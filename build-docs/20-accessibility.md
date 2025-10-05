@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Autoimmune Symptom Tracker implements comprehensive accessibility features to ensure the application is usable by people with disabilities. Following WCAG 2.1 AA guidelines, the app provides multiple ways to access all functionality and accommodates various assistive technologies.
+The Pocket Symptom Tracker implements comprehensive accessibility features to ensure the application is usable by people with disabilities. Following WCAG 2.1 AA guidelines, the app provides multiple ways to access all functionality and accommodates various assistive technologies.
 
 ## Core Accessibility Principles
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The data storage architecture for the Autoimmune Symptom Tracker implements a local-first, offline-capable database system. All user data remains on-device with optional future cloud synchronization. The system must handle complex relational data, large photo collections, and provide fast queries for analytics and reporting.
+The data storage architecture for the Pocket Symptom Tracker implements a local-first, offline-capable database system. All user data remains on-device with optional future cloud synchronization. The system must handle complex relational data, large photo collections, and provide fast queries for analytics and reporting.
 
 ## Core Requirements
 

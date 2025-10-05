@@ -1,8 +1,8 @@
-# Autoimmune Symptom Tracker - Implementation Plan Master Document
+# Pocket Symptom Tracker - Implementation Plan Master Document
 
 ## Overview
 
-This document serves as the master index for all detailed implementation plans for the Autoimmune Symptom Tracker PWA. Each major feature, system, and foundational component has its own detailed implementation document.
+This document serves as the master index for all detailed implementation plans for the Pocket Symptom Tracker PWA. Each major feature, system, and foundational component has its own detailed implementation document.
 
 ## Project Context
 
