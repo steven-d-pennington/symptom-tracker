@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Progressive Web App (PWA) infrastructure enables the Autoimmune Symptom Tracker to work offline, install on devices, and provide a native app-like experience. This implementation focuses on service workers, caching strategies, and offline functionality while maintaining privacy and performance.
+The Progressive Web App (PWA) infrastructure enables the Pocket Symptom Tracker to work offline, install on devices, and provide a native app-like experience. This implementation focuses on service workers, caching strategies, and offline functionality while maintaining privacy and performance.
 
 ## Core Requirements
 
@@ -24,7 +24,7 @@ The Progressive Web App (PWA) infrastructure enables the Autoimmune Symptom Trac
 ### Manifest Configuration
 ```json
 {
-  "name": "Autoimmune Symptom Tracker",
+  "name": "Pocket Symptom Tracker",
   "short_name": "SymptomTracker",
   "description": "Privacy-first symptom tracking for autoimmune conditions",
   "start_url": "/",

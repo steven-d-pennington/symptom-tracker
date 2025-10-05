@@ -1,4 +1,4 @@
-# Autoimmune Symptom Tracker
+# Pocket Symptom Tracker
 
 This repository contains the Phase 1 foundations for a privacy-first progressive web app that helps people living with autoimmune conditions log symptoms, daily entries, and health insights entirely on their device.
 

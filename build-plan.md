@@ -1,4 +1,4 @@
-# Autoimmune Symptom Tracker - Product Requirements Document
+# Pocket Symptom Tracker - Product Requirements Document
 
 ## Product Vision
 

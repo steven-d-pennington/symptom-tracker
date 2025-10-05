@@ -12,7 +12,7 @@ const HomePage = () => {
             Phase 1 Foundations
           </span>
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Autoimmune Symptom Tracker
+            Pocket Symptom Tracker
           </h1>
           <p className="mx-auto max-w-3xl text-base text-muted-foreground sm:text-lg">
             A privacy-first progressive web app that helps people living with autoimmune conditions capture daily health context, understand patterns, and prepare for appointments—all while keeping data on their device.

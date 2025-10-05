@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { OnboardingFlow } from "./components/OnboardingFlow";
 
 export const metadata: Metadata = {
-  title: "Onboarding • Autoimmune Symptom Tracker",
+  title: "Onboarding • Pocket Symptom Tracker",
   description:
-    "Personalize your Autoimmune Symptom Tracker experience with guided onboarding steps.",
+    "Personalize your Pocket Symptom Tracker experience with guided onboarding steps.",
 };
 
 const OnboardingPage = () => {

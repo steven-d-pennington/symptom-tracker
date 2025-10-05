@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Autoimmune Symptom Tracker implements comprehensive privacy and security measures to protect sensitive health data. All data remains on-device with strong encryption, and the system follows privacy-first principles while maintaining usability for managing chronic health conditions.
+The Pocket Symptom Tracker implements comprehensive privacy and security measures to protect sensitive health data. All data remains on-device with strong encryption, and the system follows privacy-first principles while maintaining usability for managing chronic health conditions.
 
 ## Core Security Principles
 

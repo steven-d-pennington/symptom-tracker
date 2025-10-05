@@ -3,7 +3,7 @@ import { OnboardingStepDefinition } from "../types/onboarding";
 export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
   {
     id: "welcome",
-    title: "Welcome to the Autoimmune Symptom Tracker",
+    title: "Welcome to the Pocket Symptom Tracker",
     description:
       "Get a quick overview of how the tracker keeps your health data organized and private.",
   },

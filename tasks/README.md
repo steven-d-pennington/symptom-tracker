@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document serves as the central hub for tracking all Phase 1 development tasks for the Autoimmune Symptom Tracker PWA. Phase 1 focuses on building the core MVP with essential features for symptom tracking and data management.
+This document serves as the central hub for tracking all Phase 1 development tasks for the Pocket Symptom Tracker PWA. Phase 1 focuses on building the core MVP with essential features for symptom tracking and data management.
 
 **Current Status**: All Phase 1 task documents have been created and are ready for development. Tasks 1-4 can be developed in parallel, while Tasks 5-6 depend on the completion of Tasks 1-4.
 

@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Autoimmune Symptom Tracker",
+  title: "Pocket Symptom Tracker",
   description:
     "Privacy-first PWA foundations for tracking autoimmune symptoms, daily entries, and health trends.",
   metadataBase: new URL("https://symptom-tracker.local"),
   openGraph: {
-    title: "Autoimmune Symptom Tracker",
+    title: "Pocket Symptom Tracker",
     description:
       "Offline-ready health tracking workspace built with Next.js, Tailwind, and Dexie.",
     type: "website",

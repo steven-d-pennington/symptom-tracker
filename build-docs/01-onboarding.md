@@ -2,7 +2,7 @@
 
 ## Overview
 
-The onboarding system provides a comprehensive, user-friendly introduction to the Autoimmune Symptom Tracker. It guides new users through initial setup, educates them about key features, and personalizes the app based on their specific health conditions and preferences. The system balances thorough education with quick setup to minimize friction while ensuring users understand how to effectively use the app.
+The onboarding system provides a comprehensive, user-friendly introduction to the Pocket Symptom Tracker. It guides new users through initial setup, educates them about key features, and personalizes the app based on their specific health conditions and preferences. The system balances thorough education with quick setup to minimize friction while ensuring users understand how to effectively use the app.
 
 ## Core Objectives
 

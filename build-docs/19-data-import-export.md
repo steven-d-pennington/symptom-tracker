@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Autoimmune Symptom Tracker provides comprehensive data portability features allowing users to export their health data in various formats and import data from other sources. This ensures users maintain control over their health information and can share it with healthcare providers or migrate between devices.
+The Pocket Symptom Tracker provides comprehensive data portability features allowing users to export their health data in various formats and import data from other sources. This ensures users maintain control over their health information and can share it with healthcare providers or migrate between devices.
 
 ## Export Formats
 
