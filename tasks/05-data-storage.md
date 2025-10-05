@@ -2,8 +2,8 @@
 
 ## Task Overview
 
-**Status**: Not Started
-**Assigned To**: Unassigned
+**Status**: Started
+**Assigned To**: gpt-5-codex
 **Priority**: Critical
 **Estimated Hours**: 32
 **Dependencies**: None (foundation for all other tasks)
@@ -164,6 +164,12 @@ Implement a robust, offline-first data storage system using IndexedDB with Dexie
 - `lib/database/migrations.ts`
 
 **Testing**: Schema definitions compile, migration system initializes
+
+---
+
+## Progress Notes
+- ✅ Drafted schema interfaces in `src/lib/db/schema.ts` aligned with planned entities.
+- ✅ Initialized Dexie client (`src/lib/db/client.ts`) with versioned stores for users, symptoms, medications, triggers, daily entries, and attachments.
 
 ---
 

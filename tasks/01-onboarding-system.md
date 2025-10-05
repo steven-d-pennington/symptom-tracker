@@ -2,8 +2,8 @@
 
 ## Task Overview
 
-**Status**: Not Started
-**Assigned To**: Unassigned
+**Status**: Started
+**Assigned To**: gpt-5-codex
 **Priority**: High
 **Estimated Hours**: 16
 **Dependencies**: None
@@ -81,6 +81,10 @@ Implement a comprehensive onboarding system that guides new users through settin
 - `app/onboarding/types/onboarding.ts`
 
 **Testing**: Verify component imports and basic rendering
+
+## Progress Notes
+- ✅ Project structure scaffolding added under `src/app/onboarding` with placeholder components, hook, types, and configuration.
+- ✅ Onboarding page wired into App Router with descriptive metadata and hero section.
 
 ---
 

@@ -2,8 +2,8 @@
 
 ## Task Overview
 
-**Status**: Not Started
-**Assigned To**: Unassigned
+**Status**: Started
+**Assigned To**: gpt-5-codex
 **Priority**: High
 **Estimated Hours**: 20
 **Dependencies**: None
@@ -95,6 +95,10 @@ Implement a flexible symptom tracking system that allows users to record, catego
 - `components/symptoms/hooks/useSymptoms.ts`
 
 **Testing**: Type definitions compile, basic hook structure works
+
+## Progress Notes
+- ✅ Established `src/lib/types/symptoms.ts` and placeholder feature components/hooks under `src/components/symptoms`.
+- ✅ Added sample data filtering logic in `useSymptoms` to exercise the component wiring.
 
 ---
 
