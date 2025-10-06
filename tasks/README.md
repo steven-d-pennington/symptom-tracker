@@ -54,16 +54,16 @@ This document serves as the central hub for tracking all Phase 1 development tas
 ### Parallel Tasks (Can work simultaneously)
 | Task | Status | Assigned To | Priority | Est. Hours |
 |------|--------|-------------|----------|------------|
-| [Task 1: Onboarding System](./tasks/01-onboarding-system.md) | Documents Complete | Unassigned | High | 16 |
-| [Task 2: Symptom Tracking](./tasks/02-symptom-tracking.md) | Documents Complete | Unassigned | High | 20 |
-| [Task 3: Daily Entry System](./tasks/03-daily-entry-system.md) | Documents Complete | Unassigned | High | 24 |
-| [Task 4: Calendar/Timeline](./tasks/04-calendar-timeline.md) | Documents Complete | Unassigned | High | 28 |
+| [Task 1: Onboarding System](./01-onboarding-system.md) | Complete | gpt-5-codex | High | 16 |
+| [Task 2: Symptom Tracking](./02-symptom-tracking.md) | Complete | gpt-5-codex | High | 20 |
+| [Task 3: Daily Entry System](./03-daily-entry-system.md) | Complete | gpt-5-codex | High | 24 |
+| [Task 4: Calendar/Timeline](./04-calendar-timeline.md) | Complete | gpt-5-codex | High | 28 |
 
 ### Sequential Tasks (Depend on Parallel Tasks)
 | Task | Status | Assigned To | Priority | Est. Hours | Dependencies |
 |------|--------|-------------|----------|------------|--------------|
-| [Task 5: Data Storage](./tasks/05-data-storage.md) | Documents Complete | Unassigned | Critical | 32 | Tasks 1-4 |
-| [Task 6: PWA Infrastructure](./tasks/06-pwa-infrastructure.md) | Documents Complete | Unassigned | Critical | 20 | Tasks 1-4 |
+| [Task 5: Data Storage](./05-data-storage.md) | Complete | gpt-5-codex | Critical | 32 | Tasks 1-4 |
+| [Task 6: PWA Infrastructure](./06-pwa-infrastructure.md) | Not Started | Unassigned | Critical | 20 | Tasks 1-4 |
 
 ## Development Workflow
 
