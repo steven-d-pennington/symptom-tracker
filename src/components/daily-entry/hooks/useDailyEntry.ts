@@ -11,19 +11,13 @@ import {
   MEDICATION_OPTIONS,
   SYMPTOM_OPTIONS,
 } from "@/lib/data/daily-entry-presets";
-
-const OFFLINE_QUEUE_KEY = "pst-offline-entry-queue";
-const HISTORY_KEY = "pst-entry-history";
-
-const serializeEntry = (entry: DailyEntry) => ({
-  ...entry,
-  completedAt: entry.completedAt.toISOString(),
-});
-
-const deserializeEntry = (entry: ReturnType<typeof serializeEntry>): DailyEntry => ({
-  ...entry,
-  completedAt: new Date(entry.completedAt),
-});
+import {
+  HISTORY_STORAGE_KEY,
+  HISTORY_UPDATED_EVENT,
+  OFFLINE_QUEUE_STORAGE_KEY,
+  loadDailyEntries,
+  persistDailyEntries,
+} from "@/lib/storage/daily-entry-storage";
 
 const createInitialEntry = (): DailyEntry => ({
   id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
@@ -60,29 +54,6 @@ const defaultTouchedState: TouchedSections = {
   notes: false,
 };
 
-const loadPersistedEntries = (storageKey: string) => {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const stored = window.localStorage.getItem(storageKey);
-    if (!stored) {
-      return [];
-    }
-
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.map(deserializeEntry);
-  } catch (error) {
-    console.warn(`Unable to parse ${storageKey}`, error);
-    return [];
-  }
-};
-
 export const useDailyEntry = () => {
   const [entry, setEntry] = useState<DailyEntry>(createInitialEntry);
   const [isSaving, setIsSaving] = useState(false);
@@ -91,10 +62,10 @@ export const useDailyEntry = () => {
     defaultTouchedState,
   );
   const [history, setHistory] = useState<DailyEntry[]>(() =>
-    loadPersistedEntries(HISTORY_KEY),
+    loadDailyEntries(HISTORY_STORAGE_KEY),
   );
   const [queue, setQueue] = useState<DailyEntry[]>(() =>
-    loadPersistedEntries(OFFLINE_QUEUE_KEY),
+    loadDailyEntries(OFFLINE_QUEUE_STORAGE_KEY),
   );
   const startTimeRef = useRef<number>(Date.now());
 
@@ -117,10 +88,8 @@ export const useDailyEntry = () => {
       return;
     }
 
-    window.localStorage.setItem(
-      HISTORY_KEY,
-      JSON.stringify(history.map(serializeEntry)),
-    );
+    persistDailyEntries(HISTORY_STORAGE_KEY, history);
+    window.dispatchEvent(new CustomEvent(HISTORY_UPDATED_EVENT));
   }, [history]);
 
   useEffect(() => {
@@ -128,10 +97,7 @@ export const useDailyEntry = () => {
       return;
     }
 
-    window.localStorage.setItem(
-      OFFLINE_QUEUE_KEY,
-      JSON.stringify(queue.map(serializeEntry)),
-    );
+    persistDailyEntries(OFFLINE_QUEUE_STORAGE_KEY, queue);
   }, [queue]);
 
   const resetEntry = useCallback(() => {
