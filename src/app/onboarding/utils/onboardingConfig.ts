@@ -42,7 +42,7 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
 
 export const DEFAULT_TRACKING_PREFERENCES = {
   frequency: "daily" as const,
-  focusAreas: ["pain", "fatigue"],
+  focusAreas: ["Pain", "Fatigue"],
   notificationsEnabled: true,
   reminderTime: "09:00",
 };
