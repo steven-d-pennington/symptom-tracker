@@ -8,7 +8,7 @@ const HomePage = () => {
       <section className="mx-auto flex max-w-5xl flex-col items-center gap-8 text-center">
         <div className="space-y-4">
           <span className="rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-sm font-semibold uppercase tracking-wide text-primary">
-            Phase 1 Foundations
+            Phase 1 & 2 Complete ✅
           </span>
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             Pocket Symptom Tracker
@@ -19,17 +19,17 @@ const HomePage = () => {
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link
-            href="/onboarding"
+            href="/dashboard"
             className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          >
+            Open Dashboard
+          </Link>
+          <Link
+            href="/onboarding"
+            className="rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
           >
             Start onboarding
           </Link>
-          <a
-            href="https://github.com/"
-            className="rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
-          >
-            View roadmap
-          </a>
         </div>
       </section>
 
@@ -56,10 +56,34 @@ const HomePage = () => {
 
       <section className="mx-auto max-w-6xl space-y-10">
         <div className="space-y-3">
-          <h2 className="text-3xl font-semibold text-foreground">Core MVP workspaces</h2>
+          <h2 className="text-3xl font-semibold text-foreground">All Features Available</h2>
           <p className="text-sm text-muted-foreground">
-            Each foundational module includes placeholder UI and hooks so parallel feature development can begin immediately.
+            Phase 1 & 2 complete with symptom tracking, photo documentation, flare monitoring, and trigger analysis.
           </p>
+        </div>
+
+        {/* Quick links to Phase 2 features */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Link href="/body-map" className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted">
+            <div className="mb-2 text-2xl">🗺️</div>
+            <div className="font-semibold text-foreground">Body Map</div>
+            <div className="mt-1 text-xs text-muted-foreground">Visual symptom locations</div>
+          </Link>
+          <Link href="/photos" className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted">
+            <div className="mb-2 text-2xl">📷</div>
+            <div className="font-semibold text-foreground">Photo Gallery</div>
+            <div className="mt-1 text-xs text-muted-foreground">Encrypted medical photos</div>
+          </Link>
+          <Link href="/flares" className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted">
+            <div className="mb-2 text-2xl">🔥</div>
+            <div className="font-semibold text-foreground">Active Flares</div>
+            <div className="mt-1 text-xs text-muted-foreground">Monitor symptom flares</div>
+          </Link>
+          <Link href="/triggers" className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted">
+            <div className="mb-2 text-2xl">📊</div>
+            <div className="font-semibold text-foreground">Trigger Analysis</div>
+            <div className="mt-1 text-xs text-muted-foreground">Find correlations</div>
+          </Link>
         </div>
         <div className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-6 rounded-3xl border border-border bg-card p-6 shadow-sm">

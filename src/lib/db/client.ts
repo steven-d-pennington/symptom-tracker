@@ -3,6 +3,7 @@ import {
   AttachmentRecord,
   BodyMapLocationRecord,
   DailyEntryRecord,
+  FlareRecord,
   MedicationRecord,
   PhotoAttachmentRecord,
   PhotoComparisonRecord,
@@ -21,6 +22,7 @@ export class SymptomTrackerDatabase extends Dexie {
   bodyMapLocations!: Table<BodyMapLocationRecord, string>;
   photoAttachments!: Table<PhotoAttachmentRecord, string>;
   photoComparisons!: Table<PhotoComparisonRecord, string>;
+  flares!: Table<FlareRecord, string>;
 
   constructor() {
     super("symptom-tracker");
@@ -67,6 +69,20 @@ export class SymptomTrackerDatabase extends Dexie {
       bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
       photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId]",
       photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+    });
+
+    // Version 5: Add flares table for active flare tracking
+    this.version(5).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive]",
+      medications: "id, userId, [userId+isActive]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, userId, symptomId, status, startDate, [userId+status], [userId+startDate]",
     });
   }
 }

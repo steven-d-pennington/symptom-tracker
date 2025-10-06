@@ -175,3 +175,20 @@ export interface PhotoComparisonRecord {
   notes?: string;
   createdAt: Date;
 }
+
+export interface FlareRecord {
+  id: string;
+  userId: string;
+  symptomId: string;
+  symptomName: string;
+  startDate: Date;
+  endDate?: Date;
+  severity: number;
+  bodyRegions: string[];
+  status: "active" | "improving" | "worsening" | "resolved";
+  interventions: string; // JSON stringified
+  notes: string;
+  photoIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
