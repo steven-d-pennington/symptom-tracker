@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git checkout:*)",
       "Bash(npm run lint:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat(phase-2): implement Task 7 foundation - body mapping data layer\n\n**Task 7 Progress: Step 1 Complete**\n\nImplemented core data layer for body mapping system:\n\n**Data Model & Types:**\n- Created comprehensive TypeScript interfaces for body mapping\n- BodyRegion, BodyMapLocation, BodyView types\n- Severity color coding system (5 levels)\n- HS-specific body region categories\n\n**Database Schema:**\n- Added BodyMapLocationRecord to schema\n- Created bodyMapLocations table in Dexie (v3)\n- Compound indexes for efficient queries\n- Support for coordinates, severity, notes\n\n**Repository Layer:**\n- Full CRUD operations for body map locations\n- Query by daily entry, symptom, body region\n- Date range queries\n- Most affected regions analytics\n- Region severity trend analysis\n- Bulk operations support\n\n**Body Region Data:**\n- 35+ predefined front view regions\n- 20+ predefined back view regions\n- HS-specific regions (armpits, under breasts, inner thighs, buttocks)\n- Categorized by head/torso/limbs/joints/other\n- Left/right/center differentiation\n\nReady for UI component development.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
