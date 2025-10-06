@@ -1,6 +1,7 @@
 import Dexie, { Table } from "dexie";
 import {
   AttachmentRecord,
+  BodyMapLocationRecord,
   DailyEntryRecord,
   MedicationRecord,
   SymptomRecord,
@@ -15,6 +16,7 @@ export class SymptomTrackerDatabase extends Dexie {
   triggers!: Table<TriggerRecord, string>;
   dailyEntries!: Table<DailyEntryRecord, string>;
   attachments!: Table<AttachmentRecord, string>;
+  bodyMapLocations!: Table<BodyMapLocationRecord, string>;
 
   constructor() {
     super("symptom-tracker");
@@ -37,6 +39,17 @@ export class SymptomTrackerDatabase extends Dexie {
       triggers: "id, userId, category, [userId+category], [userId+isActive]",
       dailyEntries: "id, userId, date, [userId+date], completedAt",
       attachments: "id, userId, relatedEntryId",
+    });
+
+    // Version 3: Add body map locations for Phase 2
+    this.version(3).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive]",
+      medications: "id, userId, [userId+isActive]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
     });
   }
 }

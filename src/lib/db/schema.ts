@@ -126,3 +126,19 @@ export interface AttachmentRecord {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface BodyMapLocationRecord {
+  id: string;
+  userId: string;
+  dailyEntryId?: string;
+  symptomId: string;
+  bodyRegionId: string;
+  coordinates?: {
+    x: number;
+    y: number;
+  };
+  severity: number;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
