@@ -1,3 +1,5 @@
+import type { ComponentType } from "react";
+
 export type OnboardingStepId =
   | "welcome"
   | "condition"
@@ -35,9 +37,10 @@ export interface OnboardingData {
 export interface OnboardingState {
   currentStep: number;
   orderedSteps: OnboardingStepId[];
-  completedSteps: Set<OnboardingStepId>;
+  completedSteps: OnboardingStepId[];
   data: OnboardingData;
   isComplete: boolean;
+  hydrated: boolean;
 }
 
 export interface OnboardingStepDefinition {
@@ -46,3 +49,22 @@ export interface OnboardingStepDefinition {
   description: string;
   optional?: boolean;
 }
+
+export interface OnboardingProgress {
+  total: number;
+  completed: number;
+  current: number;
+  percentage: number;
+}
+
+export interface OnboardingStepComponentProps {
+  data: OnboardingData;
+  onContinue: (stepId: OnboardingStepId, data?: Partial<OnboardingData>) => void;
+  goToStep: (stepId: OnboardingStepId) => void;
+  onBack: () => void;
+  updateData: (data: Partial<OnboardingData>) => void;
+  progress: OnboardingProgress;
+  reset: () => void;
+}
+
+export type OnboardingStepComponent = ComponentType<OnboardingStepComponentProps>;

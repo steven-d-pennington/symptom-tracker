@@ -2,22 +2,38 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import { OnboardingData, OnboardingStepId } from "../types/onboarding";
+import type {
+  OnboardingStepComponentProps,
+  PrivacySettings,
+} from "../types/onboarding";
 
-type StepProps = {
-  onContinue: (stepId: OnboardingStepId, data?: Partial<OnboardingData>) => void;
-};
+const STORAGE_OPTIONS = ["local", "encrypted-local"] as const;
 
-const STORAGE_OPTIONS: OnboardingData["privacySettings"]["dataStorage"][] = [
-  "local",
-  "encrypted-local",
-];
+export const PrivacyStep = ({ data, onContinue, onBack, updateData }: OnboardingStepComponentProps) => {
+  const [dataStorage, setDataStorage] = useState<(typeof STORAGE_OPTIONS)[number]>(
+    (data.privacySettings?.dataStorage as (typeof STORAGE_OPTIONS)[number]) ?? "encrypted-local",
+  );
+  const [analyticsOptIn, setAnalyticsOptIn] = useState(
+    data.privacySettings?.analyticsOptIn ?? false,
+  );
+  const [crashReportsOptIn, setCrashReportsOptIn] = useState(
+    data.privacySettings?.crashReportsOptIn ?? false,
+  );
 
-export const PrivacyStep = ({ onContinue }: StepProps) => {
-  const [dataStorage, setDataStorage] =
-    useState<OnboardingData["privacySettings"]["dataStorage"]>("encrypted-local");
-  const [analyticsOptIn, setAnalyticsOptIn] = useState(false);
-  const [crashReportsOptIn, setCrashReportsOptIn] = useState(false);
+  const mergePrivacySettings = (updates: Partial<PrivacySettings>) => {
+    const current = data.privacySettings ?? {
+      dataStorage,
+      analyticsOptIn,
+      crashReportsOptIn,
+    };
+
+    updateData({
+      privacySettings: {
+        ...current,
+        ...updates,
+      },
+    });
+  };
 
   return (
     <form
@@ -40,6 +56,22 @@ export const PrivacyStep = ({ onContinue }: StepProps) => {
         </p>
       </div>
 
+      <div className="grid gap-3 rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 text-base" aria-hidden="true">
+            🔒
+          </span>
+          <div>
+            <p className="font-medium text-foreground">Key policies</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>No cloud sync or hidden backups—everything lives on your device.</li>
+              <li>Optional diagnostics are anonymized and never include symptom content.</li>
+              <li>You can export or delete data at any time from settings.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       <fieldset className="flex flex-col gap-3">
         <legend className="text-sm font-medium text-foreground">
           Data storage mode
@@ -53,7 +85,10 @@ export const PrivacyStep = ({ onContinue }: StepProps) => {
                 "flex flex-col items-start gap-2 rounded-xl border border-border bg-muted/40 p-4 text-left text-sm shadow-sm transition",
                 dataStorage === option && "border-primary bg-primary/10",
               )}
-              onClick={() => setDataStorage(option)}
+              onClick={() => {
+                setDataStorage(option);
+                mergePrivacySettings({ dataStorage: option });
+              }}
             >
               <span className="text-base font-semibold capitalize text-foreground">
                 {option.replace("-", " ")}
@@ -73,7 +108,10 @@ export const PrivacyStep = ({ onContinue }: StepProps) => {
           <input
             type="checkbox"
             checked={analyticsOptIn}
-            onChange={(event) => setAnalyticsOptIn(event.target.checked)}
+            onChange={(event) => {
+              setAnalyticsOptIn(event.target.checked);
+              mergePrivacySettings({ analyticsOptIn: event.target.checked });
+            }}
             className="mt-1 size-4"
           />
           <span className="text-sm text-foreground">
@@ -85,7 +123,10 @@ export const PrivacyStep = ({ onContinue }: StepProps) => {
           <input
             type="checkbox"
             checked={crashReportsOptIn}
-            onChange={(event) => setCrashReportsOptIn(event.target.checked)}
+            onChange={(event) => {
+              setCrashReportsOptIn(event.target.checked);
+              mergePrivacySettings({ crashReportsOptIn: event.target.checked });
+            }}
             className="mt-1 size-4"
           />
           <span className="text-sm text-foreground">
@@ -95,7 +136,23 @@ export const PrivacyStep = ({ onContinue }: StepProps) => {
         </label>
       </div>
 
-      <div className="flex justify-end">
+      <div className="space-y-3 rounded-xl border border-dashed border-border/70 bg-background/60 p-4 text-xs text-muted-foreground">
+        <p className="font-semibold text-foreground">Compliance checklist</p>
+        <ul className="list-disc space-y-1 pl-4">
+          <li>GDPR-ready data export and deletion controls</li>
+          <li>HIPAA-aligned device encryption when available</li>
+          <li>No third-party trackers or advertising SDKs</li>
+        </ul>
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+          onClick={() => onBack()}
+        >
+          Back
+        </button>
         <button
           type="submit"
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"

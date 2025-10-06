@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { OnboardingFlow } from "./components/OnboardingFlow";
+import { OnboardingProvider } from "./hooks/useOnboarding";
 
 export const metadata: Metadata = {
   title: "Onboarding • Pocket Symptom Tracker",
@@ -21,7 +22,9 @@ const OnboardingPage = () => {
           The onboarding flow collects just enough information to personalize your dashboard, reminders, and health insights while keeping everything private on your device.
         </p>
       </div>
-      <OnboardingFlow />
+      <OnboardingProvider>
+        <OnboardingFlow />
+      </OnboardingProvider>
     </div>
   );
 };
