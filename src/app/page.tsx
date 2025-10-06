@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { CalendarView } from "@/components/calendar/CalendarView";
-import { DailyEntryForm } from "@/components/daily-entry/DailyEntryForm";
 import { SymptomTracker } from "@/components/symptoms/SymptomTracker";
 
 const HomePage = () => {
@@ -67,7 +66,18 @@ const HomePage = () => {
             <SymptomTracker />
           </div>
           <div className="space-y-6 rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <DailyEntryForm />
+            <div className="space-y-3">
+              <h3 className="text-2xl font-semibold text-foreground">Daily entry workspace</h3>
+              <p className="text-sm text-muted-foreground">
+                Visit the daily log to capture health metrics, symptoms, medications, triggers, and notes with smart suggestions and offline support.
+              </p>
+            </div>
+            <Link
+              href="/log"
+              className="inline-flex w-fit items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              Open daily log
+            </Link>
           </div>
         </div>
         <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
