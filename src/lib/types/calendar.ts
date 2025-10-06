@@ -1,3 +1,5 @@
+export type CalendarViewType = "month" | "week" | "day" | "timeline";
+
 export interface CalendarEntry {
   date: string;
   hasEntry: boolean;
@@ -7,6 +9,44 @@ export interface CalendarEntry {
   triggerCount: number;
   mood?: string;
   notes?: boolean;
+  symptomCategories?: string[];
+  triggerCategories?: string[];
+  medicationCategories?: string[];
+  symptomTags?: string[];
+  triggerTags?: string[];
+  medicationTags?: string[];
+}
+
+export interface SymptomDetail {
+  id: string;
+  name: string;
+  severity: number;
+  category: string;
+  note?: string;
+}
+
+export interface MedicationDetail {
+  id: string;
+  name: string;
+  dose: string;
+  taken: boolean;
+  schedule?: string;
+  category?: string;
+}
+
+export interface TriggerDetail {
+  id: string;
+  name: string;
+  category: string;
+  impact: "low" | "medium" | "high";
+}
+
+export interface CalendarDayDetail extends CalendarEntry {
+  energyLevel?: number;
+  notesSummary?: string;
+  symptomsDetails: SymptomDetail[];
+  medicationDetails: MedicationDetail[];
+  triggerDetails: TriggerDetail[];
 }
 
 export interface TimelineEvent {
@@ -17,6 +57,7 @@ export interface TimelineEvent {
   severity?: number;
   description?: string;
   category?: string;
+  relatedId?: string;
 }
 
 export interface DateRange {
@@ -40,8 +81,29 @@ export interface DisplayOptions {
   colorScheme: "severity" | "category" | "frequency";
 }
 
+export interface CalendarMetrics {
+  healthTrend: { date: string; score: number }[];
+  symptomFrequency: { name: string; count: number }[];
+  medicationAdherence: { name: string; taken: number; missed: number }[];
+  correlationInsights: { symptom: string; trigger: string; correlation: number; occurrences: number }[];
+}
+
+export interface FilterPreset {
+  id: string;
+  name: string;
+  filters: CalendarFilters;
+  createdAt: string;
+}
+
+export interface CalendarFilterOptions {
+  symptoms: string[];
+  medications: string[];
+  triggers: string[];
+  categories: string[];
+}
+
 export interface CalendarViewConfig {
-  viewType: "month" | "week" | "day" | "timeline";
+  viewType: CalendarViewType;
   dateRange: DateRange;
   filters: CalendarFilters;
   displayOptions: DisplayOptions;

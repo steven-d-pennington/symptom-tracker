@@ -1,66 +1,623 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  CalendarDayDetail,
   CalendarEntry,
+  CalendarFilterOptions,
+  CalendarFilters,
+  CalendarMetrics,
   CalendarViewConfig,
-  DateRange,
+  CalendarViewType,
+  DisplayOptions,
   TimelineEvent,
 } from "@/lib/types/calendar";
+import { DailyEntry } from "@/lib/types/daily-entry";
+import {
+  MEDICATION_OPTIONS,
+  MOOD_OPTIONS,
+  SYMPTOM_OPTIONS,
+  TRIGGER_OPTIONS,
+} from "@/lib/data/daily-entry-presets";
+import {
+  HISTORY_STORAGE_KEY,
+  HISTORY_UPDATED_EVENT,
+  loadDailyEntries,
+} from "@/lib/storage/daily-entry-storage";
+import { useDateNavigation } from "./useDateNavigation";
 
-const createDateRange = (): DateRange => {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - 30);
-  return { start, end };
+interface CalendarDataHookOptions {
+  filters: CalendarFilters;
+  searchTerm: string;
+}
+
+interface CalendarDataResult {
+  viewConfig: CalendarViewConfig;
+  updateView: (update: Partial<CalendarViewConfig>) => void;
+  entries: CalendarEntry[];
+  events: TimelineEvent[];
+  metrics: CalendarMetrics;
+  filterOptions: CalendarFilterOptions;
+  selectedDate?: string;
+  selectDate: (date?: string) => void;
+  selectedDay?: CalendarDayDetail;
+  dayLookup: Map<string, CalendarDayDetail>;
+  timelineZoom: "week" | "month" | "quarter" | "year";
+  setTimelineZoom: (zoom: "week" | "month" | "quarter" | "year") => void;
+  navigation: ReturnType<typeof useDateNavigation>;
+  eventsByDate: Map<string, TimelineEvent[]>;
+}
+
+const symptomOptions = new Map(
+  SYMPTOM_OPTIONS.map((option) => [option.id, option]),
+);
+const medicationOptions = new Map(
+  MEDICATION_OPTIONS.map((option) => [option.id, option]),
+);
+const triggerOptions = new Map(
+  TRIGGER_OPTIONS.map((option) => [option.id, option]),
+);
+const moodOptions = new Map(MOOD_OPTIONS.map((option) => [option.id, option]));
+
+const DEFAULT_FILTER_OPTIONS: CalendarFilterOptions = {
+  symptoms: SYMPTOM_OPTIONS.map((option) => option.label),
+  medications: MEDICATION_OPTIONS.map((option) => option.name),
+  triggers: TRIGGER_OPTIONS.map((option) => option.label),
+  categories: Array.from(
+    new Set([
+      ...SYMPTOM_OPTIONS.map((option) => option.category),
+      "Medication",
+      "Trigger",
+      "Note",
+    ]),
+  ),
 };
 
-const createInitialView = (): CalendarViewConfig => ({
-  viewType: "month",
-  dateRange: createDateRange(),
-  filters: {},
-  displayOptions: {
+const createBaseRange = () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { start, end: new Date(now.getFullYear(), now.getMonth() + 1, 0) };
+};
+
+const impactFromIntensity = (value: number): "low" | "medium" | "high" => {
+  if (value >= 7) {
+    return "high";
+  }
+  if (value >= 4) {
+    return "medium";
+  }
+  return "low";
+};
+
+const buildDataset = (history: DailyEntry[]) => {
+  const entries: CalendarEntry[] = [];
+  const dayLookup = new Map<string, CalendarDayDetail>();
+  const events: TimelineEvent[] = [];
+
+  const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
+
+  sorted.forEach((entry) => {
+    const iso = entry.date;
+    const completedAt = entry.completedAt instanceof Date
+      ? entry.completedAt
+      : new Date(entry.completedAt);
+
+    const symptomsDetails = entry.symptoms.map((symptom, index) => {
+      const option = symptomOptions.get(symptom.symptomId);
+      return {
+        id: `${iso}-symptom-${symptom.symptomId}-${index}`,
+        name: option?.label ?? symptom.symptomId,
+        severity: Math.max(0, Math.min(10, Math.round(symptom.severity))),
+        category: option?.category ?? "Symptom",
+        note: symptom.notes,
+      };
+    });
+
+    const medicationDetails = entry.medications.map((medication, index) => {
+      const option = medicationOptions.get(medication.medicationId);
+      return {
+        id: `${iso}-medication-${medication.medicationId}-${index}`,
+        name: option?.name ?? medication.medicationId,
+        dose: medication.dosage ?? option?.dosage ?? "",
+        taken: medication.taken,
+        schedule: option?.schedule,
+        category: "Medication",
+      };
+    });
+
+    const triggerDetails = entry.triggers.map((trigger, index) => {
+      const option = triggerOptions.get(trigger.triggerId);
+      return {
+        id: `${iso}-trigger-${trigger.triggerId}-${index}`,
+        name: option?.label ?? trigger.triggerId,
+        category: "Trigger",
+        impact: impactFromIntensity(trigger.intensity),
+      };
+    });
+
+    const moodLabel = entry.mood ? moodOptions.get(entry.mood)?.label ?? entry.mood : undefined;
+
+    const calendarEntry: CalendarEntry = {
+      date: iso,
+      hasEntry: true,
+      overallHealth: entry.overallHealth,
+      symptomCount: symptomsDetails.length,
+      medicationCount: medicationDetails.filter((item) => item.taken).length,
+      triggerCount: triggerDetails.length,
+      mood: moodLabel,
+      notes: Boolean(entry.notes),
+      symptomCategories: [...new Set(symptomsDetails.map((item) => item.category))],
+      triggerCategories: triggerDetails.length > 0 ? ["Trigger"] : [],
+      medicationCategories: medicationDetails.length > 0 ? ["Medication"] : [],
+      symptomTags: symptomsDetails.map((item) => item.name),
+      triggerTags: triggerDetails.map((item) => item.name),
+      medicationTags: medicationDetails
+        .filter((item) => item.taken)
+        .map((item) => item.name),
+    };
+
+    const detail: CalendarDayDetail = {
+      ...calendarEntry,
+      energyLevel: entry.energyLevel,
+      notesSummary: entry.notes,
+      symptomsDetails,
+      medicationDetails,
+      triggerDetails,
+    };
+
+    entries.push(calendarEntry);
+    dayLookup.set(iso, detail);
+
+    symptomsDetails.forEach((symptom, symptomIndex) => {
+      const eventDate = new Date(completedAt);
+      eventDate.setHours(9 + symptomIndex, 0, 0, 0);
+      events.push({
+        id: `${iso}-event-symptom-${symptomIndex}`,
+        date: eventDate,
+        type: "symptom",
+        title: `${symptom.name} (${symptom.severity}/10)`,
+        severity: symptom.severity,
+        description: symptom.note,
+        category: symptom.category,
+        relatedId: symptom.id,
+      });
+    });
+
+    medicationDetails.forEach((medication, medicationIndex) => {
+      const eventDate = new Date(completedAt);
+      eventDate.setHours(7 + medicationIndex, 30, 0, 0);
+      events.push({
+        id: `${iso}-event-medication-${medicationIndex}`,
+        date: eventDate,
+        type: "medication",
+        title: `${medication.name} ${medication.taken ? "taken" : "missed"}`,
+        description: [medication.schedule, medication.dose].filter(Boolean).join(" · "),
+        category: "Medication",
+        relatedId: medication.id,
+      });
+    });
+
+    triggerDetails.forEach((trigger, triggerIndex) => {
+      const eventDate = new Date(completedAt);
+      eventDate.setHours(12 + triggerIndex, 15, 0, 0);
+      const baseTrigger = entry.triggers[triggerIndex];
+      const severity = baseTrigger
+        ? Math.max(0, Math.min(10, Math.round(baseTrigger.intensity)))
+        : trigger.impact === "high"
+          ? 9
+          : trigger.impact === "medium"
+            ? 6
+            : 2;
+      events.push({
+        id: `${iso}-event-trigger-${triggerIndex}`,
+        date: eventDate,
+        type: "trigger",
+        title: `${trigger.name} (${trigger.impact})`,
+        description: baseTrigger?.notes,
+        category: "Trigger",
+        relatedId: trigger.id,
+        severity,
+      });
+    });
+
+    if (entry.notes) {
+      const eventDate = new Date(completedAt);
+      eventDate.setHours(20, 0, 0, 0);
+      events.push({
+        id: `${iso}-event-note`,
+        date: eventDate,
+        type: "note",
+        title: "Reflection added",
+        description: entry.notes,
+        category: "Note",
+      });
+    }
+  });
+
+  events.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  return { entries, dayLookup, events };
+};
+
+const includesSome = (source: string[] = [], targets: string[] = []) =>
+  targets.length === 0 || targets.some((target) => source.includes(target));
+
+const entryMatchesFilters = (
+  entry: CalendarEntry,
+  detail: CalendarDayDetail | undefined,
+  filters: CalendarFilters,
+  searchTerm: string,
+) => {
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  if (normalizedSearch) {
+    const haystack = [
+      entry.date,
+      entry.mood ?? "",
+      detail?.notesSummary ?? "",
+      ...(detail?.symptomsDetails.map((item) => item.name) ?? []),
+      ...(detail?.medicationDetails.map((item) => item.name) ?? []),
+      ...(detail?.triggerDetails.map((item) => item.name) ?? []),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    if (!haystack.includes(normalizedSearch)) {
+      return false;
+    }
+  }
+
+  if (filters.severityRange && typeof entry.overallHealth === "number") {
+    const [min, max] = filters.severityRange;
+    if (entry.overallHealth < min || entry.overallHealth > max) {
+      return false;
+    }
+  }
+
+  if (!includesSome(entry.symptomTags, filters.symptoms)) {
+    return false;
+  }
+
+  if (!includesSome(entry.medicationTags, filters.medications)) {
+    return false;
+  }
+
+  if (!includesSome(entry.triggerTags, filters.triggers)) {
+    return false;
+  }
+
+  if (filters.categories && filters.categories.length > 0) {
+    const categories = [
+      ...(entry.symptomCategories ?? []),
+      ...(entry.medicationCategories ?? []),
+      ...(entry.triggerCategories ?? []),
+      entry.notes ? ["Note"] : [],
+    ];
+
+    if (!includesSome(categories, filters.categories)) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const eventMatchesFilters = (
+  event: TimelineEvent,
+  filters: CalendarFilters,
+  searchTerm: string,
+) => {
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  if (normalizedSearch) {
+    const haystack = `${event.title} ${event.description ?? ""}`.toLowerCase();
+    if (!haystack.includes(normalizedSearch)) {
+      return false;
+    }
+  }
+
+  if (filters.categories && filters.categories.length > 0) {
+    if (!event.category || !filters.categories.includes(event.category)) {
+      return false;
+    }
+  }
+
+  if (filters.severityRange && typeof event.severity === "number") {
+    const [min, max] = filters.severityRange;
+    if (event.severity < min || event.severity > max) {
+      return false;
+    }
+  }
+
+  if (filters.symptoms && filters.symptoms.length > 0) {
+    if (event.type !== "symptom") {
+      return false;
+    }
+
+    if (!filters.symptoms.some((symptom) => event.title.toLowerCase().includes(symptom.toLowerCase()))) {
+      return false;
+    }
+  }
+
+  if (filters.medications && filters.medications.length > 0) {
+    if (event.type !== "medication") {
+      return false;
+    }
+
+    if (!filters.medications.some((medication) => event.title.toLowerCase().includes(medication.toLowerCase()))) {
+      return false;
+    }
+  }
+
+  if (filters.triggers && filters.triggers.length > 0) {
+    if (event.type !== "trigger") {
+      return false;
+    }
+
+    if (!filters.triggers.some((trigger) => event.title.toLowerCase().includes(trigger.toLowerCase()))) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const emptyMetrics: CalendarMetrics = {
+  healthTrend: [],
+  symptomFrequency: [],
+  medicationAdherence: [],
+  correlationInsights: [],
+};
+
+export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions): CalendarDataResult => {
+  const [viewType, setViewType] = useState<CalendarViewType>("month");
+  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
     showHealthScore: true,
     showSymptoms: true,
-    showMedications: false,
-    showTriggers: false,
+    showMedications: true,
+    showTriggers: true,
     colorScheme: "severity",
-  },
-});
+  });
+  const [timelineZoom, setTimelineZoom] = useState<"week" | "month" | "quarter" | "year">("month");
+  const [history, setHistory] = useState<DailyEntry[]>([]);
+  const navigation = useDateNavigation(createBaseRange(), viewType);
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
 
-export const useCalendarData = () => {
-  const [viewConfig, setViewConfig] = useState<CalendarViewConfig>(createInitialView);
+  useEffect(() => {
+    setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
 
-  const entries = useMemo<CalendarEntry[]>(
-    () => [
-      {
-        date: new Date().toISOString().slice(0, 10),
-        hasEntry: false,
-        symptomCount: 0,
-        medicationCount: 0,
-        triggerCount: 0,
-      },
-    ],
-    [],
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === HISTORY_STORAGE_KEY) {
+        setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
+      }
+    };
+
+    const handleHistoryUpdate = () => {
+      setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleStorageChange);
+      window.addEventListener(HISTORY_UPDATED_EVENT, handleHistoryUpdate);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleStorageChange);
+        window.removeEventListener(HISTORY_UPDATED_EVENT, handleHistoryUpdate);
+      }
+    };
+  }, []);
+
+  const dataset = useMemo(() => buildDataset(history), [history]);
+
+  useEffect(() => {
+    if (dataset.entries.length === 0) {
+      return;
+    }
+
+    const latest = dataset.entries[dataset.entries.length - 1];
+    const latestDate = new Date(latest.date);
+    const withinRange =
+      latestDate >= navigation.range.start && latestDate <= navigation.range.end;
+    if (!withinRange) {
+      navigation.setRange({ start: latestDate, end: latestDate });
+    }
+
+    if (!selectedDate || !dataset.dayLookup.has(selectedDate)) {
+      setSelectedDate(latest.date);
+    }
+  }, [dataset.entries, dataset.dayLookup, navigation, selectedDate]);
+
+  const entriesInRange = useMemo(
+    () =>
+      dataset.entries.filter((entry) => {
+        const entryDate = new Date(entry.date);
+        return entryDate >= navigation.range.start && entryDate <= navigation.range.end;
+      }),
+    [dataset.entries, navigation.range.end, navigation.range.start],
   );
 
-  const events = useMemo<TimelineEvent[]>(
-    () => [
-      {
-        id: "getting-started",
-        date: new Date(),
-        type: "milestone",
-        title: "Onboarding completed",
-        description: "Phase 1 setup placeholder event.",
-      },
-    ],
-    [],
+  const filteredEntries = useMemo(
+    () =>
+      entriesInRange.filter((entry) =>
+        entryMatchesFilters(entry, dataset.dayLookup.get(entry.date), filters, searchTerm),
+      ),
+    [dataset.dayLookup, entriesInRange, filters, searchTerm],
   );
+
+  const filteredEvents = useMemo(
+    () =>
+      dataset.events.filter((event) => {
+        const inRange =
+          event.date >= navigation.range.start && event.date <= navigation.range.end;
+        return inRange && eventMatchesFilters(event, filters, searchTerm);
+      }),
+    [dataset.events, filters, navigation.range.end, navigation.range.start, searchTerm],
+  );
+
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, TimelineEvent[]>();
+    filteredEvents.forEach((event) => {
+      const iso = event.date.toISOString().slice(0, 10);
+      if (!map.has(iso)) {
+        map.set(iso, []);
+      }
+      map.get(iso)?.push(event);
+    });
+    return map;
+  }, [filteredEvents]);
+
+  useEffect(() => {
+    if (!selectedDate) {
+      return;
+    }
+
+    const stillVisible =
+      filteredEntries.some((entry) => entry.date === selectedDate) ||
+      filteredEvents.some((event) => event.date.toISOString().startsWith(selectedDate));
+
+    if (!stillVisible) {
+      setSelectedDate(filteredEntries.at(-1)?.date ?? filteredEntries[0]?.date);
+    }
+  }, [filteredEntries, filteredEvents, selectedDate]);
+
+  const metrics = useMemo<CalendarMetrics>(() => {
+    if (filteredEntries.length === 0) {
+      return emptyMetrics;
+    }
+
+    const healthTrend = filteredEntries.map((entry) => ({
+      date: entry.date,
+      score: entry.overallHealth ?? 0,
+    }));
+
+    const symptomFrequencyMap = new Map<string, number>();
+    filteredEntries.forEach((entry) => {
+      const detail = dataset.dayLookup.get(entry.date);
+      detail?.symptomsDetails.forEach((symptom) => {
+        symptomFrequencyMap.set(
+          symptom.name,
+          (symptomFrequencyMap.get(symptom.name) ?? 0) + 1,
+        );
+      });
+    });
+
+    const medicationAdherenceMap = new Map<string, { taken: number; missed: number }>();
+    filteredEntries.forEach((entry) => {
+      const detail = dataset.dayLookup.get(entry.date);
+      detail?.medicationDetails.forEach((medication) => {
+        const current =
+          medicationAdherenceMap.get(medication.name) ?? { taken: 0, missed: 0 };
+        if (medication.taken) {
+          current.taken += 1;
+        } else {
+          current.missed += 1;
+        }
+        medicationAdherenceMap.set(medication.name, current);
+      });
+    });
+
+    const correlationMap = new Map<
+      string,
+      { symptom: string; trigger: string; occurrences: number; intensityTotal: number }
+    >();
+
+    filteredEntries.forEach((entry) => {
+      const detail = dataset.dayLookup.get(entry.date);
+      if (!detail) {
+        return;
+      }
+
+      detail.symptomsDetails.forEach((symptom) => {
+        detail.triggerDetails.forEach((trigger, index) => {
+          const key = `${symptom.name}__${trigger.name}`;
+          const baseTrigger = entry.triggers[index];
+          const intensity = baseTrigger?.intensity ??
+            (trigger.impact === "high" ? 9 : trigger.impact === "medium" ? 6 : 3);
+
+          const current =
+            correlationMap.get(key) ?? {
+              symptom: symptom.name,
+              trigger: trigger.name,
+              occurrences: 0,
+              intensityTotal: 0,
+            };
+
+          current.occurrences += 1;
+          current.intensityTotal += intensity;
+          correlationMap.set(key, current);
+        });
+      });
+    });
+
+    const symptomFrequency = Array.from(symptomFrequencyMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+
+    const medicationAdherence = Array.from(medicationAdherenceMap.entries())
+      .sort((a, b) => b[1].taken + b[1].missed - (a[1].taken + a[1].missed))
+      .map(([name, value]) => ({ name, ...value }));
+
+    const correlationInsights = Array.from(correlationMap.values())
+      .sort((a, b) => b.occurrences - a.occurrences)
+      .slice(0, 6)
+      .map((item) => ({
+        symptom: item.symptom,
+        trigger: item.trigger,
+        correlation: Number(
+          (item.intensityTotal / (item.occurrences * 10)).toFixed(2),
+        ),
+        occurrences: item.occurrences,
+      }));
+
+    return {
+      healthTrend,
+      symptomFrequency,
+      medicationAdherence,
+      correlationInsights,
+    };
+  }, [dataset.dayLookup, filteredEntries]);
+
+  const viewConfig = useMemo<CalendarViewConfig>(
+    () => ({
+      viewType,
+      dateRange: navigation.range,
+      filters,
+      displayOptions,
+    }),
+    [displayOptions, filters, navigation.range, viewType],
+  );
+
+  const updateView = (update: Partial<CalendarViewConfig>) => {
+    if (update.viewType && update.viewType !== viewType) {
+      setViewType(update.viewType as CalendarViewType);
+    }
+
+    if (update.displayOptions) {
+      setDisplayOptions((current) => ({
+        ...current,
+        ...update.displayOptions,
+      }));
+    }
+
+    if (update.dateRange) {
+      navigation.setRange(update.dateRange);
+    }
+  };
 
   return {
     viewConfig,
-    entries,
-    events,
-    updateView: setViewConfig,
+    updateView,
+    entries: filteredEntries,
+    events: filteredEvents,
+    metrics,
+    filterOptions: DEFAULT_FILTER_OPTIONS,
+    selectedDate,
+    selectDate: setSelectedDate,
+    selectedDay: selectedDate ? dataset.dayLookup.get(selectedDate) : undefined,
+    dayLookup: dataset.dayLookup,
+    timelineZoom,
+    setTimelineZoom,
+    navigation,
+    eventsByDate,
   };
 };

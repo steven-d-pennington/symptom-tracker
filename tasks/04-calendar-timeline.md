@@ -115,6 +115,8 @@ Create an intuitive calendar and timeline visualization system that helps users 
 ## Progress Notes
 - ✅ Added calendar and timeline type definitions along with foundational components in `src/components/calendar`.
 - ✅ Implemented `useCalendarData` hook with placeholder entries/events to validate rendering paths.
+- ✅ Replaced placeholder calendar data with live daily entry history integration and synchronized timeline events.
+- ✅ Added shared storage utilities so calendar analytics stay in sync with daily log saves across tabs.
 
 ---
 
@@ -341,10 +343,10 @@ Create an intuitive calendar and timeline visualization system that helps users 
 
 *Add detailed notes here during implementation:*
 
-- **Date**: [Date]
-- **Decision**: [What was decided and why]
-- **Impact**: [How it affects other components]
-- **Testing**: [Test results and issues found]
+- **Date**: 2025-10-06
+- **Decision**: Pivoted the calendar data layer to consume persisted daily entry history instead of synthetic samples, and broadcast storage updates for realtime sync.
+- **Impact**: Calendar, timeline, and analytics now mirror actual user logs while reusing the daily entry persistence model.
+- **Testing**: npm run lint
 
 ## Blockers and Issues
 
@@ -361,11 +363,11 @@ Create an intuitive calendar and timeline visualization system that helps users 
 
 *Update this section with daily progress:*
 
-- **Date**: [Date] - **Status**: [Current Status] - **Assigned**: [Your Name]
-- **Completed**: [What was finished]
-- **Next Steps**: [What's planned next]
-- **Hours Spent**: [Time spent today]
-- **Total Hours**: [Cumulative time]
+- **Date**: 2025-10-06 - **Status**: Started - **Assigned**: gpt-5-codex
+  - **Completed**: Linked calendar data to saved daily entries, refreshed analytics metrics, and added shared storage helpers.
+  - **Next Steps**: Implement refined chart interactions and begin export automation once data flows are verified with real logs.
+  - **Hours Spent**: 4
+  - **Total Hours**: 4
 
 ---
 
