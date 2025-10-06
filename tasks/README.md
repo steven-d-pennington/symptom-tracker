@@ -63,7 +63,7 @@ This document serves as the central hub for tracking all Phase 1 development tas
 | Task | Status | Assigned To | Priority | Est. Hours | Dependencies |
 |------|--------|-------------|----------|------------|--------------|
 | [Task 5: Data Storage](./05-data-storage.md) | Complete | gpt-5-codex | Critical | 32 | Tasks 1-4 |
-| [Task 6: PWA Infrastructure](./06-pwa-infrastructure.md) | Not Started | Unassigned | Critical | 20 | Tasks 1-4 |
+| [Task 6: PWA Infrastructure](./06-pwa-infrastructure.md) | Complete | gpt-5-codex | Critical | 20 | Tasks 1-4 |
 
 ## Development Workflow
 
