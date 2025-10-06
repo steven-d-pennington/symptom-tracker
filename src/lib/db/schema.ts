@@ -142,3 +142,36 @@ export interface BodyMapLocationRecord {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface PhotoAttachmentRecord {
+  id: string;
+  userId: string;
+  dailyEntryId?: string;
+  symptomId?: string;
+  bodyRegionId?: string;
+  fileName: string;
+  originalFileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  encryptedData: Blob;
+  thumbnailData: Blob;
+  encryptionIV: string;
+  capturedAt: Date;
+  tags: string;
+  notes?: string;
+  metadata?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PhotoComparisonRecord {
+  id: string;
+  userId: string;
+  beforePhotoId: string;
+  afterPhotoId: string;
+  title: string;
+  notes?: string;
+  createdAt: Date;
+}
