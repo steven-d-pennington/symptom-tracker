@@ -129,7 +129,7 @@ export const CalendarControls = ({
           { label: "Symptoms", key: "showSymptoms" },
           { label: "Medications", key: "showMedications" },
           { label: "Triggers", key: "showTriggers" },
-        ] as Array<{ label: string; key: keyof DisplayOptions }>).map((toggle) => (
+        ] as Array<{ label: string; key: "showHealthScore" | "showSymptoms" | "showMedications" | "showTriggers" }>).map((toggle) => (
           <label key={toggle.key} className="flex items-center gap-1">
             <input
               type="checkbox"

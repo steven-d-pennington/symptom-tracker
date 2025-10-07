@@ -126,3 +126,69 @@ export interface AttachmentRecord {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface BodyMapLocationRecord {
+  id: string;
+  userId: string;
+  dailyEntryId?: string;
+  symptomId: string;
+  bodyRegionId: string;
+  coordinates?: {
+    x: number;
+    y: number;
+  };
+  severity: number;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PhotoAttachmentRecord {
+  id: string;
+  userId: string;
+  dailyEntryId?: string;
+  symptomId?: string;
+  bodyRegionId?: string;
+  fileName: string;
+  originalFileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  encryptedData: Blob;
+  thumbnailData: Blob;
+  encryptionIV: string;
+  capturedAt: Date;
+  tags: string;
+  notes?: string;
+  metadata?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PhotoComparisonRecord {
+  id: string;
+  userId: string;
+  beforePhotoId: string;
+  afterPhotoId: string;
+  title: string;
+  notes?: string;
+  createdAt: Date;
+}
+
+export interface FlareRecord {
+  id: string;
+  userId: string;
+  symptomId: string;
+  symptomName: string;
+  startDate: Date;
+  endDate?: Date;
+  severity: number;
+  bodyRegions: string[];
+  status: "active" | "improving" | "worsening" | "resolved";
+  interventions: string; // JSON stringified
+  notes: string;
+  photoIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
