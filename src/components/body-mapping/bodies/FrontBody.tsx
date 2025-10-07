@@ -10,6 +10,7 @@ interface FrontBodyProps {
   onRegionClick?: (regionId: string) => void;
   onRegionHover?: (regionId: string | null) => void;
   severityByRegion?: Record<string, number>;
+  flareRegions?: string[];
 }
 
 export function FrontBody({
@@ -18,6 +19,7 @@ export function FrontBody({
   onRegionClick,
   onRegionHover,
   severityByRegion = {},
+  flareRegions = [],
 }: FrontBodyProps) {
   const getSeverityColor = (severity: number): string => {
     if (severity <= 2) return "#10b981"; // green
@@ -28,7 +30,16 @@ export function FrontBody({
   };
 
   const getRegionFill = (region: BodyRegion): string => {
+    const isFlare = flareRegions.includes(region.id);
     const severity = severityByRegion[region.id];
+
+    // Flares get special red coloring regardless of severity
+    if (isFlare) {
+      if (severity <= 4) return "#fca5a5"; // light red
+      if (severity <= 7) return "#ef4444"; // red
+      return "#991b1b"; // dark red
+    }
+
     if (severity) return getSeverityColor(severity);
     if (selectedRegions.includes(region.id)) return "#3b82f6";
     if (highlightedRegion === region.id) return "#60a5fa";
@@ -36,11 +47,21 @@ export function FrontBody({
   };
 
   const getRegionOpacity = (region: BodyRegion): number => {
+    const isFlare = flareRegions.includes(region.id);
     const severity = severityByRegion[region.id];
+
+    // Flares are more opaque and prominent
+    if (isFlare) return 0.9;
+
     if (severity) return 0.8;
     if (selectedRegions.includes(region.id)) return 0.6;
     if (highlightedRegion === region.id) return 0.5;
     return 0.3;
+  };
+
+  const getRegionClassName = (region: BodyRegion): string => {
+    const isFlare = flareRegions.includes(region.id);
+    return isFlare ? "flare-pulse" : "";
   };
 
   return (
@@ -61,6 +82,21 @@ export function FrontBody({
             opacity: 0.8 !important;
             stroke-width: 3;
           }
+          @keyframes flare-pulse {
+            0%, 100% {
+              opacity: 0.9;
+              filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.8));
+            }
+            50% {
+              opacity: 1;
+              filter: drop-shadow(0 0 8px rgba(239, 68, 68, 1));
+            }
+          }
+          .flare-pulse {
+            animation: flare-pulse 2s ease-in-out infinite;
+            stroke: #dc2626;
+            stroke-width: 3;
+          }
         `}</style>
       </defs>
 
@@ -71,7 +107,7 @@ export function FrontBody({
         cy="60"
         rx="50"
         ry="60"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS[0])}`}
         fill={getRegionFill(FRONT_BODY_REGIONS[0])}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS[0])}
         onClick={() => onRegionClick?.("head-front")}
@@ -86,7 +122,7 @@ export function FrontBody({
         y="110"
         width="50"
         height="40"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS[1])}`}
         fill={getRegionFill(FRONT_BODY_REGIONS[1])}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS[1])}
         onClick={() => onRegionClick?.("neck-front")}
@@ -101,7 +137,7 @@ export function FrontBody({
         cy="170"
         rx="45"
         ry="35"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}
         onClick={() => onRegionClick?.("shoulder-left")}
@@ -116,7 +152,7 @@ export function FrontBody({
         cy="170"
         rx="45"
         ry="35"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-right")!)}
         onClick={() => onRegionClick?.("shoulder-right")}
@@ -131,7 +167,7 @@ export function FrontBody({
         cy="195"
         rx="20"
         ry="25"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-left")!)}
         onClick={() => onRegionClick?.("armpit-left")}
@@ -146,7 +182,7 @@ export function FrontBody({
         cy="195"
         rx="20"
         ry="25"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-right")!)}
         onClick={() => onRegionClick?.("armpit-right")}
@@ -162,7 +198,7 @@ export function FrontBody({
         stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
         strokeWidth="60"
         strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}`}
         onClick={() => onRegionClick?.("chest-left")}
         onMouseEnter={() => onRegionHover?.("chest-left")}
         onMouseLeave={() => onRegionHover?.(null)}
@@ -176,7 +212,7 @@ export function FrontBody({
         stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
         strokeWidth="60"
         strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}`}
         onClick={() => onRegionClick?.("chest-right")}
         onMouseEnter={() => onRegionHover?.("chest-right")}
         onMouseLeave={() => onRegionHover?.(null)}
@@ -189,7 +225,7 @@ export function FrontBody({
         cy="250"
         rx="30"
         ry="15"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "under-breast-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "under-breast-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "under-breast-left")!)}
         onClick={() => onRegionClick?.("under-breast-left")}
@@ -204,7 +240,7 @@ export function FrontBody({
         cy="250"
         rx="30"
         ry="15"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "under-breast-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "under-breast-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "under-breast-right")!)}
         onClick={() => onRegionClick?.("under-breast-right")}
@@ -220,7 +256,7 @@ export function FrontBody({
         width="70"
         height="60"
         rx="10"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-upper")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-upper")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-upper")!)}
         onClick={() => onRegionClick?.("abdomen-upper")}
@@ -236,7 +272,7 @@ export function FrontBody({
         width="70"
         height="60"
         rx="10"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-lower")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-lower")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-lower")!)}
         onClick={() => onRegionClick?.("abdomen-lower")}
@@ -252,7 +288,7 @@ export function FrontBody({
         stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}
         strokeWidth="30"
         strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}`}
         onClick={() => onRegionClick?.("groin")}
         onMouseEnter={() => onRegionHover?.("groin")}
         onMouseLeave={() => onRegionHover?.(null)}
@@ -266,7 +302,7 @@ export function FrontBody({
         width="40"
         height="120"
         rx="20"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}
         onClick={() => onRegionClick?.("upper-arm-left")}
@@ -282,7 +318,7 @@ export function FrontBody({
         width="40"
         height="120"
         rx="20"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}
         onClick={() => onRegionClick?.("upper-arm-right")}
@@ -297,7 +333,7 @@ export function FrontBody({
         cy="325"
         rx="25"
         ry="20"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-left")!)}
         onClick={() => onRegionClick?.("elbow-left")}
@@ -312,7 +348,7 @@ export function FrontBody({
         cy="325"
         rx="25"
         ry="20"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-right")!)}
         onClick={() => onRegionClick?.("elbow-right")}
@@ -328,7 +364,7 @@ export function FrontBody({
         width="35"
         height="110"
         rx="17"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "forearm-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "forearm-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "forearm-left")!)}
         onClick={() => onRegionClick?.("forearm-left")}
@@ -344,7 +380,7 @@ export function FrontBody({
         width="35"
         height="110"
         rx="17"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "forearm-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "forearm-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "forearm-right")!)}
         onClick={() => onRegionClick?.("forearm-right")}
@@ -359,7 +395,7 @@ export function FrontBody({
         cy="465"
         rx="18"
         ry="15"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-left")!)}
         onClick={() => onRegionClick?.("wrist-left")}
@@ -374,7 +410,7 @@ export function FrontBody({
         cy="465"
         rx="18"
         ry="15"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-right")!)}
         onClick={() => onRegionClick?.("wrist-right")}
@@ -389,7 +425,7 @@ export function FrontBody({
         cy="495"
         rx="20"
         ry="25"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hand-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "hand-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "hand-left")!)}
         onClick={() => onRegionClick?.("hand-left")}
@@ -404,7 +440,7 @@ export function FrontBody({
         cy="495"
         rx="20"
         ry="25"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hand-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "hand-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "hand-right")!)}
         onClick={() => onRegionClick?.("hand-right")}
@@ -419,7 +455,7 @@ export function FrontBody({
         cy="400"
         rx="30"
         ry="25"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hip-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "hip-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "hip-left")!)}
         onClick={() => onRegionClick?.("hip-left")}
@@ -434,7 +470,7 @@ export function FrontBody({
         cy="400"
         rx="30"
         ry="25"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hip-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "hip-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "hip-right")!)}
         onClick={() => onRegionClick?.("hip-right")}
@@ -450,7 +486,7 @@ export function FrontBody({
         width="45"
         height="130"
         rx="22"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "thigh-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "thigh-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "thigh-left")!)}
         onClick={() => onRegionClick?.("thigh-left")}
@@ -466,7 +502,7 @@ export function FrontBody({
         width="45"
         height="130"
         rx="22"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "thigh-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "thigh-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "thigh-right")!)}
         onClick={() => onRegionClick?.("thigh-right")}
@@ -481,7 +517,7 @@ export function FrontBody({
         cy="490"
         rx="15"
         ry="50"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "inner-thigh-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "inner-thigh-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "inner-thigh-left")!)}
         onClick={() => onRegionClick?.("inner-thigh-left")}
@@ -496,7 +532,7 @@ export function FrontBody({
         cy="490"
         rx="15"
         ry="50"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "inner-thigh-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "inner-thigh-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "inner-thigh-right")!)}
         onClick={() => onRegionClick?.("inner-thigh-right")}
@@ -511,7 +547,7 @@ export function FrontBody({
         cy="565"
         rx="28"
         ry="25"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "knee-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "knee-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "knee-left")!)}
         onClick={() => onRegionClick?.("knee-left")}
@@ -526,7 +562,7 @@ export function FrontBody({
         cy="565"
         rx="28"
         ry="25"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "knee-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "knee-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "knee-right")!)}
         onClick={() => onRegionClick?.("knee-right")}
@@ -542,7 +578,7 @@ export function FrontBody({
         width="38"
         height="120"
         rx="19"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "calf-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "calf-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "calf-left")!)}
         onClick={() => onRegionClick?.("calf-left")}
@@ -558,7 +594,7 @@ export function FrontBody({
         width="38"
         height="120"
         rx="19"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "calf-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "calf-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "calf-right")!)}
         onClick={() => onRegionClick?.("calf-right")}
@@ -573,7 +609,7 @@ export function FrontBody({
         cy="720"
         rx="20"
         ry="15"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "ankle-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "ankle-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "ankle-left")!)}
         onClick={() => onRegionClick?.("ankle-left")}
@@ -588,7 +624,7 @@ export function FrontBody({
         cy="720"
         rx="20"
         ry="15"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "ankle-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "ankle-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "ankle-right")!)}
         onClick={() => onRegionClick?.("ankle-right")}
@@ -603,7 +639,7 @@ export function FrontBody({
         cy="755"
         rx="22"
         ry="30"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "foot-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "foot-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "foot-left")!)}
         onClick={() => onRegionClick?.("foot-left")}
@@ -618,7 +654,7 @@ export function FrontBody({
         cy="755"
         rx="22"
         ry="30"
-        className="body-region"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "foot-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "foot-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "foot-right")!)}
         onClick={() => onRegionClick?.("foot-right")}

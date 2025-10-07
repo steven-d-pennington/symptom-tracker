@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { ActiveFlare } from "@/lib/types/flare";
 import { flareRepository } from "@/lib/repositories/flareRepository";
+import { Map } from "lucide-react";
 
 interface FlareCardProps {
   flare: ActiveFlare;
@@ -66,27 +68,41 @@ export function FlareCard({ flare, onUpdate }: FlareCardProps) {
         <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{flare.notes}</p>
       )}
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => handleStatusChange("improving")}
-          disabled={flare.status === "improving"}
-          className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-green-500/10 disabled:opacity-50"
-        >
-          Improving
-        </button>
-        <button
-          onClick={() => handleStatusChange("worsening")}
-          disabled={flare.status === "worsening"}
-          className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-red-500/10 disabled:opacity-50"
-        >
-          Worsening
-        </button>
-        <button
-          onClick={() => handleStatusChange("resolved")}
-          className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-500/10"
-        >
-          Resolve
-        </button>
+      <div className="space-y-2">
+        {/* Status Quick Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleStatusChange("improving")}
+            disabled={flare.status === "improving"}
+            className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-green-500/10 disabled:opacity-50"
+          >
+            Improving
+          </button>
+          <button
+            onClick={() => handleStatusChange("worsening")}
+            disabled={flare.status === "worsening"}
+            className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-red-500/10 disabled:opacity-50"
+          >
+            Worsening
+          </button>
+          <button
+            onClick={() => handleStatusChange("resolved")}
+            className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-500/10"
+          >
+            Resolve
+          </button>
+        </div>
+
+        {/* View on Body Map */}
+        {flare.bodyRegions.length > 0 && (
+          <Link
+            href={`/body-map?flareId=${flare.id}`}
+            className="flex items-center justify-center gap-2 w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            <Map className="w-3.5 h-3.5" />
+            View on Body Map
+          </Link>
+        )}
       </div>
     </div>
   );

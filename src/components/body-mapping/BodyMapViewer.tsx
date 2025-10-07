@@ -14,6 +14,7 @@ interface BodyMapViewerProps {
   onSymptomClick?: (locationId: string) => void;
   readOnly?: boolean;
   multiSelect?: boolean;
+  flareSeverityByRegion?: Record<string, number>;
 }
 
 export function BodyMapViewer({
@@ -25,6 +26,7 @@ export function BodyMapViewer({
   onSymptomClick: _onSymptomClick,
   readOnly = false,
   multiSelect = false,
+  flareSeverityByRegion = {},
 }: BodyMapViewerProps) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -33,7 +35,8 @@ export function BodyMapViewer({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Calculate severity by region for visualization
-  const severityByRegion = symptoms.reduce(
+  // Merge symptom severity and flare severity (flares take priority with red coloring)
+  const symptomSeverityByRegion = symptoms.reduce(
     (acc, symptom) => {
       if (!acc[symptom.bodyRegionId] || symptom.severity > acc[symptom.bodyRegionId]) {
         acc[symptom.bodyRegionId] = symptom.severity;
@@ -42,6 +45,9 @@ export function BodyMapViewer({
     },
     {} as Record<string, number>
   );
+
+  // Combine both severity sources - flares will be shown with special styling
+  const combinedSeverityByRegion = { ...symptomSeverityByRegion, ...flareSeverityByRegion };
 
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev + 0.25, 3));
@@ -133,7 +139,8 @@ export function BodyMapViewer({
             selectedRegions={selectedRegion ? [selectedRegion] : []}
             onRegionSelect={onRegionSelect}
             multiSelect={multiSelect}
-            severityByRegion={severityByRegion}
+            severityByRegion={combinedSeverityByRegion}
+            flareRegions={Object.keys(flareSeverityByRegion)}
           />
         </div>
       </div>

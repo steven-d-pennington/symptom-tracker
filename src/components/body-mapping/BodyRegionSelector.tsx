@@ -11,6 +11,7 @@ interface BodyRegionSelectorProps {
   onRegionSelect: (regionId: string) => void;
   multiSelect?: boolean;
   severityByRegion?: Record<string, number>;
+  flareRegions?: string[];
 }
 
 export function BodyRegionSelector({
@@ -19,6 +20,7 @@ export function BodyRegionSelector({
   onRegionSelect,
   multiSelect = false,
   severityByRegion = {},
+  flareRegions = [],
 }: BodyRegionSelectorProps) {
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -55,6 +57,7 @@ export function BodyRegionSelector({
             onRegionClick={handleRegionClick}
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
+            flareRegions={flareRegions}
           />
         )}
         {view === "back" && (
@@ -64,6 +67,7 @@ export function BodyRegionSelector({
             onRegionClick={handleRegionClick}
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
+            flareRegions={flareRegions}
           />
         )}
         {(view === "left" || view === "right") && (
@@ -73,6 +77,7 @@ export function BodyRegionSelector({
             onRegionClick={handleRegionClick}
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
+            flareRegions={flareRegions}
           />
         )}
       </div>

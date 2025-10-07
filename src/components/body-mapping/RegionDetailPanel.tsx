@@ -1,22 +1,28 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { BodyMapLocation } from "@/lib/types/body-mapping";
 import { BodyRegion } from "@/lib/types/body-mapping";
-import { Calendar, TrendingUp, AlertCircle } from "lucide-react";
+import { ActiveFlare } from "@/lib/types/flare";
+import { Calendar, TrendingUp, AlertCircle, Flame } from "lucide-react";
 
 interface RegionDetailPanelProps {
   region: BodyRegion | null;
   symptoms: BodyMapLocation[];
+  flares?: ActiveFlare[];
   onClose: () => void;
   onAddSymptom?: () => void;
+  onTrackAsFlare?: (regionId: string) => void;
 }
 
 export function RegionDetailPanel({
   region,
   symptoms,
+  flares = [],
   onClose,
   onAddSymptom,
+  onTrackAsFlare,
 }: RegionDetailPanelProps) {
   if (!region) return null;
 
@@ -97,6 +103,54 @@ export function RegionDetailPanel({
         </div>
       )}
 
+      {/* Active Flares */}
+      {flares.length > 0 && (
+        <div className="mb-6">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            <Flame className="w-4 h-4 text-red-600" />
+            Active Flares ({flares.length})
+          </h4>
+          <div className="space-y-2">
+            {flares.map((flare) => (
+              <div
+                key={flare.id}
+                className="bg-red-50 rounded-lg p-3 border border-red-200"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-semibold text-red-900">
+                    {flare.symptomName}
+                  </span>
+                  <span className="text-xs px-2 py-0.5 bg-red-100 text-red-800 rounded font-medium">
+                    {flare.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-red-700">
+                  <span>Severity: {flare.severity}/10</span>
+                  <span>
+                    {Math.floor(
+                      (new Date().getTime() - new Date(flare.startDate).getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )}{" "}
+                    days active
+                  </span>
+                </div>
+                {flare.notes && (
+                  <p className="text-xs text-red-600 mt-1 line-clamp-2">
+                    {flare.notes}
+                  </p>
+                )}
+                <Link
+                  href="/flares"
+                  className="mt-2 inline-block text-xs text-red-700 hover:text-red-900 font-medium"
+                >
+                  View in Flare Dashboard →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recent Symptoms */}
       <div className="mb-6">
         <h4 className="text-sm font-semibold text-gray-700 mb-2">
@@ -132,15 +186,26 @@ export function RegionDetailPanel({
         )}
       </div>
 
-      {/* Add Symptom Button */}
-      {onAddSymptom && (
-        <button
-          onClick={onAddSymptom}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          Add Symptom to This Region
-        </button>
-      )}
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        {onAddSymptom && (
+          <button
+            onClick={onAddSymptom}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Add Symptom to This Region
+          </button>
+        )}
+        {onTrackAsFlare && (
+          <button
+            onClick={() => onTrackAsFlare(region.id)}
+            className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <AlertCircle className="w-4 h-4" />
+            Track as Active Flare
+          </button>
+        )}
+      </div>
     </div>
   );
 }
