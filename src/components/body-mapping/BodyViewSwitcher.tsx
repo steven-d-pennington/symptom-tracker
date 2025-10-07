@@ -1,0 +1,75 @@
+"use client";
+
+import React from "react";
+import { User, UserSquare } from "lucide-react";
+
+interface BodyViewSwitcherProps {
+  currentView: "front" | "back" | "left" | "right";
+  onViewChange: (view: "front" | "back" | "left" | "right") => void;
+}
+
+export function BodyViewSwitcher({
+  currentView,
+  onViewChange,
+}: BodyViewSwitcherProps) {
+  const views = [
+    { id: "front" as const, label: "Front", icon: User, key: "F" },
+    { id: "back" as const, label: "Back", icon: UserSquare, key: "B" },
+    { id: "left" as const, label: "Left", icon: User, key: "L" },
+    { id: "right" as const, label: "Right", icon: User, key: "R" },
+  ];
+
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) return; // Ignore if modifier keys are pressed
+
+      switch (e.key.toLowerCase()) {
+        case "f":
+          onViewChange("front");
+          break;
+        case "b":
+          onViewChange("back");
+          break;
+        case "l":
+          onViewChange("left");
+          break;
+        case "r":
+          onViewChange("right");
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [onViewChange]);
+
+  return (
+    <div className="flex gap-2">
+      {views.map((view) => {
+        const Icon = view.icon;
+        const isActive = currentView === view.id;
+
+        return (
+          <button
+            key={view.id}
+            onClick={() => onViewChange(view.id)}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+              ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+              }
+            `}
+            aria-label={`Switch to ${view.label} view`}
+            aria-pressed={isActive}
+          >
+            <Icon className="w-4 h-4" />
+            <span>{view.label}</span>
+            <span className="text-xs opacity-70">({view.key})</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
