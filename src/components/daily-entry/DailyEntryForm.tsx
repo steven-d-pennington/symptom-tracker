@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { DailyEntry, DailyEntryTemplate } from "@/lib/types/daily-entry";
-import { SYMPTOM_OPTIONS, TRIGGER_OPTIONS, MedicationOption } from "@/lib/data/daily-entry-presets";
+import { MedicationOption, SymptomOption, TriggerOption } from "@/lib/data/daily-entry-presets";
 import { HealthSection } from "./EntrySections/HealthSection";
 import { SymptomSection } from "./EntrySections/SymptomSection";
 import { MedicationSection } from "./EntrySections/MedicationSection";
@@ -12,6 +12,9 @@ import { QuickEntry } from "./QuickEntry";
 import { SmartSuggestions } from "../daily-entry/SmartSuggestions";
 import { Suggestion } from "./hooks/useSmartSuggestions";
 import { DailyMedication, DailySymptom, DailyTrigger } from "@/lib/types/daily-entry";
+import { symptomRepository } from "@/lib/repositories/symptomRepository";
+import { triggerRepository } from "@/lib/repositories/triggerRepository";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 interface DailyEntryFormProps {
   entry: DailyEntry;
@@ -59,7 +62,45 @@ export const DailyEntryForm = ({
   recentSymptomIds,
   medicationSchedule,
 }: DailyEntryFormProps) => {
+  const { userId } = useCurrentUser();
   const [mode, setMode] = useState<"full" | "quick">("full");
+  const [symptomOptions, setSymptomOptions] = useState<SymptomOption[]>([]);
+  const [triggerOptions, setTriggerOptions] = useState<TriggerOption[]>([]);
+
+  // Load symptoms and triggers from database
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadData = async () => {
+      try {
+        // Load symptoms (only enabled ones)
+        const symptoms = await symptomRepository.getAll(userId);
+        const enabledSymptoms = symptoms.filter(s => s.isActive && s.isEnabled);
+        setSymptomOptions(
+          enabledSymptoms.map(s => ({
+            id: s.id,
+            label: s.name,
+            category: s.category,
+          }))
+        );
+
+        // Load triggers (only enabled ones)
+        const triggers = await triggerRepository.getAll(userId);
+        const enabledTriggers = triggers.filter(t => t.isActive && t.isEnabled);
+        setTriggerOptions(
+          enabledTriggers.map(t => ({
+            id: t.id,
+            label: t.name,
+            category: t.category,
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to load symptoms/triggers:", error);
+      }
+    };
+
+    loadData();
+  }, [userId]);
 
   const orderedSections = useMemo(
     () =>
@@ -153,7 +194,7 @@ export const DailyEntryForm = ({
                 <SymptomSection
                   key="symptoms"
                   symptoms={entry.symptoms}
-                  availableSymptoms={SYMPTOM_OPTIONS}
+                  availableSymptoms={symptomOptions}
                   recentSymptomIds={recentSymptomIds}
                   onAddSymptom={(symptomId) => upsertSymptom(symptomId)}
                   onUpdateSymptom={(symptomId, changes) => upsertSymptom(symptomId, changes)}
@@ -179,7 +220,7 @@ export const DailyEntryForm = ({
                 <TriggerSection
                   key="triggers"
                   triggers={entry.triggers}
-                  availableTriggers={TRIGGER_OPTIONS}
+                  availableTriggers={triggerOptions}
                   onAddTrigger={(triggerId) => upsertTrigger(triggerId)}
                   onUpdateTrigger={(triggerId, changes) => upsertTrigger(triggerId, changes)}
                   onRemoveTrigger={removeTrigger}

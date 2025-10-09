@@ -71,6 +71,8 @@ export interface SymptomRecord {
   commonTriggers?: string[];
   severityScale: SeverityScaleRecord;
   isActive: boolean;
+  isDefault: boolean; // True for preset symptoms, false for custom
+  isEnabled: boolean; // For toggling default symptoms visibility
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,6 +119,8 @@ export interface TriggerRecord {
   category: string;
   description?: string;
   isActive: boolean;
+  isDefault: boolean; // True for preset triggers, false for custom
+  isEnabled: boolean; // For toggling default triggers visibility
   createdAt: Date;
   updatedAt: Date;
 }
