@@ -17,6 +17,17 @@ const DailyLogPage = () => {
   const activeTemplate = useMemo(() => templateState.activeTemplate, [templateState.activeTemplate]);
   const { suggestions } = useSmartSuggestions(dailyEntry.entry, dailyEntry.history);
 
+  // Convert medications to the format needed by MedicationSection
+  const medicationSchedule = useMemo(() =>
+    dailyEntry.medications.map(med => ({
+      id: med.id,
+      name: med.name,
+      dosage: med.dosage || '',
+      schedule: med.frequency,
+    })),
+    [dailyEntry.medications]
+  );
+
   // Show loading state while user data is being loaded
   if (userLoading || !activeTemplate) {
     return (
@@ -52,6 +63,7 @@ const DailyLogPage = () => {
           queueLength={dailyEntry.queue.length}
           onSyncQueue={dailyEntry.syncQueuedEntries}
           recentSymptomIds={dailyEntry.recentSymptoms}
+          medicationSchedule={medicationSchedule}
         />
       </section>
       <aside className="w-full max-w-sm space-y-6">

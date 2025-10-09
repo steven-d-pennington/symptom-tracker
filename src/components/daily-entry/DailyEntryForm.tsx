@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { DailyEntry, DailyEntryTemplate } from "@/lib/types/daily-entry";
-import { SYMPTOM_OPTIONS, MEDICATION_OPTIONS, TRIGGER_OPTIONS } from "@/lib/data/daily-entry-presets";
+import { SYMPTOM_OPTIONS, TRIGGER_OPTIONS, MedicationOption } from "@/lib/data/daily-entry-presets";
 import { HealthSection } from "./EntrySections/HealthSection";
 import { SymptomSection } from "./EntrySections/SymptomSection";
 import { MedicationSection } from "./EntrySections/MedicationSection";
@@ -31,6 +31,7 @@ interface DailyEntryFormProps {
   queueLength: number;
   onSyncQueue: () => Promise<void> | void;
   recentSymptomIds: string[];
+  medicationSchedule: MedicationOption[];
 }
 
 const formatLastSaved = (date: Date | null) => {
@@ -56,6 +57,7 @@ export const DailyEntryForm = ({
   queueLength,
   onSyncQueue,
   recentSymptomIds,
+  medicationSchedule,
 }: DailyEntryFormProps) => {
   const [mode, setMode] = useState<"full" | "quick">("full");
 
@@ -165,7 +167,7 @@ export const DailyEntryForm = ({
                 <MedicationSection
                   key="medications"
                   medications={entry.medications}
-                  schedule={MEDICATION_OPTIONS}
+                  schedule={medicationSchedule}
                   onToggleTaken={toggleMedicationTaken}
                   onUpdateMedication={updateMedication}
                 />

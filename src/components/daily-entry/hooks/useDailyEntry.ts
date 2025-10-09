@@ -8,13 +8,14 @@ import {
   DailyTrigger,
 } from "@/lib/types/daily-entry";
 import {
-  MEDICATION_OPTIONS,
   SYMPTOM_OPTIONS,
 } from "@/lib/data/daily-entry-presets";
 import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
+import { medicationRepository } from "@/lib/repositories/medicationRepository";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { MedicationRecord } from "@/lib/db/schema";
 
-const createInitialEntry = (userId: string): DailyEntry => ({
+const createInitialEntry = (userId: string, medications: MedicationRecord[] = []): DailyEntry => ({
   id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
   userId,
   date: new Date().toISOString().slice(0, 10),
@@ -23,7 +24,7 @@ const createInitialEntry = (userId: string): DailyEntry => ({
   sleepQuality: 5,
   stressLevel: 5,
   symptoms: [],
-  medications: MEDICATION_OPTIONS.map((medication) => ({
+  medications: medications.map((medication) => ({
     medicationId: medication.id,
     taken: false,
     dosage: medication.dosage,
@@ -51,7 +52,8 @@ const defaultTouchedState: TouchedSections = {
 
 export const useDailyEntry = () => {
   const { userId } = useCurrentUser();
-  const [entry, setEntry] = useState<DailyEntry>(() => createInitialEntry(userId || ""));
+  const [medications, setMedications] = useState<MedicationRecord[]>([]);
+  const [entry, setEntry] = useState<DailyEntry>(() => createInitialEntry(userId || "", []));
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [touchedSections, setTouchedSections] = useState<TouchedSections>(
@@ -75,6 +77,21 @@ export const useDailyEntry = () => {
 
     return () => window.clearInterval(interval);
   }, []);
+
+  // Load medications from IndexedDB on mount
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadMedications = async () => {
+      const meds = await medicationRepository.getActive(userId);
+      setMedications(meds);
+
+      // Reset entry with loaded medications
+      setEntry(createInitialEntry(userId, meds));
+    };
+
+    loadMedications().catch(console.error);
+  }, [userId]);
 
   // Load history from IndexedDB on mount
   useEffect(() => {
@@ -120,9 +137,9 @@ export const useDailyEntry = () => {
 
   const resetEntry = useCallback(() => {
     startTimeRef.current = Date.now();
-    setEntry(createInitialEntry());
+    setEntry(createInitialEntry(userId || "", medications));
     setTouchedSections(defaultTouchedState);
-  }, []);
+  }, [userId, medications]);
 
   const markSectionTouched = useCallback((section: keyof TouchedSections) => {
     setTouchedSections((prev) => ({ ...prev, [section]: true }));
@@ -422,5 +439,6 @@ export const useDailyEntry = () => {
     queue,
     syncQueuedEntries,
     recentSymptoms,
+    medications,
   };
 };

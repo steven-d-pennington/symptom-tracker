@@ -1,4 +1,4 @@
-export type CalendarViewType = "month" | "week" | "day" | "timeline";
+export type CalendarViewType = "year" | "month" | "week" | "day" | "timeline";
 
 export interface CalendarEntry {
   date: string;

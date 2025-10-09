@@ -29,7 +29,7 @@ export async function populateDevDemoData(
     throw new Error("populateDevDemoData can only run in the browser");
   }
 
-  const months = options.months ?? 12;
+  const months = 48 ?? 12;
   const userId = options.userId;
 
   const now = new Date();

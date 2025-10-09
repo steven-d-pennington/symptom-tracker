@@ -1,27 +1,31 @@
 # symptom-tracker - Epic Breakdown
 
 **Author:** BMad User
-**Date:** 2025-10-07
+**Date:** 2025-10-07 (Updated: 2025-10-08)
 **Project Level:** Level 3 (Full Product)
-**Target Scale:** Phase 3 Intelligence Layer - 18-25 stories across 3 epics
+**Target Scale:** Phase 3 Intelligence Layer + Phase 4 Customization - 23-30 stories across 4 epics
 
 ---
 
 ## Epic Overview
 
-Phase 3 introduces the Intelligence Layer through three strategic epics that transform the Pocket Symptom Tracker from a data collection tool into a decision support system. These epics build sequentially: **Epic 1 (Data Analysis)** creates the analytical foundation, **Epic 2 (Search & Filtering)** enables data discovery, and **Epic 3 (Report Generation)** facilitates clinical communication.
+**Phase 3** introduces the Intelligence Layer through three strategic epics that transform the Pocket Symptom Tracker from a data collection tool into a decision support system. These epics build sequentially: **Epic 1 (Data Analysis)** creates the analytical foundation, **Epic 2 (Search & Filtering)** enables data discovery, and **Epic 3 (Report Generation)** facilitates clinical communication.
+
+**Phase 4** introduces the Data Customization & Management system, enabling users to personalize their tracking experience with custom medications, symptoms, and triggers while maintaining curated defaults.
 
 **Epic Summary:**
 - **Epic 1: Data Analysis & Insights Engine** - 11-13 stories - Local analytics for pattern discovery and predictions
   - Note: Story 1.1 split into 5 sub-stories (1.1a-1.1e) for proper sizing
 - **Epic 2: Advanced Search & Filtering** - 6-8 stories - Instant search across all health data
 - **Epic 3: Professional Report Generation** - 5-8 stories - Medical-grade reports for consultations
+- **Epic 4: Data Customization & Management** - 1 story (2 phases) - User-managed medications, symptoms, and triggers
 
-**Total Story Count:** 22-29 stories
+**Total Story Count:** 23-30 stories
 - Epic 1: 11-13 stories (Story 1.1 split into 1.1a-1.1e adds 4 stories)
 - Epic 2: 6-8 stories (unchanged)
 - Epic 3: 5-8 stories (unchanged)
-**Implementation Timeline:** Sequential (Epic 1 → Epic 2 → Epic 3)
+- Epic 4: 1 story (2 implementation phases)
+**Implementation Timeline:** Sequential (Epic 1 → Epic 2 → Epic 3), Epic 4 can run parallel to Epic 3 or after Phase 3
 
 ---
 
@@ -847,6 +851,60 @@ Phase 3 introduces the Intelligence Layer through three strategic epics that tra
 - Create `QualityCheck` component showing validation results
 - Add "Fix issues" quick actions for common problems
 - Implement warning system with severity levels (info/warning/error)
+
+---
+
+# Epic 4: Data Customization & Management
+
+**Goal:** Enable users to fully customize their tracking experience by managing medications, symptoms, and triggers with both curated defaults and custom entries.
+
+**Value Proposition:** Users can track exactly what matters to their unique condition without being limited to predefined options, while still benefiting from thoughtfully curated defaults that cover common scenarios.
+
+**Prerequisites:**
+- Phase 1 & 2 data collection fully operational
+- Existing repositories (medication, symptom, trigger) implemented
+- Daily entry system integrated with repositories
+
+**Dependencies:**
+- Existing Dexie database and repositories
+- Daily entry form components
+- Navigation system from Phase 2
+
+---
+
+## Story 4.1: Data Customization & Management System
+
+**As a** user tracking my health data,
+**I want to** manage my medications, symptoms, and triggers with both default presets and custom items,
+**So that** I can track exactly what matters to my condition without being limited to predefined options.
+
+**Acceptance Criteria (Phase 1 - Medication Management MVP):**
+1. Navigation: Users can access medication management from `/manage` route
+2. List View: Displays all medications (active and inactive) in organized list
+3. Add Medication: Modal form with name, dosage, frequency, schedule, notes, active toggle
+4. Edit Medication: Inline editing or modal for existing medications
+5. Deactivate/Activate: Soft delete via active toggle (preserves historical data)
+6. Hard Delete: Permanently remove with confirmation warning
+7. Validation: Prevents duplicate medication names, requires name field
+8. Daily Entry Integration: Medications appear in /log page medications section
+9. Empty State: Helpful message when no medications exist with "Add your first medication" CTA
+
+**Acceptance Criteria (Phase 2 - Extended Management):**
+10. Symptom Management: View all symptoms (default presets + custom)
+11. Trigger Management: View all triggers (default presets + custom)
+12. Default Preset System: Clearly labeled default vs. custom items, cannot delete defaults only disable
+13. Search & Filter: Search medications/symptoms/triggers by name, filter by active/inactive/category
+14. Usage Tracking: Show usage count, warn before deleting items with usage history
+
+**Technical Notes:**
+- Leverage existing medicationRepository, symptomRepository, triggerRepository
+- Add `isDefault` and `isEnabled` booleans to symptoms/triggers schema
+- Database migrations: v7 (populate medications), v8 (add symptom/trigger fields)
+- Create `/manage` page with tabbed layout (Medications/Symptoms/Triggers)
+- Build reusable components: `*List`, `*Form`, `ConfirmDialog`, `EmptyState`
+- Custom hooks: `useMedicationManagement`, `useSymptomManagement`, `useTriggerManagement`, `useItemUsage`
+
+**Story Document:** [docs/stories/story-4.1.md](./stories/story-4.1.md)
 
 ---
 

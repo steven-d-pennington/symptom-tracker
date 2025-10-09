@@ -14,6 +14,7 @@ import {
   Download,
   Lock,
   Info,
+  Sliders,
 } from "lucide-react";
 import { useActiveRoute } from "./hooks/useActiveRoute";
 import { LucideIcon } from "lucide-react";
@@ -37,6 +38,7 @@ const navSections: NavSection[] = [
       { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
       { icon: TrendingUp, label: "Analytics", href: "/analytics" },
       { icon: Calendar, label: "Calendar", href: "/calendar" },
+      { icon: Sliders, label: "Manage", href: "/manage" },
     ],
   },
   {
