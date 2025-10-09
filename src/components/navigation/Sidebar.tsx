@@ -9,6 +9,7 @@ import {
   Camera,
   Flame,
   BarChart3,
+  TrendingUp,
   Settings,
   Download,
   Lock,
@@ -34,7 +35,8 @@ const navSections: NavSection[] = [
     items: [
       { icon: FileText, label: "Daily Log", href: "/log" },
       { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-      { icon: Calendar, label: "Calendar", href: "/" },
+      { icon: TrendingUp, label: "Analytics", href: "/analytics" },
+      { icon: Calendar, label: "Calendar", href: "/calendar" },
     ],
   },
   {

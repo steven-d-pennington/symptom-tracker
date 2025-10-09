@@ -408,6 +408,7 @@ export const SymptomForm = ({
               aria-invalid={Boolean(errors.timestamp)}
               aria-describedby={errors.timestamp ? "symptom-timestamp-error" : undefined}
               required
+              suppressHydrationWarning
             />
             {errors.timestamp ? (
               <span id="symptom-timestamp-error" className="text-xs text-destructive">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, LayoutDashboard, Camera, Map, Menu } from "lucide-react";
+import { FileText, LayoutDashboard, TrendingUp, Camera, Menu } from "lucide-react";
 import { useActiveRoute } from "./hooks/useActiveRoute";
 import { LucideIcon } from "lucide-react";
 
@@ -26,16 +26,16 @@ const tabs: TabItem[] = [
     ariaLabel: "Dashboard",
   },
   {
+    icon: TrendingUp,
+    label: "Analytics",
+    href: "/analytics",
+    ariaLabel: "Analytics and trends",
+  },
+  {
     icon: Camera,
     label: "Gallery",
     href: "/photos",
     ariaLabel: "Photo gallery",
-  },
-  {
-    icon: Map,
-    label: "Map",
-    href: "/body-map",
-    ariaLabel: "Body map",
   },
   {
     icon: Menu,

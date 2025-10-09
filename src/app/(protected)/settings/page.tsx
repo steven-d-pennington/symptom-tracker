@@ -1,4 +1,5 @@
 import { Settings as SettingsIcon, Bell, Lock, Palette, Globe } from "lucide-react";
+import DevDataControls from "@/components/settings/DevDataControls";
 
 export default function SettingsPage() {
   const settingsSections = [
@@ -81,6 +82,8 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <DevDataControls />
     </div>
   );
 }

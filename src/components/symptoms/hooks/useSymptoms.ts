@@ -9,23 +9,18 @@ import {
   SymptomSort,
   SymptomStats,
 } from "@/lib/types/symptoms";
-import {
-  exportSymptoms,
-  importSymptoms,
-  loadFilterPresets,
-  loadSymptoms,
-  saveFilterPresets,
-  saveSymptoms,
-} from "@/lib/utils/symptomStorage";
+import { symptomInstanceRepository } from "@/lib/repositories/symptomInstanceRepository";
+import { userRepository } from "@/lib/repositories/userRepository";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 const PAGE_SIZE = 6;
 
 const now = () => new Date();
 
-const SAMPLE_SYMPTOMS: Symptom[] = [
+const createSampleSymptoms = (userId: string): Symptom[] => [
   {
     id: "demo-1",
-    userId: "demo",
+    userId,
     name: "Painful nodule",
     category: "pain",
     severity: 6,
@@ -179,6 +174,7 @@ const calculateStats = (symptoms: Symptom[]): SymptomStats => {
 };
 
 export const useSymptoms = () => {
+  const { userId } = useCurrentUser();
   const [symptoms, setSymptoms] = useState<Symptom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<SymptomFilter>(createInitialFilters);
@@ -188,35 +184,40 @@ export const useSymptoms = () => {
   const hasLoaded = useRef(false);
 
   useEffect(() => {
-    const storedSymptoms = loadSymptoms();
-    const storedPresets = loadFilterPresets();
+    if (!userId) return;
 
-    if (storedSymptoms.length > 0) {
-      setSymptoms(storedSymptoms);
-    } else {
-      setSymptoms(SAMPLE_SYMPTOMS);
-    }
+    const loadData = async () => {
+      try {
+        const storedSymptoms = await symptomInstanceRepository.getAll(userId);
 
-    setPresets(storedPresets);
-    setIsLoading(false);
-    hasLoaded.current = true;
-  }, []);
+        if (storedSymptoms.length > 0) {
+          setSymptoms(storedSymptoms);
+        } else {
+          setSymptoms(createSampleSymptoms(userId));
+        }
 
-  useEffect(() => {
-    if (!hasLoaded.current) {
-      return;
-    }
+        // Load filter presets from userRepository
+        const presetRecords = await userRepository.getSymptomFilterPresets(userId);
+        const parsedPresets = presetRecords.map(record => ({
+          id: record.id,
+          name: record.name,
+          filters: JSON.parse(record.filters),
+          createdAt: new Date(record.createdAt),
+        }));
+        setPresets(parsedPresets);
 
-    saveSymptoms(symptoms);
-  }, [symptoms]);
+        setIsLoading(false);
+        hasLoaded.current = true;
+      } catch (error) {
+        console.error("Failed to load symptoms", error);
+        setSymptoms(createSampleSymptoms(userId));
+        setIsLoading(false);
+        hasLoaded.current = true;
+      }
+    };
 
-  useEffect(() => {
-    if (!hasLoaded.current) {
-      return;
-    }
-
-    saveFilterPresets(presets);
-  }, [presets]);
+    loadData();
+  }, [userId]);
 
   const updateFilters = useCallback((next: SymptomFilter) => {
     setFilters(next);
@@ -233,84 +234,99 @@ export const useSymptoms = () => {
     setPage(1);
   }, []);
 
-  const createSymptom = useCallback((draft: SymptomDraft) => {
-    const createdAt = now();
-    const id = draft.id ?? (typeof crypto !== "undefined" ? crypto.randomUUID() : `symptom-${createdAt.getTime()}`);
-    const timestamp = draft.timestamp ? new Date(draft.timestamp) : createdAt;
-
-    setSymptoms((current) => [
-      {
-        ...draft,
-        id,
-        timestamp,
-        updatedAt: createdAt,
-      },
-      ...current,
-    ]);
+  const createSymptom = useCallback(async (draft: SymptomDraft) => {
+    try {
+      const id = await symptomInstanceRepository.create(draft);
+      const created = await symptomInstanceRepository.getById(id);
+      if (created) {
+        setSymptoms((current) => [created, ...current]);
+      }
+    } catch (error) {
+      console.error("Failed to create symptom", error);
+    }
   }, []);
 
-  const updateSymptom = useCallback((id: string, draft: SymptomDraft) => {
-    setSymptoms((current) =>
-      current.map((symptom) => {
-        if (symptom.id !== id) {
-          return symptom;
-        }
-
-        const timestamp = draft.timestamp ? new Date(draft.timestamp) : symptom.timestamp;
-
-        return {
-          ...symptom,
-          ...draft,
-          id: symptom.id,
-          timestamp,
-          updatedAt: now(),
-        };
-      }),
-    );
+  const updateSymptom = useCallback(async (id: string, draft: SymptomDraft) => {
+    try {
+      await symptomInstanceRepository.update(id, draft);
+      const updated = await symptomInstanceRepository.getById(id);
+      if (updated) {
+        setSymptoms((current) =>
+          current.map((symptom) => (symptom.id === id ? updated : symptom))
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update symptom", error);
+    }
   }, []);
 
-  const deleteSymptom = useCallback((id: string) => {
-    setSymptoms((current) => current.filter((symptom) => symptom.id !== id));
+  const deleteSymptom = useCallback(async (id: string) => {
+    try {
+      await symptomInstanceRepository.delete(id);
+      setSymptoms((current) => current.filter((symptom) => symptom.id !== id));
+    } catch (error) {
+      console.error("Failed to delete symptom", error);
+    }
   }, []);
 
-  const reassignCategory = useCallback((fromCategory: string, toCategory: string) => {
-    setSymptoms((current) =>
-      current.map((symptom) => {
-        if (symptom.category !== fromCategory) {
-          return symptom;
-        }
+  const reassignCategory = useCallback(async (fromCategory: string, toCategory: string) => {
+    try {
+      const symptomsToUpdate = symptoms.filter(s => s.category === fromCategory);
+      for (const symptom of symptomsToUpdate) {
+        await symptomInstanceRepository.update(symptom.id, { category: toCategory });
+      }
+      setSymptoms((current) =>
+        current.map((symptom) =>
+          symptom.category === fromCategory
+            ? { ...symptom, category: toCategory, updatedAt: now() }
+            : symptom
+        )
+      );
+    } catch (error) {
+      console.error("Failed to reassign category", error);
+    }
+  }, [symptoms]);
 
-        return {
-          ...symptom,
-          category: toCategory,
-          updatedAt: now(),
-        };
-      }),
-    );
-  }, []);
+  const exportData = useCallback(() => JSON.stringify(symptoms, null, 2), [symptoms]);
 
-  const exportData = useCallback(() => exportSymptoms(symptoms), [symptoms]);
+  const importData = useCallback(async (payload: string) => {
+    if (!userId) return;
 
-  const importData = useCallback((payload: string) => {
-    const importedSymptoms = importSymptoms(payload);
-    setSymptoms(importedSymptoms);
-  }, []);
+    try {
+      const importedSymptoms = JSON.parse(payload) as Symptom[];
+      if (!Array.isArray(importedSymptoms)) {
+        throw new Error("Invalid symptom payload");
+      }
+      await symptomInstanceRepository.bulkCreate(importedSymptoms);
+      const allSymptoms = await symptomInstanceRepository.getAll(userId);
+      setSymptoms(allSymptoms);
+    } catch (error) {
+      console.error("Failed to import symptoms", error);
+    }
+  }, [userId]);
 
   const savePreset = useCallback(
-    (name: string, presetFilters: SymptomFilter) => {
-      const preset: SymptomFilterPreset = {
-        id:
-          typeof crypto !== "undefined"
-            ? crypto.randomUUID()
-            : `preset-${Date.now()}`,
-        name,
-        filters: presetFilters,
-        createdAt: now(),
-      };
+    async (name: string, presetFilters: SymptomFilter) => {
+      if (!userId) return;
 
-      setPresets((current) => [preset, ...current]);
+      try {
+        const preset: SymptomFilterPreset = {
+          id:
+            typeof crypto !== "undefined"
+              ? crypto.randomUUID()
+              : `preset-${Date.now()}`,
+          name,
+          filters: presetFilters,
+          createdAt: now(),
+        };
+
+        await userRepository.saveSymptomFilterPreset(userId, preset);
+        setPresets((current) => [preset, ...current]);
+      } catch (error) {
+        console.error("Failed to save preset", error);
+      }
     },
-    [],
+    [userId],
   );
 
   const applyPreset = useCallback((presetId: string) => {
@@ -326,9 +342,16 @@ export const useSymptoms = () => {
     });
   }, []);
 
-  const deletePreset = useCallback((presetId: string) => {
-    setPresets((current) => current.filter((preset) => preset.id !== presetId));
-  }, []);
+  const deletePreset = useCallback(async (presetId: string) => {
+    if (!userId) return;
+
+    try {
+      await userRepository.deleteSymptomFilterPreset(userId, presetId);
+      setPresets((current) => current.filter((preset) => preset.id !== presetId));
+    } catch (error) {
+      console.error("Failed to delete preset", error);
+    }
+  }, [userId]);
 
   const filteredSymptoms = useMemo(() => {
     return symptoms.filter((symptom) => {

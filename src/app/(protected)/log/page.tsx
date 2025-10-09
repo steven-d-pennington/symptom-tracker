@@ -7,13 +7,29 @@ import { EntryTemplates } from "@/components/daily-entry/EntryTemplates";
 import { useDailyEntry } from "@/components/daily-entry/hooks/useDailyEntry";
 import { useEntryTemplates } from "@/components/daily-entry/hooks/useEntryTemplates";
 import { useSmartSuggestions } from "@/components/daily-entry/hooks/useSmartSuggestions";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 const DailyLogPage = () => {
+  const { isLoading: userLoading } = useCurrentUser();
   const dailyEntry = useDailyEntry();
   const templateState = useEntryTemplates();
 
   const activeTemplate = useMemo(() => templateState.activeTemplate, [templateState.activeTemplate]);
   const { suggestions } = useSmartSuggestions(dailyEntry.entry, dailyEntry.history);
+
+  // Show loading state while user data is being loaded
+  if (userLoading || !activeTemplate) {
+    return (
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+            <p className="text-sm text-muted-foreground">Loading your daily log...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 lg:flex-row">

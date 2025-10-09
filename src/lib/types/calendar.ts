@@ -39,6 +39,7 @@ export interface TriggerDetail {
   name: string;
   category: string;
   impact: "low" | "medium" | "high";
+  intensity: number;
 }
 
 export interface CalendarDayDetail extends CalendarEntry {

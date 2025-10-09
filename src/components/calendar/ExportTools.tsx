@@ -63,9 +63,10 @@ export const ExportTools = ({
           className={`rounded-lg border px-3 py-2 text-left text-foreground transition ${
             canShare ? "border-border hover:bg-muted" : "cursor-not-allowed border-border/60 text-muted-foreground"
           }`}
+          suppressHydrationWarning
         >
           Share quick summary
-          <span className="block text-xs text-muted-foreground">
+          <span className="block text-xs text-muted-foreground" suppressHydrationWarning>
             {canShare ? "Uses the device share sheet" : "Share API not available in this browser"}
           </span>
         </button>

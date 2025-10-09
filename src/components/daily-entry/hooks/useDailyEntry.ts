@@ -11,17 +11,12 @@ import {
   MEDICATION_OPTIONS,
   SYMPTOM_OPTIONS,
 } from "@/lib/data/daily-entry-presets";
-import {
-  HISTORY_STORAGE_KEY,
-  HISTORY_UPDATED_EVENT,
-  OFFLINE_QUEUE_STORAGE_KEY,
-  loadDailyEntries,
-  persistDailyEntries,
-} from "@/lib/storage/daily-entry-storage";
+import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
-const createInitialEntry = (): DailyEntry => ({
+const createInitialEntry = (userId: string): DailyEntry => ({
   id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
-  userId: "demo",
+  userId,
   date: new Date().toISOString().slice(0, 10),
   overallHealth: 5,
   energyLevel: 5,
@@ -55,19 +50,17 @@ const defaultTouchedState: TouchedSections = {
 };
 
 export const useDailyEntry = () => {
-  const [entry, setEntry] = useState<DailyEntry>(createInitialEntry);
+  const { userId } = useCurrentUser();
+  const [entry, setEntry] = useState<DailyEntry>(() => createInitialEntry(userId || ""));
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [touchedSections, setTouchedSections] = useState<TouchedSections>(
     defaultTouchedState,
   );
-  const [history, setHistory] = useState<DailyEntry[]>(() =>
-    loadDailyEntries(HISTORY_STORAGE_KEY),
-  );
-  const [queue, setQueue] = useState<DailyEntry[]>(() =>
-    loadDailyEntries(OFFLINE_QUEUE_STORAGE_KEY),
-  );
+  const [history, setHistory] = useState<DailyEntry[]>([]);
+  const [queue, setQueue] = useState<DailyEntry[]>([]);
   const startTimeRef = useRef<number>(Date.now());
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -83,22 +76,47 @@ export const useDailyEntry = () => {
     return () => window.clearInterval(interval);
   }, []);
 
+  // Load history from IndexedDB on mount
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (!userId) return;
 
-    persistDailyEntries(HISTORY_STORAGE_KEY, history);
-    window.dispatchEvent(new CustomEvent(HISTORY_UPDATED_EVENT));
-  }, [history]);
+    const loadHistory = async () => {
+      const entries = await dailyEntryRepository.getAll(userId);
+      const converted = entries.map(entry => ({
+        ...entry,
+        completedAt: new Date(entry.createdAt),
+      }));
+      setHistory(converted);
+      setIsHydrated(true);
+    };
 
+    loadHistory().catch(console.error);
+  }, [userId]);
+
+  // Load queue from localStorage (offline entries are ephemeral)
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("pst-offline-queue");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setQueue(parsed.map(entry => ({
+            ...entry,
+            completedAt: new Date(entry.completedAt),
+          })));
+        }
+      } catch (error) {
+        console.error("Failed to load offline queue", error);
+      }
     }
+  }, []);
 
-    persistDailyEntries(OFFLINE_QUEUE_STORAGE_KEY, queue);
-  }, [queue]);
+  // Save queue to localStorage (offline entries are ephemeral)
+  useEffect(() => {
+    if (typeof window === "undefined" || !isHydrated) return;
+    localStorage.setItem("pst-offline-queue", JSON.stringify(queue));
+  }, [queue, isHydrated]);
 
   const resetEntry = useCallback(() => {
     startTimeRef.current = Date.now();
@@ -289,35 +307,73 @@ export const useDailyEntry = () => {
 
     const isOnline = typeof navigator === "undefined" || navigator.onLine;
 
-    const persistHistory = (nextHistory: DailyEntry[]) => {
-      setHistory(nextHistory);
-    };
-
     if (!isOnline) {
       setQueue((prev) => [finalizedEntry, ...prev]);
     } else {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      persistHistory([finalizedEntry, ...history].slice(0, 50));
+      try {
+        // Save to IndexedDB
+        await dailyEntryRepository.create({
+          ...finalizedEntry,
+          createdAt: completedAt,
+          updatedAt: completedAt,
+        });
+
+        // Reload history
+        const entries = await dailyEntryRepository.getAll("demo");
+        const converted = entries.map(entry => ({
+          ...entry,
+          completedAt: new Date(entry.createdAt),
+        }));
+        setHistory(converted);
+
+        // Dispatch event for other components
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("daily-entry-updated"));
+        }
+      } catch (error) {
+        console.error("Failed to save entry", error);
+        setQueue((prev) => [finalizedEntry, ...prev]);
+      }
     }
 
     setLastSavedAt(completedAt);
     resetEntry();
     setIsSaving(false);
-  }, [entry, history, resetEntry]);
+  }, [entry, resetEntry]);
 
   const syncQueuedEntries = useCallback(async () => {
     if (queue.length === 0) {
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    setHistory((prev) => {
-      const merged = [...queue, ...prev].slice(0, 50);
-      return merged.sort(
-        (a, b) => b.completedAt.getTime() - a.completedAt.getTime(),
-      );
-    });
-    setQueue([]);
+    try {
+      // Save all queued entries to IndexedDB
+      for (const queuedEntry of queue) {
+        await dailyEntryRepository.create({
+          ...queuedEntry,
+          createdAt: queuedEntry.completedAt,
+          updatedAt: queuedEntry.completedAt,
+        });
+      }
+
+      // Reload history from IndexedDB
+      const entries = await dailyEntryRepository.getAll("demo");
+      const converted = entries.map(entry => ({
+        ...entry,
+        completedAt: new Date(entry.createdAt),
+      }));
+      setHistory(converted);
+
+      // Clear queue
+      setQueue([]);
+
+      // Dispatch event
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("daily-entry-updated"));
+      }
+    } catch (error) {
+      console.error("Failed to sync queued entries", error);
+    }
   }, [queue]);
 
   useEffect(() => {

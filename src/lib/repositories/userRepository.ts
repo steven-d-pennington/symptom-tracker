@@ -62,7 +62,7 @@ export class UserRepository {
   ): Promise<void> {
     const user = await this.getById(id);
     if (!user) {
-      throw new Error(`User not found: ${id}`);
+      throw new Error(`User not found: ${id}. Please complete onboarding first.`);
     }
 
     await db.users.update(id, {
@@ -112,6 +112,7 @@ export class UserRepository {
           crashReportsOptIn: false,
         },
         exportFormat: "json",
+        symptomFilterPresets: [],
       },
     });
 
@@ -121,6 +122,104 @@ export class UserRepository {
     }
 
     return user;
+  }
+
+  /**
+   * Get symptom filter presets
+   */
+  async getSymptomFilterPresets(userId: string) {
+    const user = await this.getById(userId);
+    return user?.preferences.symptomFilterPresets || [];
+  }
+
+  /**
+   * Save symptom filter preset
+   */
+  async saveSymptomFilterPreset(userId: string, preset: { id: string; name: string; filters: unknown; createdAt: Date }) {
+    const user = await this.getById(userId);
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+
+    const presets = user.preferences.symptomFilterPresets || [];
+    const updated = [...presets, {
+      id: preset.id,
+      name: preset.name,
+      filters: JSON.stringify(preset.filters),
+      createdAt: preset.createdAt,
+    }];
+
+    await this.updatePreferences(userId, {
+      symptomFilterPresets: updated,
+    });
+  }
+
+  /**
+   * Delete symptom filter preset
+   */
+  async deleteSymptomFilterPreset(userId: string, presetId: string) {
+    const user = await this.getById(userId);
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+
+    const presets = user.preferences.symptomFilterPresets || [];
+    const updated = presets.filter(p => p.id !== presetId);
+
+    await this.updatePreferences(userId, {
+      symptomFilterPresets: updated,
+    });
+  }
+
+  /**
+   * Get symptom categories
+   */
+  async getSymptomCategories(userId: string) {
+    const user = await this.getById(userId);
+    return user?.preferences.symptomCategories || [];
+  }
+
+  /**
+   * Save symptom categories
+   */
+  async saveSymptomCategories(userId: string, categories: unknown[]) {
+    await this.updatePreferences(userId, {
+      symptomCategories: categories,
+    });
+  }
+
+  /**
+   * Get entry templates
+   */
+  async getEntryTemplates(userId: string) {
+    const user = await this.getById(userId);
+    return user?.preferences.entryTemplates || [];
+  }
+
+  /**
+   * Save entry templates
+   */
+  async saveEntryTemplates(userId: string, templates: unknown[]) {
+    await this.updatePreferences(userId, {
+      entryTemplates: templates,
+    });
+  }
+
+  /**
+   * Get active template ID
+   */
+  async getActiveTemplateId(userId: string) {
+    const user = await this.getById(userId);
+    return user?.preferences.activeTemplateId;
+  }
+
+  /**
+   * Set active template ID
+   */
+  async setActiveTemplateId(userId: string, templateId: string) {
+    await this.updatePreferences(userId, {
+      activeTemplateId: templateId,
+    });
   }
 }
 

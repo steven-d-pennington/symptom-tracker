@@ -19,12 +19,9 @@ import {
   SYMPTOM_OPTIONS,
   TRIGGER_OPTIONS,
 } from "@/lib/data/daily-entry-presets";
-import {
-  HISTORY_STORAGE_KEY,
-  HISTORY_UPDATED_EVENT,
-  loadDailyEntries,
-} from "@/lib/storage/daily-entry-storage";
+import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
 import { useDateNavigation } from "./useDateNavigation";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 interface CalendarDataHookOptions {
   filters: CalendarFilters;
@@ -132,6 +129,7 @@ const buildDataset = (history: DailyEntry[]) => {
         name: option?.label ?? trigger.triggerId,
         category: "Trigger",
         impact: impactFromIntensity(trigger.intensity),
+        intensity: trigger.intensity,
       };
     });
 
@@ -376,56 +374,53 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     showTriggers: true,
     colorScheme: "severity",
   });
+  const { userId } = useCurrentUser();
   const [timelineZoom, setTimelineZoom] = useState<"week" | "month" | "quarter" | "year">("month");
   const [history, setHistory] = useState<DailyEntry[]>([]);
   const navigation = useDateNavigation(createBaseRange(), viewType);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
+    if (!userId) return;
 
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === HISTORY_STORAGE_KEY) {
-        setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
-      }
+    const loadEntries = async () => {
+      const entries = await dailyEntryRepository.getAll(userId);
+      // Convert DailyEntryRecord to DailyEntry format
+      const converted = entries.map(entry => ({
+        ...entry,
+        completedAt: new Date(entry.createdAt),
+      }));
+      setHistory(converted);
     };
 
+    loadEntries().catch(console.error);
+
     const handleHistoryUpdate = () => {
-      setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
+      loadEntries().catch(console.error);
     };
 
     if (typeof window !== "undefined") {
-      window.addEventListener("storage", handleStorageChange);
-      window.addEventListener(HISTORY_UPDATED_EVENT, handleHistoryUpdate);
+      window.addEventListener("daily-entry-updated", handleHistoryUpdate);
     }
 
     return () => {
       if (typeof window !== "undefined") {
-        window.removeEventListener("storage", handleStorageChange);
-        window.removeEventListener(HISTORY_UPDATED_EVENT, handleHistoryUpdate);
+        window.removeEventListener("daily-entry-updated", handleHistoryUpdate);
       }
     };
-  }, []);
+  }, [userId]);
 
   const dataset = useMemo(() => buildDataset(history), [history]);
 
+  // Initialize selected date to latest entry on first load only
   useEffect(() => {
-    if (dataset.entries.length === 0) {
+    if (dataset.entries.length === 0 || selectedDate) {
       return;
     }
 
     const latest = dataset.entries[dataset.entries.length - 1];
-    const latestDate = new Date(latest.date);
-    const withinRange =
-      latestDate >= navigation.range.start && latestDate <= navigation.range.end;
-    if (!withinRange) {
-      navigation.setRange({ start: latestDate, end: latestDate });
-    }
-
-    if (!selectedDate || !dataset.dayLookup.has(selectedDate)) {
-      setSelectedDate(latest.date);
-    }
-  }, [dataset.entries, dataset.dayLookup, navigation, selectedDate]);
+    setSelectedDate(latest.date);
+  }, [dataset.entries, selectedDate]);
 
   const entriesInRange = useMemo(
     () =>
@@ -528,11 +523,9 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
       }
 
       detail.symptomsDetails.forEach((symptom) => {
-        detail.triggerDetails.forEach((trigger, index) => {
+        detail.triggerDetails.forEach((trigger) => {
           const key = `${symptom.name}__${trigger.name}`;
-          const baseTrigger = entry.triggers[index];
-          const intensity = baseTrigger?.intensity ??
-            (trigger.impact === "high" ? 9 : trigger.impact === "medium" ? 6 : 3);
+          const intensity = trigger.intensity;
 
           const current =
             correlationMap.get(key) ?? {

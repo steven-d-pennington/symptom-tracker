@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DailyEntryTemplate, EntrySection } from "@/lib/types/daily-entry";
-
-const STORAGE_KEY = "pst-entry-templates";
-const ACTIVE_TEMPLATE_KEY = "pst-active-template";
+import { userRepository } from "@/lib/repositories/userRepository";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 const DEFAULT_SECTIONS: EntrySection[] = [
   { type: "health", required: true, order: 0, config: {} },
@@ -14,75 +13,21 @@ const DEFAULT_SECTIONS: EntrySection[] = [
   { type: "notes", required: false, order: 4, config: {} },
 ];
 
-const createTemplate = (name: string, sections: EntrySection[], isDefault = false): DailyEntryTemplate => ({
+const DEFAULT_TEMPLATE_NAME = "Daily health check";
+
+const createTemplate = (userId: string, name: string, sections: EntrySection[], isDefault = false): DailyEntryTemplate => ({
   id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
-  userId: "demo",
+  userId,
   name,
   sections,
   isDefault,
   createdAt: new Date(),
 });
 
-const deserializeTemplate = (template: DailyEntryTemplate): DailyEntryTemplate => ({
-  ...template,
-  createdAt: new Date(template.createdAt),
-  sections: template.sections.map((section, index) => ({
-    ...section,
-    order: section.order ?? index,
-    config: section.config ?? {},
-  })),
-});
+const createDefaultTemplate = (userId: string) => createTemplate(userId, DEFAULT_TEMPLATE_NAME, DEFAULT_SECTIONS, true);
 
-const loadTemplates = () => {
-  if (typeof window === "undefined") {
-    return [createTemplate("Daily health check", DEFAULT_SECTIONS, true)];
-  }
-
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      return [createTemplate("Daily health check", DEFAULT_SECTIONS, true)];
-    }
-
-    const parsed: DailyEntryTemplate[] = JSON.parse(stored);
-    if (!Array.isArray(parsed)) {
-      return [createTemplate("Daily health check", DEFAULT_SECTIONS, true)];
-    }
-
-    return parsed.map(deserializeTemplate);
-  } catch (error) {
-    console.warn("Unable to read entry templates", error);
-    return [createTemplate("Daily health check", DEFAULT_SECTIONS, true)];
-  }
-};
-
-const persistTemplates = (templates: DailyEntryTemplate[]) => {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(
-      templates.map((template) => ({
-        ...template,
-        createdAt: template.createdAt.toISOString(),
-      })),
-    ),
-  );
-};
-
-const loadActiveTemplateId = (templates: DailyEntryTemplate[]) => {
-  if (typeof window === "undefined") {
-    return templates.find((template) => template.isDefault)?.id ?? templates[0].id;
-  }
-
-  const stored = window.localStorage.getItem(ACTIVE_TEMPLATE_KEY);
-  if (stored && templates.some((template) => template.id === stored)) {
-    return stored;
-  }
-
-  return templates.find((template) => template.isDefault)?.id ?? templates[0].id;
+const ensureDefaultTemplate = (userId: string, templates: DailyEntryTemplate[]) => {
+  return templates.length > 0 ? templates : [createDefaultTemplate(userId)];
 };
 
 export type TemplateSectionType = EntrySection["type"];
@@ -94,22 +39,88 @@ export interface TemplateDraft {
 }
 
 export const useEntryTemplates = () => {
-  const [templates, setTemplates] = useState<DailyEntryTemplate[]>(loadTemplates);
-  const [activeTemplateId, setActiveTemplateId] = useState<string>(() =>
-    loadActiveTemplateId(templates),
-  );
+  const { userId } = useCurrentUser();
+  const [templates, setTemplates] = useState<DailyEntryTemplate[]>([]);
+  const [activeTemplateId, setActiveTemplateId] = useState<string>("");
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // Load from IndexedDB on mount
   useEffect(() => {
-    persistTemplates(templates);
-  }, [templates]);
+    if (!userId) return;
 
+    const loadData = async () => {
+      try {
+        const storedTemplates = await userRepository.getEntryTemplates(userId);
+
+        if (storedTemplates.length > 0) {
+          const parsed = storedTemplates.map(record => ({
+            id: record.id,
+            userId: record.userId,
+            name: record.name,
+            sections: JSON.parse(record.sections),
+            isDefault: record.isDefault,
+            createdAt: new Date(record.createdAt),
+          }));
+          setTemplates(ensureDefaultTemplate(userId, parsed));
+        } else {
+          setTemplates([createDefaultTemplate(userId)]);
+        }
+
+        const storedActiveId = await userRepository.getActiveTemplateId(userId);
+        if (storedActiveId) {
+          setActiveTemplateId(storedActiveId);
+        } else {
+          setActiveTemplateId(templates[0]?.id || "");
+        }
+
+        setIsLoaded(true);
+      } catch (error) {
+        console.error("Failed to load templates", error);
+        setTemplates([createDefaultTemplate(userId)]);
+        setIsLoaded(true);
+      }
+    };
+
+    loadData();
+  }, [userId]);
+
+  // Save templates to IndexedDB
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (!isLoaded || !userId) return;
 
-    window.localStorage.setItem(ACTIVE_TEMPLATE_KEY, activeTemplateId);
-  }, [activeTemplateId]);
+    const saveData = async () => {
+      try {
+        const records = templates.map(template => ({
+          id: template.id,
+          userId: template.userId,
+          name: template.name,
+          sections: JSON.stringify(template.sections),
+          isDefault: template.isDefault,
+          createdAt: template.createdAt,
+        }));
+        await userRepository.saveEntryTemplates(userId, records);
+      } catch (error) {
+        console.error("Failed to save templates", error);
+      }
+    };
+
+    saveData();
+  }, [templates, isLoaded, userId]);
+
+  // Save active template ID
+  useEffect(() => {
+    if (!isLoaded || !activeTemplateId || !userId) return;
+
+    const saveActiveId = async () => {
+      try {
+        await userRepository.setActiveTemplateId(userId, activeTemplateId);
+      } catch (error) {
+        console.error("Failed to save active template ID", error);
+      }
+    };
+
+    saveActiveId();
+  }, [activeTemplateId, isLoaded, userId]);
 
   const activeTemplate = useMemo(() => {
     return (
@@ -128,16 +139,17 @@ export const useEntryTemplates = () => {
 
   const createTemplateFromDraft = useCallback(
     (draft: TemplateDraft) => {
+      if (!userId) return;
       if (!draft.name.trim()) {
         throw new Error("Template name is required");
       }
 
       const sections = ensureOrder(draft.sectionTypes);
-      const next = createTemplate(draft.name.trim(), sections, false);
+      const next = createTemplate(userId, draft.name.trim(), sections, false);
       setTemplates((prev) => [...prev, next]);
       setActiveTemplateId(next.id);
     },
-    [ensureOrder],
+    [ensureOrder, userId],
   );
 
   const updateTemplate = useCallback(

@@ -12,11 +12,15 @@
 Phase 3 introduces the Intelligence Layer through three strategic epics that transform the Pocket Symptom Tracker from a data collection tool into a decision support system. These epics build sequentially: **Epic 1 (Data Analysis)** creates the analytical foundation, **Epic 2 (Search & Filtering)** enables data discovery, and **Epic 3 (Report Generation)** facilitates clinical communication.
 
 **Epic Summary:**
-- **Epic 1: Data Analysis & Insights Engine** - 7-9 stories - Local analytics for pattern discovery and predictions
+- **Epic 1: Data Analysis & Insights Engine** - 11-13 stories - Local analytics for pattern discovery and predictions
+  - Note: Story 1.1 split into 5 sub-stories (1.1a-1.1e) for proper sizing
 - **Epic 2: Advanced Search & Filtering** - 6-8 stories - Instant search across all health data
 - **Epic 3: Professional Report Generation** - 5-8 stories - Medical-grade reports for consultations
 
-**Total Story Count:** 18-25 stories
+**Total Story Count:** 22-29 stories
+- Epic 1: 11-13 stories (Story 1.1 split into 1.1a-1.1e adds 4 stories)
+- Epic 2: 6-8 stories (unchanged)
+- Epic 3: 5-8 stories (unchanged)
 **Implementation Timeline:** Sequential (Epic 1 → Epic 2 → Epic 3)
 
 ---
@@ -43,28 +47,126 @@ Phase 3 introduces the Intelligence Layer through three strategic epics that tra
 
 ---
 
-## Story 1.1: Trend Analysis Engine
+## Story 1.1a: Trend Analysis - Core Regression Algorithm ✅
 
-**As a** user tracking symptoms over time
-**I want to** see statistical trends in my symptom severity, medication effectiveness, and custom metrics
-**So that** I can understand if my condition is improving, stable, or worsening
+**As a** developer building the analytics engine
+**I want to** implement the core linear regression algorithm with comprehensive testing
+**So that** trend analysis can accurately compute statistical trends on symptom data
 
 **Acceptance Criteria:**
-1. System performs linear regression on selected metrics over user-defined time periods (7/30/90 days, 1 year, all time)
-2. Displays trend direction (increasing/decreasing/stable/fluctuating) with visual indicators
-3. Shows R² value and confidence interval with plain-language explanation
-4. Overlays trend line on data chart with clear legend
-5. Detects and highlights change points (significant shifts in trend)
-6. Provides "What does this mean?" tooltip explaining the statistical significance
-7. Computation completes in <2 seconds for 90-day datasets
-8. Works offline using local computation only
+1. Implements linear regression using least squares method (slope, intercept, R²)
+2. Validates input data (minimum 14 days, handles NaN/Infinity)
+3. Provides outlier removal using IQR method
+4. Includes prediction helper function
+5. Computation completes in <100ms for 365-day datasets
+6. Comprehensive test coverage (28+ tests covering all edge cases)
 
 **Technical Notes:**
-- Implement linear regression in TypeScript (no external ML libraries)
-- Use Web Workers for regression calculation to prevent UI blocking
-- Store analysis results in `analysisResults` table with expiration
-- Integrate with existing Chart.js setup for visualization
-- Handle edge cases: insufficient data (< 14 days), missing values, outliers
+- Pure TypeScript implementation in `/src/lib/utils/statistics/linearRegression.ts`
+- No external ML libraries required
+- Handles edge cases: insufficient data, missing values, outliers, identical x-values
+- Jest testing framework configured for project
+
+**Status:** COMPLETE ✅ (Implemented 2025-10-07)
+
+---
+
+## Story 1.1b: Trend Analysis - Service Layer & Caching
+
+**As a** user tracking symptoms over time
+**I want to** the system to compute trends efficiently in the background
+**So that** I can analyze my data without the UI freezing
+
+**Acceptance Criteria:**
+1. TrendAnalysisService performs linear regression on selected metrics
+2. Web Worker offloads computation for datasets >100 points to prevent UI blocking
+3. Results cached in IndexedDB with 24h TTL (Dexie v6 migration)
+4. Cache invalidates on new daily entry submission
+5. Service queries existing repositories (dailyEntries, symptoms, medications)
+6. Computation completes in <2 seconds for 90-day datasets
+7. Works offline using local computation only
+
+**Technical Notes:**
+- Create `/src/lib/services/TrendAnalysisService.ts`
+- Create `/src/lib/workers/analyticsWorker.ts` for Web Worker
+- Create `WorkerPool` class for managing worker instances
+- Add `analysisResults` table to Dexie schema (v5→v6 migration)
+- Implement `AnalysisRepository` for caching
+
+**Dependencies:** Requires Story 1.1a (Core Algorithm) complete
+
+---
+
+## Story 1.1c: Trend Analysis - Change Point Detection
+
+**As a** user tracking symptoms over time
+**I want to** see when my symptoms significantly changed
+**So that** I can correlate changes with life events or treatments
+
+**Acceptance Criteria:**
+1. Detects change points (significant shifts in trend) using PELT algorithm
+2. Returns array of dates where shifts occurred
+3. Configurable sensitivity threshold
+4. Highlights change points on trend chart with markers
+5. Computation included in <2 second performance budget
+
+**Technical Notes:**
+- Research and implement PELT (Pruned Exact Linear Time) algorithm
+- Create `/src/lib/utils/statistics/changePointDetection.ts`
+- Integrate with TrendAnalysisService
+- Add tests with synthetic data containing known change points
+
+**Dependencies:** Requires Story 1.1b (Service Layer) complete
+
+---
+
+## Story 1.1d: Trend Analysis - Visualization Components
+
+**As a** user tracking symptoms over time
+**I want to** see visual trend charts with clear explanations
+**So that** I can easily understand if my condition is improving or worsening
+
+**Acceptance Criteria:**
+1. Displays trend direction (increasing/decreasing/stable) with visual indicators (↑↓→)
+2. Shows R² value and confidence interval with plain-language explanation
+3. Overlays trend line on data chart with clear legend
+4. Provides "What does this mean?" tooltip explaining statistical significance
+5. Time range selector (7/30/90 days, 1 year, all time, custom)
+6. Responsive design (mobile/desktop)
+7. WCAG 2.1 AA accessibility compliance
+
+**Technical Notes:**
+- Create `/src/components/analytics/TrendChart.tsx` (Chart.js integration)
+- Create `/src/components/analytics/TimeRangeSelector.tsx`
+- Create `/src/components/analytics/TrendWidget.tsx` for dashboard
+- Generate plain-language interpretations (improving/worsening/stable)
+- Add glossary tooltips for statistical terms (R², confidence interval)
+
+**Dependencies:** Requires Story 1.1b (Service Layer) complete
+
+---
+
+## Story 1.1e: Trend Analysis - Dashboard Integration & Testing
+
+**As a** user wanting to understand my health data
+**I want to** access trend analysis from the analytics dashboard
+**So that** I can view insights alongside other analytics
+
+**Acceptance Criteria:**
+1. Analytics dashboard displays trend widget with loading states
+2. Error states handled with user-friendly messages
+3. Widget integrated with dashboard grid layout
+4. E2E test: Navigate to analytics → select metric → view trend chart
+5. Performance test validates <2s computation for 90-day dataset
+6. Accessibility audit passes WCAG 2.1 AA for charts and tooltips
+
+**Technical Notes:**
+- Create placeholder `AnalyticsDashboard` component (full implementation in Story 1.6)
+- Integrate TrendWidget with dashboard state
+- E2E tests using Playwright (deferred setup if needed)
+- Performance testing with various dataset sizes
+
+**Dependencies:** Requires Stories 1.1b, 1.1c, 1.1d complete
 
 ---
 

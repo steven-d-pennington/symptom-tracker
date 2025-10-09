@@ -18,7 +18,7 @@ export default function MorePage() {
         {
           icon: Calendar,
           label: "Calendar View",
-          href: "/",
+          href: "/calendar",
           description: "View your health history timeline",
         },
         {

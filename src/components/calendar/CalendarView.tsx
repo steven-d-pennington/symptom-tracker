@@ -66,7 +66,9 @@ export const CalendarView = () => {
         activePresetId={filterState.activePresetId}
         navigation={navigation}
         onViewChange={updateView}
-        onDisplayOptionsChange={(displayOptions) => updateView({ displayOptions })}
+        onDisplayOptionsChange={(displayOptions) => updateView({
+          displayOptions: { ...viewConfig.displayOptions, ...displayOptions }
+        })}
         onFiltersChange={filterState.updateFilters}
         onSeverityChange={filterState.updateSeverityRange}
         onClearFilters={filterState.clearFilters}

@@ -3,6 +3,7 @@ import "./globals.css";
 import { OnboardingRedirectGate } from "./onboarding/components/OnboardingRedirectGate";
 import { OfflineIndicator, InstallPrompt, UpdateNotification } from "@/components/pwa";
 import { NavLayout } from "@/components/navigation/NavLayout";
+import { MigrationProvider } from "@/components/providers/MigrationProvider";
 
 export const metadata: Metadata = {
   title: "Pocket Symptom Tracker",
@@ -49,12 +50,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background text-foreground antialiased font-sans">
-        <OnboardingRedirectGate />
-        <NavLayout>{children}</NavLayout>
-        {/* PWA Components */}
-        <OfflineIndicator />
-        <InstallPrompt />
-        <UpdateNotification />
+        <MigrationProvider>
+          <OnboardingRedirectGate />
+          <NavLayout>{children}</NavLayout>
+          {/* PWA Components */}
+          <OfflineIndicator />
+          <InstallPrompt />
+          <UpdateNotification />
+        </MigrationProvider>
       </body>
     </html>
   );

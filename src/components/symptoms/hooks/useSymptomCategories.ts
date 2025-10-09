@@ -6,15 +6,15 @@ import {
   SymptomCategoryInput,
   SymptomCategoryUpdate,
 } from "@/lib/types/symptoms";
+import { userRepository } from "@/lib/repositories/userRepository";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
-const CATEGORY_STORAGE_KEY = "pst:symptom-categories";
-
-const createDefaultCategories = (): SymptomCategory[] => {
+const createDefaultCategories = (userId: string): SymptomCategory[] => {
   const createdAt = new Date("2024-01-01T00:00:00.000Z");
   return [
     {
       id: "uncategorized",
-      userId: "demo",
+      userId,
       name: "Uncategorized",
       color: "#6b7280",
       description: "Symptoms that have not been categorized yet.",
@@ -24,7 +24,7 @@ const createDefaultCategories = (): SymptomCategory[] => {
     },
     {
       id: "pain",
-      userId: "demo",
+      userId,
       name: "Pain",
       color: "#ef4444",
       description: "Musculoskeletal, nerve, and joint pain experiences.",
@@ -34,7 +34,7 @@ const createDefaultCategories = (): SymptomCategory[] => {
     },
     {
       id: "fatigue",
-      userId: "demo",
+      userId,
       name: "Fatigue",
       color: "#f97316",
       description: "Energy, exhaustion, or burnout related symptoms.",
@@ -44,7 +44,7 @@ const createDefaultCategories = (): SymptomCategory[] => {
     },
     {
       id: "skin",
-      userId: "demo",
+      userId,
       name: "Skin",
       color: "#8b5cf6",
       description: "Rashes, lesions, irritation, and flare markers.",
@@ -61,57 +61,61 @@ const hydrateCategory = (category: SymptomCategory): SymptomCategory => ({
 });
 
 export const useSymptomCategories = () => {
-  const [categories, setCategories] = useState<SymptomCategory[]>(createDefaultCategories);
+  const { userId } = useCurrentUser();
+  const [categories, setCategories] = useState<SymptomCategory[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (!userId) return;
 
-    try {
-      const raw = window.localStorage.getItem(CATEGORY_STORAGE_KEY);
+    const loadCategories = async () => {
+      try {
+        const stored = await userRepository.getSymptomCategories(userId);
 
-      if (!raw) {
+        if (stored.length > 0) {
+          const defaults = createDefaultCategories(userId);
+          const mergedMap = new Map(defaults.map((category) => [category.id, category]));
+
+          stored.forEach((category) => {
+            mergedMap.set(category.id, hydrateCategory(category as SymptomCategory));
+          });
+
+          setCategories(Array.from(mergedMap.values()));
+        } else {
+          setCategories(createDefaultCategories(userId));
+        }
+      } catch (error) {
+        console.warn("Failed to load symptom categories", error);
+      } finally {
         setIsLoaded(true);
-        return;
       }
+    };
 
-      const parsed = JSON.parse(raw) as SymptomCategory[];
-
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        const defaults = createDefaultCategories();
-        const mergedMap = new Map(defaults.map((category) => [category.id, category]));
-
-        parsed.forEach((category) => {
-          mergedMap.set(category.id, hydrateCategory(category));
-        });
-
-        setCategories(Array.from(mergedMap.values()));
-      }
-    } catch (error) {
-      console.warn("Failed to load symptom categories", error);
-    } finally {
-      setIsLoaded(true);
-    }
-  }, []);
+    loadCategories();
+  }, [userId]);
 
   useEffect(() => {
-    if (!isLoaded || typeof window === "undefined") {
+    if (!isLoaded || !userId) {
       return;
     }
 
-    try {
-      window.localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categories));
-    } catch (error) {
-      console.warn("Failed to persist symptom categories", error);
-    }
-  }, [categories, isLoaded]);
+    const saveCategories = async () => {
+      try {
+        await userRepository.saveSymptomCategories(userId, categories);
+      } catch (error) {
+        console.warn("Failed to persist symptom categories", error);
+      }
+    };
+
+    saveCategories();
+  }, [categories, isLoaded, userId]);
 
   const addCategory = useCallback((input: SymptomCategoryInput) => {
+    if (!userId) return;
+
     const category: SymptomCategory = {
       id: typeof crypto !== "undefined" ? crypto.randomUUID() : `category-${Date.now()}`,
-      userId: input.userId ?? "demo",
+      userId: input.userId ?? userId,
       name: input.name.trim(),
       color: input.color,
       description: input.description,
@@ -122,7 +126,7 @@ export const useSymptomCategories = () => {
 
     setCategories((current) => [...current, category]);
     return category;
-  }, []);
+  }, [userId]);
 
   const updateCategory = useCallback((id: string, updates: SymptomCategoryUpdate) => {
     setCategories((current) =>

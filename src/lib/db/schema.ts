@@ -9,11 +9,42 @@ export interface PrivacySettings {
   crashReportsOptIn: boolean;
 }
 
+export interface SymptomFilterPresetRecord {
+  id: string;
+  name: string;
+  filters: string; // JSON-stringified SymptomFilter
+  createdAt: Date;
+}
+
+export interface SymptomCategoryRecord {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  isDefault: boolean;
+  createdAt: Date;
+}
+
+export interface EntryTemplateRecord {
+  id: string;
+  userId: string;
+  name: string;
+  sections: string; // JSON-stringified EntrySection[]
+  isDefault: boolean;
+  createdAt: Date;
+}
+
 export interface UserPreferences {
   theme: "light" | "dark" | "system";
   notifications: NotificationSettings;
   privacy: PrivacySettings;
   exportFormat: "json" | "csv" | "pdf";
+  symptomFilterPresets?: SymptomFilterPresetRecord[];
+  symptomCategories?: SymptomCategoryRecord[];
+  entryTemplates?: EntryTemplateRecord[];
+  activeTemplateId?: string;
 }
 
 export interface UserRecord {
@@ -41,6 +72,23 @@ export interface SymptomRecord {
   severityScale: SeverityScaleRecord;
   isActive: boolean;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+// Symptom Instance - tracks individual symptom occurrences
+export interface SymptomInstanceRecord {
+  id: string;
+  userId: string;
+  name: string;
+  category: string;
+  severity: number;
+  severityScale: string; // JSON-stringified SeverityScale
+  location?: string;
+  duration?: number;
+  triggers?: string; // JSON-stringified string[]
+  notes?: string;
+  photos?: string; // JSON-stringified string[]
+  timestamp: Date;
   updatedAt: Date;
 }
 
@@ -115,6 +163,8 @@ export interface DailyEntryRecord {
   location?: string;
   duration: number;
   completedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface AttachmentRecord {
@@ -174,6 +224,17 @@ export interface PhotoComparisonRecord {
   title: string;
   notes?: string;
   createdAt: Date;
+}
+
+import { RegressionResult } from '../utils/statistics/linearRegression';
+
+export interface AnalysisResultRecord {
+    id?: string;
+    userId: string;
+    metric: string;
+    timeRange: string;
+    result: RegressionResult;
+    createdAt: Date;
 }
 
 export interface FlareRecord {

@@ -6,7 +6,7 @@ import type {
 } from "../types/onboarding";
 
 export const ONBOARDING_STORAGE_KEY = "pocket:onboarding-state";
-export const USER_SETTINGS_STORAGE_KEY = "pocket:user-settings";
+export const CURRENT_USER_ID_KEY = "pocket:currentUserId";
 
 export const createInitialData = (): OnboardingData => ({
   condition: "Hidradenitis Suppurativa",
@@ -183,31 +183,43 @@ export const persistOnboardingState = (state: OnboardingState) => {
   }
 };
 
-export interface StoredUserSettings {
-  condition: string;
-  experience: OnboardingData["experience"];
-  trackingPreferences: OnboardingData["trackingPreferences"];
-  privacySettings: OnboardingData["privacySettings"];
-  onboardingCompletedAt: string;
-}
-
-export const persistUserSettings = (data: OnboardingData) => {
+export const persistUserSettings = async (data: OnboardingData) => {
   if (typeof window === "undefined") {
     return;
   }
 
-  const payload: StoredUserSettings = {
-    condition: data.condition,
-    experience: data.experience,
-    trackingPreferences: data.trackingPreferences,
-    privacySettings: data.privacySettings,
-    onboardingCompletedAt: new Date().toISOString(),
-  };
+  // Ensure user profile exists
+  if (!data.userProfile) {
+    console.error("[Onboarding] Cannot persist user settings without user profile");
+    return;
+  }
 
   try {
-    window.localStorage.setItem(USER_SETTINGS_STORAGE_KEY, JSON.stringify(payload));
+    const { userRepository } = await import("@/lib/repositories/userRepository");
+
+    // Create user record in IndexedDB with all onboarding data
+    const userId = await userRepository.create({
+      name: data.userProfile.name,
+      email: data.userProfile.email,
+      preferences: {
+        theme: "system",
+        notifications: {
+          remindersEnabled: data.trackingPreferences.notificationsEnabled,
+          reminderTime: data.trackingPreferences.reminderTime,
+        },
+        privacy: data.privacySettings,
+        exportFormat: "json",
+        symptomFilterPresets: [],
+      },
+    });
+
+    console.log("[Onboarding] User created in IndexedDB:", userId);
+
+    // Store userId in localStorage for quick access
+    window.localStorage.setItem(CURRENT_USER_ID_KEY, userId);
+    console.log("[Onboarding] Current user ID saved to localStorage");
   } catch (error) {
-    console.warn("[Onboarding] Failed to persist user settings", error);
+    console.error("[Onboarding] Failed to persist user settings", error);
   }
 };
 
@@ -224,5 +236,5 @@ export const resetUserSettings = () => {
     return;
   }
 
-  window.localStorage.removeItem(USER_SETTINGS_STORAGE_KEY);
+  window.localStorage.removeItem(CURRENT_USER_ID_KEY);
 };
