@@ -20,6 +20,9 @@ import {
   TRIGGER_OPTIONS,
 } from "@/lib/data/daily-entry-presets";
 import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
+import { symptomRepository } from "@/lib/repositories/symptomRepository";
+import { medicationRepository } from "@/lib/repositories/medicationRepository";
+import { triggerRepository } from "@/lib/repositories/triggerRepository";
 import { useDateNavigation } from "./useDateNavigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
@@ -45,30 +48,45 @@ interface CalendarDataResult {
   eventsByDate: Map<string, TimelineEvent[]>;
 }
 
-const symptomOptions = new Map(
-  SYMPTOM_OPTIONS.map((option) => [option.id, option]),
-);
-const medicationOptions = new Map(
-  MEDICATION_OPTIONS.map((option) => [option.id, option]),
-);
-const triggerOptions = new Map(
-  TRIGGER_OPTIONS.map((option) => [option.id, option]),
-);
-const moodOptions = new Map(MOOD_OPTIONS.map((option) => [option.id, option]));
+type SymptomLookupValue = { label: string; category: string };
+type MedicationLookupValue = { name: string; dosage?: string; schedule?: string };
+type TriggerLookupValue = { label: string; category: string; description?: string };
 
-const DEFAULT_FILTER_OPTIONS: CalendarFilterOptions = {
-  symptoms: SYMPTOM_OPTIONS.map((option) => option.label),
-  medications: MEDICATION_OPTIONS.map((option) => option.name),
-  triggers: TRIGGER_OPTIONS.map((option) => option.label),
-  categories: Array.from(
-    new Set([
-      ...SYMPTOM_OPTIONS.map((option) => option.category),
-      "Medication",
-      "Trigger",
-      "Note",
-    ]),
-  ),
-};
+const presetSymptomLookup = new Map<string, SymptomLookupValue>(
+  SYMPTOM_OPTIONS.map((option) => [option.id, {
+    label: option.label,
+    category: option.category,
+  }]),
+);
+
+const presetMedicationLookup = new Map<string, MedicationLookupValue>(
+  MEDICATION_OPTIONS.map((option) => [option.id, {
+    name: option.name,
+    dosage: option.dosage,
+    schedule: option.schedule,
+  }]),
+);
+
+const presetTriggerLookup = new Map<string, TriggerLookupValue>(
+  TRIGGER_OPTIONS.map((option) => [option.id, {
+    label: option.label,
+    description: option.description,
+    category: "Trigger",
+  }]),
+);
+
+const moodLookup = new Map(MOOD_OPTIONS.map((option) => [option.id, option]));
+
+const createPresetSymptomLookup = () => new Map(presetSymptomLookup);
+const createPresetMedicationLookup = () => new Map(presetMedicationLookup);
+const createPresetTriggerLookup = () => new Map(presetTriggerLookup);
+
+interface LookupMaps {
+  symptoms: Map<string, SymptomLookupValue>;
+  medications: Map<string, MedicationLookupValue>;
+  triggers: Map<string, TriggerLookupValue>;
+  moods: Map<string, typeof MOOD_OPTIONS[number]>;
+}
 
 const createBaseRange = () => {
   const now = new Date();
@@ -86,7 +104,7 @@ const impactFromIntensity = (value: number): "low" | "medium" | "high" => {
   return "low";
 };
 
-const buildDataset = (history: DailyEntry[]) => {
+const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
   const entries: CalendarEntry[] = [];
   const dayLookup = new Map<string, CalendarDayDetail>();
   const events: TimelineEvent[] = [];
@@ -100,7 +118,7 @@ const buildDataset = (history: DailyEntry[]) => {
       : new Date(entry.completedAt);
 
     const symptomsDetails = entry.symptoms.map((symptom, index) => {
-      const option = symptomOptions.get(symptom.symptomId);
+      const option = lookups.symptoms.get(symptom.symptomId);
       return {
         id: `${iso}-symptom-${symptom.symptomId}-${index}`,
         name: option?.label ?? symptom.symptomId,
@@ -111,7 +129,7 @@ const buildDataset = (history: DailyEntry[]) => {
     });
 
     const medicationDetails = entry.medications.map((medication, index) => {
-      const option = medicationOptions.get(medication.medicationId);
+      const option = lookups.medications.get(medication.medicationId);
       return {
         id: `${iso}-medication-${medication.medicationId}-${index}`,
         name: option?.name ?? medication.medicationId,
@@ -123,17 +141,17 @@ const buildDataset = (history: DailyEntry[]) => {
     });
 
     const triggerDetails = entry.triggers.map((trigger, index) => {
-      const option = triggerOptions.get(trigger.triggerId);
+      const option = lookups.triggers.get(trigger.triggerId);
       return {
         id: `${iso}-trigger-${trigger.triggerId}-${index}`,
         name: option?.label ?? trigger.triggerId,
-        category: "Trigger",
+        category: option?.category ?? "Trigger",
         impact: impactFromIntensity(trigger.intensity),
         intensity: trigger.intensity,
       };
     });
 
-    const moodLabel = entry.mood ? moodOptions.get(entry.mood)?.label ?? entry.mood : undefined;
+    const moodLabel = entry.mood ? lookups.moods.get(entry.mood)?.label ?? entry.mood : undefined;
 
     const calendarEntry: CalendarEntry = {
       date: iso,
@@ -288,7 +306,7 @@ const entryMatchesFilters = (
       ...(entry.symptomCategories ?? []),
       ...(entry.medicationCategories ?? []),
       ...(entry.triggerCategories ?? []),
-      entry.notes ? ["Note"] : [],
+      ...(entry.notes ? ["Note"] : []),
     ];
 
     if (!includesSome(categories, filters.categories)) {
@@ -377,8 +395,73 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
   const { userId } = useCurrentUser();
   const [timelineZoom, setTimelineZoom] = useState<"week" | "month" | "quarter" | "year">("month");
   const [history, setHistory] = useState<DailyEntry[]>([]);
+  const [symptomLookup, setSymptomLookup] = useState<Map<string, SymptomLookupValue>>(
+    () => createPresetSymptomLookup(),
+  );
+  const [medicationLookup, setMedicationLookup] = useState<Map<string, MedicationLookupValue>>(
+    () => createPresetMedicationLookup(),
+  );
+  const [triggerLookup, setTriggerLookup] = useState<Map<string, TriggerLookupValue>>(
+    () => createPresetTriggerLookup(),
+  );
   const navigation = useDateNavigation(createBaseRange(), viewType);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!userId) {
+      setSymptomLookup(createPresetSymptomLookup());
+      setMedicationLookup(createPresetMedicationLookup());
+      setTriggerLookup(createPresetTriggerLookup());
+      return;
+    }
+
+    const loadLookups = async () => {
+      const [symptoms, medications, triggers] = await Promise.all([
+        symptomRepository.getAll(userId),
+        medicationRepository.getAll(userId),
+        triggerRepository.getAll(userId),
+      ]);
+
+      setSymptomLookup(() => {
+        const map = createPresetSymptomLookup();
+        symptoms.forEach((symptom) => {
+          map.set(symptom.id, {
+            label: symptom.name,
+            category: symptom.category ?? "Symptom",
+          });
+        });
+        return map;
+      });
+
+      setMedicationLookup(() => {
+        const map = createPresetMedicationLookup();
+        medications.forEach((medication) => {
+          const scheduleTimes = medication.schedule?.map((slot) => slot.time).join(", ");
+          const scheduleSummary = scheduleTimes || medication.frequency;
+          map.set(medication.id, {
+            name: medication.name,
+            dosage: medication.dosage,
+            schedule: scheduleSummary,
+          });
+        });
+        return map;
+      });
+
+      setTriggerLookup(() => {
+        const map = createPresetTriggerLookup();
+        triggers.forEach((trigger) => {
+          map.set(trigger.id, {
+            label: trigger.name,
+            category: trigger.category ?? "Trigger",
+            description: trigger.description,
+          });
+        });
+        return map;
+      });
+    };
+
+    loadLookups().catch(console.error);
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -410,7 +493,15 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     };
   }, [userId]);
 
-  const dataset = useMemo(() => buildDataset(history), [history]);
+  const dataset = useMemo(
+    () => buildDataset(history, {
+      symptoms: symptomLookup,
+      medications: medicationLookup,
+      triggers: triggerLookup,
+      moods: moodLookup,
+    }),
+    [history, symptomLookup, medicationLookup, triggerLookup],
+  );
 
   // Initialize selected date to latest entry on first load only
   useEffect(() => {
@@ -570,6 +661,34 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     };
   }, [dataset.dayLookup, filteredEntries]);
 
+  const filterOptions = useMemo<CalendarFilterOptions>(() => {
+    const symptomLabels = new Set<string>();
+    symptomLookup.forEach((option) => {
+      symptomLabels.add(option.label);
+    });
+
+    const medicationNames = new Set<string>();
+    medicationLookup.forEach((option) => {
+      medicationNames.add(option.name);
+    });
+
+    const triggerLabels = new Set<string>();
+    triggerLookup.forEach((option) => {
+      triggerLabels.add(option.label);
+    });
+
+    const categories = new Set<string>(["Medication", "Trigger", "Note"]);
+    symptomLookup.forEach((option) => categories.add(option.category));
+    triggerLookup.forEach((option) => categories.add(option.category));
+
+    return {
+      symptoms: Array.from(symptomLabels).sort((a, b) => a.localeCompare(b)),
+      medications: Array.from(medicationNames).sort((a, b) => a.localeCompare(b)),
+      triggers: Array.from(triggerLabels).sort((a, b) => a.localeCompare(b)),
+      categories: Array.from(categories),
+    };
+  }, [medicationLookup, symptomLookup, triggerLookup]);
+
   const viewConfig = useMemo<CalendarViewConfig>(
     () => ({
       viewType,
@@ -603,7 +722,7 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     entries: filteredEntries,
     events: filteredEvents,
     metrics,
-    filterOptions: DEFAULT_FILTER_OPTIONS,
+  filterOptions,
     selectedDate,
     selectDate: setSelectedDate,
     selectedDay: selectedDate ? dataset.dayLookup.get(selectedDate) : undefined,

@@ -29,9 +29,10 @@ ChartJS.register(
 interface ChartViewProps {
   metrics: CalendarMetrics;
   onRegisterChart: (id: string, chart: ChartJS | null) => void;
+  variant?: "full" | "health-only";
 }
 
-export const ChartView = ({ metrics, onRegisterChart }: ChartViewProps) => {
+export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartViewProps) => {
   const healthChartRef = useRef<ChartJS | null>(null);
   const symptomChartRef = useRef<ChartJS | null>(null);
   const medicationChartRef = useRef<ChartJS | null>(null);
@@ -39,16 +40,22 @@ export const ChartView = ({ metrics, onRegisterChart }: ChartViewProps) => {
 
   useEffect(() => {
     onRegisterChart("health-trend", healthChartRef.current);
-    onRegisterChart("symptom-frequency", symptomChartRef.current);
-    onRegisterChart("medication-adherence", medicationChartRef.current);
-    onRegisterChart("correlation", correlationChartRef.current);
+    if (variant === "health-only") {
+      onRegisterChart("symptom-frequency", null);
+      onRegisterChart("medication-adherence", null);
+      onRegisterChart("correlation", null);
+    } else {
+      onRegisterChart("symptom-frequency", symptomChartRef.current);
+      onRegisterChart("medication-adherence", medicationChartRef.current);
+      onRegisterChart("correlation", correlationChartRef.current);
+    }
     return () => {
       onRegisterChart("health-trend", null);
       onRegisterChart("symptom-frequency", null);
       onRegisterChart("medication-adherence", null);
       onRegisterChart("correlation", null);
     };
-  }, [metrics, onRegisterChart]);
+  }, [metrics, onRegisterChart, variant]);
 
   const healthTrendData = useMemo(
     () => ({
@@ -122,16 +129,41 @@ export const ChartView = ({ metrics, onRegisterChart }: ChartViewProps) => {
     [metrics.correlationInsights],
   );
 
-  const emptyState =
-    metrics.healthTrend.length === 0 &&
-    metrics.symptomFrequency.length === 0 &&
-    metrics.medicationAdherence.length === 0 &&
-    metrics.correlationInsights.length === 0;
+  const emptyState = variant === "health-only"
+    ? metrics.healthTrend.length === 0
+    : metrics.healthTrend.length === 0 &&
+      metrics.symptomFrequency.length === 0 &&
+      metrics.medicationAdherence.length === 0 &&
+      metrics.correlationInsights.length === 0;
 
   if (emptyState) {
     return (
       <section className="rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-sm text-muted-foreground">
         Chart visualizations will help highlight correlations once analytics are available.
+      </section>
+    );
+  }
+
+  if (variant === "health-only") {
+    return (
+      <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <h3 className="text-base font-semibold text-foreground">Health trend</h3>
+        <Line
+          ref={(instance) => {
+            healthChartRef.current = instance?.chart ?? null;
+          }}
+          data={healthTrendData}
+          options={{
+            responsive: true,
+            plugins: {
+              legend: { position: "top" as const },
+              tooltip: { mode: "index" as const, intersect: false },
+            },
+            scales: {
+              y: { suggestedMin: 0, suggestedMax: 10 },
+            },
+          }}
+        />
       </section>
     );
   }

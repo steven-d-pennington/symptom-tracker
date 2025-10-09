@@ -34,6 +34,13 @@ const endOfMonth = (date: Date) => {
 const normalizeRange = (range: DateRange, viewType: CalendarViewType): DateRange => {
   const anchor = new Date(range.start);
   switch (viewType) {
+    case "year": {
+      const start = new Date(anchor.getFullYear(), 0, 1);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(anchor.getFullYear(), 11, 31);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
     case "day": {
       const start = new Date(anchor);
       start.setHours(0, 0, 0, 0);
@@ -54,6 +61,9 @@ const shiftRange = (range: DateRange, viewType: CalendarViewType, step: number):
   const { start } = range;
   const next = new Date(start);
   switch (viewType) {
+    case "year":
+      next.setFullYear(next.getFullYear() + step);
+      break;
     case "day":
       next.setDate(next.getDate() + step);
       break;
@@ -72,8 +82,11 @@ const shiftRange = (range: DateRange, viewType: CalendarViewType, step: number):
 const formatRangeLabel = (range: DateRange, viewType: CalendarViewType) => {
   const formatter = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
   const monthFormatter = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" });
+  const yearFormatter = new Intl.DateTimeFormat("en", { year: "numeric" });
 
   switch (viewType) {
+    case "year":
+      return yearFormatter.format(range.start);
     case "day":
       return formatter.format(range.start);
     case "week":
