@@ -120,6 +120,7 @@ const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
     const symptomsDetails = entry.symptoms.map((symptom, index) => {
       const option = lookups.symptoms.get(symptom.symptomId);
       return {
+        symptomId: symptom.symptomId,
         id: `${iso}-symptom-${symptom.symptomId}-${index}`,
         name: option?.label ?? symptom.symptomId,
         severity: Math.max(0, Math.min(10, Math.round(symptom.severity))),
@@ -131,6 +132,7 @@ const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
     const medicationDetails = entry.medications.map((medication, index) => {
       const option = lookups.medications.get(medication.medicationId);
       return {
+        medicationId: medication.medicationId,
         id: `${iso}-medication-${medication.medicationId}-${index}`,
         name: option?.name ?? medication.medicationId,
         dose: medication.dosage ?? option?.dosage ?? "",
@@ -143,6 +145,7 @@ const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
     const triggerDetails = entry.triggers.map((trigger, index) => {
       const option = lookups.triggers.get(trigger.triggerId);
       return {
+        triggerId: trigger.triggerId,
         id: `${iso}-trigger-${trigger.triggerId}-${index}`,
         name: option?.label ?? trigger.triggerId,
         category: option?.category ?? "Trigger",
@@ -165,11 +168,11 @@ const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
       symptomCategories: [...new Set(symptomsDetails.map((item) => item.category))],
       triggerCategories: triggerDetails.length > 0 ? ["Trigger"] : [],
       medicationCategories: medicationDetails.length > 0 ? ["Medication"] : [],
-      symptomTags: symptomsDetails.map((item) => item.name),
-      triggerTags: triggerDetails.map((item) => item.name),
+      symptomTags: symptomsDetails.map((item) => lookups.symptoms.get(item.symptomId)?.label ?? item.name),
+      triggerTags: triggerDetails.map((item) => lookups.triggers.get(item.triggerId)?.label ?? item.name),
       medicationTags: medicationDetails
         .filter((item) => item.taken)
-        .map((item) => item.name),
+        .map((item) => lookups.medications.get(item.medicationId)?.name ?? item.name),
     };
 
     const detail: CalendarDayDetail = {
@@ -580,9 +583,10 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     filteredEntries.forEach((entry) => {
       const detail = dataset.dayLookup.get(entry.date);
       detail?.symptomsDetails.forEach((symptom) => {
+        const resolvedName = symptomLookup.get(symptom.symptomId)?.label ?? symptom.name;
         symptomFrequencyMap.set(
-          symptom.name,
-          (symptomFrequencyMap.get(symptom.name) ?? 0) + 1,
+          resolvedName,
+          (symptomFrequencyMap.get(resolvedName) ?? 0) + 1,
         );
       });
     });
@@ -591,14 +595,15 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     filteredEntries.forEach((entry) => {
       const detail = dataset.dayLookup.get(entry.date);
       detail?.medicationDetails.forEach((medication) => {
+        const resolvedName = medicationLookup.get(medication.medicationId)?.name ?? medication.name;
         const current =
-          medicationAdherenceMap.get(medication.name) ?? { taken: 0, missed: 0 };
+          medicationAdherenceMap.get(resolvedName) ?? { taken: 0, missed: 0 };
         if (medication.taken) {
           current.taken += 1;
         } else {
           current.missed += 1;
         }
-        medicationAdherenceMap.set(medication.name, current);
+        medicationAdherenceMap.set(resolvedName, current);
       });
     });
 
@@ -615,13 +620,15 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
 
       detail.symptomsDetails.forEach((symptom) => {
         detail.triggerDetails.forEach((trigger) => {
-          const key = `${symptom.name}__${trigger.name}`;
+          const resolvedSymptom = symptomLookup.get(symptom.symptomId)?.label ?? symptom.name;
+          const resolvedTrigger = triggerLookup.get(trigger.triggerId)?.label ?? trigger.name;
+          const key = `${resolvedSymptom}__${resolvedTrigger}`;
           const intensity = trigger.intensity;
 
           const current =
             correlationMap.get(key) ?? {
-              symptom: symptom.name,
-              trigger: trigger.name,
+              symptom: resolvedSymptom,
+              trigger: resolvedTrigger,
               occurrences: 0,
               intensityTotal: 0,
             };
@@ -659,7 +666,7 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
       medicationAdherence,
       correlationInsights,
     };
-  }, [dataset.dayLookup, filteredEntries]);
+  }, [dataset.dayLookup, filteredEntries, medicationLookup, symptomLookup, triggerLookup]);
 
   const filterOptions = useMemo<CalendarFilterOptions>(() => {
     const symptomLabels = new Set<string>();
