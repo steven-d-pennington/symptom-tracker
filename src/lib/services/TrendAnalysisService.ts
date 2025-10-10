@@ -4,7 +4,6 @@ import { medicationRepository, MedicationRepository } from '../repositories/medi
 import { analysisRepository, AnalysisRepository } from '../repositories/analysisRepository';
 import { computeLinearRegression, Point, RegressionResult } from '../utils/statistics/linearRegression';
 import { DailyEntryRecord } from '../db/schema';
-import { WorkerPool } from '../workers/WorkerPool';
 
 const parseTimeRange = (timeRange: string): { startDate: string; endDate: string } => {
     const endDate = new Date();
@@ -22,18 +21,12 @@ const parseTimeRange = (timeRange: string): { startDate: string; endDate: string
 };
 
 export class TrendAnalysisService {
-  private workerPool: WorkerPool;
-
   constructor(
     private dailyEntryRepo: DailyEntryRepository,
     private symptomRepo: SymptomRepository,
     private medicationRepo: MedicationRepository,
-    private analysisRepo: AnalysisRepository,
-    workerPool?: WorkerPool
+    private analysisRepo: AnalysisRepository
   ) {
-    if (workerPool) {
-        this.workerPool = workerPool;
-    }
     // Note: Workers disabled for now due to Next.js compatibility issues
     // Computations will run synchronously in the main thread
   }
@@ -54,12 +47,9 @@ export class TrendAnalysisService {
         return null;
     }
 
-    let result: RegressionResult;
-    if (points.length > 100 && this.workerPool) {
-        result = await this.workerPool.runTask({ type: 'linearRegression', payload: points });
-    } else {
-        result = computeLinearRegression(points);
-    }
+    // Note: Worker pool is disabled for Next.js compatibility
+    // All computations run synchronously in the main thread
+    const result = computeLinearRegression(points);
 
     if (result) {
         await this.analysisRepo.saveResult({ userId, metric, timeRange, result, createdAt: new Date() });

@@ -301,7 +301,7 @@ export class ImportService {
    * Import medications
    */
   private async importMedications(
-    medications: Record<string, unknown>[],
+    medications: MedicationRecord[],
     userId: string,
     options: ImportOptions
   ): Promise<{ count: number; skipped: number }> {
@@ -319,10 +319,10 @@ export class ImportService {
             await medicationRepository.update(existing[0].id, {
               ...medication,
               userId,
-            });
+            } as any);
             count++;
           } else {
-            await medicationRepository.create({ ...medication, userId });
+            await medicationRepository.create({ ...medication, userId } as any);
             count++;
           }
         } else if (options.mergeStrategy === "skip") {
@@ -331,13 +331,13 @@ export class ImportService {
             medication.name
           );
           if (existing.length === 0) {
-            await medicationRepository.create({ ...medication, userId });
+            await medicationRepository.create({ ...medication, userId } as any);
             count++;
           } else {
             skipped++;
           }
         } else {
-          await medicationRepository.create({ ...medication, userId });
+          await medicationRepository.create({ ...medication, userId } as any);
           count++;
         }
       } catch (error) {
@@ -353,7 +353,7 @@ export class ImportService {
    * Import triggers
    */
   private async importTriggers(
-    triggers: Record<string, unknown>[],
+    triggers: TriggerRecord[],
     userId: string,
     options: ImportOptions
   ): Promise<{ count: number; skipped: number }> {
@@ -371,10 +371,10 @@ export class ImportService {
             await triggerRepository.update(existing[0].id, {
               ...trigger,
               userId,
-            });
+            } as any);
             count++;
           } else {
-            await triggerRepository.create({ ...trigger, userId });
+            await triggerRepository.create({ ...trigger, userId } as any);
             count++;
           }
         } else if (options.mergeStrategy === "skip") {
@@ -383,13 +383,13 @@ export class ImportService {
             trigger.name
           );
           if (existing.length === 0) {
-            await triggerRepository.create({ ...trigger, userId });
+            await triggerRepository.create({ ...trigger, userId } as any);
             count++;
           } else {
             skipped++;
           }
         } else {
-          await triggerRepository.create({ ...trigger, userId });
+          await triggerRepository.create({ ...trigger, userId } as any);
           count++;
         }
       } catch (error) {
@@ -405,7 +405,7 @@ export class ImportService {
    * Import daily entries
    */
   private async importDailyEntries(
-    entries: Record<string, unknown>[],
+    entries: DailyEntryRecord[],
     userId: string,
     options: ImportOptions
   ): Promise<{ count: number; skipped: number }> {
@@ -423,10 +423,10 @@ export class ImportService {
             await dailyEntryRepository.update(existing.id, {
               ...entry,
               userId,
-            });
+            } as any);
             count++;
           } else {
-            await dailyEntryRepository.create({ ...entry, userId });
+            await dailyEntryRepository.create({ ...entry, userId } as any);
             count++;
           }
         } else if (options.mergeStrategy === "skip") {
@@ -435,13 +435,13 @@ export class ImportService {
             entry.date
           );
           if (!existing) {
-            await dailyEntryRepository.create({ ...entry, userId });
+            await dailyEntryRepository.create({ ...entry, userId } as any);
             count++;
           } else {
             skipped++;
           }
         } else {
-          await dailyEntryRepository.create({ ...entry, userId });
+          await dailyEntryRepository.create({ ...entry, userId } as any);
           count++;
         }
       } catch (error) {
