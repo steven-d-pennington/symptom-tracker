@@ -14,6 +14,13 @@ jest.mock('../TrendChart', () => ({
   TrendChart: () => <div data-testid="mock-chart">Mock Chart</div>,
 }));
 
+// Mock the TrendInterpretation component
+jest.mock('../TrendInterpretation', () => ({
+  TrendInterpretation: ({ direction, confidence }: { direction: string; confidence: string }) => (
+    <div data-testid="mock-interpretation">{direction} - {confidence}</div>
+  ),
+}));
+
 describe('TrendWidget', () => {
     it('should show a loading state and then display the chart', async () => {
         const mockService = {

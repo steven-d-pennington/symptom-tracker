@@ -150,7 +150,7 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
         <h3 className="text-base font-semibold text-foreground">Health trend</h3>
         <Line
           ref={(instance) => {
-            healthChartRef.current = instance?.chart ?? null;
+            healthChartRef.current = instance ?? null;
           }}
           data={healthTrendData}
           options={{
@@ -174,7 +174,7 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
         <h3 className="text-base font-semibold text-foreground">Health trend</h3>
         <Line
           ref={(instance) => {
-            healthChartRef.current = instance?.chart ?? null;
+            healthChartRef.current = instance ?? null;
           }}
           data={healthTrendData}
           options={{
@@ -195,7 +195,7 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
           <h3 className="text-base font-semibold text-foreground">Symptom frequency</h3>
           <Bar
             ref={(instance) => {
-              symptomChartRef.current = instance?.chart ?? null;
+              symptomChartRef.current = instance ?? null;
             }}
             data={symptomFrequencyData}
             options={{
@@ -214,7 +214,7 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
           <h3 className="text-base font-semibold text-foreground">Medication adherence</h3>
           <Bar
             ref={(instance) => {
-              medicationChartRef.current = instance?.chart ?? null;
+              medicationChartRef.current = instance ?? null;
             }}
             data={medicationAdherenceData}
             options={{
@@ -233,7 +233,7 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
           <h3 className="text-base font-semibold text-foreground">Correlation insights</h3>
           <Scatter
             ref={(instance) => {
-              correlationChartRef.current = instance?.chart ?? null;
+              correlationChartRef.current = instance ?? null;
             }}
             data={correlationData}
             options={{

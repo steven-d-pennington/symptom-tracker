@@ -2,7 +2,25 @@
 
 import { TimeRangeSelector } from './TimeRangeSelector';
 import { TrendChart } from './TrendChart';
+import { TrendInterpretation } from './TrendInterpretation';
 import { useDashboard } from './DashboardContext';
+import { TrendAnalysisService } from '@/lib/services/TrendAnalysisService';
+
+const trendAnalysisService = new TrendAnalysisService(
+    {} as any, // dailyEntryRepo - not needed for interpretation
+    {} as any, // symptomRepo - not needed for interpretation
+    {} as any, // medicationRepo - not needed for interpretation
+    {} as any  // analysisRepo - not needed for interpretation
+);
+
+const getMetricType = (metric: string): 'symptom' | 'energy' | 'sleep' | 'stress' | 'health' => {
+    if (metric === 'overallHealth') return 'health';
+    if (metric === 'energyLevel') return 'energy';
+    if (metric === 'sleepQuality') return 'sleep';
+    if (metric === 'stressLevel') return 'stress';
+    if (metric.startsWith('symptom:')) return 'symptom';
+    return 'health';
+};
 
 export const TrendWidget = () => {
     const {
@@ -22,6 +40,16 @@ export const TrendWidget = () => {
     const handleMetricChange = (metric: string) => {
         runAnalysis(metric, selectedTimeRange);
     };
+
+    // Generate interpretation from analysis results
+    const interpretation = analysis?.result 
+        ? trendAnalysisService.generateInterpretation(
+            analysis.result, 
+            Array.isArray(analysis.data) ? analysis.data.length : 0
+          )
+        : null;
+
+    const metricType = getMetricType(selectedMetric);
 
     return (
         <div className="p-4 border rounded-lg bg-card">
@@ -85,15 +113,27 @@ export const TrendWidget = () => {
 
             {/* Success State */}
             {analysis && analysis.result && !loading && !error && (
-                <div>
+                <div className="space-y-4">
+                    {/* Trend Interpretation */}
+                    {interpretation && (
+                        <TrendInterpretation 
+                            direction={interpretation.direction} 
+                            confidence={interpretation.confidence} 
+                        />
+                    )}
+
+                    {/* Trend Chart */}
                     <TrendChart
-                        data={Array.isArray(analysis.data) ? analysis.data : []}
+                        data={Array.isArray(analysis.data) ? analysis.data as { x: number; y: number }[] : []}
                         trendline={analysis.result ? [
                             { x: 0, y: analysis.result.intercept },
                             { x: 1, y: analysis.result.slope + analysis.result.intercept }
                         ] : []}
+                        metricType={metricType}
                     />
-                    <div className="mt-4 p-3 border rounded-md bg-muted/50">
+
+                    {/* Analysis Summary */}
+                    <div className="p-3 border rounded-md bg-muted/50">
                         <h3 className="text-sm font-semibold mb-2">Analysis Summary</h3>
                         <dl className="grid grid-cols-2 gap-2 text-sm">
                             <dt className="text-muted-foreground">Data Points:</dt>
