@@ -6,6 +6,12 @@ import {
   userRepository,
 } from "../repositories";
 import { ExportData } from "./exportService";
+import type {
+  SymptomRecord,
+  MedicationRecord,
+  TriggerRecord,
+  DailyEntryRecord,
+} from "../db/schema";
 
 export interface ImportOptions {
   mergeStrategy: "replace" | "merge" | "skip";
@@ -240,7 +246,7 @@ export class ImportService {
    * Import symptoms
    */
   private async importSymptoms(
-    symptoms: Record<string, unknown>[],
+    symptoms: SymptomRecord[],
     userId: string,
     options: ImportOptions
   ): Promise<{ count: number; skipped: number }> {

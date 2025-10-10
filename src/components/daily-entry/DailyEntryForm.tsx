@@ -91,7 +91,7 @@ export const DailyEntryForm = ({
           enabledTriggers.map(t => ({
             id: t.id,
             label: t.name,
-            category: t.category,
+            description: t.description || "",
           }))
         );
       } catch (error) {

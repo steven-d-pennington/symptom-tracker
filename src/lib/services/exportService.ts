@@ -5,6 +5,13 @@ import {
   triggerRepository,
   dailyEntryRepository,
 } from "../repositories";
+import type {
+  UserRecord,
+  SymptomRecord,
+  MedicationRecord,
+  TriggerRecord,
+  DailyEntryRecord,
+} from "../db/schema";
 
 export interface ExportOptions {
   format: "json" | "csv";
@@ -22,11 +29,11 @@ export interface ExportOptions {
 export interface ExportData {
   exportDate: string;
   version: string;
-  user?: Record<string, unknown>;
-  symptoms?: Record<string, unknown>[];
-  medications?: Record<string, unknown>[];
-  triggers?: Record<string, unknown>[];
-  dailyEntries?: Record<string, unknown>[];
+  user?: UserRecord;
+  symptoms?: SymptomRecord[];
+  medications?: MedicationRecord[];
+  triggers?: TriggerRecord[];
+  dailyEntries?: DailyEntryRecord[];
 }
 
 export class ExportService {

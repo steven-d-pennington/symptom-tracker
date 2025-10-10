@@ -1,5 +1,5 @@
 import { db } from "../db/client";
-import { UserRecord, UserPreferences } from "../db/schema";
+import { UserRecord, UserPreferences, SymptomCategoryRecord, EntryTemplateRecord } from "../db/schema";
 import { generateId } from "../utils/idGenerator";
 
 export class UserRepository {
@@ -182,7 +182,7 @@ export class UserRepository {
   /**
    * Save symptom categories
    */
-  async saveSymptomCategories(userId: string, categories: unknown[]) {
+  async saveSymptomCategories(userId: string, categories: SymptomCategoryRecord[]) {
     await this.updatePreferences(userId, {
       symptomCategories: categories,
     });
@@ -199,7 +199,7 @@ export class UserRepository {
   /**
    * Save entry templates
    */
-  async saveEntryTemplates(userId: string, templates: unknown[]) {
+  async saveEntryTemplates(userId: string, templates: EntryTemplateRecord[]) {
     await this.updatePreferences(userId, {
       entryTemplates: templates,
     });

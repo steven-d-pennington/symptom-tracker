@@ -71,7 +71,6 @@ export function SyncStatus() {
             <button
               onClick={handleSync}
               className="text-blue-600 hover:text-blue-700"
-              disabled={syncStatus.syncStatus === "syncing"}
             >
               Sync now
             </button>

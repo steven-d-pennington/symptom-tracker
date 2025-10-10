@@ -31,7 +31,7 @@ export function PhotoStorageManager({ userId }: PhotoStorageManagerProps) {
     try {
       setIsLoading(true);
 
-      const photos = await photoRepository.getByUserId(userId);
+      const photos = await photoRepository.getAll(userId);
       const totalSize = await photoRepository.getTotalStorageUsed(userId);
 
       const stats: StorageStats = {

@@ -24,7 +24,7 @@ export function TriggerCorrelationDashboard({ userId }: TriggerCorrelationDashbo
       setIsLoading(true);
 
       // Get last 90 days of entries
-      const entries = await dailyEntryRepository.getByUserId(userId);
+      const entries = await dailyEntryRepository.getAll(userId);
       const recentEntries = entries.slice(0, 90);
 
       // Calculate correlations

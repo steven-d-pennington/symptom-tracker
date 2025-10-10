@@ -28,9 +28,15 @@ export function PhotoFilters({ onFilterChange, availableTags }: PhotoFiltersProp
   };
 
   const handleDateRangeChange = (type: "start" | "end", value: string) => {
+    const newDate = value ? new Date(value) : undefined;
+    const currentRange = filter.dateRange || { start: undefined as any, end: undefined as any };
+    
     const newFilter = {
       ...filter,
-      [type === "start" ? "startDate" : "endDate"]: value ? new Date(value) : undefined,
+      dateRange: {
+        start: type === "start" ? newDate : currentRange.start,
+        end: type === "end" ? newDate : currentRange.end,
+      },
     };
 
     setFilter(newFilter);
@@ -44,7 +50,8 @@ export function PhotoFilters({ onFilterChange, availableTags }: PhotoFiltersProp
   };
 
   const hasActiveFilters =
-    (filter.tags && filter.tags.length > 0) || filter.startDate || filter.endDate;
+    (filter.tags && filter.tags.length > 0) || 
+    (filter.dateRange && (filter.dateRange.start || filter.dateRange.end));
 
   return (
     <div className="rounded-lg border border-border bg-card">
@@ -64,7 +71,7 @@ export function PhotoFilters({ onFilterChange, availableTags }: PhotoFiltersProp
           <span className="font-medium">Filters</span>
           {hasActiveFilters && (
             <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-              {(filter.tags?.length || 0) + (filter.startDate ? 1 : 0) + (filter.endDate ? 1 : 0)}
+              {(filter.tags?.length || 0) + ((filter.dateRange?.start || filter.dateRange?.end) ? 1 : 0)}
             </span>
           )}
         </div>
@@ -88,7 +95,7 @@ export function PhotoFilters({ onFilterChange, availableTags }: PhotoFiltersProp
                 <label className="mb-1 block text-xs text-muted-foreground">From</label>
                 <input
                   type="date"
-                  value={filter.startDate?.toISOString().split("T")[0] || ""}
+                  value={filter.dateRange?.start?.toISOString().split("T")[0] || ""}
                   onChange={(e) => handleDateRangeChange("start", e.target.value)}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 />
@@ -97,7 +104,7 @@ export function PhotoFilters({ onFilterChange, availableTags }: PhotoFiltersProp
                 <label className="mb-1 block text-xs text-muted-foreground">To</label>
                 <input
                   type="date"
-                  value={filter.endDate?.toISOString().split("T")[0] || ""}
+                  value={filter.dateRange?.end?.toISOString().split("T")[0] || ""}
                   onChange={(e) => handleDateRangeChange("end", e.target.value)}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 />
