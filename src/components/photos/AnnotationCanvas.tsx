@@ -14,6 +14,7 @@ import {
   renderArrow,
   renderCircle,
   renderRectangle,
+  renderBlur,
 } from '@/lib/utils/annotationRendering';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -122,6 +123,14 @@ export function AnnotationCanvas({
             canvasSize.height
           );
           break;
+        case 'blur':
+          renderBlur(
+            ctx,
+            currentAnnotation.coordinates,
+            canvasSize.width,
+            canvasSize.height
+          );
+          break;
       }
     }
   }, [annotations, currentAnnotation, canvasSize]);
@@ -179,6 +188,7 @@ export function AnnotationCanvas({
         coordinates = { centerX: x, centerY: y, radius: 0 };
         break;
       case 'rectangle':
+      case 'blur':
         coordinates = { x, y, width: 0, height: 0 };
         break;
     }
@@ -216,7 +226,8 @@ export function AnnotationCanvas({
         updatedCoordinates.radius = Math.sqrt(dx * dx + dy * dy);
         break;
       }
-      case 'rectangle': {
+      case 'rectangle':
+      case 'blur': {
         const startX = currentAnnotation.coordinates.x || 0;
         const startY = currentAnnotation.coordinates.y || 0;
         updatedCoordinates.width = x - startX;
@@ -251,6 +262,7 @@ export function AnnotationCanvas({
         hasSize = (coords.radius || 0) > 1;
         break;
       case 'rectangle':
+      case 'blur':
         hasSize = Math.abs(coords.width || 0) > 1 && Math.abs(coords.height || 0) > 1;
         break;
     }

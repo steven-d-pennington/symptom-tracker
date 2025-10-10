@@ -139,6 +139,44 @@ export function getTextBackgroundColor(textColor: string): string {
 }
 
 /**
+ * Render blur region annotation on canvas (preview with overlay)
+ */
+export function renderBlur(
+  ctx: CanvasRenderingContext2D,
+  coords: AnnotationCoordinates,
+  canvasWidth: number,
+  canvasHeight: number
+): void {
+  if (coords.x === undefined || coords.y === undefined || 
+      coords.width === undefined || coords.height === undefined) return;
+
+  const x = percentToPixel(coords.x, canvasWidth);
+  const y = percentToPixel(coords.y, canvasHeight);
+  const width = percentToPixel(coords.width, canvasWidth);
+  const height = percentToPixel(coords.height, canvasHeight);
+
+  // Draw semi-transparent yellow overlay to indicate blur region
+  ctx.fillStyle = 'rgba(234, 179, 8, 0.3)'; // yellow-500 with 30% opacity
+  ctx.fillRect(x, y, width, height);
+
+  // Draw yellow border
+  ctx.strokeStyle = '#EAB308'; // yellow-500
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]); // Dashed line
+  ctx.strokeRect(x, y, width, height);
+  ctx.setLineDash([]); // Reset to solid line
+
+  // Add "BLUR" text label in center
+  ctx.fillStyle = '#EAB308';
+  ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('BLUR', x + width / 2, y + height / 2);
+  ctx.textAlign = 'left'; // Reset
+  ctx.textBaseline = 'top'; // Reset
+}
+
+/**
  * Render text annotation on canvas
  */
 export function renderText(
@@ -267,6 +305,14 @@ export function renderAnnotations(
           ctx,
           annotation.coordinates,
           annotation.color,
+          canvasWidth,
+          canvasHeight
+        );
+        break;
+      case 'blur':
+        renderBlur(
+          ctx,
+          annotation.coordinates,
           canvasWidth,
           canvasHeight
         );

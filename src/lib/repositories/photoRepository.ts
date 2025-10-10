@@ -2,6 +2,9 @@ import { db } from "../db/client";
 import { PhotoAttachmentRecord, PhotoComparisonRecord } from "../db/schema";
 import { PhotoAttachment, PhotoComparisonPair, PhotoFilter } from "../types/photo";
 import { PhotoAnnotation } from "../types/annotation";
+import { PhotoEncryption } from "../utils/photoEncryption";
+import { blurRegion } from "../utils/gaussianBlur";
+import { percentToPixel } from "../utils/annotationRendering";
 import { v4 as uuidv4 } from "uuid";
 
 class PhotoRepository {
@@ -295,6 +298,160 @@ class PhotoRepository {
    */
   async bulkDelete(ids: string[]): Promise<void> {
     await db.photoAttachments.bulkDelete(ids);
+  }
+
+  /**
+   * Apply permanent blur to photo (IRREVERSIBLE)
+   * This replaces the original photo data with blurred version
+   */
+  async applyPermanentBlur(
+    photoId: string,
+    blurAnnotations: PhotoAnnotation[]
+  ): Promise<PhotoAttachment> {
+    console.log('[applyPermanentBlur] Starting blur application', {
+      photoId,
+      blurAnnotationsCount: blurAnnotations.length,
+      blurAnnotations: blurAnnotations.map(a => ({
+        id: a.id,
+        type: a.type,
+        coordinates: a.coordinates,
+      })),
+    });
+
+    const photo = await this.getById(photoId);
+    if (!photo) throw new Error('Photo not found');
+
+    console.log('[applyPermanentBlur] Photo loaded', {
+      hasEncryptionKey: !!photo.encryptionKey,
+      hasEncryptedData: !!photo.encryptedData,
+      width: photo.width,
+      height: photo.height,
+    });
+
+    // 1. Decrypt photo
+    let decryptedBlob: Blob;
+    if (photo.encryptionKey && photo.encryptedData) {
+      console.log('[applyPermanentBlur] Decrypting photo...');
+      const key = await PhotoEncryption.importKey(photo.encryptionKey);
+      decryptedBlob = await PhotoEncryption.decryptPhoto(
+        photo.encryptedData,
+        key,
+        photo.encryptionIV
+      );
+      console.log('[applyPermanentBlur] Photo decrypted', {
+        blobSize: decryptedBlob.size,
+      });
+    } else if (photo.encryptedData) {
+      decryptedBlob = photo.encryptedData;
+      console.log('[applyPermanentBlur] Using unencrypted data');
+    } else {
+      throw new Error('No photo data available');
+    }
+
+    // 2. Load image into canvas
+    console.log('[applyPermanentBlur] Loading image into canvas...');
+    const imageUrl = URL.createObjectURL(decryptedBlob);
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = imageUrl;
+    });
+
+    console.log('[applyPermanentBlur] Image loaded', {
+      width: img.width,
+      height: img.height,
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Could not get canvas context');
+
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(imageUrl);
+
+    // 3. Apply blur to each region
+    console.log('[applyPermanentBlur] Applying blur to regions...');
+    for (const annotation of blurAnnotations) {
+      const coords = annotation.coordinates;
+      if (coords.x === undefined || coords.y === undefined ||
+          coords.width === undefined || coords.height === undefined) {
+        console.warn('[applyPermanentBlur] Skipping annotation with missing coordinates', annotation);
+        continue;
+      }
+
+      // Convert percentage coordinates to pixels
+      const x = percentToPixel(coords.x, canvas.width);
+      const y = percentToPixel(coords.y, canvas.height);
+      const width = percentToPixel(Math.abs(coords.width), canvas.width);
+      const height = percentToPixel(Math.abs(coords.height), canvas.height);
+      const intensity = coords.intensity || 10;
+
+      console.log('[applyPermanentBlur] Blurring region', {
+        percentCoords: { x: coords.x, y: coords.y, width: coords.width, height: coords.height },
+        pixelCoords: { x, y, width, height },
+        intensity,
+      });
+
+      // Apply blur to this region
+      blurRegion(canvas, x, y, width, height, intensity);
+    }
+
+    console.log('[applyPermanentBlur] Blur applied to all regions');
+
+    // 4. Export canvas to blob
+    console.log('[applyPermanentBlur] Exporting canvas to blob...');
+    const blurredBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Failed to create blob from canvas'));
+      }, photo.mimeType || 'image/jpeg', 0.95);
+    });
+
+    console.log('[applyPermanentBlur] Canvas exported', {
+      blobSize: blurredBlob.size,
+    });
+
+    // 5. Re-encrypt if original was encrypted
+    let newEncryptedData: Blob;
+    let newEncryptionKey: string | undefined;
+    let newEncryptionIV: string | undefined;
+
+    if (photo.encryptionKey) {
+      console.log('[applyPermanentBlur] Re-encrypting blurred photo...');
+      // Reuse existing encryption key
+      const key = await PhotoEncryption.importKey(photo.encryptionKey);
+      const { data, iv } = await PhotoEncryption.encryptPhoto(blurredBlob, key);
+      newEncryptedData = data;
+      newEncryptionKey = photo.encryptionKey; // Keep the same key
+      newEncryptionIV = iv;
+      console.log('[applyPermanentBlur] Photo re-encrypted');
+    } else {
+      newEncryptedData = blurredBlob;
+      console.log('[applyPermanentBlur] No encryption needed');
+    }
+
+    // 6. Update photo record
+    console.log('[applyPermanentBlur] Updating photo record...');
+    const updatedPhoto: PhotoAttachment = {
+      ...photo,
+      encryptedData: newEncryptedData,
+      encryptionIV: newEncryptionIV ?? photo.encryptionIV,
+      hasBlur: true,
+      // Remove blur annotations (they're now permanent)
+      annotations: photo.annotations?.filter(a => a.type !== 'blur'),
+      updatedAt: new Date(),
+    };
+
+    await this.update(photoId, updatedPhoto);
+    console.log('[applyPermanentBlur] Photo updated successfully', {
+      hasBlur: updatedPhoto.hasBlur,
+      remainingAnnotations: updatedPhoto.annotations?.length || 0,
+    });
+
+    return updatedPhoto;
   }
 }
 

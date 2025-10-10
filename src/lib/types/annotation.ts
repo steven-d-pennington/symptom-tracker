@@ -70,6 +70,13 @@ export const FONT_SIZES = {
   large: 24,
 } as const;
 
+export const BLUR_INTENSITIES = {
+  light: 5,
+  medium: 10,
+  heavy: 20,
+} as const;
+
 export type ColorOption = keyof typeof ANNOTATION_COLORS;
 export type LineWidthOption = keyof typeof LINE_WIDTHS;
 export type FontSizeOption = keyof typeof FONT_SIZES;
+export type BlurIntensityOption = keyof typeof BLUR_INTENSITIES;

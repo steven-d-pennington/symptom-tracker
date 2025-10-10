@@ -1,7 +1,7 @@
 "use client";
 
 import { AnnotationTool } from '@/lib/types/annotation';
-import { ArrowUpRight, Circle, Square, Type } from 'lucide-react';
+import { ArrowUpRight, Circle, Square, Type, Ban } from 'lucide-react';
 
 interface AnnotationToolbarProps {
   selectedTool: AnnotationTool;
@@ -14,6 +14,7 @@ export function AnnotationToolbar({ selectedTool, onToolSelect }: AnnotationTool
     { type: 'circle' as AnnotationTool, icon: Circle, label: 'Circle' },
     { type: 'rectangle' as AnnotationTool, icon: Square, label: 'Rectangle' },
     { type: 'text' as AnnotationTool, icon: Type, label: 'Text' },
+    { type: 'blur' as AnnotationTool, icon: Ban, label: 'Blur (Permanent)', isWarning: true },
   ];
 
   return (
@@ -21,6 +22,7 @@ export function AnnotationToolbar({ selectedTool, onToolSelect }: AnnotationTool
       {tools.map((tool) => {
         const Icon = tool.icon;
         const isActive = selectedTool === tool.type;
+        const isWarning = 'isWarning' in tool && tool.isWarning;
         
         return (
           <button
@@ -28,8 +30,12 @@ export function AnnotationToolbar({ selectedTool, onToolSelect }: AnnotationTool
             onClick={() => onToolSelect(tool.type)}
             className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2 transition-colors ${
               isActive
-                ? 'bg-blue-500 text-white shadow-lg'
-                : 'bg-white/20 text-white hover:bg-white/30'
+                ? isWarning 
+                  ? 'bg-yellow-500 text-white shadow-lg'
+                  : 'bg-blue-500 text-white shadow-lg'
+                : isWarning
+                  ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'
+                  : 'bg-white/20 text-white hover:bg-white/30'
             }`}
             title={tool.label}
             aria-label={tool.label}

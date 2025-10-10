@@ -11,13 +11,17 @@ import {
   ANNOTATION_COLORS,
   LINE_WIDTHS,
   FONT_SIZES,
+  BLUR_INTENSITIES,
 } from '@/lib/types/annotation';
 import { AnnotationCanvas } from './AnnotationCanvas';
 import { AnnotationToolbar } from './AnnotationToolbar';
 import { AnnotationColorPicker } from './AnnotationColorPicker';
 import { LineWidthSelector } from './LineWidthSelector';
 import { FontSizeSelector } from './FontSizeSelector';
+import { BlurIntensitySelector } from './BlurIntensitySelector';
 import { TextInputDialog } from './TextInputDialog';
+import { BlurWarningDialog } from './BlurWarningDialog';
+import { photoRepository } from '@/lib/repositories/photoRepository';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PhotoAnnotationProps {
@@ -41,6 +45,7 @@ export function PhotoAnnotation({
     color: ANNOTATION_COLORS.red,
     lineWidth: LINE_WIDTHS.medium,
     fontSize: FONT_SIZES.medium,
+    blurIntensity: BLUR_INTENSITIES.medium,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -51,6 +56,10 @@ export function PhotoAnnotation({
   // Text annotation state
   const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const [textPosition, setTextPosition] = useState<{ x: number; y: number } | null>(null);
+  
+  // Blur warning state
+  const [isBlurWarningOpen, setIsBlurWarningOpen] = useState(false);
+  const [isApplyingBlur, setIsApplyingBlur] = useState(false);
 
   // Load and decrypt image
   useEffect(() => {
@@ -122,6 +131,7 @@ export function PhotoAnnotation({
         color: ANNOTATION_COLORS.red,
         lineWidth: LINE_WIDTHS.medium,
         fontSize: FONT_SIZES.medium,
+        blurIntensity: BLUR_INTENSITIES.medium,
       });
     }
   }, [isOpen, existingAnnotations]);
@@ -169,6 +179,16 @@ export function PhotoAnnotation({
   };
 
   const handleSave = async () => {
+    // Check if there are any blur annotations
+    const blurAnnotations = annotations.filter(a => a.type === 'blur');
+    
+    if (blurAnnotations.length > 0) {
+      // Show warning dialog before applying blur
+      setIsBlurWarningOpen(true);
+      return;
+    }
+    
+    // No blur annotations, save normally
     setIsSaving(true);
     try {
       await onSave(annotations);
@@ -178,6 +198,40 @@ export function PhotoAnnotation({
       alert('Failed to save annotations. Please try again.');
     } finally {
       setIsSaving(false);
+    }
+  };
+  
+  const handleBlurConfirm = async () => {
+    setIsBlurWarningOpen(false);
+    setIsApplyingBlur(true);
+    
+    try {
+      // Get blur annotations
+      const blurAnnotations = annotations.filter(a => a.type === 'blur');
+      
+      console.log('[PhotoAnnotation] Applying permanent blur', {
+        blurAnnotationsCount: blurAnnotations.length,
+        photoId: photo.id,
+      });
+      
+      // Apply permanent blur to photo (this updates the photo in the database)
+      await photoRepository.applyPermanentBlur(photo.id, blurAnnotations);
+      
+      console.log('[PhotoAnnotation] Blur applied successfully');
+      
+      // Save remaining non-blur annotations
+      // The blur annotations are already removed by applyPermanentBlur
+      const nonBlurAnnotations = annotations.filter(a => a.type !== 'blur');
+      await onSave(nonBlurAnnotations);
+      
+      console.log('[PhotoAnnotation] Annotations saved. Photo will be refreshed by parent component.');
+      
+      onClose();
+    } catch (error) {
+      console.error('[PhotoAnnotation] Failed to apply blur:', error);
+      alert('Failed to apply blur. Please try again.');
+    } finally {
+      setIsApplyingBlur(false);
     }
   };
 
@@ -225,6 +279,8 @@ export function PhotoAnnotation({
         setSelectedTool('rectangle');
       } else if (e.key === 't' || e.key === 'T') {
         setSelectedTool('text');
+      } else if (e.key === 'b' || e.key === 'B') {
+        setSelectedTool('blur');
       }
     };
 
@@ -298,7 +354,7 @@ export function PhotoAnnotation({
           </div>
 
           {/* Line width selector - only for shape tools */}
-          {selectedTool !== 'text' && (
+          {selectedTool !== 'text' && selectedTool !== 'blur' && (
             <div className="rounded-lg bg-black/60 p-2 backdrop-blur-md">
               <LineWidthSelector
                 selectedWidth={toolConfig.lineWidth}
@@ -319,6 +375,21 @@ export function PhotoAnnotation({
                 }
                 onSizeSelect={(size) =>
                   setToolConfig((prev) => ({ ...prev, fontSize: FONT_SIZES[size] }))
+                }
+              />
+            </div>
+          )}
+
+          {/* Blur intensity selector - only for blur tool */}
+          {selectedTool === 'blur' && (
+            <div className="rounded-lg bg-black/60 p-2 backdrop-blur-md">
+              <BlurIntensitySelector
+                selectedIntensity={
+                  (toolConfig.blurIntensity === BLUR_INTENSITIES.light ? 'light' :
+                   toolConfig.blurIntensity === BLUR_INTENSITIES.heavy ? 'heavy' : 'medium') as 'light' | 'medium' | 'heavy'
+                }
+                onIntensitySelect={(intensity) =>
+                  setToolConfig((prev) => ({ ...prev, blurIntensity: BLUR_INTENSITIES[intensity] }))
                 }
               />
             </div>
@@ -354,7 +425,7 @@ export function PhotoAnnotation({
         <div className="text-sm text-white/60">
           {annotations.length} {annotations.length === 1 ? 'annotation' : 'annotations'}
           <span className="ml-4 text-white/40">
-            Shortcuts: A (Arrow), C (Circle), R (Rectangle), T (Text), Ctrl+Z (Undo), Ctrl+S (Save)
+            Shortcuts: A (Arrow), C (Circle), R (Rectangle), T (Text), B (Blur), Ctrl+Z (Undo), Ctrl+S (Save)
           </span>
         </div>
         <div className="flex gap-3">
@@ -367,11 +438,11 @@ export function PhotoAnnotation({
           </button>
           <button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || isApplyingBlur}
             className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50"
           >
-            {isSaving ? (
-              <>Saving...</>
+            {isSaving || isApplyingBlur ? (
+              <>{isApplyingBlur ? 'Applying Blur...' : 'Saving...'}</>
             ) : (
               <>
                 <Save className="h-4 w-4" />
@@ -388,6 +459,25 @@ export function PhotoAnnotation({
         onOpenChange={setIsTextDialogOpen}
         onSave={handleTextSave}
       />
+      
+      {/* Blur warning dialog */}
+      <BlurWarningDialog
+        open={isBlurWarningOpen}
+        blurAnnotations={annotations.filter(a => a.type === 'blur')}
+        onConfirm={handleBlurConfirm}
+        onOpenChange={setIsBlurWarningOpen}
+      />
+      
+      {/* Blur processing indicator */}
+      {isApplyingBlur && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 rounded-lg bg-white/10 px-8 py-6 shadow-xl backdrop-blur-md">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-yellow-500/30 border-t-yellow-500"></div>
+            <div className="text-lg font-medium text-white">Applying blur to photo...</div>
+            <div className="text-sm text-white/60">This may take a moment</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

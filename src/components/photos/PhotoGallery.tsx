@@ -210,15 +210,22 @@ export function PhotoGallery({
   const handleAnnotationsSave = async (photoId: string, annotations: PhotoAnnotation[]) => {
     try {
       await photoRepository.updateAnnotations(photoId, annotations);
-      // Update local state
-      setPhotos((prev) => 
-        prev.map((p) => 
-          p.id === photoId ? { ...p, annotations } : p
-        )
-      );
-      // Update selected photo if it's the current one
-      if (selectedPhoto?.id === photoId) {
-        setSelectedPhoto({ ...selectedPhoto, annotations });
+      
+      // Reload the photo from database to get any changes (e.g., blur applied)
+      const updatedPhoto = await photoRepository.getById(photoId);
+      
+      if (updatedPhoto) {
+        // Update local state with fresh photo data
+        setPhotos((prev) => 
+          prev.map((p) => 
+            p.id === photoId ? updatedPhoto : p
+          )
+        );
+        
+        // Update selected photo if it's the current one
+        if (selectedPhoto?.id === photoId) {
+          setSelectedPhoto(updatedPhoto);
+        }
       }
     } catch (error) {
       console.error("Failed to save annotations:", error);

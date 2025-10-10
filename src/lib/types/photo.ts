@@ -27,6 +27,7 @@ export interface PhotoAttachment {
   notes?: string;
   metadata?: PhotoMetadata;
   annotations?: PhotoAnnotation[]; // Photo annotations (arrows, circles, etc.)
+  hasBlur?: boolean; // Flag indicating permanent blur has been applied
   createdAt: Date;
   updatedAt: Date;
 }
