@@ -8,6 +8,7 @@ import {
   Calendar,
   HelpCircle,
   LogOut,
+  Sliders,
 } from "lucide-react";
 
 export default function MorePage() {
@@ -16,9 +17,15 @@ export default function MorePage() {
       title: "App Features",
       items: [
         {
+          icon: Sliders,
+          label: "Manage Data",
+          href: "/manage",
+          description: "Customize medications, symptoms, and triggers",
+        },
+        {
           icon: Calendar,
           label: "Calendar View",
-          href: "/",
+          href: "/calendar",
           description: "View your health history timeline",
         },
         {

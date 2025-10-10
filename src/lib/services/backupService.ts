@@ -8,6 +8,10 @@ export interface BackupMetadata {
   recordCount: number;
 }
 
+interface StoredBackup extends BackupMetadata {
+  data: string; // Base64 data URL
+}
+
 export interface BackupSettings {
   autoBackupEnabled: boolean;
   backupFrequency: "daily" | "weekly" | "monthly";
@@ -45,7 +49,7 @@ export class BackupService {
     // Store backup in localStorage (for small backups)
     // Future: Could store in IndexedDB for larger backups
     const dataUrl = await this.blobToDataUrl(blob);
-    const backups = this.getBackupList();
+    const backups = this.getStoredBackupList();
     backups.push({
       ...metadata,
       data: dataUrl,
@@ -70,7 +74,7 @@ export class BackupService {
     userId: string,
     options: ImportOptions
   ): Promise<boolean> {
-    const backups = this.getBackupList();
+    const backups = this.getStoredBackupList();
     const backup = backups.find((b) => b.id === backupId);
 
     if (!backup) {
@@ -89,9 +93,9 @@ export class BackupService {
   }
 
   /**
-   * Get list of available backups
+   * Get list of available backups (with data)
    */
-  getBackupList(): BackupMetadata[] {
+  private getStoredBackupList(): StoredBackup[] {
     const stored = localStorage.getItem(this.BACKUP_STORAGE_KEY);
     if (!stored) {
       return [];
@@ -105,10 +109,17 @@ export class BackupService {
   }
 
   /**
+   * Get list of available backups (metadata only)
+   */
+  getBackupList(): BackupMetadata[] {
+    return this.getStoredBackupList().map(({ data, ...metadata }) => metadata);
+  }
+
+  /**
    * Delete a backup
    */
   deleteBackup(backupId: string): void {
-    const backups = this.getBackupList();
+    const backups = this.getStoredBackupList();
     const filtered = backups.filter((b) => b.id !== backupId);
     localStorage.setItem(this.BACKUP_STORAGE_KEY, JSON.stringify(filtered));
   }
@@ -154,7 +165,7 @@ export class BackupService {
    * Download a backup file
    */
   async downloadBackup(backupId: string): Promise<void> {
-    const backups = this.getBackupList();
+    const backups = this.getStoredBackupList();
     const backup = backups.find((b) => b.id === backupId);
 
     if (!backup) {

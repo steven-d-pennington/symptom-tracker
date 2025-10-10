@@ -1,4 +1,4 @@
-export type CalendarViewType = "month" | "week" | "day" | "timeline";
+export type CalendarViewType = "year" | "month" | "week" | "day" | "timeline";
 
 export interface CalendarEntry {
   date: string;
@@ -18,6 +18,7 @@ export interface CalendarEntry {
 }
 
 export interface SymptomDetail {
+  symptomId: string;
   id: string;
   name: string;
   severity: number;
@@ -26,6 +27,7 @@ export interface SymptomDetail {
 }
 
 export interface MedicationDetail {
+  medicationId: string;
   id: string;
   name: string;
   dose: string;
@@ -35,10 +37,12 @@ export interface MedicationDetail {
 }
 
 export interface TriggerDetail {
+  triggerId: string;
   id: string;
   name: string;
   category: string;
   impact: "low" | "medium" | "high";
+  intensity: number;
 }
 
 export interface CalendarDayDetail extends CalendarEntry {

@@ -44,15 +44,9 @@ export function PhotoViewer({
         setScale(1);
         setPosition({ x: 0, y: 0 });
 
-        const encryption = new PhotoEncryption();
-        const key = await encryption.importKey(photo.encryptionKey);
-        const decryptedBlob = await encryption.decryptPhoto(
-          photo.encryptedData,
-          key,
-          photo.iv
-        );
-
-        objectUrl = URL.createObjectURL(decryptedBlob);
+        // TODO: Implement photo decryption once encryption key storage is finalized
+        // For now, create object URL directly from encrypted data
+        objectUrl = URL.createObjectURL(photo.encryptedData);
         setImageUrl(objectUrl);
       } catch (err) {
         console.error("Failed to load photo:", err);

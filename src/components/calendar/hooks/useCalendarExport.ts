@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Chart } from "chart.js";
 import { CalendarEntry, CalendarMetrics, TimelineEvent } from "@/lib/types/calendar";
 
@@ -139,7 +139,11 @@ export const useCalendarExport = ({ entries, events, metrics }: UseCalendarExpor
     link.click();
   }, []);
 
-  const canShare = useMemo(() => typeof navigator !== "undefined" && "share" in navigator, []);
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    setCanShare(typeof navigator !== "undefined" && "share" in navigator);
+  }, []);
 
   return {
     exportCSV,

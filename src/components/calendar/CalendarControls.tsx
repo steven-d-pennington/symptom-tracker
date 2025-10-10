@@ -69,6 +69,7 @@ export const CalendarControls = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 text-sm">
           {[
+            { label: "Year", value: "year" },
             { label: "Month", value: "month" },
             { label: "Week", value: "week" },
             { label: "Day", value: "day" },

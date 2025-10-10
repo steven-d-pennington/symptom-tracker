@@ -8,6 +8,12 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
       "Get a quick overview of how the tracker keeps your health data organized and private.",
   },
   {
+    id: "profile",
+    title: "Create Your Profile",
+    description:
+      "Enter your basic information to personalize your experience.",
+  },
+  {
     id: "condition",
     title: "Choose Your Focus Areas",
     description:

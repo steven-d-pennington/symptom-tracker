@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 
 export type OnboardingStepId =
   | "welcome"
+  | "profile"
   | "condition"
   | "preferences"
   | "education"
@@ -26,7 +27,13 @@ export interface EducationalProgress {
   lastViewedAt?: Date;
 }
 
+export interface UserProfile {
+  name: string;
+  email: string;
+}
+
 export interface OnboardingData {
+  userProfile?: UserProfile;
   condition: string;
   experience: "new" | "experienced" | "returning";
   trackingPreferences: TrackingPreferences;

@@ -10,11 +10,13 @@ import { ConditionStep } from "./ConditionStep";
 import { EducationStep } from "./EducationStep";
 import { PreferencesStep } from "./PreferencesStep";
 import { PrivacyStep } from "./PrivacyStep";
+import { ProfileStep } from "./ProfileStep";
 import { ProgressIndicator } from "./ProgressIndicator";
 import { WelcomeStep } from "./WelcomeStep";
 
 const STEP_COMPONENTS: Record<OnboardingStepId, OnboardingStepComponent> = {
   welcome: WelcomeStep,
+  profile: ProfileStep,
   condition: ConditionStep,
   preferences: PreferencesStep,
   education: EducationStep,

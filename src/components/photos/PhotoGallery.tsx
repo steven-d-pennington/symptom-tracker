@@ -45,15 +45,15 @@ export function PhotoGallery({
         let newPhotos: PhotoAttachment[];
 
         if (dailyEntryId) {
-          const allPhotos = await photoRepository.getAll();
+          const allPhotos = await photoRepository.getAll(userId);
           newPhotos = allPhotos.filter((p) => p.dailyEntryId === dailyEntryId);
         } else if (symptomId) {
-          const allPhotos = await photoRepository.getAll();
+          const allPhotos = await photoRepository.getAll(userId);
           newPhotos = allPhotos.filter((p) => p.symptomId === symptomId);
         } else if (bodyRegionId) {
           newPhotos = await photoRepository.getByBodyRegion(userId, bodyRegionId);
         } else {
-          newPhotos = await photoRepository.getByUserId(userId);
+          newPhotos = await photoRepository.getAll(userId);
         }
 
         // Sort by capture date (newest first)

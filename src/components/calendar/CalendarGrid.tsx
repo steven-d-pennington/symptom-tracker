@@ -22,6 +22,14 @@ interface CalendarCell {
   events: TimelineEvent[];
 }
 
+interface CalendarMonth {
+  label: string;
+  monthIndex: number;
+  cells: CalendarCell[];
+  entryCount: number;
+  averageHealth?: number;
+}
+
 const startOfWeek = (date: Date) => {
   const copy = new Date(date);
   const day = copy.getDay();
@@ -63,6 +71,57 @@ const createMonthCells = (
   }
 
   return cells;
+};
+
+const createYearMonths = (
+  year: number,
+  dayLookup: Map<string, CalendarDayDetail>,
+  eventsByDate: Map<string, TimelineEvent[]>,
+  entryMap: Map<string, CalendarEntry>,
+): CalendarMonth[] => {
+  const formatter = new Intl.DateTimeFormat("en", { month: "long" });
+  const months: CalendarMonth[] = [];
+
+  for (let monthIndex = 0; monthIndex < 12; monthIndex += 1) {
+    const monthStart = new Date(year, monthIndex, 1);
+    const monthEnd = new Date(year, monthIndex + 1, 0);
+    const gridStart = startOfWeek(monthStart);
+    const gridEnd = endOfWeek(monthEnd);
+
+    const cells: CalendarCell[] = [];
+    const cursor = new Date(gridStart);
+    let entryCount = 0;
+    let healthTotal = 0;
+
+    while (cursor <= gridEnd) {
+      const iso = cursor.toISOString().slice(0, 10);
+      const entry = entryMap.get(iso);
+      if (entry) {
+        entryCount += 1;
+        if (typeof entry.overallHealth === "number") {
+          healthTotal += entry.overallHealth;
+        }
+      }
+
+      cells.push({
+        date: iso,
+        isCurrentMonth: cursor.getMonth() === monthIndex,
+        entry: dayLookup.get(iso),
+        events: eventsByDate.get(iso) ?? [],
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    months.push({
+      label: formatter.format(monthStart),
+      monthIndex,
+      cells,
+      entryCount,
+      averageHealth: entryCount > 0 ? healthTotal / entryCount : undefined,
+    });
+  }
+
+  return months;
 };
 
 const createWeekCells = (
@@ -118,6 +177,88 @@ export const CalendarGrid = ({
   eventsByDate,
 }: CalendarGridProps) => {
   const entryMap = useMemo(() => new Map(entries.map((entry) => [entry.date, entry])), [entries]);
+  const isYearView = view.viewType === "year";
+  const year = view.dateRange.start.getFullYear();
+  const yearMonths = useMemo(
+    () => (isYearView ? createYearMonths(year, dayLookup, eventsByDate, entryMap) : []),
+    [dayLookup, entryMap, eventsByDate, isYearView, year],
+  );
+
+  if (isYearView) {
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {yearMonths.map((month) => (
+            <div key={`${view.dateRange.start.getFullYear()}-${month.monthIndex}`} className="space-y-2 rounded-2xl border border-border bg-card p-3 shadow-sm">
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="text-sm font-semibold text-foreground">{month.label}</h3>
+                {month.entryCount > 0 ? (
+                  <span className="text-xs text-muted-foreground">
+                    {month.entryCount} {month.entryCount === 1 ? "entry" : "entries"}
+                    {typeof month.averageHealth === "number"
+                      ? ` · avg ${month.averageHealth.toFixed(1)}`
+                      : ""}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">No data</span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                {weekdayLabels.map((label) => (
+                  <span key={`${month.label}-${label}`}>{label}</span>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-[11px]" role="grid">
+                {month.cells.map((cell) => {
+                  const filteredEntry = entryMap.get(cell.date);
+                  const entry = filteredEntry ?? cell.entry;
+                  const matchesFilters = Boolean(filteredEntry);
+                  const isSelected = cell.date === selectedDate;
+                  const isToday = cell.date === new Date().toISOString().slice(0, 10);
+
+                  return (
+                    <button
+                      key={cell.date}
+                      type="button"
+                      onClick={() => onSelectDate?.(cell.date)}
+                      className={`flex h-10 flex-col justify-between rounded-lg border px-2 py-1 text-left transition-colors ${
+                        getSeverityClass(entry?.overallHealth)
+                      } ${
+                        !cell.isCurrentMonth ? "opacity-30" : ""
+                      } ${isSelected ? "ring-2 ring-primary" : ""}`}
+                      aria-pressed={isSelected}
+                      aria-label={`View details for ${cell.date}`}
+                      data-filter-match={matchesFilters}
+                    >
+                      <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
+                        <span>{formatDateLabel(cell.date)}</span>
+                        {isToday ? (
+                          <span className="rounded bg-primary px-1 py-0.5 text-[9px] text-primary-foreground">
+                            Today
+                          </span>
+                        ) : null}
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ${
+                          matchesFilters ? "bg-emerald-500/20 text-emerald-700" : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {typeof entry?.overallHealth === "number"
+                          ? `${entry.overallHealth.toFixed(1)}`
+                          : "–"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const cells = useMemo(() => {
     switch (view.viewType) {

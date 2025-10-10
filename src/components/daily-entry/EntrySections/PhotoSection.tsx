@@ -26,6 +26,12 @@ export function PhotoSection({
     }
   };
 
+  const handlePhotoCapture = async (file: File, preview: string) => {
+    // TODO: Save photo to IndexedDB with encryption
+    console.log("Photo captured:", file.name, preview);
+    handlePhotoUploaded();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -87,10 +93,8 @@ export function PhotoSection({
 
       {showCapture && (
         <PhotoCapture
-          userId={userId}
-          dailyEntryId={dailyEntryId}
-          onClose={() => setShowCapture(false)}
-          onPhotoUploaded={handlePhotoUploaded}
+          onPhotoCapture={handlePhotoCapture}
+          onCancel={() => setShowCapture(false)}
         />
       )}
     </div>

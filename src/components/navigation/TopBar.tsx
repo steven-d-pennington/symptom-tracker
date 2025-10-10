@@ -3,6 +3,7 @@
 import { ArrowLeft, Menu, Wifi, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { UserProfileIndicator } from "./UserProfileIndicator";
 
 interface TopBarProps {
   title: string;
@@ -71,6 +72,9 @@ export function TopBar({
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
+          {/* User Profile Indicator */}
+          <UserProfileIndicator />
+
           {/* Offline Indicator */}
           {!isOnline && (
             <div

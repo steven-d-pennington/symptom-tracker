@@ -9,10 +9,12 @@ import {
   Camera,
   Flame,
   BarChart3,
+  TrendingUp,
   Settings,
   Download,
   Lock,
   Info,
+  Sliders,
 } from "lucide-react";
 import { useActiveRoute } from "./hooks/useActiveRoute";
 import { LucideIcon } from "lucide-react";
@@ -34,7 +36,9 @@ const navSections: NavSection[] = [
     items: [
       { icon: FileText, label: "Daily Log", href: "/log" },
       { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-      { icon: Calendar, label: "Calendar", href: "/" },
+      { icon: TrendingUp, label: "Analytics", href: "/analytics" },
+      { icon: Calendar, label: "Calendar", href: "/calendar" },
+      { icon: Sliders, label: "Manage", href: "/manage" },
     ],
   },
   {

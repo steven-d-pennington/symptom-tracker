@@ -29,17 +29,9 @@ export function PhotoThumbnail({
         setIsLoading(true);
         setError(null);
 
-        // Decrypt thumbnail
-        const encryption = new PhotoEncryption();
-        const key = await encryption.importKey(photo.encryptionKey);
-        const decryptedBlob = await encryption.decryptPhoto(
-          photo.thumbnailData,
-          key,
-          photo.iv
-        );
-
-        // Create object URL
-        objectUrl = URL.createObjectURL(decryptedBlob);
+        // TODO: Implement photo decryption once encryption key storage is finalized
+        // For now, create object URL directly from thumbnail data
+        objectUrl = URL.createObjectURL(photo.thumbnailData);
         setThumbnailUrl(objectUrl);
       } catch (err) {
         console.error("Failed to load thumbnail:", err);

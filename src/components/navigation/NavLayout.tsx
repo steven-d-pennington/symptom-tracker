@@ -18,6 +18,7 @@ function getPageTitle(pathname: string): string {
   const titles: Record<string, string> = {
     "/log": "Daily Log",
     "/dashboard": "Dashboard",
+    "/analytics": "Analytics",
     "/photos": "Photo Gallery",
     "/body-map": "Body Map",
     "/flares": "Active Flares",
