@@ -1,57 +1,39 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { userRepository } from "@/lib/repositories/userRepository";
-import { UserRecord } from "@/lib/db/schema";
+import { useState, useEffect } from 'react';
 
 const CURRENT_USER_ID_KEY = "pocket:currentUserId";
 
-/**
- * Hook to get the current user from IndexedDB
- * Returns the userId and user record, or null if not logged in/onboarded
- *
- * Storage pattern:
- * - localStorage: stores only userId (string) for quick access
- * - IndexedDB: stores full UserRecord (name, email, preferences, etc.)
- */
+// Hook for current user functionality
+// Reads the user ID from localStorage that was set during onboarding
 export const useCurrentUser = () => {
   const [userId, setUserId] = useState<string | null>(null);
-  const [user, setUser] = useState<UserRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        // Get userId from localStorage (set during onboarding)
-        const storedUserId = localStorage.getItem(CURRENT_USER_ID_KEY);
-        if (!storedUserId) {
-          setIsLoading(false);
-          return;
-        }
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
 
+    try {
+      const storedUserId = window.localStorage.getItem(CURRENT_USER_ID_KEY);
+      if (storedUserId) {
         setUserId(storedUserId);
-
-        // Load full user record from IndexedDB (single source of truth)
-        const userRecord = await userRepository.getById(storedUserId);
-        setUser(userRecord);
-
-        if (!userRecord) {
-          console.warn("[useCurrentUser] User ID found in localStorage but not in IndexedDB:", storedUserId);
-        }
-      } catch (error) {
-        console.error("[useCurrentUser] Failed to load user", error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        // Fallback to default-user-id for development/testing
+        // This allows the app to work even without going through onboarding
+        setUserId('default-user-id');
       }
-    };
-
-    loadUser();
+    } catch (error) {
+      console.error('[useCurrentUser] Failed to read user ID from localStorage', error);
+      setUserId('default-user-id'); // Fallback
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   return {
-    userId,
-    user,
+    userId: userId || 'default-user-id',
     isLoading,
-    isAuthenticated: !!userId && !!user,
+    error: null,
   };
 };

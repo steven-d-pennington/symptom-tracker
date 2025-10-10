@@ -1097,6 +1097,32 @@ describe('Performance Benchmarks', () => {
 
 ---
 
+## Post-Review Follow-ups
+
+This section collects action items from senior developer reviews that are scoped to Epic 1.
+
+### Story 1.1d Review (2025-10-09)
+
+**Critical Items (Must Fix):**
+- Fix test file extension: Rename `TrendChart.test.ts` → `TrendChart.test.tsx` (blocks test suite)
+- Fix module import errors in DashboardContext tests (mock `useCurrentUser` hook)
+- Fix TimeRangeSelector test assertions to match actual label text
+- Implement functional tooltip with keyboard support and WCAG compliance
+- Create TrendInterpretation component with visual direction indicators (↑↓→)
+- Implement change point markers on TrendChart
+
+**Important Items:**
+- Add comprehensive test coverage (interactions, edge cases, accessibility)
+- Make chart labels dynamic via props
+- Add mobile responsive configuration to TrendChart
+
+**Low Priority:**
+- Extract STABLE_SLOPE_THRESHOLD constant with documentation
+- Add date range validation to parseTimeRange
+- Add canvas aria-label and noscript fallback for accessibility
+
+---
+
 **Tech Spec Epic 1 Complete** ✅
 
 Total Pages: 16

@@ -1,13 +1,20 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { importService, ImportOptions, ImportResult } from "@/lib/services";
+import { Upload, FileJson, ArrowRight, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { importService, type ImportOptions, type ImportResult } from "@/lib/services";
 import { userRepository } from "@/lib/repositories";
+import { persistOnboardingState } from "../utils/storage";
+import { createInitialState } from "../utils/storage";
+import type { OnboardingStepId } from "../types/onboarding";
+
+const CURRENT_USER_ID_KEY = "pocket:currentUserId";
 
 type ImportStep = "file-select" | "existing-data-check" | "importing";
 
-export function ImportDialog() {
-  const [isOpen, setIsOpen] = useState(false);
+export function OnboardingImportOption() {
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [step, setStep] = useState<ImportStep>("file-select");
   const [isImporting, setIsImporting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -20,6 +27,7 @@ export function ImportDialog() {
     dailyEntries: number;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -58,6 +66,7 @@ export function ImportDialog() {
     setIsImporting(true);
 
     try {
+      // Get or create a user for this import
       const user = await userRepository.getOrCreateCurrentUser();
 
       const options: ImportOptions = {
@@ -75,14 +84,24 @@ export function ImportDialog() {
       setImportResult(result);
 
       if (result.success) {
+        // Store the user ID
+        window.localStorage.setItem(CURRENT_USER_ID_KEY, user.id);
+
+        // Mark onboarding as complete
+        const allSteps: OnboardingStepId[] = ['welcome', 'profile', 'condition', 'preferences', 'education', 'privacy', 'completion'];
+        const completedState = {
+          ...createInitialState(),
+          isComplete: true,
+          completedSteps: allSteps,
+          currentStep: 6,
+        };
+        persistOnboardingState(completedState);
+
+        // Redirect to dashboard after a brief delay
         setTimeout(() => {
-          setIsOpen(false);
-          setSelectedFile(null);
-          setImportResult(null);
-          setStep("file-select");
-          // Trigger a page reload to show the new data
+          router.push("/dashboard");
           window.location.reload();
-        }, 3000);
+        }, 2000);
       }
     } catch (error) {
       console.error("Import failed:", error);
@@ -103,7 +122,7 @@ export function ImportDialog() {
   };
 
   const resetDialog = () => {
-    setIsOpen(false);
+    setShowImportDialog(false);
     setStep("file-select");
     setSelectedFile(null);
     setImportResult(null);
@@ -111,37 +130,55 @@ export function ImportDialog() {
     setMergeStrategy("merge");
   };
 
-  if (!isOpen) {
+  if (!showImportDialog) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="rounded-md border border-blue-600 bg-white px-4 py-2 text-blue-600 hover:bg-blue-50"
-      >
-        Import Data
-      </button>
+      <div className="mt-8 pt-6 border-t border-border">
+        <button
+          onClick={() => setShowImportDialog(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground border border-border hover:border-primary/50 rounded-lg transition-colors"
+        >
+          <Upload className="w-4 h-4" />
+          Already have data? Import from another device
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 p-6 shadow-xl">
-        <h2 className="mb-2 text-xl font-bold text-foreground">Import Your Data</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Import data exported from another browser profile or restore from a backup.
-        </p>
+    <div className="mt-8 pt-6 border-t border-border">
+      <div className="rounded-lg bg-card border border-border p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
+              <FileJson className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Import Existing Data</h3>
+              <p className="text-sm text-muted-foreground">
+                Skip onboarding by importing your data
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={resetDialog}
+            className="p-1 text-muted-foreground hover:text-foreground rounded"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         {/* Existing Data Warning Screen */}
         {step === "existing-data-check" && existingDataCounts && !importResult && (
           <>
             <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
-              <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2 flex items-center gap-2">
-                <span className="text-2xl">⚠️</span>
+              <h3 className="text-base font-semibold text-red-900 dark:text-red-100 mb-2 flex items-center gap-2">
+                <span className="text-xl">⚠️</span>
                 Existing Data Detected
               </h3>
-              <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                You already have data in this profile:
+              <p className="text-sm text-red-700 dark:text-red-300 mb-2">
+                You already have data in this profile. How would you like to proceed?
               </p>
-              <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 mb-3">
+              <ul className="text-sm text-red-700 dark:text-red-300 space-y-1">
                 {existingDataCounts.symptoms > 0 && (
                   <li>• {existingDataCounts.symptoms} symptom(s)</li>
                 )}
@@ -155,9 +192,6 @@ export function ImportDialog() {
                   <li>• {existingDataCounts.dailyEntries} daily entry/entries</li>
                 )}
               </ul>
-              <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                How would you like to proceed?
-              </p>
             </div>
 
             {/* Merge Strategy Selection */}
@@ -166,51 +200,48 @@ export function ImportDialog() {
                 Choose Import Strategy
               </label>
               <div className="space-y-2">
-                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-3 rounded border-2 border-transparent hover:border-primary/30 transition-colors">
+                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-2 rounded border border-transparent hover:border-primary/30 transition-colors">
                   <input
                     type="radio"
                     value="merge"
                     checked={mergeStrategy === "merge"}
                     onChange={(e) => setMergeStrategy(e.target.value as "merge")}
-                    className="mr-3 mt-1"
+                    className="mr-2 mt-1"
                   />
                   <div>
-                    <div className="font-medium text-foreground">✅ Merge (Recommended)</div>
+                    <div className="font-medium text-foreground text-sm">✅ Merge (Recommended)</div>
                     <div className="text-xs text-muted-foreground">
-                      Keep both existing and imported data. Best for syncing between devices.
-                      Your existing data will remain untouched.
+                      Keep both existing and imported data.
                     </div>
                   </div>
                 </label>
-                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-3 rounded border-2 border-transparent hover:border-primary/30 transition-colors">
+                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-2 rounded border border-transparent hover:border-primary/30 transition-colors">
                   <input
                     type="radio"
                     value="replace"
                     checked={mergeStrategy === "replace"}
                     onChange={(e) => setMergeStrategy(e.target.value as "replace")}
-                    className="mr-3 mt-1"
+                    className="mr-2 mt-1"
                   />
                   <div>
-                    <div className="font-medium text-foreground">🔄 Replace Duplicates</div>
+                    <div className="font-medium text-foreground text-sm">🔄 Replace Duplicates</div>
                     <div className="text-xs text-muted-foreground">
-                      Update existing items with imported data. Good for restoring backups.
-                      Duplicates will be overwritten with imported versions.
+                      Update existing items with imported data.
                     </div>
                   </div>
                 </label>
-                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-3 rounded border-2 border-transparent hover:border-primary/30 transition-colors">
+                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-2 rounded border border-transparent hover:border-primary/30 transition-colors">
                   <input
                     type="radio"
                     value="skip"
                     checked={mergeStrategy === "skip"}
                     onChange={(e) => setMergeStrategy(e.target.value as "skip")}
-                    className="mr-3 mt-1"
+                    className="mr-2 mt-1"
                   />
                   <div>
-                    <div className="font-medium text-foreground">⏭️ Skip Duplicates</div>
+                    <div className="font-medium text-foreground text-sm">⏭️ Skip Duplicates</div>
                     <div className="text-xs text-muted-foreground">
-                      Only import new items, skip duplicates. Preserves all existing data.
-                      Only new items from import will be added.
+                      Only import new items, skip duplicates.
                     </div>
                   </div>
                 </label>
@@ -221,13 +252,13 @@ export function ImportDialog() {
             <div className="flex gap-2">
               <button
                 onClick={handleProceedToImport}
-                className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 font-medium"
+                className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 font-medium"
               >
                 Proceed with Import
               </button>
               <button
                 onClick={resetDialog}
-                className="flex-1 rounded-md border border-border px-4 py-2 hover:bg-muted text-foreground"
+                className="flex-1 rounded-md border border-border px-4 py-2 text-sm hover:bg-muted text-foreground"
               >
                 Cancel
               </button>
@@ -238,95 +269,31 @@ export function ImportDialog() {
         {/* File Selection Screen */}
         {step === "file-select" && !importResult && (
           <>
-            {/* Profile Transfer Info Box */}
+            {/* Info Box */}
             <div className="mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3">
-              <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">
-                ⚠️ Important: Browser Profile Transfer
-              </h3>
               <p className="text-xs text-amber-700 dark:text-amber-300">
-                If you're transferring data from another browser/profile:
-                <br />
-                • Make sure you exported with JSON format
-                <br />
-                • All your data will be imported to this profile
-                <br />
-                • Use "Merge" to keep any existing data
-                <br />
-                • Use "Replace" to overwrite duplicates
+                <strong>Note:</strong> Importing data will bypass the onboarding process.
+                Make sure you have a JSON file exported from this app.
               </p>
             </div>
 
             {/* File Selection */}
             <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Select File
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Select Export File
               </label>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept=".json"
                 onChange={handleFileSelect}
-                className="w-full text-foreground"
+                className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
               />
               {selectedFile && (
                 <p className="mt-2 text-sm text-green-600 dark:text-green-400">
                   ✓ Selected: {selectedFile.name}
                 </p>
               )}
-            </div>
-
-            {/* Merge Strategy */}
-            <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Import Strategy
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-2 rounded">
-                  <input
-                    type="radio"
-                    value="replace"
-                    checked={mergeStrategy === "replace"}
-                    onChange={(e) => setMergeStrategy(e.target.value as "replace")}
-                    className="mr-2 mt-1"
-                  />
-                  <div>
-                    <div className="font-medium text-foreground">Replace duplicates</div>
-                    <div className="text-xs text-muted-foreground">
-                      Update existing items with imported data. Recommended for restoring backups.
-                    </div>
-                  </div>
-                </label>
-                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-2 rounded">
-                  <input
-                    type="radio"
-                    value="merge"
-                    checked={mergeStrategy === "merge"}
-                    onChange={(e) => setMergeStrategy(e.target.value as "merge")}
-                    className="mr-2 mt-1"
-                  />
-                  <div>
-                    <div className="font-medium text-foreground">Merge (Recommended)</div>
-                    <div className="text-xs text-muted-foreground">
-                      Keep both existing and imported data. Best for profile transfers.
-                    </div>
-                  </div>
-                </label>
-                <label className="flex items-start cursor-pointer hover:bg-muted/50 p-2 rounded">
-                  <input
-                    type="radio"
-                    value="skip"
-                    checked={mergeStrategy === "skip"}
-                    onChange={(e) => setMergeStrategy(e.target.value as "skip")}
-                    className="mr-2 mt-1"
-                  />
-                  <div>
-                    <div className="font-medium text-foreground">Skip duplicates</div>
-                    <div className="text-xs text-muted-foreground">
-                      Only import new items, skip duplicates. Preserves all existing data.
-                    </div>
-                  </div>
-                </label>
-              </div>
             </div>
 
             {/* Actions */}
@@ -338,14 +305,24 @@ export function ImportDialog() {
                   }
                 }}
                 disabled={isImporting || !selectedFile}
-                className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 font-medium"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isImporting ? "Importing..." : "Import"}
+                {isImporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    Import & Continue
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
               <button
                 onClick={resetDialog}
                 disabled={isImporting}
-                className="flex-1 rounded-md border border-border px-4 py-2 hover:bg-muted disabled:opacity-50 text-foreground"
+                className="px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted disabled:opacity-50 transition-colors"
               >
                 Cancel
               </button>
@@ -359,45 +336,42 @@ export function ImportDialog() {
             {/* Import Result */}
             <div className="mb-4">
               {importResult.success ? (
-                <div className="rounded bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4">
-                  <h3 className="mb-2 font-medium text-green-800 dark:text-green-100">
+                <div className="rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-100 mb-2">
                     ✅ Import Successful!
-                  </h3>
+                  </h4>
                   <ul className="space-y-1 text-sm text-green-700 dark:text-green-300">
                     <li>Symptoms: {importResult.imported.symptoms}</li>
                     <li>Medications: {importResult.imported.medications}</li>
                     <li>Triggers: {importResult.imported.triggers}</li>
                     <li>Daily Entries: {importResult.imported.dailyEntries}</li>
-                    {importResult.skipped > 0 && (
-                      <li>Skipped: {importResult.skipped}</li>
-                    )}
                   </ul>
-                  <p className="mt-2 text-xs text-green-600 dark:text-green-400">
-                    Refreshing in 3 seconds...
+                  <p className="mt-3 text-sm text-green-600 dark:text-green-400">
+                    Redirecting to dashboard...
                   </p>
                 </div>
               ) : (
-                <div className="rounded bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
-                  <h3 className="mb-2 font-medium text-red-800 dark:text-red-100">
+                <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
+                  <h4 className="font-medium text-red-800 dark:text-red-100 mb-2">
                     ❌ Import Failed
-                  </h3>
+                  </h4>
                   <ul className="space-y-1 text-sm text-red-700 dark:text-red-300">
                     {importResult.errors.map((error, i) => (
                       <li key={i}>{error}</li>
                     ))}
                   </ul>
+                  <button
+                    onClick={() => {
+                      setImportResult(null);
+                      setSelectedFile(null);
+                    }}
+                    className="mt-3 text-sm font-medium text-red-700 dark:text-red-300 hover:underline"
+                  >
+                    Try Again
+                  </button>
                 </div>
               )}
             </div>
-
-            {!importResult.success && (
-              <button
-                onClick={() => setImportResult(null)}
-                className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 font-medium"
-              >
-                Try Again
-              </button>
-            )}
           </>
         )}
       </div>

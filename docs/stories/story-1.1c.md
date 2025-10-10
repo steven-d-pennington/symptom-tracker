@@ -1,6 +1,6 @@
 # Story 1.1c: Trend Analysis - Change Point Detection
 
-Status: Complete
+Status: Ready for Review
 
 ## Story
 

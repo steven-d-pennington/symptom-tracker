@@ -15,14 +15,11 @@
 
 next-env.d.ts
 BMAD-METHOD
-.claude/
+.claude
+bmad
 .gemini
 .github
-/bmad/*
-.bmad*
-.claude/*
-/.claude/
-.claude/commands/*
+
 
 # next.js
 /.next/

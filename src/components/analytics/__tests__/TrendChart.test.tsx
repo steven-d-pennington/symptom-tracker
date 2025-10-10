@@ -1,13 +1,13 @@
 import { jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react';
-import { TrendChart } from '../TrendChart';
 
-jest.mock('react-chartjs-2', () => ({
+jest.unstable_mockModule('react-chartjs-2', () => ({
     Line: () => <canvas role="img" />,
 }));
 
 describe('TrendChart', () => {
-    it('should render the chart canvas', () => {
+    it('should render the chart canvas', async () => {
+        const { TrendChart } = await import('../TrendChart');
         const mockData = Array.from({ length: 10 }, (_, i) => ({ x: i, y: i }));
         render(<TrendChart data={mockData} trendline={mockData} />);
         

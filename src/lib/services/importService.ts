@@ -3,12 +3,14 @@ import {
   medicationRepository,
   triggerRepository,
   dailyEntryRepository,
+  userRepository,
 } from "../repositories";
 import { ExportData } from "./exportService";
 
 export interface ImportOptions {
   mergeStrategy: "replace" | "merge" | "skip";
   validateData?: boolean;
+  updateUserProfile?: boolean; // Whether to update user name/email from import
 }
 
 export interface ImportResult {
@@ -21,9 +23,54 @@ export interface ImportResult {
   };
   errors: string[];
   skipped: number;
+  userUpdated?: boolean;
 }
 
 export class ImportService {
+  /**
+   * Check if the current user has any existing data
+   */
+  async hasExistingData(userId: string): Promise<{
+    hasData: boolean;
+    counts: {
+      symptoms: number;
+      medications: number;
+      triggers: number;
+      dailyEntries: number;
+    };
+  }> {
+    try {
+      const [symptoms, medications, triggers, dailyEntries] = await Promise.all([
+        symptomRepository.getAll(userId),
+        medicationRepository.getAll(userId),
+        triggerRepository.getAll(userId),
+        dailyEntryRepository.getAll(userId),
+      ]);
+
+      const counts = {
+        symptoms: symptoms.length,
+        medications: medications.length,
+        triggers: triggers.length,
+        dailyEntries: dailyEntries.length,
+      };
+
+      const hasData = Object.values(counts).some(count => count > 0);
+
+      return { hasData, counts };
+    } catch (error) {
+      console.error("Failed to check existing data:", error);
+      return {
+        hasData: false,
+        counts: {
+          symptoms: 0,
+          medications: 0,
+          triggers: 0,
+          dailyEntries: 0,
+        },
+      };
+    }
+  }
+
   /**
    * Import data from JSON file
    */
@@ -114,9 +161,28 @@ export class ImportService {
       },
       errors: [],
       skipped: 0,
+      userUpdated: false,
     };
 
     try {
+      // Update user profile if requested and user data is available
+      if (options.updateUserProfile !== false && data.user) {
+        try {
+          const user = await userRepository.getById(userId);
+          if (user && data.user.name && typeof data.user.name === 'string') {
+            await userRepository.update(userId, {
+              name: data.user.name,
+              email: typeof data.user.email === 'string' ? data.user.email : user.email,
+              preferences: user.preferences, // Keep existing preferences
+            });
+            result.userUpdated = true;
+          }
+        } catch (error) {
+          console.error("Failed to update user profile:", error);
+          result.errors.push("Failed to update user profile");
+        }
+      }
+
       // Import symptoms
       if (data.symptoms && data.symptoms.length > 0) {
         const imported = await this.importSymptoms(

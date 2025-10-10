@@ -7,7 +7,7 @@ describe('TimeRangeSelector', () => {
         const handleChange = jest.fn();
         render(<TimeRangeSelector onChange={handleChange} />);
         
-        expect(screen.getByLabelText('Select time range')).toBeInTheDocument();
+        expect(screen.getByLabelText('Time Range')).toBeInTheDocument();
         expect(screen.getAllByRole('option').length).toBe(5);
     });
 
@@ -15,7 +15,7 @@ describe('TimeRangeSelector', () => {
         const handleChange = jest.fn();
         render(<TimeRangeSelector onChange={handleChange} />);
         
-        const select = screen.getByLabelText('Select time range');
+        const select = screen.getByLabelText('Time Range');
         fireEvent.change(select, { target: { value: '90d' } });
 
         expect(handleChange).toHaveBeenCalledWith('90d');

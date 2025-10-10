@@ -3,10 +3,28 @@ import { DashboardProvider, useDashboard } from './DashboardContext';
 import { TrendAnalysisService } from '../../lib/services/TrendAnalysisService';
 import { ReactNode } from 'react';
 
+// Mock useCurrentUser hook
+jest.mock('../../lib/hooks/useCurrentUser', () => ({
+    useCurrentUser: () => ({
+        userId: 'demo',
+        user: {
+            id: 'demo',
+            name: 'Demo User',
+            email: 'demo@example.com',
+        },
+        isLoading: false,
+        isAuthenticated: true,
+    }),
+}));
+
 // Mock TrendAnalysisService
 const mockAnalyzeTrend = jest.fn();
+const mockFetchMetricData = jest.fn();
+const mockExtractTimeSeriesPoints = jest.fn();
 const mockService = {
     analyzeTrend: mockAnalyzeTrend,
+    fetchMetricData: mockFetchMetricData,
+    extractTimeSeriesPoints: mockExtractTimeSeriesPoints,
 } as unknown as TrendAnalysisService;
 
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -16,6 +34,10 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 describe('DashboardContext', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        // Default mocks for successful rendering
+        mockAnalyzeTrend.mockResolvedValue({ slope: 0.5, intercept: 10, rSquared: 0.8 });
+        mockFetchMetricData.mockResolvedValue([]);
+        mockExtractTimeSeriesPoints.mockReturnValue([]);
     });
 
     it('should initialize with default state and fetch analysis on mount', async () => {
@@ -42,9 +64,9 @@ describe('DashboardContext', () => {
 
         await waitFor(() => {
             expect(mockAnalyzeTrend).toHaveBeenCalledWith('demo', 'overallHealth', '90d');
+            expect(result.current.analysis?.result).toEqual(mockResult);
         });
 
-        expect(result.current.analysis?.result).toEqual(mockResult);
         expect(result.current.loading).toBe(false);
         expect(result.current.error).toBe(null);
     });
@@ -87,10 +109,16 @@ describe('DashboardContext', () => {
 
     it('should handle manual retry after error', async () => {
         mockAnalyzeTrend
-            .mockRejectedValueOnce(new Error('Temporary error'))
-            .mockResolvedValueOnce({ slope: 0.3, intercept: 8, rSquared: 0.7 });
+            .mockResolvedValueOnce({ slope: 0.5, intercept: 10, rSquared: 0.8 }) // Mount
+            .mockRejectedValueOnce(new Error('Temporary error')) // Manual call
+            .mockResolvedValueOnce({ slope: 0.3, intercept: 8, rSquared: 0.7 }); // Retry
 
         const { result } = renderHook(() => useDashboard(), { wrapper });
+
+        // Wait for initial mount to complete
+        await waitFor(() => {
+            expect(result.current.loading).toBe(false);
+        });
 
         await act(async () => {
             await result.current.runAnalysis('stressLevel', '90d');

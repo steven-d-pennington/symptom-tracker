@@ -3,6 +3,20 @@ import { TrendWidget } from './TrendWidget';
 import { DashboardProvider } from './DashboardContext';
 import { TrendAnalysisService } from '../../lib/services/TrendAnalysisService';
 
+// Mock useCurrentUser hook
+jest.mock('../../lib/hooks/useCurrentUser', () => ({
+    useCurrentUser: () => ({
+        userId: 'demo',
+        user: {
+            id: 'demo',
+            name: 'Demo User',
+            email: 'demo@example.com',
+        },
+        isLoading: false,
+        isAuthenticated: true,
+    }),
+}));
+
 // Mock dependencies
 jest.mock('./TrendChart', () => ({
     TrendChart: () => <div data-testid="trend-chart">Mocked TrendChart</div>
@@ -24,8 +38,12 @@ jest.mock('./TimeRangeSelector', () => ({
 }));
 
 const mockAnalyzeTrend = jest.fn();
+const mockFetchMetricData = jest.fn();
+const mockExtractTimeSeriesPoints = jest.fn();
 const mockService = {
     analyzeTrend: mockAnalyzeTrend,
+    fetchMetricData: mockFetchMetricData,
+    extractTimeSeriesPoints: mockExtractTimeSeriesPoints,
 } as unknown as TrendAnalysisService;
 
 const renderWithProvider = (component: React.ReactElement) => {
@@ -39,6 +57,9 @@ const renderWithProvider = (component: React.ReactElement) => {
 describe('TrendWidget', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        // Default mocks for successful rendering
+        mockFetchMetricData.mockResolvedValue([]);
+        mockExtractTimeSeriesPoints.mockReturnValue([]);
     });
 
     it('should render loading state', async () => {
@@ -47,7 +68,9 @@ describe('TrendWidget', () => {
         renderWithProvider(<TrendWidget />);
 
         await waitFor(() => {
-            expect(screen.getByText(/loading/i)).toBeInTheDocument();
+            // Check for skeleton loading state (animated pulse div)
+            const loadingSkeleton = document.querySelector('.animate-pulse');
+            expect(loadingSkeleton).toBeInTheDocument();
         });
     });
 
