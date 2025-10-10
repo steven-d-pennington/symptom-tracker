@@ -60,6 +60,10 @@ export function PhotoAnnotation({
   // Blur warning state
   const [isBlurWarningOpen, setIsBlurWarningOpen] = useState(false);
   const [isApplyingBlur, setIsApplyingBlur] = useState(false);
+  
+  // Undo/Redo history state
+  const [history, setHistory] = useState<PhotoAnnotationType[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
   // Load and decrypt image
   useEffect(() => {
@@ -136,8 +140,51 @@ export function PhotoAnnotation({
     }
   }, [isOpen, existingAnnotations]);
 
+  // History management functions
+  const addToHistory = (newAnnotations: PhotoAnnotationType[]) => {
+    // Deep copy current state
+    const newState = JSON.parse(JSON.stringify(newAnnotations)) as PhotoAnnotationType[];
+    
+    // Remove future states (if user made changes after undo)
+    const trimmedHistory = history.slice(0, historyIndex + 1);
+    
+    // Add new state
+    const newHistory = [...trimmedHistory, newState];
+    
+    // Enforce 10-item limit (FIFO - remove oldest)
+    if (newHistory.length > 10) {
+      newHistory.shift();
+      setHistory(newHistory);
+      // Don't increment index since we removed from beginning
+    } else {
+      setHistory(newHistory);
+      setHistoryIndex(historyIndex + 1);
+    }
+  };
+
+  const undo = () => {
+    if (historyIndex <= 0) return; // Can't undo before start
+    
+    const newIndex = historyIndex - 1;
+    setHistoryIndex(newIndex);
+    setAnnotations(JSON.parse(JSON.stringify(history[newIndex])) as PhotoAnnotationType[]);
+  };
+
+  const redo = () => {
+    if (historyIndex >= history.length - 1) return; // Can't redo beyond end
+    
+    const newIndex = historyIndex + 1;
+    setHistoryIndex(newIndex);
+    setAnnotations(JSON.parse(JSON.stringify(history[newIndex])) as PhotoAnnotationType[]);
+  };
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
   const handleAnnotationAdd = (annotation: PhotoAnnotationType) => {
-    setAnnotations((prev) => [...prev, annotation]);
+    const newAnnotations = [...annotations, annotation];
+    setAnnotations(newAnnotations);
+    addToHistory(newAnnotations);
   };
 
   const handleTextClick = (position: { x: number; y: number }) => {
@@ -163,18 +210,21 @@ export function PhotoAnnotation({
       order: annotations.length,
     };
 
-    setAnnotations((prev) => [...prev, textAnnotation]);
+    const newAnnotations = [...annotations, textAnnotation];
+    setAnnotations(newAnnotations);
+    addToHistory(newAnnotations);
     setTextPosition(null);
   };
 
   const handleUndo = () => {
-    if (annotations.length === 0) return;
-    setAnnotations((prev) => prev.slice(0, -1));
+    undo();
   };
 
   const handleClear = () => {
     if (window.confirm('Are you sure you want to clear all annotations?')) {
-      setAnnotations([]);
+      const newAnnotations: PhotoAnnotationType[] = [];
+      setAnnotations(newAnnotations);
+      addToHistory(newAnnotations);
     }
   };
 
@@ -192,6 +242,11 @@ export function PhotoAnnotation({
     setIsSaving(true);
     try {
       await onSave(annotations);
+      
+      // Clear history after successful save
+      setHistory([]);
+      setHistoryIndex(-1);
+      
       onClose();
     } catch (error) {
       console.error('Failed to save annotations:', error);
@@ -225,6 +280,10 @@ export function PhotoAnnotation({
       await onSave(nonBlurAnnotations);
       
       console.log('[PhotoAnnotation] Annotations saved. Photo will be refreshed by parent component.');
+      
+      // Clear history after successful save
+      setHistory([]);
+      setHistoryIndex(-1);
       
       onClose();
     } catch (error) {
@@ -263,10 +322,24 @@ export function PhotoAnnotation({
         return;
       }
 
+      // Ctrl/Cmd + Shift + Z to redo
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
       // Ctrl/Cmd + Z to undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
-        handleUndo();
+        undo();
+        return;
+      }
+
+      // Ctrl/Cmd + Y to redo (alternative)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        redo();
         return;
       }
 
@@ -401,18 +474,30 @@ export function PhotoAnnotation({
           {/* Undo button */}
           <button
             onClick={handleUndo}
-            disabled={annotations.length === 0}
-            className="rounded-lg bg-black/60 px-4 py-2 text-sm font-medium text-white backdrop-blur-md hover:bg-black/80 disabled:opacity-50 disabled:hover:bg-black/60"
-            aria-label="Undo last annotation"
+            disabled={!canUndo}
+            className="rounded-lg bg-black/60 px-4 py-2 text-sm font-medium text-white backdrop-blur-md hover:bg-black/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-black/60"
+            aria-label="Undo last action (Ctrl+Z)"
+            title={canUndo ? "Undo last action (Ctrl+Z)" : "No actions to undo"}
           >
             Undo
+          </button>
+
+          {/* Redo button */}
+          <button
+            onClick={redo}
+            disabled={!canRedo}
+            className="rounded-lg bg-black/60 px-4 py-2 text-sm font-medium text-white backdrop-blur-md hover:bg-black/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-black/60"
+            aria-label="Redo action (Ctrl+Shift+Z)"
+            title={canRedo ? "Redo action (Ctrl+Shift+Z)" : "No actions to redo"}
+          >
+            Redo
           </button>
 
           {/* Clear button */}
           <button
             onClick={handleClear}
             disabled={annotations.length === 0}
-            className="rounded-lg bg-black/60 px-4 py-2 text-sm font-medium text-white backdrop-blur-md hover:bg-black/80 disabled:opacity-50 disabled:hover:bg-black/60"
+            className="rounded-lg bg-black/60 px-4 py-2 text-sm font-medium text-white backdrop-blur-md hover:bg-black/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-black/60"
             aria-label="Clear all annotations"
           >
             Clear All
@@ -425,7 +510,7 @@ export function PhotoAnnotation({
         <div className="text-sm text-white/60">
           {annotations.length} {annotations.length === 1 ? 'annotation' : 'annotations'}
           <span className="ml-4 text-white/40">
-            Shortcuts: A (Arrow), C (Circle), R (Rectangle), T (Text), B (Blur), Ctrl+Z (Undo), Ctrl+S (Save)
+            Shortcuts: A (Arrow), C (Circle), R (Rectangle), T (Text), B (Blur), Ctrl+Z (Undo), Ctrl+Shift+Z (Redo), Ctrl+S (Save)
           </span>
         </div>
         <div className="flex gap-3">
