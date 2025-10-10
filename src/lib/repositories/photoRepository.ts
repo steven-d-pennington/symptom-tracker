@@ -1,6 +1,7 @@
 import { db } from "../db/client";
 import { PhotoAttachmentRecord, PhotoComparisonRecord } from "../db/schema";
 import { PhotoAttachment, PhotoComparisonPair, PhotoFilter } from "../types/photo";
+import { PhotoAnnotation } from "../types/annotation";
 import { v4 as uuidv4 } from "uuid";
 
 class PhotoRepository {
@@ -16,6 +17,7 @@ class PhotoRepository {
       id: uuidv4(),
       tags: JSON.stringify(data.tags || []),
       metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
+      annotations: data.annotations ? JSON.stringify(data.annotations) : undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -173,10 +175,24 @@ class PhotoRepository {
       ...updates,
       tags: updates.tags ? JSON.stringify(updates.tags) : undefined,
       metadata: updates.metadata ? JSON.stringify(updates.metadata) : undefined,
+      annotations: updates.annotations ? JSON.stringify(updates.annotations) : undefined,
       updatedAt: new Date(),
     };
 
     await db.photoAttachments.update(id, updateRecord);
+  }
+
+  /**
+   * Update annotations for a photo
+   */
+  async updateAnnotations(
+    id: string,
+    annotations: PhotoAnnotation[]
+  ): Promise<void> {
+    await db.photoAttachments.update(id, {
+      annotations: JSON.stringify(annotations),
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -224,6 +240,7 @@ class PhotoRepository {
       ...record,
       tags: JSON.parse(record.tags || "[]"),
       metadata: record.metadata ? JSON.parse(record.metadata) : undefined,
+      annotations: record.annotations ? JSON.parse(record.annotations) : undefined,
       capturedAt: new Date(record.capturedAt),
       createdAt: new Date(record.createdAt),
       updatedAt: new Date(record.updatedAt),

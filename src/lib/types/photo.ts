@@ -3,6 +3,8 @@
  * For secure, encrypted medical photo storage
  */
 
+import { PhotoAnnotation } from './annotation';
+
 export interface PhotoAttachment {
   id: string;
   userId: string;
@@ -24,6 +26,7 @@ export interface PhotoAttachment {
   tags: string[];
   notes?: string;
   metadata?: PhotoMetadata;
+  annotations?: PhotoAnnotation[]; // Photo annotations (arrows, circles, etc.)
   createdAt: Date;
   updatedAt: Date;
 }

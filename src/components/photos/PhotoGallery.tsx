@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { PhotoAttachment, PhotoFilter } from "@/lib/types/photo";
+import { PhotoAnnotation } from "@/lib/types/annotation";
 import { photoRepository } from "@/lib/repositories/photoRepository";
 import { PhotoThumbnail } from "./PhotoThumbnail";
 import { PhotoViewer } from "./PhotoViewer";
@@ -206,6 +207,25 @@ export function PhotoGallery({
     }
   };
 
+  const handleAnnotationsSave = async (photoId: string, annotations: PhotoAnnotation[]) => {
+    try {
+      await photoRepository.updateAnnotations(photoId, annotations);
+      // Update local state
+      setPhotos((prev) => 
+        prev.map((p) => 
+          p.id === photoId ? { ...p, annotations } : p
+        )
+      );
+      // Update selected photo if it's the current one
+      if (selectedPhoto?.id === photoId) {
+        setSelectedPhoto({ ...selectedPhoto, annotations });
+      }
+    } catch (error) {
+      console.error("Failed to save annotations:", error);
+      throw error; // Re-throw to show error in PhotoAnnotation component
+    }
+  };
+
   if (isLoading && photos.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -275,6 +295,7 @@ export function PhotoGallery({
           photos={photos}
           onClose={() => setViewerOpen(false)}
           onDelete={handleDeletePhoto}
+          onAnnotationsSave={handleAnnotationsSave}
           onNext={() => {
             const currentIndex = photos.findIndex((p) => p.id === selectedPhoto.id);
             if (currentIndex < photos.length - 1) {

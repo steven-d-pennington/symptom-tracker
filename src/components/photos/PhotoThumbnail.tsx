@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { PhotoAttachment } from "@/lib/types/photo";
 import { PhotoEncryption } from "@/lib/utils/photoEncryption";
+import { Pencil } from "lucide-react";
 
 interface PhotoThumbnailProps {
   photo: PhotoAttachment;
@@ -126,6 +127,16 @@ export function PhotoThumbnail({
               d="M5 13l4 4L19 7"
             />
           </svg>
+        </div>
+      )}
+
+      {/* Annotation indicator */}
+      {photo.annotations && photo.annotations.length > 0 && (
+        <div className="absolute right-2 top-2 rounded-md bg-blue-500 px-2 py-1 shadow-md flex items-center gap-1">
+          <Pencil className="h-3 w-3 text-white" />
+          <span className="text-xs font-semibold text-white">
+            {photo.annotations.length}
+          </span>
         </div>
       )}
     </div>

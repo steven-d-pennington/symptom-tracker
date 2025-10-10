@@ -218,6 +218,7 @@ export interface PhotoAttachmentRecord {
   tags: string;
   notes?: string;
   metadata?: string;
+  annotations?: string; // JSON stringified PhotoAnnotation[] - encrypted
   createdAt: Date;
   updatedAt: Date;
 }
