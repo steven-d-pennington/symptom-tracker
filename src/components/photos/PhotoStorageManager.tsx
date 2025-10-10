@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { photoRepository } from "@/lib/repositories/photoRepository";
 
 interface StorageStats {
@@ -14,20 +14,17 @@ interface StorageStats {
 
 interface PhotoStorageManagerProps {
   userId: string;
+  refreshKey?: number;
 }
 
-export function PhotoStorageManager({ userId }: PhotoStorageManagerProps) {
+export function PhotoStorageManager({ userId, refreshKey = 0 }: PhotoStorageManagerProps) {
   const [stats, setStats] = useState<StorageStats>({
     totalPhotos: 0,
     totalSize: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadStats();
-  }, [userId]);
-
-  async function loadStats() {
+  const loadStats = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -58,7 +55,11 @@ export function PhotoStorageManager({ userId }: PhotoStorageManagerProps) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [userId]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats, refreshKey]);
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return "0 B";
@@ -195,7 +196,7 @@ export function PhotoStorageManager({ userId }: PhotoStorageManagerProps) {
                 <div>
                   <h4 className="font-medium text-yellow-900">Storage Almost Full</h4>
                   <p className="mt-1 text-sm text-yellow-800">
-                    You're using {usagePercent.toFixed(0)}% of your available storage. Consider
+                    You&apos;re using {usagePercent.toFixed(0)}% of your available storage. Consider
                     deleting old photos or exporting them for backup.
                   </p>
                 </div>

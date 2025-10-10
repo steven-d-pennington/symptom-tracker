@@ -18,6 +18,8 @@ export interface PhotoAttachment {
   encryptedData: Blob; // Encrypted photo data
   thumbnailData: Blob; // Encrypted thumbnail (150x150)
   encryptionIV: string; // Initialization vector (base64)
+  thumbnailIV?: string; // Thumbnail IV (base64)
+  encryptionKey?: string; // Base64-encoded key (encrypted at rest in future)
   capturedAt: Date;
   tags: string[];
   notes?: string;

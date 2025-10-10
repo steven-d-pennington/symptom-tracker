@@ -224,6 +224,9 @@ class PhotoRepository {
       ...record,
       tags: JSON.parse(record.tags || "[]"),
       metadata: record.metadata ? JSON.parse(record.metadata) : undefined,
+      capturedAt: new Date(record.capturedAt),
+      createdAt: new Date(record.createdAt),
+      updatedAt: new Date(record.updatedAt),
     };
   }
 

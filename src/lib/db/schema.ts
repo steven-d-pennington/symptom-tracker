@@ -212,6 +212,8 @@ export interface PhotoAttachmentRecord {
   encryptedData: Blob;
   thumbnailData: Blob;
   encryptionIV: string;
+  thumbnailIV?: string;
+  encryptionKey?: string;
   capturedAt: Date;
   tags: string;
   notes?: string;

@@ -1,32 +1,39 @@
-# symptom-tracker UX/UI Specification
+# Photo Feature Completion - UX/UI Specification
 
-_Generated on 2025-10-07 by BMad User_
+_Generated on 2025-10-10 by BMad User_
 
 ## Executive Summary
 
-**Project:** Pocket Symptom Tracker - Phase 3 Intelligence Layer
-**Platform:** Progressive Web App (Web)
-**Project Level:** Level 3 (Full Product)
-**Target Release:** Progressive rollout (analytics → search → reports)
+**Project:** Pocket Symptom Tracker - Photo Annotation & Linking Features
+**Platform:** Progressive Web App (Web + Mobile)
+**Project Level:** Level 2 (Feature Enhancement)
+**Target Release:** 2-sprint incremental rollout
 
 **Overview:**
 
-Phase 3 adds the Intelligence Layer to an existing symptom tracking PWA used by people with autoimmune conditions (specifically Hidradenitis Suppurativa). This layer transforms passive data collection into active intelligence through three major feature areas:
+This UX specification covers the completion of the Photo Documentation system for the Pocket Symptom Tracker. The feature enables users with autoimmune conditions (specifically Hidradenitis Suppurativa) to capture, annotate, and organize medical photos for symptom tracking and healthcare communication.
 
-1. **Data Analysis & Insights Engine** - Statistical analytics, pattern detection, predictive modeling, and automated recommendations
-2. **Advanced Search & Filtering** - Real-time full-text search with faceted filtering across all health data
-3. **Professional Report Generation** - Medical-grade reports with charts and multi-format export for healthcare consultations
+**Current State (40% Complete):**
+- ✅ Photo capture with encryption
+- ✅ Photo gallery with lazy loading
+- ✅ Full-screen photo viewer with zoom/pan
+- ✅ Basic tagging and filtering
+
+**This Specification Covers (60% Remaining):**
+- 🎨 Photo annotation tools (drawing, text, blur)
+- 🔗 Enhanced photo linking (auto-linking, visual interface)
+- 📦 Export/import integration
 
 **UX Challenge:**
 
-The intelligence features must make sophisticated statistical analysis accessible to non-technical users while maintaining the privacy-first, offline-capable architecture established in Phases 1 & 2. Users need to understand complex correlations, trends, and predictions without requiring data science knowledge.
+Users need to annotate medical photos for doctor appointments while maintaining privacy (blur sensitive areas). The annotation tools must work seamlessly on touch devices (primary use case) while providing precise control. Photos must be automatically organized with health data to reduce manual effort.
 
-**Key UX Principles from PRD:**
-- Progressive intelligence disclosure (features unlock as data matures)
-- Plain-language insights (no unexplained statistics)
-- Actionable over informational (every insight includes next steps)
-- Trust through transparency (always show confidence levels)
-- Report-ready by default (sharable visualizations)
+**Key UX Principles:**
+- Touch-first design (finger-friendly controls)
+- Non-destructive editing (preserve original photos)
+- Privacy-first (clear blur warnings, local-only processing)
+- Medical context (annotation styles optimized for healthcare communication)
+- Progressive disclosure (simple tools first, advanced features revealed as needed)
 
 ---
 
@@ -34,335 +41,432 @@ The intelligence features must make sophisticated statistical analysis accessibl
 
 ### 1.1 Target User Personas
 
-**Primary Persona: "Sarah - The Pattern Seeker"**
-- **Demographics:** 28-45 years old, diagnosed with Hidradenitis Suppurativa, tech-comfortable
+**Primary Persona: "Michael - The Visual Documenter"**
+- **Demographics:** 28-42 years old, managing HS with regular dermatology appointments, uses smartphone for photos
 - **Goals:**
-  - Identify triggers to avoid flare-ups
-  - Understand if treatments are working
-  - Communicate effectively with dermatologist/rheumatologist
+  - Document lesions and track healing over time
+  - Highlight specific areas of concern for doctor appointments
+  - Protect privacy by blurring identifying features before sharing
+  - Quickly find photos from specific body regions or dates
 - **Pain Points:**
-  - Can't see patterns in daily symptom logs manually
-  - Forgets to mention important correlations during doctor visits
-  - Trial-and-error with diet/lifestyle changes is exhausting
-- **Technical Comfort:** Intermediate - uses health apps, comfortable with graphs/charts but not statistical terminology
+  - Takes photos with phone camera but struggles to organize them
+  - Forgets to show important photos during doctor visits
+  - Wants to highlight areas on photos but doesn't have good tools
+  - Worried about privacy when sharing medical photos
+- **Technical Comfort:** Intermediate - comfortable with photo apps, familiar with basic photo editing
+- **Device Usage:** Primarily mobile (iPhone/Android), occasionally tablet for doctor appointment prep
 
-**Secondary Persona: "Dr. Martinez - The Healthcare Provider"**
+**Secondary Persona: "Dr. Chen - The Dermatologist"**
 - **Demographics:** Dermatologist treating HS patients
 - **Goals:**
-  - Quickly understand patient's symptom history
-  - Make evidence-based treatment adjustments
-  - Document patient progress for insurance/records
+  - Quickly assess photo documentation from patients
+  - Understand which areas patient is most concerned about
+  - Track progression of treatment effectiveness visually
 - **Pain Points:**
-  - Patients struggle to recall symptom details accurately
-  - Limited appointment time (15-30 minutes)
-  - Need objective data to justify treatment changes
-- **Technical Comfort:** High - reviews medical charts daily, values clear data visualization
+  - Patients show disorganized phone photos during appointments
+  - Unclear which lesion/area the patient is pointing to
+  - Limited appointment time to review many photos
+- **Technical Comfort:** High - reviews medical imaging daily
+- **Device Usage:** Desktop for chart review, sometimes receives photos via patient portal
 
 ### 1.2 Usability Goals
 
-1. **Learnability** - New intelligence features should be discoverable and self-explanatory within 5 minutes of exploration, with progressive disclosure preventing overwhelm
+1. **Touch-Optimized Drawing** - Annotation tools must work smoothly with finger input on mobile devices, with controls sized for thumb/finger use (minimum 44x44px touch targets)
 
-2. **Efficiency for Repeat Use** - Power users should be able to:
-   - Generate a consultation report in < 2 minutes
-   - Find specific historical entries in < 10 seconds via search
-   - Review key insights at a glance from dashboard
+2. **Quick Annotation Workflow** - Users should be able to:
+   - Open photo viewer → tap "Annotate" → draw arrow → save in < 30 seconds
+   - Blur a face in < 20 seconds (critical privacy feature)
+   - Add text note in < 15 seconds
 
-3. **Error Prevention & Recovery** -
-   - No destructive actions without confirmation
-   - Auto-save for report drafts and search queries
-   - Clear undo/redo for filter configurations
-   - Graceful degradation when insufficient data exists
+3. **Automatic Organization** - Photos captured during daily entry creation should auto-link without user action, reducing manual filing
 
-4. **Accessibility** - WCAG 2.1 AA compliance minimum for all intelligence features, with special attention to:
-   - Screen reader support for charts (data tables + alt descriptions)
-   - Keyboard navigation for dashboards and report builder
-   - High contrast mode for correlation matrices
-   - Text alternatives for all visualizations
+4. **Error Prevention** -
+   - Clear warning before applying irreversible blur
+   - Undo/redo for all annotation actions (10 steps)
+   - Original photos never modified (non-destructive overlays)
+   - Confirmation dialogs for destructive actions
 
-5. **Trust & Confidence** - Users must trust the intelligence system by:
-   - Always showing confidence levels and sample sizes
-   - Explaining why insufficient data prevents analysis
-   - Providing plain-language interpretations of statistics
-   - Clear attribution of insights to data sources
+5. **Medical Communication Ready** - Annotated photos should be suitable for:
+   - In-person doctor appointments (clear visual markers)
+   - Patient portal uploads (privacy-preserved)
+   - Insurance documentation (professional appearance)
 
 ### 1.3 Design Principles
 
-1. **Progressive Intelligence Disclosure** - Reveal advanced analytics progressively based on data maturity (trend analysis at 14 days, seasonal patterns at 6 months), preventing overwhelm while educating users on capabilities
+1. **Touch-First, Desktop-Compatible** - Design all annotation tools for finger input first (minimum 44px targets, gesture controls), then enhance for mouse/stylus precision
 
-2. **Plain-Language Insights** - Present all statistical findings with plain-language explanations suitable for non-technical users, with "Show technical details" toggle for advanced users
+2. **Non-Destructive Editing** - Original photos are sacred; all annotations are overlays that can be edited or removed, with blur as the only exception (explicitly warned)
 
-3. **Actionable Over Informational** - Every insight includes actionable next steps with clear rationale and expected outcomes—never present data without guidance
+3. **Privacy Through Transparency** - Every privacy-sensitive action (blur, share, export) includes clear warnings about permanence and visibility
 
-4. **Trust Through Transparency** - Always show confidence levels, data quality indicators, and sample sizes with visual cues (color-coded badges, uncertainty ranges)
+4. **Medical Context Over Artistic** - Annotation tools prioritized for medical communication (arrows, circles, clinical notes) over artistic features (filters, effects, stickers)
 
-5. **Glanceable Dashboard Design** - Prioritize information hierarchy with quick-scan cards at top, progressive depth through click-to-expand, and shortcuts for deep dives
+5. **Progressive Disclosure** - Simple tools front and center (arrow, circle), advanced features (text positioning, blur intensity) revealed through progressive interaction
 
 ---
 
 ## 2. Information Architecture
 
-### 2.1 Site Map
+### 2.1 Site Map (Photo Feature Branch)
 
 ```
 Pocket Symptom Tracker
 │
-├── Home / Dashboard (Phase 1)
-├── Daily Entry (Phase 1)
-├── Calendar (Phase 1)
-├── Active Flares (Phase 2)
-├── Body Map (Phase 2)
+├── Photos (Existing - Enhanced)
+│   ├── **Photo Gallery** (Enhanced)
+│   │   ├── Grid view with infinite scroll
+│   │   ├── Filters (date, tags, body region, linked entries)
+│   │   ├── Bulk selection
+│   │   └── Storage manager
+│   │
+│   ├── **Photo Viewer** (Enhanced - NEW FEATURES)
+│   │   ├── Full-screen view with zoom/pan
+│   │   ├── Metadata panel (date, tags, links)
+│   │   ├── **→ Annotate Button** (NEW)
+│   │   ├── **→ Manage Links Button** (NEW)
+│   │   ├── Share controls
+│   │   └── Delete confirmation
+│   │
+│   ├── **Photo Annotation Editor** (NEW)
+│   │   ├── Canvas with photo + annotation overlay
+│   │   ├── Toolbar (drawing tools)
+│   │   │   ├── Arrow tool
+│   │   │   ├── Circle tool
+│   │   │   ├── Rectangle tool
+│   │   │   ├── Text tool
+│   │   │   └── Blur tool (with warning)
+│   │   ├── Tool Config Panel
+│   │   │   ├── Color picker
+│   │   │   ├── Line width selector
+│   │   │   ├── Font size selector
+│   │   │   └── Blur intensity selector
+│   │   ├── Action Controls
+│   │   │   ├── Undo/Redo
+│   │   │   ├── Clear All
+│   │   │   ├── Save
+│   │   │   └── Cancel
+│   │   └── Annotations List (shows all annotations)
+│   │
+│   ├── **Photo Linker** (NEW)
+│   │   ├── Photo preview
+│   │   ├── Linkable Entities List
+│   │   │   ├── Recent Daily Entries (30 days)
+│   │   │   ├── Active Symptoms
+│   │   │   └── Body Regions
+│   │   ├── Multi-select interface
+│   │   └── Save/Cancel actions
+│   │
+│   └── Photo Capture (Existing - Enhanced with auto-link context)
 │
-├── **Insights Dashboard** (Phase 3 - NEW)
-│   ├── Quick Insights Cards
-│   ├── Trend Analysis
-│   ├── Correlation Matrix
-│   ├── Pattern Detection
-│   ├── Predictive Insights
-│   ├── Anomaly Alerts
-│   └── Recommendations
+├── Daily Entry Form (Existing - Enhanced)
+│   └── Photo Section
+│       ├── Photo grid (linked to this entry)
+│       └── **Add Photos** (passes auto-link context)
 │
-├── **Search** (Phase 3 - NEW)
-│   ├── Search Interface (Global)
-│   ├── Advanced Filters
-│   ├── Faceted Navigation
-│   ├── Saved Searches
-│   └── Search Results (List/Timeline/Map views)
-│
-├── **Reports** (Phase 3 - NEW)
-│   ├── Report Templates Library
-│   ├── Report Builder Wizard
-│   │   ├── Step 1: Template Selection
-│   │   ├── Step 2: Configuration
-│   │   ├── Step 3: Content Customization
-│   │   └── Step 4: Preview & Generate
-│   ├── Report History
-│   ├── Shared Reports
-│   └── Export Options
-│
-├── Photos (Phase 2)
-├── Settings (Phase 1)
-└── More Menu (Phase 1)
+└── Settings → Export/Import (Enhanced)
+    ├── Export with Photos option
+    └── Import with Photos restoration
 ```
 
 **Hierarchy Rationale:**
-- **Insights Dashboard** placed prominently as primary intelligence entry point
-- **Search** positioned for quick access (also available via global Cmd/Ctrl+K)
-- **Reports** grouped as destination feature (users go here with intent)
-- Phase 3 features integrated at same level as Phase 1 & 2 to signal equal importance
+- **Photo Annotation Editor** modal overlay (doesn't require new route, maintains context)
+- **Photo Linker** modal overlay (lightweight interaction, doesn't need dedicated screen)
+- **Auto-link Context** passed invisibly (improves UX without UI complexity)
 
 ### 2.2 Navigation Structure
 
-**Primary Navigation (Bottom Tab Bar):**
-```
-[Home] [Daily Entry] [Insights] [Search] [More]
-```
+**Primary Navigation:**
+- Photos accessible from main bottom navigation (existing)
+- Global "Add Photo" floating action button from any screen (existing)
 
-Phase 3 adds **Insights** and **Search** to primary navigation, replacing less-frequently-used items moved to "More" menu.
+**Secondary Navigation (Within Photo Feature):**
+- Gallery → Tap photo → Viewer
+- Viewer → "Annotate" button → Annotation Editor → Save → back to Viewer
+- Viewer → "Manage Links" button → Photo Linker → Save → back to Viewer
+- Daily Entry → "Add Photos" → Photo Capture (with auto-link) → back to Entry
 
-**Desktop Adaptation:**
-- Horizontal top navigation bar for primary items
-- Insights dashboard uses sidebar for analytics categories
-- Search results use left sidebar for filters (always visible)
+**Mobile Navigation:**
+- Bottom navigation for primary nav (existing)
+- Modal overlays for annotation and linking (prevent deep stacking)
+- Swipe-to-dismiss for modals (natural gesture)
 
-**Secondary Navigation by Feature:**
-
-**1. Insights Dashboard:**
-- **Tab Switcher:** Overview | Trends | Correlations | Patterns | Predictions
-- **Time Range Selector:** 7d | 30d | 90d | 1y | All (always visible top-right)
-- **Widget Configuration:** Gear icon for dashboard customization
-
-**2. Search:**
-- **Global Access:** Cmd/Ctrl+K keyboard shortcut from anywhere
-- **Filter Panel:** Collapsible sidebar (desktop) / Bottom sheet (mobile)
-- **View Mode Switcher:** List | Timeline | Map
-- **Saved Searches:** Dropdown accessible from search bar
-
-**3. Reports:**
-- **Linear Wizard:** Step 1 → Step 2 → Step 3 → Step 4 (can't skip)
-- **Progress Indicator:** Stepper showing current position
-- **Back/Next Buttons:** With "Save Draft" option
-- **Report History:** Accessible from main Reports tab
-
-**Mobile Navigation Strategy:**
-- Bottom tab bar limited to 5 items (prevents overcrowding)
-- Search icon in top-right corner (alternative to tab)
-- Insights uses horizontal scrolling cards
-- Report builder uses vertical stepper (mobile-optimized)
-- Filter panels slide up from bottom (not sidebars)
-
-**Breadcrumb Examples:**
-```
-Home > Insights > Trend Analysis > Symptom Severity Trend
-Home > Search Results > Daily Entry (2024-09-15)
-Home > Reports > New Report > Consultation Summary > Preview
-```
+**Keyboard Navigation:**
+- Esc to close modals
+- Ctrl/Cmd+Z/Y for undo/redo in annotation
+- Tab navigation through all controls
+- Arrow keys for tool selection
 
 ---
 
 ## 3. User Flows
 
-### 3.1 User Flow: Pattern Discovery (Trigger Correlation)
+### 3.1 User Flow: Annotating a Photo for Doctor Visit
 
-**User Goal:** Identify which triggers are causing symptom flare-ups
+**Goal:** Highlight area of concern on photo and add contextual note
 
-**Entry Points:**
-- Direct navigation to Insights Dashboard
-- Notification: "5 new correlations detected"
-- From Daily Entry: "View analysis" link
+**Entry Point:** User has photo in gallery, preparing for doctor appointment tomorrow
 
-**Flow Diagram:**
+**Flow:**
 
 ```mermaid
-graph TD
-    A[User opens app] --> B[Navigates to Insights Dashboard]
-    B --> C{Has sufficient data?}
-    C -->|No < 14 days| D[Show progressive disclosure message]
-    D --> E[Explain what unlocks at 14/30/90 days]
-    C -->|Yes ≥ 14 days| F[Display Quick Insights Cards]
-    F --> G[See: 5 significant correlations detected]
-    G --> H[Click on Correlations Card]
-    H --> I[View Correlation Matrix Heatmap]
-    I --> J[Identify strong correlation<br/>dairy → pain r=0.78]
-    J --> K[Click correlation cell]
-    K --> L[View detailed analysis]
-    L --> M[See scatter plot + timeline]
-    M --> N[Read plain-language explanation]
-    N --> O[Review confidence level 92%]
-    O --> P{Want to act on this?}
-    P -->|Yes| Q[Read recommendation:<br/>Eliminate dairy 30 days]
-    Q --> R[Bookmark for doctor visit]
-    R --> S[Create saved search:<br/>dairy + pain monitoring]
-    P -->|Not yet| T[Dismiss for now]
-    S --> U[Success: Pattern identified]
-    T --> U
+flowchart TD
+    A[Photo Gallery] --> B{Select Photo}
+    B --> C[Photo Viewer Opens]
+    C --> D{Tap 'Annotate' Button}
+    D --> E[Annotation Editor Loads]
+    E --> F[Photo displays in canvas]
+    F --> G{Select Tool}
+    G --> H[Arrow Tool Selected]
+    H --> I{Draw Arrow on Photo}
+    I --> J[Pointer Down - Start Arrow]
+    J --> K[Pointer Move - Preview Arrow]
+    K --> L[Pointer Up - Finish Arrow]
+    L --> M{Need More Annotations?}
+    M -->|Yes| G
+    M -->|No| N{Add Text Note?}
+    N -->|Yes| O[Select Text Tool]
+    O --> P{Tap Location}
+    P --> Q[Text Input Dialog]
+    Q --> R[Enter 'Pain level 8/10']
+    R --> S[Text Appears on Photo]
+    S --> T{Review Complete?}
+    N -->|No| T
+    T -->|Need Changes| U{Undo Last Action}
+    U --> M
+    T -->|Looks Good| V{Tap 'Save' Button}
+    V --> W[Saving Spinner]
+    W --> X[Annotations Encrypted]
+    X --> Y[Photo Record Updated]
+    Y --> Z[Return to Viewer]
+    Z --> AA[Annotations Visible]
+    AA --> AB[Success Toast: 'Annotations Saved']
+    
+    style D fill:#e1f5ff
+    style V fill:#c8e6c9
+    style AB fill:#c8e6c9
 ```
 
 **Success Criteria:**
-- User understands correlation strength and confidence
-- User receives actionable recommendation
-- User can bookmark insight for future reference
+- Annotation visible in viewer with toggle on/off
+- Original photo preserved (can remove annotations later)
+- Workflow completes in < 30 seconds for simple arrow
 
 **Error States:**
-- Insufficient data (< 14 days): Show educational message about data requirements
-- No significant correlations found: Explain why and suggest longer tracking period
-- Calculation error: Graceful fallback with "Try again" option
+- **Insufficient data:** Photo fails to load → Error message with retry
+- **Save failure:** Network/storage issue → Error toast, keep editor open, allow retry
+- **Accidental dismiss:** User taps outside modal → Confirm "Discard annotations?" if unsaved
 
 ---
 
-### 3.2 User Flow: Report Generation (Preparing for Doctor Visit)
+### 3.2 User Flow: Auto-Linking Photos During Daily Entry
 
-**User Goal:** Create comprehensive medical report for healthcare provider consultation
+**Goal:** Capture photos that automatically link to current daily entry
 
-**Entry Points:**
-- Reports tab from navigation
-- From Insights: "Include in report" button
-- From Calendar: "Generate report for date range"
+**Entry Point:** User creating evening daily entry, wants to document new lesion
 
-**Flow Diagram:**
+**Flow:**
 
 ```mermaid
-graph TD
-    A[User needs report for doctor] --> B[Navigate to Reports tab]
-    B --> C[Click Generate Report]
-    C --> D[Step 1: Select Template]
-    D --> E{Which template?}
-    E -->|Consultation Summary| F[Preview template description]
-    E -->|Other templates| G[Browse 7 other options]
-    F --> H[Click Use This Template]
-    G --> H
-    H --> I[Step 2: Configure Parameters]
-    I --> J[Set date range: Last 6 months]
-    J --> K[Select data to include:<br/>☑ Symptoms ☑ Flares ☑ Meds<br/>☑ Triggers ☑ Body Map]
-    K --> L[See preview summary:<br/>187 entries, 12 flares, 3 meds]
-    L --> M{Looks good?}
-    M -->|No| N[Adjust selections]
-    N --> L
-    M -->|Yes| O[Click Next]
-    O --> P[Step 3: Customize Content]
-    P --> Q[Add custom text section:<br/>Questions for doctor]
-    Q --> R[Remove Recommendations section]
-    R --> S[Reorder: Flare history first]
-    S --> T[Click Preview Report]
-    T --> U[Review 8-page PDF preview]
-    U --> V{Satisfied?}
-    V -->|No| W[Click Back to edit]
-    W --> P
-    V -->|Yes| X[Click Generate PDF]
-    X --> Y[Show progress: 0% → 100%]
-    Y --> Z[Step 4: Download & Share]
-    Z --> AA[Download PDF locally]
-    AA --> AB{Share with doctor?}
-    AB -->|Yes| AC[Generate shareable link]
-    AC --> AD[Set expiration: 7 days]
-    AD --> AE[Copy access code]
-    AB -->|No| AF[Success: Report ready]
-    AE --> AF
+flowchart TD
+    A[Daily Entry Form] --> B{Filling Entry Fields}
+    B --> C[Severity: 7/10]
+    C --> D[Body Region: Right Armpit]
+    D --> E{Scroll to Photo Section}
+    E --> F[Photo Section Shows: '0 photos']
+    F --> G{Tap 'Add Photos' Button}
+    G --> H[Photo Capture Modal Opens]
+    H --> I[Auto-Link Notice Displayed]
+    I --> J['Photos will be linked to this daily entry']
+    J --> K{Select Photo Source}
+    K -->|Gallery| L[File Input Opens]
+    K -->|Camera| M[Camera Permission Check]
+    M --> N[Camera Interface]
+    L --> O{Select Files}
+    O --> P[Files Selected: 2 photos]
+    P --> Q[Upload Progress: 1/2]
+    Q --> R[Encryption Progress]
+    R --> S[Thumbnail Generation]
+    S --> T[Auto-Link Applied]
+    T --> U[dailyEntryId Set on Photo]
+    U --> V[Upload Progress: 2/2]
+    V --> W[All Photos Uploaded]
+    W --> X[Modal Closes]
+    X --> Y[Photo Section Updates: '2 photos']
+    Y --> Z[Thumbnails Display in Entry]
+    Z --> AA{Continue Editing Entry}
+    AA --> AB{Save Entry}
+    AB --> AC[Entry Saved with Photo Links]
+    AC --> AD[Success Toast]
+    
+    style I fill:#fff9c4
+    style T fill:#c8e6c9
+    style AD fill:#c8e6c9
 ```
 
 **Success Criteria:**
-- Report generated in < 10 seconds
-- Professional medical-grade quality
-- Successfully downloaded or shared
+- User never manually selects entry to link (automatic)
+- Photos immediately appear in Photo Section
+- Links visible in photo metadata (when viewing later)
 
-**Error States:**
-- Insufficient data for report: Show which sections will be empty, offer to continue anyway
-- PDF generation timeout: Offer simplified report or retry
-- Share link creation failed: Fallback to download-only option
+**Auto-Link Indicator:**
+- Yellow notice banner: "Photos will be automatically linked to this daily entry"
+- Icon shows link symbol + entry date
+- Reassures user that organization happens automatically
 
 ---
 
-### 3.3 User Flow: Search & Investigation (Understanding Unusual Symptom)
+### 3.3 User Flow: Blurring Identifying Information
 
-**User Goal:** Find and analyze historical occurrences of unusual symptom pattern
+**Goal:** Blur face/tattoo before exporting photo for insurance claim
 
-**Entry Points:**
-- Global search (Cmd/Ctrl+K from anywhere)
-- Search tab from navigation
-- From Daily Entry: "Find similar" button
+**Entry Point:** User has photo they want to share but needs privacy protection
 
-**Flow Diagram:**
+**Flow:**
 
 ```mermaid
-graph TD
-    A[User had unusual flare] --> B{Where to search?}
-    B -->|Global shortcut| C[Press Cmd/Ctrl+K]
-    B -->|Navigation| D[Click Search tab]
-    C --> E[Search bar appears with focus]
-    D --> E
-    E --> F[Type: severe flare left thigh]
-    F --> G[See real-time results<br/>3 similar entries appear]
-    G --> H[Apply severity filter: ≥7]
-    H --> I[Apply body region: Legs]
-    I --> J[Results update: 4 entries<br/>over past 12 months]
-    J --> K{View preference?}
-    K -->|Timeline| L[Switch to Timeline view]
-    K -->|Keep list| M[Stay in List view]
-    L --> N[See temporal pattern:<br/>All 4 events seasonal]
-    M --> N
-    N --> O[Notice pattern:<br/>All within 5 days of high stress]
-    O --> P[Click Analyze Common Factors]
-    P --> Q[System runs correlation<br/>on these 4 events]
-    Q --> R[Discover: Stress + Poor sleep<br/>pattern in all 4 cases]
-    R --> S[Check Predictive Dashboard]
-    S --> T[Warning: High risk next 2 weeks<br/>Current stress + deadline]
-    T --> U{Create safeguard?}
-    U -->|Yes| V[Set up custom alert:<br/>Stress + sleep < 6hrs for 2+ days]
-    V --> W[Add note to recent entry:<br/>Pattern: Stress + sleep → leg flares]
-    W --> X[Save search as:<br/>Severe Flare Investigation]
-    U -->|No| Y[Just note the pattern]
-    X --> Z[Success: Insight gained]
-    Y --> Z
+flowchart TD
+    A[Photo Viewer] --> B{Tap 'Annotate' Button}
+    B --> C[Annotation Editor Opens]
+    C --> D{Select 'Blur' Tool}
+    D --> E[Blur Tool Active]
+    E --> F[Intensity Selector Visible]
+    F --> G{Select Intensity: Heavy}
+    G --> H{Draw Blur Region}
+    H --> I[Pointer Down on Face]
+    I --> J[Drag to Cover Area]
+    J --> K[Blur Preview Renders]
+    K --> L[Pointer Up - Blur Region Complete]
+    L --> M{Review Blur Coverage}
+    M -->|Need More| H
+    M -->|Sufficient| N{Tap 'Save' Button}
+    N --> O[Warning Dialog Appears]
+    O --> P['Blur is PERMANENT and cannot be undone']
+    P --> Q{Confirmation Required}
+    Q -->|Cancel| C
+    Q -->|Confirm| R[Processing Spinner]
+    R --> S[Decrypt Original Photo]
+    S --> T[Apply Blur to Base Image]
+    T --> U[Re-encrypt Modified Photo]
+    U --> V[Update Photo Record]
+    V --> W[Remove Blur from Annotations List]
+    W --> X[Return to Viewer]
+    X --> Y[Blurred Photo Displays]
+    Y --> Z[Success Toast: 'Blur Applied']
+    Z --> AA[Original NO LONGER Recoverable]
+    
+    style O fill:#ffccbc
+    style P fill:#ffccbc
+    style AA fill:#ffccbc
+```
+
+**Critical UX Moments:**
+
+**Warning Dialog:**
+```
+⚠️ Blur is Permanent
+
+This action will permanently blur the selected area.
+The original photo cannot be recovered.
+
+Are you sure you want to continue?
+
+[Cancel]  [Yes, Apply Blur]
 ```
 
 **Success Criteria:**
-- Search results returned in < 500ms
-- Relevant filters suggested based on query
-- User discovers actionable pattern
+- User understands permanence before confirming
+- Blur is truly irreversible (privacy guarantee)
+- Blurred photo suitable for sharing
 
 **Error States:**
-- No results found: Suggest broadening search criteria or checking spelling
-- Search index building: Show progress, allow basic search with warning
-- Too many results (>1000): Prompt to add filters for refinement
+- **Blur processing failure:** Show error, keep original photo intact, allow retry
+- **Insufficient blur coverage:** Warn user before saving if blur region very small
+
+---
+
+### 3.4 User Flow: Manual Photo Linking (Retrospective)
+
+**Goal:** Link existing photos to symptoms/entries after capture
+
+**Entry Point:** User has 5 old photos they want to link to specific symptom
+
+**Flow:**
+
+```mermaid
+flowchart TD
+    A[Photo Gallery] --> B{Filter Photos}
+    B --> C[Filter: Last 30 Days]
+    C --> D{Select First Photo}
+    D --> E[Photo Viewer Opens]
+    E --> F{Tap 'Manage Links' Button}
+    F --> G[Photo Linker Modal Opens]
+    G --> H[Photo Preview at Top]
+    H --> I[Linkable Entities Load]
+    I --> J[Spinner: 'Loading entries...']
+    J --> K[Daily Entries List Populates]
+    K --> L[Symptoms List Populates]
+    L --> M[Body Regions List Populates]
+    M --> N{Scroll to Find Entry}
+    N --> O[Entry: Oct 8, 2025]
+    O --> P{Tap Checkbox}
+    P --> Q[Entry Selected - Checkmark]
+    Q --> R{Select Symptom}
+    R --> S[Symptom: 'Right Armpit Abscess']
+    S --> T{Tap Checkbox}
+    T --> U[Symptom Selected - Checkmark]
+    U --> V[Link Summary: '2 links selected']
+    V --> W{Review Selections}
+    W --> X{Tap 'Save Links' Button}
+    X --> Y[Saving Spinner]
+    Y --> Z[Photo Record Updated]
+    Z --> AA[Links Array Created]
+    AA --> AB[Modal Closes]
+    AB --> AC[Viewer Updates]
+    AC --> AD[Metadata Panel Shows Links]
+    AD --> AE[Success Toast: 'Links Saved']
+    
+    style Q fill:#c8e6c9
+    style U fill:#c8e6c9
+    style AE fill:#c8e6c9
+```
+
+**PhotoLinker UI Layout:**
+
+```
+┌─────────────────────────────────────┐
+│ [X] Link Photo                      │
+├─────────────────────────────────────┤
+│  [Photo Thumbnail]                  │
+│  Oct 9, 2025 • test.jpg             │
+├─────────────────────────────────────┤
+│  Daily Entries                      │
+│  ┌───────────────────────────────┐ │
+│  │ ☐ Oct 10, 2025 (Severity: 5) │ │
+│  │ ☑ Oct 8, 2025 (Severity: 7)  │ │
+│  │ ☐ Oct 5, 2025 (Severity: 4)  │ │
+│  └───────────────────────────────┘ │
+│                                     │
+│  Symptoms                           │
+│  ┌───────────────────────────────┐ │
+│  │ ☑ Right Armpit Abscess        │ │
+│  │ ☐ Left Groin Lesion           │ │
+│  └───────────────────────────────┘ │
+│                                     │
+│  Body Regions                       │
+│  ┌───────────────────────────────┐ │
+│  │ ☐ Right Armpit (Front)        │ │
+│  │ ☐ Left Groin (Front)          │ │
+│  └───────────────────────────────┘ │
+├─────────────────────────────────────┤
+│  2 link(s) selected                 │
+│                   [Cancel] [Save]   │
+└─────────────────────────────────────┘
+```
+
+**Success Criteria:**
+- Entity lists load in < 1 second
+- Multi-select clear and responsive
+- Links immediately visible in viewer metadata
 
 ---
 
@@ -370,175 +474,207 @@ graph TD
 
 ### 4.1 Design System Approach
 
-**Strategy:** Extend existing Tailwind CSS 4 + custom component system from Phases 1 & 2
+**Primary System:** Hybrid approach using **shadcn/ui** components (already established in project)
 
 **Rationale:**
-- Maintains visual consistency across all phases
-- Leverages existing design tokens and utilities
-- Avoids external library dependencies (keeps bundle size optimal)
-- Custom components provide full control for health data visualizations
+- Project already uses shadcn/ui for buttons, inputs, modals
+- Accessible by default (WCAG AA compliant)
+- Customizable with Tailwind CSS
+- No runtime dependencies (copy-paste components)
 
-**Phase 3 Extension Areas:**
-1. **Data Visualization** - Chart.js wrappers, heatmaps, stat cards
-2. **Advanced Inputs** - Multi-filter builder, drag-drop customization
-3. **Complex Layouts** - Dashboard grids, wizards, collapsible panels
+**Custom Components Needed:**
+- `AnnotationCanvas` - HTML5 Canvas wrapper for drawing
+- `AnnotationToolbar` - Tool selection and configuration
+- `PhotoLinker` - Entity selection interface
+- `LinkableItem` - Checkbox list item for entities
 
-**Technology Stack:**
-- **Base:** Tailwind CSS 4 (existing)
-- **Primitives:** Headless UI for accessible interactive components (existing)
-- **Charts:** Chart.js 4.5 + react-chartjs-2 (NEW)
-- **Icons:** Heroicons (existing, extend with data/analytics icons)
-- **Animations:** Tailwind transitions + Framer Motion for complex sequences (NEW)
+**Component Consistency:**
+- All modals use `Dialog` from shadcn/ui
+- All buttons use `Button` component with variants
+- All form inputs use shadcn/ui form components
+- All icons from `lucide-react` (existing icon library)
 
 ### 4.2 Core Components
 
-**4.2.1 Data Visualization Components**
+#### Component: AnnotationCanvas
 
-**InsightCard**
-- **Purpose:** Display individual insight with metric, trend, and CTA
-- **Variants:** `default` | `warning` | `success` | `info`
-- **States:** `default` | `hover` | `expanded` | `loading`
-- **Props:** title, value, trend, confidence, action, onExpand
-- **Usage:** Dashboard overview, recommendation lists
+**Purpose:** Render photo with annotation overlay and handle drawing input
 
-**CorrelationMatrix**
-- **Purpose:** Interactive heatmap showing variable correlations
-- **Variants:** `compact` (mobile) | `expanded` (desktop)
-- **States:** `default` | `cell-hover` | `cell-selected` | `loading`
-- **Props:** data (correlation coefficients), labels, onCellClick, threshold
-- **Usage:** Correlation analysis view
-- **Accessibility:** Keyboard navigation, screen reader data table alternative
+**Variants:**
+- Read-only (for PhotoViewer)
+- Editable (for Annotation Editor)
 
-**TrendChart**
-- **Purpose:** Line chart with trend line overlay and confidence intervals
-- **Variants:** `symptom` | `medication` | `trigger` | `custom`
-- **States:** `default` | `loading` | `no-data` | `error`
-- **Props:** data, timeRange, showTrendLine, showConfidenceInterval
-- **Usage:** Trend analysis, report visualizations
-- **Accessibility:** Data table toggle, alt text descriptions
+**States:**
+- `idle` - No active drawing
+- `drawing` - User actively drawing shape
+- `saving` - Annotations being saved
+- `error` - Failed to load photo or save
 
-**ConfidenceBadge**
-- **Purpose:** Visual indicator of statistical confidence level
-- **Variants:** `very-high` (≥90%) | `high` (70-89%) | `medium` (50-69%) | `low` (<50%)
-- **States:** `default` | `hover` (shows tooltip)
-- **Props:** confidence (0-100), size (`sm` | `md` | `lg`)
-- **Usage:** Throughout analytics features
+**Props:**
+```typescript
+interface AnnotationCanvasProps {
+  photo: PhotoAttachment;
+  annotations: PhotoAnnotation[];
+  isEditable: boolean;
+  selectedTool?: AnnotationTool;
+  toolConfig?: ToolConfig;
+  onAnnotationAdd?: (annotation: PhotoAnnotation) => void;
+  onAnnotationUpdate?: (id: string, updates: Partial<PhotoAnnotation>) => void;
+}
+```
 
----
-
-**4.2.2 Search & Filter Components**
-
-**GlobalSearch**
-- **Purpose:** Omnipresent search interface with keyboard shortcut
-- **Variants:** `inline` (in header) | `modal` (Cmd+K overlay)
-- **States:** `closed` | `open` | `searching` | `results` | `no-results`
-- **Props:** onSearch, suggestions, recentSearches, placeholder
-- **Usage:** Global header, search page
-- **Keyboard:** Cmd/Ctrl+K to open, Esc to close, arrow keys to navigate
-
-**FilterBuilder**
-- **Purpose:** Construct complex multi-field filters with boolean logic
-- **Variants:** `simple` (1-3 filters) | `advanced` (unlimited, with AND/OR)
-- **States:** `default` | `editing` | `applied` | `invalid`
-- **Props:** availableFields, appliedFilters, onFilterChange
-- **Usage:** Search page, report builder
-
-**FilterChip**
-- **Purpose:** Removable tag showing active filter
-- **Variants:** `removable` | `read-only`
-- **States:** `default` | `hover` | `removing`
-- **Props:** label, onRemove, disabled
-- **Usage:** Above search results, in saved searches
-
-**FacetPanel**
-- **Purpose:** Collapsible list of facets with counts
-- **Variants:** `sidebar` (desktop) | `bottom-sheet` (mobile)
-- **States:** `collapsed` | `expanded` | `loading`
-- **Props:** facets (array), onFacetSelect, selectedValues
-- **Usage:** Search results sidebar
+**Touch Interaction:**
+- Single-touch drawing (primary finger)
+- Two-finger pinch to zoom (when not drawing)
+- Two-finger pan (when not drawing)
+- Touch targets sized for finger: 44x44px minimum
 
 ---
 
-**4.2.3 Report Builder Components**
+#### Component: AnnotationToolbar
 
-**WizardStepper**
-- **Purpose:** Linear multi-step form with progress indicator
-- **Variants:** `horizontal` (desktop) | `vertical` (mobile)
-- **States:** Step states: `completed` | `current` | `upcoming` | `error`
-- **Props:** steps, currentStep, onStepChange, canSkip
-- **Usage:** Report builder, potentially future onboarding flows
-- **Keyboard:** Tab to navigate, Enter to proceed
+**Purpose:** Tool selection, configuration, and history controls
 
-**ReportPreview**
-- **Purpose:** PDF preview with zoom/page controls
-- **Variants:** `thumbnail` (overview) | `full-page` (detailed)
-- **States:** `loading` | `ready` | `error`
-- **Props:** pdfData, currentPage, totalPages, zoom
-- **Usage:** Report builder step 4
+**Layout:** Horizontal toolbar above canvas on mobile, sidebar on tablet/desktop
 
-**TemplateCard**
-- **Purpose:** Selectable report template with preview
-- **Variants:** `grid` (gallery view) | `list` (detailed view)
-- **States:** `default` | `hover` | `selected` | `recommended`
-- **Props:** template (name, description, preview), onSelect, isRecommended
-- **Usage:** Report builder step 1
+**Sections:**
+1. **Drawing Tools** (primary section, always visible)
+   - Arrow, Circle, Rectangle, Text, Blur buttons
+   - Active tool highlighted with background color
+   - Icon-only on mobile, icon+label on desktop
 
----
+2. **Tool Configuration** (conditional, based on selected tool)
+   - Color picker (6 preset colors)
+   - Line width selector (thin/medium/thick)
+   - Font size selector (small/medium/large)
+   - Blur intensity selector (light/medium/heavy)
 
-**4.2.4 Dashboard Components**
+3. **History Controls** (secondary section)
+   - Undo button (disabled when no history)
+   - Redo button (disabled when no future)
+   - Clear All button (with confirmation)
 
-**DashboardGrid**
-- **Purpose:** Responsive grid container for widget placement
-- **Variants:** `fixed` (no customization) | `customizable` (drag-drop)
-- **States:** `view-mode` | `edit-mode` | `dragging`
-- **Props:** widgets, layout, onLayoutChange, editable
-- **Usage:** Insights dashboard
-- **Accessibility:** Keyboard-accessible reordering in edit mode
+**Mobile Layout:**
+```
+┌──────────────────────────────────────────┐
+│ [→] [○] [▢] [T] [#]    [⟲] [⟳] [Clear] │
+└──────────────────────────────────────────┘
+         Tool Buttons         History
+         
+┌──────────────────────────────────────────┐
+│ Color: [●][●][●][●][●][●]  Width: [─][──][───] │
+└──────────────────────────────────────────┘
+         Tool Configuration (expandable)
+```
 
-**Widget**
-- **Purpose:** Container for dashboard content blocks
-- **Variants:** `small` (1x1) | `medium` (2x1) | `large` (2x2) | `full-width`
-- **States:** `collapsed` | `expanded` | `loading` | `error` | `empty`
-- **Props:** title, content, actions, collapsible, removable
-- **Usage:** Insights dashboard, potentially home dashboard
-
-**StatCard**
-- **Purpose:** Single statistic with icon and optional trend
-- **Variants:** `compact` | `detailed`
-- **States:** `default` | `hover` | `pulse` (for new insights)
-- **Props:** label, value, icon, trend (+/-/=), onClick
-- **Usage:** Dashboard quick stats
+**Visual Design:**
+- Tool buttons: 44x44px touch targets
+- Active tool: Blue background (--primary color)
+- Disabled buttons: 40% opacity, no pointer events
+- Color swatches: 32x32px with border
+- Tooltips on hover (desktop only)
 
 ---
 
-**4.2.5 Shared Utility Components**
+#### Component: PhotoLinker
 
-**LoadingSkeleton**
-- **Purpose:** Content placeholder during data fetch
-- **Variants:** `text` | `card` | `chart` | `table`
-- **Props:** count, height, width
-- **Usage:** All async data loading states
+**Purpose:** Visual interface for linking photos to entries/symptoms/regions
 
-**EmptyState**
-- **Purpose:** Friendly message when no content exists
-- **Variants:** `no-data` | `no-results` | `error` | `coming-soon`
-- **States:** `default` | `with-action`
-- **Props:** icon, title, description, action (button)
-- **Usage:** Empty search results, insufficient data for analysis
+**Layout:** Modal dialog with scrollable entity lists
 
-**TooltipInfo**
-- **Purpose:** Contextual help explaining features/terms
-- **Variants:** `icon-trigger` | `text-trigger` | `always-visible`
-- **States:** `hidden` | `visible`
-- **Props:** content, placement, trigger
-- **Usage:** Statistical term explanations, feature hints
+**Sections:**
+1. **Header**
+   - Title: "Link Photo"
+   - Close button (X)
 
-**ProgressIndicator**
-- **Purpose:** Show operation progress for long-running tasks
-- **Variants:** `linear` (bar) | `circular` (spinner) | `determinate` | `indeterminate`
-- **States:** `0-100%` for determinate
-- **Props:** progress (0-100), label, indeterminate
-- **Usage:** Report generation, analysis computation
+2. **Photo Preview** (sticky at top)
+   - Thumbnail (150x150px)
+   - Filename and capture date
+
+3. **Linkable Entities** (scrollable)
+   - Daily Entries section
+   - Symptoms section
+   - Body Regions section
+
+4. **Footer** (sticky at bottom)
+   - Link count summary
+   - Cancel and Save buttons
+
+**Entity List Item:**
+```typescript
+interface LinkableItemProps {
+  type: 'entry' | 'symptom' | 'region';
+  id: string;
+  label: string;
+  description?: string;
+  icon: ReactNode;
+  isSelected: boolean;
+  onToggle: () => void;
+}
+```
+
+**Item Layout:**
+```
+┌────────────────────────────────────┐
+│ ☑ Oct 8, 2025              [📅]   │
+│   Severity: 7/10                   │
+└────────────────────────────────────┘
+   ^         ^                  ^
+ Checkbox   Label             Icon
+           Description
+```
+
+**States:**
+- `loading` - Entities being fetched
+- `loaded` - Entities displayed
+- `empty` - No entities available
+- `saving` - Links being saved
+- `error` - Failed to load or save
+
+**Empty States:**
+- "No recent entries found" with icon
+- "No active symptoms found" with "Add Symptom" button
+- "No body regions found" with "Add Body Map" button
+
+---
+
+#### Component: ToolConfigPanel
+
+**Purpose:** Configure selected annotation tool (color, size, style)
+
+**Conditional Rendering:**
+- **Arrow/Circle/Rectangle:** Show color picker + line width
+- **Text:** Show color picker + font size
+- **Blur:** Show blur intensity only
+
+**Color Picker:**
+```
+Colors: [Red] [Blue] [Yellow] [Green] [White] [Black]
+         ●     ●      ●        ●       ●       ●
+```
+
+**Line Width Selector:**
+```
+Width:  [Thin] [Medium] [Thick]
+         ─      ──       ───
+```
+
+**Font Size Selector:**
+```
+Size:   [Small] [Medium] [Large]
+         14px    18px     24px
+```
+
+**Blur Intensity Selector:**
+```
+Intensity: [Light] [Medium] [Heavy]
+            5px     10px     20px
+```
+
+**Visual Feedback:**
+- Active option: Blue background + white text
+- Inactive options: Gray background + dark text
+- Hover: Slight background change
 
 ---
 
@@ -546,85 +682,109 @@ graph TD
 
 ### 5.1 Color Palette
 
-**Strategy:** Extend existing Tailwind color system with intelligence-specific semantic colors
+**Primary Colors (Existing from App):**
+```css
+--primary: 222.2 47.4% 11.2%;        /* Dark blue-gray */
+--primary-foreground: 210 40% 98%;   /* Off-white */
 
-**Primary Colors (Existing from Phases 1 & 2):**
-- **Brand Primary:** `purple-600` (#9333ea) - Primary CTA, active states
-- **Brand Secondary:** `indigo-600` (#4f46e5) - Secondary actions, links
-- **Surface:** `white` / `gray-50` (light mode), `gray-900` / `gray-800` (dark mode)
+--secondary: 210 40% 96.1%;          /* Light gray */
+--secondary-foreground: 222.2 47.4% 11.2%; /* Dark text */
 
-**Semantic Colors for Phase 3 Intelligence:**
+--accent: 210 40% 96.1%;             /* Accent blue */
+--accent-foreground: 222.2 47.4% 11.2%;
+```
 
-**Insight Severity / Confidence:**
-- **Very High (≥90%):** `emerald-500` (#10b981) - Strong correlations, high confidence
-- **High (70-89%):** `blue-500` (#3b82f6) - Moderate confidence insights
-- **Medium (50-69%):** `amber-500` (#f59e0b) - Caution, needs more data
-- **Low (<50%):** `gray-400` (#9ca3af) - Insufficient confidence
+**Annotation-Specific Colors:**
+```css
+/* Medical annotation defaults */
+--annotation-red: 0 84% 60%;         /* #E53E3E - Primary attention */
+--annotation-blue: 221 83% 53%;      /* #3B82F6 - Secondary marker */
+--annotation-yellow: 45 93% 47%;     /* #EAB308 - Warning/highlight */
+--annotation-green: 142 71% 45%;     /* #22C55E - Positive/healing */
+--annotation-white: 0 0% 100%;       /* #FFFFFF - Contrast on dark */
+--annotation-black: 0 0% 0%;         /* #000000 - Contrast on light */
 
-**Data Visualization Palette:**
-- **Positive Trend:** `emerald-500` → `emerald-700` gradient
-- **Negative Trend:** `red-500` → `red-700` gradient
-- **Neutral/Stable:** `gray-500` → `gray-700` gradient
-- **Heatmap Scale:** `blue-100` → `blue-500` → `red-500` (cold to hot)
+/* UI state colors */
+--blur-warning: 0 84% 60%;           /* Red for blur warnings */
+--auto-link-notice: 45 93% 47%;      /* Yellow for auto-link notices */
+--success: 142 71% 45%;              /* Green for success */
+--error: 0 84% 60%;                  /* Red for errors */
+```
 
-**Functional Colors:**
-- **Success:** `emerald-600` (#059669) - Completed actions, positive outcomes
-- **Warning:** `amber-600` (#d97706) - Attention needed, data quality issues
-- **Error:** `red-600` (#dc2626) - Failed operations, invalid inputs
-- **Info:** `blue-600` (#2563eb) - Informational messages, tips
+**Semantic Color Usage:**
+- **Red annotations:** Primary areas of concern, active inflammation
+- **Blue annotations:** Secondary markers, progression tracking
+- **Yellow annotations:** Warnings, areas to monitor
+- **Green annotations:** Healing progress, positive changes
+- **Blur tool:** Always shows red/warning color in UI
 
 ### 5.2 Typography
 
 **Font Families:**
+```css
+--font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+--font-mono: "Fira Code", "Courier New", monospace;
+```
 
-**Primary (Existing):**
-- **Sans-serif:** `Inter` - UI text, body copy, data labels
-- **Monospace:** `JetBrains Mono` - Code snippets, technical details (if needed)
+**Type Scale:**
+```css
+/* Annotation Editor */
+--text-annotation-sm: 0.875rem;   /* 14px - Small annotations */
+--text-annotation-md: 1.125rem;   /* 18px - Default annotations */
+--text-annotation-lg: 1.5rem;     /* 24px - Large annotations */
 
-**Usage:**
-- Headings: Inter (600-700 weight)
-- Body text: Inter (400 weight)
-- Data/Stats: Inter (500-600 weight for emphasis)
-- Captions: Inter (400 weight, smaller size)
+/* UI Elements */
+--text-xs: 0.75rem;     /* 12px - Captions, hints */
+--text-sm: 0.875rem;    /* 14px - Body small */
+--text-base: 1rem;      /* 16px - Body text */
+--text-lg: 1.125rem;    /* 18px - Subheadings */
+--text-xl: 1.25rem;     /* 20px - Headings */
+--text-2xl: 1.5rem;     /* 24px - Large headings */
+```
 
-**Type Scale (Tailwind classes):**
-
-| Element | Size | Line Height | Weight | Usage |
-|---------|------|-------------|--------|-------|
-| H1 | `text-4xl` (36px) | `leading-tight` | `font-bold` | Page titles |
-| H2 | `text-3xl` (30px) | `leading-tight` | `font-bold` | Section headers |
-| H3 | `text-2xl` (24px) | `leading-snug` | `font-semibold` | Subsection headers, card titles |
-| H4 | `text-xl` (20px) | `leading-snug` | `font-semibold` | Component headers |
-| Body Large | `text-lg` (18px) | `leading-relaxed` | `font-normal` | Intro paragraphs, key insights |
-| Body | `text-base` (16px) | `leading-normal` | `font-normal` | Standard body text |
-| Body Small | `text-sm` (14px) | `leading-normal` | `font-normal` | Secondary text, captions |
-| Caption | `text-xs` (12px) | `leading-snug` | `font-normal` | Metadata, timestamps |
-| Stat Display | `text-3xl` (30px) | `leading-none` | `font-semibold` | Dashboard metrics |
+**Line Heights:**
+- Body text: 1.5
+- Headings: 1.2
+- Annotation text: 1.4 (better readability on photos)
 
 ### 5.3 Spacing and Layout
 
+**Spacing Scale (Tailwind-based):**
+```css
+--space-1: 0.25rem;   /* 4px */
+--space-2: 0.5rem;    /* 8px */
+--space-3: 0.75rem;   /* 12px */
+--space-4: 1rem;      /* 16px */
+--space-6: 1.5rem;    /* 24px */
+--space-8: 2rem;      /* 32px */
+--space-12: 3rem;     /* 48px */
+```
+
+**Touch Target Sizes:**
+- Minimum: 44x44px (WCAG AAA)
+- Preferred: 48x48px
+- Icon buttons: 44x44px
+- Text buttons: min 44px height, auto width with padding
+
+**Modal Layouts:**
+```css
+/* PhotoLinker Modal */
+--modal-width-mobile: 100vw;
+--modal-width-tablet: 600px;
+--modal-width-desktop: 700px;
+--modal-max-height: 90vh;
+
+/* Annotation Editor (fullscreen) */
+--editor-width: 100vw;
+--editor-height: 100vh;
+--toolbar-height: 64px;
+--footer-height: 72px;
+```
+
 **Grid System:**
-- **Base Unit:** 4px (Tailwind's default spacing scale)
-- **Container Max Width:** `max-w-7xl` (1280px) for desktop
-- **Content Padding:** `px-4` (mobile), `px-6` (tablet), `px-8` (desktop)
-
-**Spacing Scale (Phase 3 components):**
-- **Tight:** `gap-2` (8px) - Within widget content, chip spacing
-- **Default:** `gap-4` (16px) - Between form fields, card content
-- **Comfortable:** `gap-6` (24px) - Between sections within page
-- **Loose:** `gap-8` (32px) - Between major page sections
-- **Extra Loose:** `gap-12` (48px) - Between distinct content areas
-
-**Dashboard Grid:**
-- **Desktop:** 12-column grid with `gap-6`
-- **Tablet:** 8-column grid with `gap-4`
-- **Mobile:** Single column with `gap-4`
-
-**Widget Sizing:**
-- **Small:** 1 column × 1 row (min 280px × 200px)
-- **Medium:** 2 columns × 1 row (min 560px × 200px)
-- **Large:** 2 columns × 2 rows (min 560px × 400px)
-- **Full Width:** 12 columns × flexible height
+- Photo grid: CSS Grid with auto-fill, minmax(150px, 1fr)
+- Entity lists: Flex column with gap-2 (8px)
+- Toolbar: Flex row with gap-2 (8px)
 
 ---
 
@@ -632,44 +792,96 @@ graph TD
 
 ### 6.1 Breakpoints
 
-Following Tailwind CSS 4 default breakpoints:
+```css
+/* Mobile First Approach */
+--breakpoint-sm: 640px;   /* Small tablets */
+--breakpoint-md: 768px;   /* Tablets */
+--breakpoint-lg: 1024px;  /* Small desktops */
+--breakpoint-xl: 1280px;  /* Large desktops */
+```
 
-| Name | Min Width | Target Devices | Layout Strategy |
-|------|-----------|----------------|-----------------|
-| `sm` | 640px | Large phones (landscape) | Single column → 2 columns |
-| `md` | 768px | Tablets (portrait) | 2-3 columns, sidebars appear |
-| `lg` | 1024px | Tablets (landscape), small laptops | Full multi-column, sidebars fixed |
-| `xl` | 1280px | Desktops | Optimal layout, max container width |
-| `2xl` | 1536px | Large displays | Same as xl with more whitespace |
-
-**Mobile-First Strategy:** All Phase 3 features designed for mobile first, progressively enhanced for larger screens.
+**Primary Target:** Mobile (375px - 428px) - 80% of usage
 
 ### 6.2 Adaptation Patterns
 
-**Insights Dashboard:**
-- **Mobile (<640px):** Horizontal scrolling cards, vertical stacking of widgets
-- **Tablet (640px-1024px):** 2-column grid, collapsible sidebar for filters
-- **Desktop (≥1024px):** Full dashboard grid (3-4 columns), persistent sidebar
+#### PhotoAnnotation Editor
 
-**Search Interface:**
-- **Mobile:** Full-screen search modal, filters in bottom sheet, list view default
-- **Tablet:** Inline search bar, collapsible filter sidebar, timeline view available
-- **Desktop:** Persistent search bar + left sidebar filters, all view modes
+**Mobile (< 768px):**
+```
+┌────────────────────────────┐
+│  [X] Annotate              │ ← Header (fixed)
+├────────────────────────────┤
+│ [→][○][▢][T][#] [⟲][⟳][x] │ ← Toolbar (fixed)
+├────────────────────────────┤
+│                            │
+│      [Photo Canvas]        │
+│    (fullscreen height)     │
+│                            │
+├────────────────────────────┤
+│ Color: [●][●][●]           │ ← Config (expandable)
+├────────────────────────────┤
+│          [Save] [Cancel]   │ ← Footer (fixed)
+└────────────────────────────┘
+```
 
-**Report Builder Wizard:**
-- **Mobile:** Vertical stepper, full-screen steps, preview as separate step
-- **Tablet:** Horizontal stepper at top, split preview (50/50)
-- **Desktop:** Horizontal stepper, live preview sidebar (70/30 split)
+**Tablet/Desktop (≥ 768px):**
+```
+┌────────────┬─────────────────────────┐
+│   Tools    │  [X] Annotate           │ ← Header
+│            ├─────────────────────────┤
+│   [→]      │                         │
+│   [○]      │                         │
+│   [▢]      │      [Photo Canvas]     │
+│   [T]      │    (expanded view)      │
+│   [#]      │                         │
+│            │                         │
+│ ────────── ├─────────────────────────┤
+│   [⟲]      │         [Save] [Cancel] │
+│   [⟳]      └─────────────────────────┘
+│   [x]      
+│            
+│ Config     
+│ [Colors]   
+│ [Width]    
+└────────────┘
+```
 
-**Charts and Visualizations:**
-- **Mobile:** Full-width charts, simplified axis labels, tap for details
-- **Tablet:** Charts with full labels, hover for tooltips
-- **Desktop:** Interactive charts with zoom, hover, click interactions
+#### PhotoLinker Modal
 
-**Navigation:**
-- **Mobile:** Bottom tab bar (5 items), hamburger in "More" tab
-- **Tablet:** Bottom tab bar OR top horizontal nav (based on screen height)
-- **Desktop:** Top horizontal navigation, persistent sidebars where applicable
+**Mobile (< 640px):**
+- Full screen modal
+- Scrollable entity lists
+- Sticky header and footer
+- Checkbox touch targets: 44x44px
+
+**Tablet (≥ 640px):**
+- Centered modal (600px width)
+- Same scrolling behavior
+- More breathing room
+
+**Desktop (≥ 1024px):**
+- Centered modal (700px width)
+- Hover states on entity items
+- Keyboard navigation emphasized
+
+#### Canvas Gestures
+
+**Mobile (Touch):**
+- Single finger: Draw annotation
+- Two fingers: Pinch to zoom
+- Two fingers: Pan photo
+- Touch targets: Minimum 44x44px
+
+**Desktop (Mouse):**
+- Left click: Draw annotation
+- Scroll wheel: Zoom
+- Middle mouse + drag: Pan
+- Hover previews on toolbar
+
+**Tablet (Stylus):**
+- Stylus: Precise drawing
+- Finger: UI interaction
+- Pressure sensitivity: Optional line width variation
 
 ---
 
@@ -677,91 +889,117 @@ Following Tailwind CSS 4 default breakpoints:
 
 ### 7.1 Compliance Target
 
-**Minimum:** WCAG 2.1 Level AA compliance across all Phase 3 features
+**WCAG 2.1 AA Compliance** (minimum)
 
-**Priority Areas for Phase 3:**
-- **Perceivable:** All data visualizations have text alternatives
-- **Operable:** Full keyboard navigation for dashboards and wizards
-- **Understandable:** Plain-language explanations for all statistical terms
-- **Robust:** Screen reader compatible with ARIA labels and roles
+**Critical Requirements:**
+- Color contrast: 4.5:1 for text, 3:1 for UI components
+- Keyboard navigation: All interactive elements focusable and operable
+- Screen reader support: Meaningful labels and ARIA attributes
+- Touch targets: Minimum 44x44px (WCAG AAA)
 
 ### 7.2 Key Requirements
 
-**7.2.1 Data Visualization Accessibility**
+#### Keyboard Navigation
 
-**Charts:**
-- Every chart MUST have a data table toggle (show/hide)
-- Alt text describes trend direction, key values, and insight
-- Color is NEVER the only indicator (use patterns, labels, icons)
-- Screen readers announce: "Chart showing [metric] over [time range]"
+**PhotoAnnotation Editor:**
+```
+Tab       - Navigate through toolbar buttons
+Shift+Tab - Navigate backwards
+Enter     - Activate tool/button
+Escape    - Close editor (with unsaved changes warning)
+Ctrl+Z    - Undo
+Ctrl+Y    - Redo
+1-5       - Quick tool selection (Arrow, Circle, Rect, Text, Blur)
+```
 
-**Correlation Matrix:**
-- Keyboard navigation: Arrow keys move between cells
-- Screen reader table mode: Reads correlation values with variable names
-- High contrast mode: Distinct patterns for positive/negative correlations
-- Focus indicators clearly visible on active cell
+**PhotoLinker:**
+```
+Tab       - Navigate through entity checkboxes
+Space     - Toggle checkbox selection
+Escape    - Close modal
+Enter     - Save links (when focused on Save button)
+```
 
-**Confidence Badges:**
-- Semantic colors paired with text labels ("High confidence: 92%")
-- Icon indicators (checkmark, warning) in addition to color
-- Tooltip explanations on hover AND on keyboard focus
+**Canvas Drawing (Keyboard Alternative):**
+- Arrow keys to move cursor
+- Space to place annotation at cursor position
+- Not primary method but provides alternative
 
-**7.2.2 Interactive Component Accessibility**
+#### Screen Reader Support
 
-**Dashboard Widgets:**
-- Drag-and-drop: Keyboard alternative (select, move with arrows, place with Enter)
-- Expand/collapse: Space bar toggles, Enter activates links
-- Loading states: Announced to screen readers ("Loading trend analysis...")
+**Annotation Tools:**
+```html
+<button
+  role="button"
+  aria-label="Arrow tool - Draw directional arrows"
+  aria-pressed={selectedTool === 'arrow'}
+>
+  <ArrowRightIcon aria-hidden="true" />
+</button>
+```
 
-**Search Interface:**
-- Cmd/Ctrl+K announced as "Open search"
-- Live region updates for search results count
-- Filter changes announced: "Applied filter: severity ≥ 7"
-- Suggestions navigable with arrow keys, selectable with Enter
+**Canvas Annotations:**
+```html
+<canvas
+  role="img"
+  aria-label="Medical photo with 3 annotations: 
+    1 arrow pointing to inflamed area, 
+    1 circle highlighting lesion, 
+    1 text note saying 'Pain level 8/10'"
+>
+  <!-- Canvas content -->
+</canvas>
+```
 
-**Report Builder Wizard:**
-- Step completion announced: "Completed step 1 of 4: Template selection"
-- Form validation errors: Associated with fields via aria-describedby
-- Progress indicator: aria-valuenow for determinate progress
-- Preview zoom: Keyboard shortcuts (+ / - keys)
+**PhotoLinker Entities:**
+```html
+<div role="listitem">
+  <input
+    type="checkbox"
+    id="entry-123"
+    checked={isSelected}
+    aria-labelledby="entry-123-label"
+  />
+  <label id="entry-123-label">
+    Daily entry from October 8, 2025. Severity: 7 out of 10.
+  </label>
+</div>
+```
 
-**7.2.3 Color Contrast Requirements**
+#### Visual Accessibility
 
-All text and interactive elements meet WCAG AA contrast ratios:
-- **Normal text (16px+):** Minimum 4.5:1 contrast
-- **Large text (24px+ or 18px+ bold):** Minimum 3:1 contrast
-- **Interactive elements:** 3:1 contrast against background
-- **Focus indicators:** 3:1 contrast, minimum 2px outline
+**Color Contrast:**
+- All annotation colors tested against photo backgrounds
+- Fallback: Semi-transparent white background behind annotations
+- High contrast mode: Increase annotation line width, add background
 
-**7.2.4 Keyboard Navigation**
+**Focus Indicators:**
+- Visible focus ring: 2px solid blue
+- Focus ring offset: 2px
+- Never remove focus indicators
 
-**Global Shortcuts:**
-- `Cmd/Ctrl + K`: Open global search
-- `Esc`: Close modals, clear search
-- `Tab`: Navigate forward through interactive elements
-- `Shift + Tab`: Navigate backward
-- `/`: Focus search bar (common pattern)
+**Text Alternatives:**
+- All icons have accessible labels
+- Canvas has descriptive aria-label
+- Blur warning has role="alert"
 
-**Component-Specific:**
-- **Dashboard:** Arrow keys navigate widgets, Enter opens detail view
-- **Matrix:** Arrow keys navigate cells, Enter shows detail
-- **Wizard:** Tab moves between form fields, Enter advances step
-- **Charts:** Tab focuses chart, Arrow keys navigate data points
+#### Motion Sensitivity
 
-**7.2.5 Screen Reader Support**
+**Reduced Motion:**
+```css
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
 
-**ARIA Roles and Labels:**
-- `role="main"` for primary content areas
-- `role="navigation"` for nav bars
-- `role="search"` for search interfaces
-- `role="region"` with `aria-label` for dashboard widgets
-- `role="status"` for live updates (loading, search results)
-
-**Announcements:**
-- Analysis completion: "Analysis complete. 5 correlations found."
-- Report generation: "Generating report... 45% complete"
-- Search results: "Found 12 results for 'dairy'"
-- Errors: "Error: Unable to load trend data. Please try again."
+**No Auto-Play:**
+- No automatic canvas animations
+- User-initiated drawing only
+- Loading spinners only when necessary
 
 ---
 
@@ -769,72 +1007,120 @@ All text and interactive elements meet WCAG AA contrast ratios:
 
 ### 8.1 Motion Principles
 
-**Purposeful:** Animations guide attention and communicate state changes, never purely decorative
+1. **Purposeful Motion** - Animation only when it communicates state or provides feedback, never decorative
 
-**Respectful:** Honor user preferences (prefers-reduced-motion), provide instant alternatives
+2. **Responsive Feel** - Drawing feels real-time (<16ms frame rate), button presses have immediate visual feedback
 
-**Performant:** Use GPU-accelerated properties (transform, opacity), avoid layout thrashing
+3. **Smooth Transitions** - Modal open/close, tool switching use easing functions (ease-out for entrances, ease-in for exits)
 
-**Consistent:** Same duration and easing for similar interactions across the app
+4. **Respect User Preferences** - Honor prefers-reduced-motion, provide instant alternatives
 
 ### 8.2 Key Animations
 
-**8.2.1 Transition Durations**
+#### Modal Animations
 
-| Interaction | Duration | Easing | Usage |
-|-------------|----------|--------|-------|
-| Micro (hover, focus) | 150ms | ease-out | Button hover, input focus |
-| Quick (show/hide) | 200ms | ease-in-out | Tooltip appearance, dropdown |
-| Standard (page transition) | 300ms | ease-in-out | Page navigation, modal open |
-| Deliberate (large change) | 500ms | ease-in-out | Dashboard reorder, chart update |
+**PhotoLinker Open/Close:**
+```css
+/* Enter */
+.modal-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.modal-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
 
-**8.2.2 Specific Animations**
-
-**Data Loading (Skeleton → Content):**
-```
-Skeleton shimmer: 1.5s infinite linear
-Fade-in content: 300ms ease-in
-```
-
-**Chart Rendering:**
-```
-Line draw: 800ms ease-out (path animation)
-Bars grow: 400ms ease-out (scale-y from 0)
-Fade-in axes: 200ms ease-in (delayed 100ms)
-```
-
-**Insight Card Expansion:**
-```
-Height: 300ms ease-in-out (auto)
-Content fade: 200ms ease-in (delayed 100ms)
-Icon rotate: 200ms ease-out (chevron flip)
+/* Exit */
+.modal-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+.modal-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
 ```
 
-**Search Results Appearance:**
-```
-Fade-in: 200ms ease-out
-Stagger: 50ms delay per item (max 5 items)
-```
-
-**Report Generation Progress:**
-```
-Progress bar: Smooth 16.67ms updates (60fps)
-Percentage: 200ms ease-out per update
-Success checkmark: 400ms spring animation
-```
-
-**Modal/Sheet Entry:**
-```
-Backdrop fade: 200ms ease-out
-Content slide/scale: 300ms ease-out
-  Mobile (bottom sheet): translateY(-100%)
-  Desktop (modal): scale(0.95) → scale(1)
+**Annotation Editor (Fullscreen):**
+```css
+/* Slide up from bottom (mobile) */
+.editor-enter {
+  transform: translateY(100%);
+}
+.editor-enter-active {
+  transform: translateY(0);
+  transition: transform 300ms ease-out;
+}
 ```
 
-**Reduced Motion Fallback:**
-- All animations ≤ 50ms or instant
-- No slide/scale effects, only fade
-- Progress updates in 25% increments instead of smooth
+#### Drawing Feedback
+
+**Tool Selection:**
+- Instant highlight (no transition)
+- Scale up 1.05x on press, return on release
+- Haptic feedback on mobile (if available)
+
+**Annotation Drawing:**
+- Real-time preview while dragging
+- No animation (performance critical)
+- Snap to completion on pointer up
+
+**Undo/Redo:**
+- Fade out annotation (150ms)
+- Remove from DOM
+- No complex animations (performance)
+
+#### Success/Error Feedback
+
+**Save Success:**
+```css
+/* Checkmark animation */
+.success-icon {
+  animation: checkmark 400ms ease-out;
+}
+
+@keyframes checkmark {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+```
+
+**Error Shake:**
+```css
+/* Shake animation for errors */
+.error-shake {
+  animation: shake 400ms ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+```
+
+#### Loading States
+
+**Spinner (Button Loading):**
+```css
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+```
+
+**Skeleton Loading (Entity List):**
+- Gray background with shimmer effect
+- Pulse animation while loading
+- Replace with content once loaded
 
 ---
 
@@ -842,28 +1128,185 @@ Content slide/scale: 300ms ease-out
 
 ### 9.1 Design Files
 
-**Strategy:** Development from specification (no high-fidelity designs required initially)
+**Design System:** Existing shadcn/ui theme with custom photo annotation components
 
-**Rationale:**
-- Existing Tailwind design system provides visual consistency
-- Component specifications in Section 4 provide sufficient implementation guidance
-- Solo developer can iterate on implementation directly
-- High-fidelity designs can be created post-MVP if needed for stakeholder presentations
+**Figma File Structure (to be created):**
+```
+Photo Feature Completion
+├── 📄 Cover
+├── 🎨 Design System Reference
+│   ├── Colors (annotations)
+│   ├── Typography (annotation text)
+│   ├── Icons (tool icons)
+│   └── Components (from shadcn/ui)
+├── 📱 Mobile Screens
+│   ├── PhotoAnnotation Editor
+│   ├── PhotoLinker Modal
+│   ├── PhotoViewer (enhanced)
+│   └── Auto-Link Flow
+├── 💻 Desktop Screens
+│   ├── PhotoAnnotation Editor (sidebar layout)
+│   └── PhotoLinker Modal (centered)
+└── 🔄 Interactions
+    ├── Drawing Gestures
+    ├── Blur Warning
+    └── Link Selection
+```
 
-**Future Design Assets (Optional):**
-- Figma file for component library documentation
-- Design mockups for marketing/fundraising materials
-- User testing prototypes for complex flows (report builder, correlation matrix)
+**Design File Location:** `designs/photo-feature-completion.fig` (to be created)
+
+**Component Library:** Shared with main app Figma file
 
 ### 9.2 Key Screen Layouts
 
-**Note:** Detailed wireframes not included in this specification. Implementation will follow component specifications and user flows defined in Sections 3-4.
+#### Screen: PhotoAnnotation Editor (Mobile)
 
-**Screen Layout Priorities (for future wireframing):**
+**Layout Description:**
 
-1. **Insights Dashboard** - Most complex layout, requires careful information hierarchy
-2. **Correlation Matrix Detail View** - Novel interaction pattern, may benefit from prototype
-3. **Report Builder Wizard** - Multi-step flow with live preview needs validation
+```
+┌─────────────────────────────────────┐
+│ ← Annotate                      [X] │ ← Header (64px)
+├─────────────────────────────────────┤
+│ [→] [○] [▢] [T] [#]  [⟲] [⟳] [🗑️] │ ← Toolbar (64px)
+├─────────────────────────────────────┤
+│                                     │
+│                                     │
+│         [Photo with Canvas]         │
+│          (Interactive Area)         │
+│                                     │
+│         ┌─────────────────┐         │
+│         │   [Arrow drawn  │         │
+│         │    on photo]    │         │
+│         │   [Circle drawn]│         │
+│         │   [Text: "Pain"]│         │
+│         └─────────────────┘         │
+│                                     │
+├─────────────────────────────────────┤
+│ ▼ Tool Config                       │ ← Expandable panel
+│   Color: [●][●][●][●][●][●]         │
+│   Width: [─] [──] [───]             │
+├─────────────────────────────────────┤
+│ Annotations (3)                     │ ← Annotations list
+│  1. Arrow                      [×]  │
+│  2. Circle                     [×]  │
+│  3. Text: "Pain level 8/10"    [×]  │
+├─────────────────────────────────────┤
+│              [Cancel] [Save]        │ ← Footer (72px)
+└─────────────────────────────────────┘
+```
+
+**Key Elements:**
+- **Header:** Back button, title, close button
+- **Toolbar:** All drawing tools in single row, history controls
+- **Canvas:** Full-width, max height (calc(100vh - 200px))
+- **Config Panel:** Collapsible, expands based on selected tool
+- **Annotations List:** Scrollable list of all annotations with delete
+- **Footer:** Sticky footer with action buttons
+
+**Interaction Notes:**
+- Tap tool to select (highlight with blue background)
+- Tap color to change (immediate feedback)
+- Drag on canvas to draw
+- Tap annotation in list to highlight on canvas
+- Tap X on annotation to delete (with undo available)
+
+---
+
+#### Screen: PhotoLinker Modal (Mobile)
+
+**Layout Description:**
+
+```
+┌─────────────────────────────────────┐
+│ Link Photo                      [X] │ ← Header
+├─────────────────────────────────────┤
+│  ┌─────────┐                        │ ← Photo preview
+│  │ [Photo] │  Oct 9, 2025            │
+│  └─────────┘  test.jpg              │
+├─────────────────────────────────────┤
+│ Daily Entries                       │ ← Scrollable area
+│ ┌─────────────────────────────────┐ │
+│ │ ☐ Oct 10, 2025          📅     │ │
+│ │   Severity: 5/10                │ │
+│ ├─────────────────────────────────┤ │
+│ │ ☑ Oct 8, 2025           📅     │ │ ← Selected
+│ │   Severity: 7/10                │ │
+│ ├─────────────────────────────────┤ │
+│ │ ☐ Oct 5, 2025           📅     │ │
+│ │   Severity: 4/10                │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ Symptoms                            │
+│ ┌─────────────────────────────────┐ │
+│ │ ☑ Right Armpit Abscess  ❤️‍🩹     │ │ ← Selected
+│ │   Type: Abscess                 │ │
+│ ├─────────────────────────────────┤ │
+│ │ ☐ Left Groin Lesion     ❤️‍🩹     │ │
+│ │   Type: Lesion                  │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ Body Regions                        │
+│ ┌─────────────────────────────────┐ │
+│ │ ☐ Right Armpit (Front)  👤     │ │
+│ └─────────────────────────────────┘ │
+├─────────────────────────────────────┤
+│ 2 link(s) selected                  │ ← Footer (sticky)
+│                  [Cancel] [Save]    │
+└─────────────────────────────────────┘
+```
+
+**Key Elements:**
+- **Header:** Title and close button
+- **Photo Preview:** Small thumbnail with metadata (sticky)
+- **Entity Lists:** Three sections with checkboxes
+- **List Items:** Checkbox, label, description, icon
+- **Footer:** Link count summary and action buttons (sticky)
+
+**Interaction Notes:**
+- Tap anywhere on list item to toggle checkbox
+- Selected items show blue background + checkmark
+- Scroll to see all entities
+- Footer remains visible while scrolling
+- Link count updates in real-time
+
+---
+
+#### Screen: Blur Warning Dialog
+
+**Layout Description:**
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│              ⚠️                      │
+│                                     │
+│      Blur is Permanent              │
+│                                     │
+│  This action will permanently blur  │
+│  the selected area. The original    │
+│  photo cannot be recovered.         │
+│                                     │
+│  Are you sure you want to           │
+│  continue?                          │
+│                                     │
+│  ☑ I understand this is permanent   │
+│                                     │
+│         [Cancel] [Yes, Apply Blur]  │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**Key Elements:**
+- **Warning Icon:** Large, prominent (48x48px)
+- **Title:** Bold, red color
+- **Message:** Clear explanation of permanence
+- **Confirmation Checkbox:** Required before enabling Apply button
+- **Buttons:** Cancel (secondary) and Apply (destructive/red)
+
+**Interaction Notes:**
+- Apply button disabled until checkbox checked
+- Clicking Cancel returns to editor without changes
+- Clicking Apply processes blur (irreversible)
 
 ---
 
@@ -871,55 +1314,63 @@ Content slide/scale: 300ms ease-out
 
 ### 10.1 Immediate Actions
 
-**For Phase 3 Intelligence Layer Implementation:**
+**Phase 1: Design Finalization (1 day)**
+1. Create Figma mockups for PhotoAnnotation Editor (mobile + desktop)
+2. Create Figma mockups for PhotoLinker modal
+3. Define exact color values for annotation palette
+4. Create icon set for drawing tools (if not in lucide-react)
 
-1. **✅ UX Specification Complete** - This document provides comprehensive UX guidance
+**Phase 2: Development Setup (0.5 days)**
+1. Create component files in `src/components/photos/`
+2. Set up TypeScript interfaces for new components
+3. Configure Canvas API utilities
 
-2. **➡️ Resume Solution Architecture Workflow** - Return to solution-architecture workflow to:
-   - Design technical architecture for analytics, search, and reports
-   - Define data models and component architecture
-   - Create tech specs for each epic
+**Phase 3: Implementation (2 weeks)**
+- **Sprint 1 (Week 1):** Epic 1 - Photo Annotation System
+  - Days 1-2: PhotoAnnotation component + basic shapes
+  - Days 3-4: Text and blur tools
+  - Day 5: Undo/redo and save
 
-3. **Component Development Order (Post-Architecture):**
-   - **Epic 1 - Analytics:** Start with foundation components (InsightCard, TrendChart, ConfidenceBadge)
-   - **Epic 2 - Search:** Build GlobalSearch and FilterBuilder next
-   - **Epic 3 - Reports:** WizardStepper and ReportPreview last (builds on analytics)
+- **Sprint 2 (Week 2):** Epic 2 - Linking & Export
+  - Days 1-2: Auto-linking and PhotoLinker
+  - Days 3-4: Export/import integration
+  - Day 5: Testing and polish
 
-4. **Design System Extensions:**
-   - Add intelligence-specific color tokens to Tailwind config
-   - Create Chart.js theme matching existing design system
-   - Document new component patterns in Storybook (if using)
-
-5. **Accessibility Testing Plan:**
-   - Screen reader testing with NVDA/JAWS (Epic 1)
-   - Keyboard navigation testing (all epics)
-   - Color contrast validation (automated + manual)
-   - WCAG 2.1 AA audit before production release
+**Phase 4: Testing & Refinement (3 days)**
+1. Cross-browser testing (Chrome, Firefox, Safari, Edge)
+2. Mobile device testing (iOS Safari, Chrome Android)
+3. Accessibility audit (keyboard, screen reader)
+4. Performance testing (100+ photos)
 
 ### 10.2 Design Handoff Checklist
 
-**Phase 3 UX Specification Status:**
+**Pre-Development:**
+- [x] User personas defined
+- [x] User flows documented with Mermaid diagrams
+- [x] Component specifications complete
+- [x] Color palette defined (annotations + UI)
+- [x] Typography scale defined
+- [x] Spacing and layout grid defined
+- [x] Responsive breakpoints and patterns defined
+- [x] Accessibility requirements documented
+- [ ] Figma mockups created (high-fidelity)
+- [ ] Design QA with stakeholders
 
-- [x] **All user flows documented** (3 critical paths with Mermaid diagrams)
-- [x] **Component inventory complete** (20+ components specified with variants/states)
-- [x] **Accessibility requirements defined** (WCAG 2.1 AA targets, keyboard nav, screen reader support)
-- [x] **Responsive strategy clear** (Mobile-first, breakpoint adaptations defined)
-- [x] **Brand guidelines incorporated** (Extends existing Tailwind system)
-- [x] **Performance goals established** (Animation durations, motion principles)
+**Development Ready:**
+- [x] All component props interfaces defined
+- [x] All interaction states documented
+- [x] All error states defined
+- [x] Motion/animation specs provided
+- [x] Touch gesture specs provided
+- [ ] Design tokens exported (colors, spacing)
+- [ ] Icon assets exported (if custom)
 
-**Ready for Next Phase:**
-
-- [x] **Solution architecture can proceed** - UX spec defines all UI/UX requirements
-- [x] **Frontend architecture informed** - Component structure, state management needs clear
-- [x] **Story generation can include UX details** - User flows map to acceptance criteria
-- [x] **Development can begin** - Sufficient detail for implementation without mockups
-
-**Outstanding Items (Non-Blocking):**
-
-- [ ] High-fidelity mockups (optional, can be created during/after development)
-- [ ] Interactive prototypes for user testing (recommended for Epic 1 correlation matrix)
-- [ ] Component documentation in Storybook (recommended for handoff to future developers)
-- [ ] Design QA review of implemented components (post-development validation)
+**Post-Development:**
+- [ ] Visual QA on staging environment
+- [ ] Responsive testing on real devices
+- [ ] Accessibility testing with screen reader
+- [ ] Performance benchmarking (Canvas FPS)
+- [ ] User acceptance testing
 
 ---
 
@@ -927,13 +1378,39 @@ Content slide/scale: 300ms ease-out
 
 ### Related Documents
 
-- PRD: `docs/PRD.md`
-- Epics: `docs/epics.md`
-- Tech Spec: `docs/tech-spec.md`
-- Architecture: `docs/solution-architecture.md`
+- **PRD:** `docs/photos-feature-completion-prd.md`
+- **Epics:** `docs/photos-feature-epics.md`
+- **Tech Spec Epic 1:** `docs/tech-spec-photo-epic-1.md`
+- **Tech Spec Epic 2:** `docs/tech-spec-photo-epic-2.md`
+- **Planning Summary:** `docs/photo-feature-planning-summary.md`
+
+### Design References
+
+**Similar Medical Photo Annotation Tools:**
+- Apple Health app photo annotations
+- DermEngine (dermatology app)
+- Custo med (wound care app)
+- Simple draw apps (but medical context)
+
+**Touch Drawing Libraries (for reference):**
+- react-canvas-draw
+- react-sketch-canvas
+- Excalidraw (inspiration for UI)
+
+### Accessibility Resources
+
+- WCAG 2.1 Guidelines: https://www.w3.org/WAI/WCAG21/quickref/
+- Canvas Accessibility: https://www.w3.org/WAI/tutorials/canvas/
+- Touch Target Sizes: https://www.w3.org/WAI/WCAG21/Understanding/target-size.html
 
 ### Version History
 
-| Date       | Version | Changes               | Author    |
-| ---------- | ------- | --------------------- | --------- |
-| 2025-10-07 | 1.0     | Initial specification | BMad User |
+| Date       | Version | Changes                              | Author    |
+| ---------- | ------- | ------------------------------------ | --------- |
+| 2025-10-10 | 1.0     | Initial UX specification             | BMad User |
+
+---
+
+**Status:** ✅ UX Specification Complete - Ready for Design and Development
+
+**Next Immediate Step:** Create Figma mockups or proceed directly to implementation with wireframe-level fidelity.
