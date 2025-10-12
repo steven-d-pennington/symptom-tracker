@@ -182,6 +182,10 @@ export function PhotoAnnotation({
   const canRedo = historyIndex < history.length - 1;
 
   const handleAnnotationAdd = (annotation: PhotoAnnotationType) => {
+    // Prevent adding more than 50 annotations
+    if (annotations.length >= 50) {
+      return;
+    }
     const newAnnotations = [...annotations, annotation];
     setAnnotations(newAnnotations);
     addToHistory(newAnnotations);
@@ -413,6 +417,7 @@ export function PhotoAnnotation({
             <AnnotationToolbar
               selectedTool={selectedTool}
               onToolSelect={setSelectedTool}
+              disabled={annotations.length >= 50}
             />
           </div>
 
@@ -509,6 +514,16 @@ export function PhotoAnnotation({
       <div className="flex items-center justify-between border-t border-white/10 bg-black/80 px-4 py-3 backdrop-blur-sm">
         <div className="text-sm text-white/60">
           {annotations.length} {annotations.length === 1 ? 'annotation' : 'annotations'}
+          {annotations.length >= 50 && (
+            <span className="ml-3 rounded bg-red-500/90 px-2 py-0.5 text-xs font-semibold text-white">
+              Maximum 50 annotations reached
+            </span>
+          )}
+          {annotations.length >= 45 && annotations.length < 50 && (
+            <span className="ml-3 rounded bg-yellow-500/90 px-2 py-0.5 text-xs font-semibold text-black">
+              Warning: {50 - annotations.length} annotations remaining
+            </span>
+          )}
           <span className="ml-4 text-white/40">
             Shortcuts: A (Arrow), C (Circle), R (Rectangle), T (Text), B (Blur), Ctrl+Z (Undo), Ctrl+Shift+Z (Redo), Ctrl+S (Save)
           </span>

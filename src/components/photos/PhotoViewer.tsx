@@ -6,7 +6,7 @@ import { PhotoEncryption } from "@/lib/utils/photoEncryption";
 import { PhotoAnnotation } from "./PhotoAnnotation";
 import { PhotoAnnotation as PhotoAnnotationType } from "@/lib/types/annotation";
 import { renderAnnotations } from "@/lib/utils/annotationRendering";
-import { Pencil } from "lucide-react";
+import { Pencil, Eye, EyeOff } from "lucide-react";
 
 interface PhotoViewerProps {
   photo: PhotoAttachment;
@@ -35,6 +35,7 @@ export function PhotoViewer({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [showAnnotation, setShowAnnotation] = useState(false);
+  const [showAnnotations, setShowAnnotations] = useState(true);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const dragStart = useRef({ x: 0, y: 0 });
   const imageRef = useRef<HTMLImageElement>(null);
@@ -117,13 +118,29 @@ export function PhotoViewer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Clear canvas if annotations are hidden
+    if (!showAnnotations) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
+    // Filter out blur annotations if photo has permanent blur applied
+    const annotationsToRender = photo.hasBlur 
+      ? photo.annotations.filter(a => a.type !== 'blur')
+      : photo.annotations;
+
+    if (annotationsToRender.length === 0) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
     // Wait for image to load
     if (!img.complete) {
       const handleLoad = () => {
         const rect = img.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
-        renderAnnotations(ctx, photo.annotations!, rect.width, rect.height);
+        renderAnnotations(ctx, annotationsToRender, rect.width, rect.height);
       };
       img.addEventListener('load', handleLoad);
       return () => img.removeEventListener('load', handleLoad);
@@ -133,8 +150,8 @@ export function PhotoViewer({
     const rect = img.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
-    renderAnnotations(ctx, photo.annotations, rect.width, rect.height);
-  }, [imageUrl, photo.annotations, scale, position]);
+    renderAnnotations(ctx, annotationsToRender, rect.width, rect.height);
+  }, [imageUrl, photo.annotations, scale, position, showAnnotations, photo.hasBlur]);
 
   const handleZoomIn = () => setScale((s) => Math.min(s + 0.25, 4));
   const handleZoomOut = () => setScale((s) => Math.max(s - 0.25, 0.5));
@@ -329,14 +346,35 @@ export function PhotoViewer({
             />
           </svg>
         </button>
+        
+        {/* Toggle Annotations */}
+        {photo.annotations && photo.annotations.length > 0 && (
+          <>
+            <div className="h-8 w-px bg-white/30" />
+            <button
+              onClick={() => setShowAnnotations(!showAnnotations)}
+              className="rounded p-2 text-white transition-colors hover:bg-white/20"
+              aria-label={showAnnotations ? "Hide annotations" : "Show annotations"}
+              title={showAnnotations ? "Hide annotations" : "Show annotations"}
+            >
+              {showAnnotations ? (
+                <Eye className="h-5 w-5" />
+              ) : (
+                <EyeOff className="h-5 w-5" />
+              )}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Action buttons */}
       <div className="absolute bottom-4 right-4 z-10 flex gap-2">
         <button
           onClick={handleAnnotate}
-          className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
-          aria-label="Annotate photo"
+          disabled={photo.hasBlur}
+          className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed"
+          aria-label={photo.hasBlur ? "Annotations locked (blur applied)" : "Annotate photo"}
+          title={photo.hasBlur ? "Annotations locked (blur applied)" : "Annotate photo"}
         >
           <Pencil className="h-4 w-4" />
           Annotate
@@ -380,14 +418,23 @@ export function PhotoViewer({
         <div className="rounded-lg bg-black/70 backdrop-blur-sm px-3 py-1.5 text-sm text-white shadow-lg">
           {currentIndex + 1} / {photos.length}
         </div>
-        {photo.annotations && photo.annotations.length > 0 && (
-          <div className="rounded-lg bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 text-sm text-white flex items-center gap-1.5 shadow-lg">
-            <Pencil className="h-3.5 w-3.5" />
-            <span className="font-medium">
-              {photo.annotations.length} annotation{photo.annotations.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-        )}
+        {photo.annotations && photo.annotations.length > 0 && (() => {
+          // Filter out blur annotations if photo has permanent blur applied
+          const visibleAnnotations = photo.hasBlur 
+            ? photo.annotations.filter(a => a.type !== 'blur')
+            : photo.annotations;
+          
+          if (visibleAnnotations.length === 0) return null;
+          
+          return (
+            <div className="rounded-lg bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 text-sm text-white flex items-center gap-1.5 shadow-lg">
+              <Pencil className="h-3.5 w-3.5" />
+              <span className="font-medium">
+                {visibleAnnotations.length} annotation{visibleAnnotations.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+          );
+        })()}
       </div>
     </div>
 

@@ -6,9 +6,10 @@ import { ArrowUpRight, Circle, Square, Type, Ban } from 'lucide-react';
 interface AnnotationToolbarProps {
   selectedTool: AnnotationTool;
   onToolSelect: (tool: AnnotationTool) => void;
+  disabled?: boolean;
 }
 
-export function AnnotationToolbar({ selectedTool, onToolSelect }: AnnotationToolbarProps) {
+export function AnnotationToolbar({ selectedTool, onToolSelect, disabled = false }: AnnotationToolbarProps) {
   const tools = [
     { type: 'arrow' as AnnotationTool, icon: ArrowUpRight, label: 'Arrow' },
     { type: 'circle' as AnnotationTool, icon: Circle, label: 'Circle' },
@@ -28,6 +29,7 @@ export function AnnotationToolbar({ selectedTool, onToolSelect }: AnnotationTool
           <button
             key={tool.type}
             onClick={() => onToolSelect(tool.type)}
+            disabled={disabled}
             className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2 transition-colors ${
               isActive
                 ? isWarning 
@@ -36,8 +38,8 @@ export function AnnotationToolbar({ selectedTool, onToolSelect }: AnnotationTool
                 : isWarning
                   ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'
                   : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
-            title={tool.label}
+            } ${disabled ? 'opacity-40 cursor-not-allowed hover:bg-white/20' : ''}`}
+            title={disabled ? 'Maximum annotations reached' : tool.label}
             aria-label={tool.label}
             aria-pressed={isActive}
           >
