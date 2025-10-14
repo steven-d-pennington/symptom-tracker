@@ -4,9 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import { PhotoAttachment } from "@/lib/types/photo";
 import { PhotoEncryption } from "@/lib/utils/photoEncryption";
 import { PhotoAnnotation } from "./PhotoAnnotation";
+import { PhotoLinker } from "./PhotoLinker";
+import { photoRepository } from "@/lib/repositories/photoRepository";
 import { PhotoAnnotation as PhotoAnnotationType } from "@/lib/types/annotation";
 import { renderAnnotations } from "@/lib/utils/annotationRendering";
-import { Pencil, Eye, EyeOff } from "lucide-react";
+import { Pencil, Eye, EyeOff, Link } from "lucide-react";
 
 interface PhotoViewerProps {
   photo: PhotoAttachment;
@@ -32,6 +34,8 @@ export function PhotoViewer({
   const [error, setError] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPhotoLinker, setShowPhotoLinker] = useState(false);
+  const [currentPhoto, setCurrentPhoto] = useState<PhotoAttachment>(photo);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [showAnnotation, setShowAnnotation] = useState(false);
@@ -187,6 +191,29 @@ export function PhotoViewer({
   const confirmDelete = () => {
     onDelete(photo.id);
     setShowDeleteConfirm(false);
+  };
+
+  const handleManageLinks = () => {
+    setShowPhotoLinker(true);
+  };
+
+  const handleLinksSave = async (updatedPhoto: PhotoAttachment) => {
+    try {
+      await photoRepository.update(updatedPhoto.id, updatedPhoto);
+      setCurrentPhoto(updatedPhoto);
+      setShowPhotoLinker(false);
+    } catch (error) {
+      console.error("Failed to update photo links:", error);
+      throw error;
+    }
+  };
+
+  const getLinkCount = () => {
+    let count = 0;
+    if (currentPhoto.dailyEntryId) count++;
+    if (currentPhoto.symptomId) count++;
+    if (currentPhoto.bodyRegionId) count++;
+    return count;
   };
 
   const handleAnnotate = () => {
@@ -370,6 +397,14 @@ export function PhotoViewer({
       {/* Action buttons */}
       <div className="absolute bottom-4 right-4 z-10 flex gap-2">
         <button
+          onClick={handleManageLinks}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
+          aria-label="Manage photo links"
+        >
+          <Link className="h-4 w-4" />
+          Manage Links {getLinkCount() > 0 && `(${getLinkCount()})`}
+        </button>
+        <button
           onClick={handleAnnotate}
           disabled={photo.hasBlur}
           className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed"
@@ -446,6 +481,15 @@ export function PhotoViewer({
         isOpen={showAnnotation}
         onClose={() => setShowAnnotation(false)}
         onSave={handleAnnotationsSave}
+      />
+    )}
+
+    {/* Photo Linker modal */}
+    {showPhotoLinker && (
+      <PhotoLinker
+        photo={currentPhoto}
+        onSave={handleLinksSave}
+        onCancel={() => setShowPhotoLinker(false)}
       />
     )}
   </>

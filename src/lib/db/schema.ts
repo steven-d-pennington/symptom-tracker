@@ -244,18 +244,61 @@ export interface AnalysisResultRecord {
     createdAt: Date;
 }
 
+// Event Stream Model - New tables for event-based logging
+
+export interface MedicationEventRecord {
+  id: string;
+  userId: string;
+  medicationId: string; // Reference to medications table
+  timestamp: number; // When taken (epoch ms)
+  taken: boolean; // true if taken, false if skipped/missed
+  dosage?: string; // Optional override (e.g., "2 tablets instead of 1")
+  notes?: string; // Optional context
+  timingWarning?: 'early' | 'late' | null; // If taken outside schedule
+  createdAt: number; // When logged
+  updatedAt: number; // Last modified
+}
+
+export interface TriggerEventRecord {
+  id: string;
+  userId: string;
+  triggerId: string; // Reference to triggers table
+  timestamp: number; // When exposed (epoch ms)
+  intensity: 'low' | 'medium' | 'high'; // Exposure level
+  notes?: string; // Optional context
+  createdAt: number; // When logged
+  updatedAt: number; // Last modified
+}
+
+// Enhanced FlareRecord with severity tracking and interventions
 export interface FlareRecord {
   id: string;
   userId: string;
   symptomId: string;
   symptomName: string;
+  bodyRegionId: string; // Single primary body region
+  bodyRegions: string[]; // Array for backward compatibility
   startDate: Date;
   endDate?: Date;
-  severity: number;
-  bodyRegions: string[];
+
+  // New: Current severity and history
+  severity: number; // Current severity (1-10)
+  severityHistory: {
+    timestamp: number;
+    severity: number;
+    status: 'active' | 'improving' | 'worsening';
+  }[];
+
+  // New: Intervention tracking
+  interventions: {
+    timestamp: number;
+    type: 'ice' | 'medication' | 'rest' | 'other';
+    notes?: string;
+  }[];
+
   status: "active" | "improving" | "worsening" | "resolved";
-  interventions: string; // JSON stringified
   notes: string;
+  resolutionNotes?: string; // What helped resolve the flare
   photoIds: string[];
   createdAt: Date;
   updatedAt: Date;

@@ -1,5 +1,5 @@
 export { exportService, ExportService } from "./exportService";
-export type { ExportOptions, ExportData } from "./exportService";
+export type { ExportOptions, ExportData, ExportProgress } from "./exportService";
 
 export { importService, ImportService } from "./importService";
 export type { ImportOptions, ImportResult } from "./importService";

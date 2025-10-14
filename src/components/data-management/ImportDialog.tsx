@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { importService, ImportOptions, ImportResult } from "@/lib/services";
+import { importService, ImportOptions, ImportResult, ImportProgress } from "@/lib/services";
 import { userRepository } from "@/lib/repositories";
 
 type ImportStep = "file-select" | "existing-data-check" | "importing";
@@ -13,6 +13,7 @@ export function ImportDialog() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mergeStrategy, setMergeStrategy] = useState<"replace" | "merge" | "skip">("merge");
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [existingDataCounts, setExistingDataCounts] = useState<{
     symptoms: number;
     medications: number;
@@ -56,6 +57,7 @@ export function ImportDialog() {
     }
 
     setIsImporting(true);
+    setImportProgress(null);
 
     try {
       const user = await userRepository.getOrCreateCurrentUser();
@@ -64,6 +66,10 @@ export function ImportDialog() {
         mergeStrategy,
         validateData: true,
         updateUserProfile: true, // Always update user profile from import
+        allowDuplicates: false,
+        onProgress: (progress) => {
+          setImportProgress(progress);
+        },
       };
 
       const result = await importService.importFromJSON(
@@ -73,6 +79,7 @@ export function ImportDialog() {
       );
 
       setImportResult(result);
+      setImportProgress(null);
 
       if (result.success) {
         setTimeout(() => {
@@ -93,10 +100,15 @@ export function ImportDialog() {
           medications: 0,
           triggers: 0,
           dailyEntries: 0,
+          photos: 0,
         },
         errors: [error instanceof Error ? error.message : "Unknown error"],
-        skipped: 0,
+        skipped: {
+          items: 0,
+          photos: 0,
+        },
       });
+      setImportProgress(null);
     } finally {
       setIsImporting(false);
     }
@@ -353,6 +365,30 @@ export function ImportDialog() {
           </>
         )}
 
+        {/* Import Progress Screen */}
+        {isImporting && importProgress && !importResult && (
+          <div className="mb-4">
+            <div className="rounded bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4">
+              <h3 className="mb-2 font-medium text-blue-800 dark:text-blue-100">
+                {importProgress.message}
+              </h3>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${(importProgress.current / importProgress.total) * 100}%`,
+                  }}
+                />
+              </div>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                {importProgress.current} of {importProgress.total} (
+                {Math.round((importProgress.current / importProgress.total) * 100)}
+                %)
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Import Result Screen */}
         {importResult && (
           <>
@@ -368,10 +404,30 @@ export function ImportDialog() {
                     <li>Medications: {importResult.imported.medications}</li>
                     <li>Triggers: {importResult.imported.triggers}</li>
                     <li>Daily Entries: {importResult.imported.dailyEntries}</li>
-                    {importResult.skipped > 0 && (
-                      <li>Skipped: {importResult.skipped}</li>
+                    <li className="font-medium">Photos: {importResult.imported.photos}</li>
+                    {importResult.skipped.photos > 0 && (
+                      <li className="text-gray-600 dark:text-gray-400">
+                        Duplicates skipped: {importResult.skipped.photos}
+                      </li>
                     )}
                   </ul>
+                  {importResult.errors.length > 0 && (
+                    <div className="mt-3">
+                      <h4 className="font-semibold text-sm text-orange-900 dark:text-orange-100 mb-1">
+                        ⚠️ Errors:
+                      </h4>
+                      <ul className="text-xs space-y-1 text-orange-800 dark:text-orange-300">
+                        {importResult.errors.slice(0, 5).map((error, idx) => (
+                          <li key={idx}>{error}</li>
+                        ))}
+                        {importResult.errors.length > 5 && (
+                          <li className="text-gray-600 dark:text-gray-400">
+                            ... and {importResult.errors.length - 5} more errors
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
                   <p className="mt-2 text-xs text-green-600 dark:text-green-400">
                     Refreshing in 3 seconds...
                   </p>

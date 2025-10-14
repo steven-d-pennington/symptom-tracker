@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { DailyEntryForm } from "@/components/daily-entry/DailyEntryForm";
 import { EntryHistory } from "@/components/daily-entry/EntryHistory";
 import { EntryTemplates } from "@/components/daily-entry/EntryTemplates";
@@ -10,12 +11,24 @@ import { useSmartSuggestions } from "@/components/daily-entry/hooks/useSmartSugg
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 const DailyLogPage = () => {
+  const searchParams = useSearchParams();
+  const entryId = searchParams.get("id");
   const { isLoading: userLoading } = useCurrentUser();
   const dailyEntry = useDailyEntry();
   const templateState = useEntryTemplates();
 
   const activeTemplate = useMemo(() => templateState.activeTemplate, [templateState.activeTemplate]);
   const { suggestions } = useSmartSuggestions(dailyEntry.entry, dailyEntry.history);
+
+  // Load specific entry if ID is provided
+  useEffect(() => {
+    if (entryId && dailyEntry.history.length > 0) {
+      const targetEntry = dailyEntry.history.find(e => e.id === entryId);
+      if (targetEntry) {
+        dailyEntry.loadEntry(targetEntry);
+      }
+    }
+  }, [entryId, dailyEntry.history, dailyEntry.loadEntry]);
 
   // Convert medications to the format needed by MedicationSection
   const medicationSchedule = useMemo(() =>

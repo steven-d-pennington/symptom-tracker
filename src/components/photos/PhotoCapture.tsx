@@ -1,8 +1,14 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Camera, Upload, X } from "lucide-react";
+import { Camera, Upload, X, Link as LinkIcon } from "lucide-react";
 import { PhotoEncryption } from "@/lib/utils/photoEncryption";
+
+export interface LinkContext {
+  dailyEntryId?: string;
+  symptomIds?: string[];
+  bodyRegionIds?: string[];
+}
 
 interface PhotoCaptureProps {
   onPhotoCapture: (file: File, preview: string) => void;
@@ -10,6 +16,7 @@ interface PhotoCaptureProps {
   maxFiles?: number;
   allowCamera?: boolean;
   allowGallery?: boolean;
+  linkContext?: LinkContext;
 }
 
 export function PhotoCapture({
@@ -18,6 +25,7 @@ export function PhotoCapture({
   maxFiles = 1,
   allowCamera = true,
   allowGallery = true,
+  linkContext,
 }: PhotoCaptureProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +83,16 @@ export function PhotoCapture({
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-800">{error}</p>
+          </div>
+        )}
+
+        {/* Auto-Link Indicator */}
+        {linkContext?.dailyEntryId && (
+          <div className="mb-4 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <LinkIcon className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <span className="text-sm text-blue-900">
+              Photos will be automatically linked to this daily entry
+            </span>
           </div>
         )}
 

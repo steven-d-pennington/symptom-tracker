@@ -5,18 +5,31 @@ import {
   dailyEntryRepository,
   userRepository,
 } from "../repositories";
-import { ExportData } from "./exportService";
+import { photoRepository } from "../repositories/photoRepository";
+import { ExportData, PhotoExportData } from "./exportService";
+import { PhotoEncryption } from "../utils/photoEncryption";
+import { PhotoAttachment } from "../types/photo";
 import type {
   SymptomRecord,
   MedicationRecord,
   TriggerRecord,
   DailyEntryRecord,
 } from "../db/schema";
+import { v4 as uuidv4 } from "uuid";
+
+export interface ImportProgress {
+  phase: "importing-photos" | "importing-data";
+  current: number;
+  total: number;
+  message: string;
+}
 
 export interface ImportOptions {
   mergeStrategy: "replace" | "merge" | "skip";
   validateData?: boolean;
   updateUserProfile?: boolean; // Whether to update user name/email from import
+  allowDuplicates?: boolean; // Allow duplicate photos (default: false)
+  onProgress?: (progress: ImportProgress) => void;
 }
 
 export interface ImportResult {
@@ -26,9 +39,13 @@ export interface ImportResult {
     medications: number;
     triggers: number;
     dailyEntries: number;
+    photos: number;
+  };
+  skipped: {
+    items: number;
+    photos: number;
   };
   errors: string[];
-  skipped: number;
   userUpdated?: boolean;
 }
 
@@ -102,11 +119,15 @@ export class ImportService {
           medications: 0,
           triggers: 0,
           dailyEntries: 0,
+          photos: 0,
         },
         errors: [
           error instanceof Error ? error.message : "Unknown import error",
         ],
-        skipped: 0,
+        skipped: {
+          items: 0,
+          photos: 0,
+        },
       };
     }
   }
@@ -128,9 +149,13 @@ export class ImportService {
         medications: 0,
         triggers: 0,
         dailyEntries: 0,
+        photos: 0,
       },
       errors: ["CSV import not yet implemented"],
-      skipped: 0,
+      skipped: {
+        items: 0,
+        photos: 0,
+      },
     };
   }
 
@@ -164,9 +189,13 @@ export class ImportService {
         medications: 0,
         triggers: 0,
         dailyEntries: 0,
+        photos: 0,
       },
       errors: [],
-      skipped: 0,
+      skipped: {
+        items: 0,
+        photos: 0,
+      },
       userUpdated: false,
     };
 
@@ -197,7 +226,7 @@ export class ImportService {
           options
         );
         result.imported.symptoms = imported.count;
-        result.skipped += imported.skipped;
+        result.skipped.items += imported.skipped;
       }
 
       // Import medications
@@ -208,7 +237,7 @@ export class ImportService {
           options
         );
         result.imported.medications = imported.count;
-        result.skipped += imported.skipped;
+        result.skipped.items += imported.skipped;
       }
 
       // Import triggers
@@ -219,7 +248,7 @@ export class ImportService {
           options
         );
         result.imported.triggers = imported.count;
-        result.skipped += imported.skipped;
+        result.skipped.items += imported.skipped;
       }
 
       // Import daily entries
@@ -230,7 +259,19 @@ export class ImportService {
           options
         );
         result.imported.dailyEntries = imported.count;
-        result.skipped += imported.skipped;
+        result.skipped.items += imported.skipped;
+      }
+
+      // Import photos (AC #1: Detect photos in import bundle)
+      if (data.photos && data.photos.length > 0) {
+        const imported = await this.importPhotos(
+          data.photos,
+          userId,
+          options
+        );
+        result.imported.photos = imported.count;
+        result.skipped.photos = imported.duplicates;
+        result.errors.push(...imported.errors);
       }
     } catch (error) {
       result.success = false;
@@ -451,6 +492,213 @@ export class ImportService {
     }
 
     return { count, skipped };
+  }
+
+  /**
+   * Import photos with re-encryption (AC #2, #3, #4)
+   */
+  private async importPhotos(
+    photos: PhotoExportData[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; errors: string[]; duplicates: number }> {
+    let count = 0;
+    let duplicates = 0;
+    const errors: string[] = [];
+    let lastProgressUpdate = Date.now();
+
+    for (let i = 0; i < photos.length; i++) {
+      const photoData = photos[i];
+
+      // Progress callback (throttled to 1 second) (AC #5)
+      const now = Date.now();
+      if (options.onProgress && (now - lastProgressUpdate >= 1000 || i === photos.length - 1)) {
+        options.onProgress({
+          phase: "importing-photos",
+          current: i + 1,
+          total: photos.length,
+          message: `Importing photos: ${i + 1} of ${photos.length}`,
+        });
+        lastProgressUpdate = now;
+      }
+
+      try {
+        // Validate photo data (AC #6)
+        if (!this.validatePhotoData(photoData)) {
+          errors.push(
+            `Invalid photo data: ${photoData.photo?.originalFileName || "unknown"}`
+          );
+          continue;
+        }
+
+        // Convert base64 to blob (AC #6)
+        const blobData = this.base64ToBlob(photoData.blob, "image/jpeg");
+
+        // Check for duplicates (AC #7)
+        const existing = await photoRepository.findDuplicate({
+          originalFilename: photoData.photo.originalFileName,
+          captureDate: new Date(photoData.photo.capturedAt),
+        });
+
+        if (existing && !options.allowDuplicates) {
+          console.log(
+            `Skipping duplicate: ${photoData.photo.originalFileName}`
+          );
+          duplicates++;
+          continue;
+        }
+
+        // Generate new encryption key (AC #2)
+        const newKey = await PhotoEncryption.generateKey();
+        const newKeyString = await PhotoEncryption.exportKey(newKey);
+
+        // Re-encrypt photo (AC #2, #4)
+        let encryptedBlob: Blob;
+        if (photoData.encryptionKey) {
+          // Photo was exported encrypted - decrypt then re-encrypt
+          const oldKey = await PhotoEncryption.importKey(
+            photoData.encryptionKey
+          );
+          const decrypted = await PhotoEncryption.decryptPhoto(
+            blobData,
+            oldKey,
+            photoData.photo.encryptionIV
+          );
+          const encrypted = await PhotoEncryption.encryptPhoto(
+            decrypted,
+            newKey
+          );
+          encryptedBlob = encrypted.data;
+        } else {
+          // Photo was exported decrypted - just encrypt
+          const encrypted = await PhotoEncryption.encryptPhoto(
+            blobData,
+            newKey
+          );
+          encryptedBlob = encrypted.data;
+        }
+
+        // Regenerate thumbnail (AC #4)
+        const thumbnailBlob = await PhotoEncryption.generateThumbnail(
+          encryptedBlob,
+          150
+        );
+
+        // Get image dimensions
+        const dimensions = await this.getImageDimensions(blobData);
+
+        // Create photo record (AC #3)
+        const photo: Omit<PhotoAttachment, "id" | "createdAt" | "updatedAt"> =
+          {
+            userId,
+            fileName: photoData.photo.fileName,
+            originalFileName: photoData.photo.originalFileName,
+            capturedAt: new Date(photoData.photo.capturedAt),
+            encryptedData: encryptedBlob,
+            thumbnailData: thumbnailBlob,
+            encryptionKey: newKeyString,
+            encryptionIV: photoData.photo.encryptionIV,
+            thumbnailIV: photoData.photo.thumbnailIV,
+            sizeBytes: encryptedBlob.size,
+            width: dimensions.width,
+            height: dimensions.height,
+            mimeType: photoData.photo.mimeType || "image/jpeg",
+            tags: photoData.photo.tags || [],
+            notes: photoData.photo.notes,
+            metadata: photoData.photo.metadata,
+            annotations: photoData.photo.annotations,
+            dailyEntryId: photoData.photo.dailyEntryId,
+            symptomId: photoData.photo.symptomId,
+            bodyRegionId: photoData.photo.bodyRegionId,
+          };
+
+        // Save to database
+        await photoRepository.create(photo);
+        count++;
+      } catch (error) {
+        const filename =
+          photoData.photo?.originalFileName || "unknown";
+        errors.push(
+          `Failed to import ${filename}: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+        console.error(`Photo import error:`, error);
+      }
+    }
+
+    return { count, errors, duplicates };
+  }
+
+  /**
+   * Convert base64 to Blob (AC #6)
+   */
+  private base64ToBlob(base64: string, mimeType: string): Blob {
+    try {
+      const byteCharacters = atob(base64); // Decode base64
+      const byteNumbers = new Array(byteCharacters.length);
+
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      return new Blob([byteArray], { type: mimeType });
+    } catch (error) {
+      throw new Error(
+        `Invalid base64 encoding: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  }
+
+  /**
+   * Validate photo data (AC #6)
+   */
+  private validatePhotoData(photoData: PhotoExportData): boolean {
+    try {
+      // Check required fields
+      if (!photoData || !photoData.photo || !photoData.blob) {
+        return false;
+      }
+
+      // Validate base64 encoding (try to decode)
+      atob(photoData.blob);
+
+      // Validate required metadata
+      if (!photoData.photo.originalFileName) return false;
+      if (!photoData.photo.capturedAt) return false;
+
+      // Validate date format
+      const date = new Date(photoData.photo.capturedAt);
+      if (isNaN(date.getTime())) return false;
+
+      return true;
+    } catch (error) {
+      console.error("Photo validation failed:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Get image dimensions from blob
+   */
+  private async getImageDimensions(
+    blob: Blob
+  ): Promise<{ width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(blob);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve({ width: img.width, height: img.height });
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Failed to load image"));
+      };
+
+      img.src = url;
+    });
   }
 }
 

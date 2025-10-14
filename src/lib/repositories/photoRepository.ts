@@ -206,6 +206,23 @@ class PhotoRepository {
   }
 
   /**
+   * Unlink photo from daily entry
+   */
+  async unlinkFromEntry(photoId: string, entryId: string): Promise<void> {
+    const photo = await this.getById(photoId);
+    if (!photo) {
+      throw new Error(`Photo not found: ${photoId}`);
+    }
+
+    // Only unlink if this photo is actually linked to this entry
+    if (photo.dailyEntryId === entryId) {
+      await db.photoAttachments.update(photoId, {
+        dailyEntryId: undefined,
+      });
+    }
+  }
+
+  /**
    * Get total storage used by photos
    */
   async getTotalStorageUsed(userId: string): Promise<number> {
@@ -221,6 +238,20 @@ class PhotoRepository {
    */
   async getPhotoCount(userId: string): Promise<number> {
     return await db.photoAttachments.where("userId").equals(userId).count();
+  }
+
+  /**
+   * Get storage statistics (count and total size)
+   */
+  async getStorageStats(
+    userId: string
+  ): Promise<{ count: number; totalSize: number }> {
+    const photos = await db.photoAttachments
+      .where("userId")
+      .equals(userId)
+      .toArray();
+    const totalSize = photos.reduce((sum, photo) => sum + photo.sizeBytes, 0);
+    return { count: photos.length, totalSize };
   }
 
   /**
@@ -298,6 +329,21 @@ class PhotoRepository {
    */
   async bulkDelete(ids: string[]): Promise<void> {
     await db.photoAttachments.bulkDelete(ids);
+  }
+
+  /**
+   * Find duplicate photo by originalFilename and captureDate (AC #7)
+   */
+  async findDuplicate(criteria: {
+    originalFilename: string;
+    captureDate: Date;
+  }): Promise<PhotoAttachment | undefined> {
+    const record = await db.photoAttachments
+      .where('[originalFileName+capturedAt]')
+      .equals([criteria.originalFilename, criteria.captureDate.toISOString()])
+      .first();
+
+    return record ? this.recordToPhoto(record) : undefined;
   }
 
   /**

@@ -97,4 +97,151 @@ export const flareRepository = {
       commonInterventions,
     };
   },
+
+  /**
+   * Update flare severity and track history
+   * Automatically updates status based on severity changes
+   */
+  async updateSeverity(
+    id: string,
+    newSeverity: number,
+    status?: 'active' | 'improving' | 'worsening'
+  ): Promise<void> {
+    const flare = await this.getById(id);
+    if (!flare) {
+      throw new Error(`Flare not found: ${id}`);
+    }
+
+    // Validate severity (1-10 range)
+    if (newSeverity < 1 || newSeverity > 10) {
+      throw new Error('Severity must be between 1 and 10');
+    }
+
+    const timestamp = Date.now();
+
+    // Auto-detect status if not provided
+    let calculatedStatus = status;
+    if (!calculatedStatus) {
+      const severityDelta = newSeverity - flare.severity;
+      if (severityDelta >= 2) {
+        calculatedStatus = 'worsening';
+      } else if (severityDelta <= -2) {
+        calculatedStatus = 'improving';
+      } else {
+        calculatedStatus = 'active';
+      }
+    }
+
+    // Initialize severityHistory if it doesn't exist (backward compatibility)
+    const severityHistory = (flare as any).severityHistory || [];
+
+    // Add new severity entry to history
+    severityHistory.push({
+      timestamp,
+      severity: newSeverity,
+      status: calculatedStatus,
+    });
+
+    await this.update(id, {
+      severity: newSeverity,
+      status: calculatedStatus,
+      severityHistory,
+    } as any);
+  },
+
+  /**
+   * Add intervention to a flare
+   */
+  async addIntervention(
+    id: string,
+    type: 'ice' | 'medication' | 'rest' | 'other',
+    notes?: string
+  ): Promise<void> {
+    const flare = await this.getById(id);
+    if (!flare) {
+      throw new Error(`Flare not found: ${id}`);
+    }
+
+    const timestamp = Date.now();
+
+    // Initialize interventions arrays if they don't exist (avoid mutation with spread)
+    const existingInterventions = (flare as any).interventions || [];
+    const newInterventions = [...existingInterventions];
+
+    // Add new intervention to the new format (array of objects)
+    newInterventions.push({
+      timestamp,
+      type,
+      notes,
+    });
+
+    await this.update(id, {
+      interventions: newInterventions,
+    } as any);
+  },
+
+  /**
+   * Resolve a flare with optional notes about what helped
+   */
+  async resolve(id: string, resolutionNotes?: string): Promise<void> {
+    const flare = await this.getById(id);
+    if (!flare) {
+      throw new Error(`Flare not found: ${id}`);
+    }
+
+    const now = new Date();
+
+    await this.update(id, {
+      status: 'resolved',
+      endDate: now,
+      resolutionNotes,
+    } as any);
+  },
+
+  /**
+   * Get active flares with trend indicators based on severity changes
+   * Returns trend: 'worsening' (↑), 'stable' (→), 'improving' (↓)
+   */
+  async getActiveFlaresWithTrend(
+    userId: string
+  ): Promise<Array<ActiveFlare & { trend: 'worsening' | 'stable' | 'improving' }>> {
+    const activeFlares = await this.getActiveFlares(userId);
+
+    return activeFlares.map((flare) => {
+      // Get severity history (with backward compatibility)
+      const severityHistory = (flare as any).severityHistory || [];
+
+      let trend: 'worsening' | 'stable' | 'improving' = 'stable';
+
+      if (severityHistory.length >= 2) {
+        // Get severity from 24 hours ago (or closest available)
+        const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+        // Find the closest severity entry to 24 hours ago
+        let previousSeverity = flare.severity;
+        for (let i = severityHistory.length - 1; i >= 0; i--) {
+          if (severityHistory[i].timestamp <= twentyFourHoursAgo) {
+            previousSeverity = severityHistory[i].severity;
+            break;
+          }
+        }
+
+        const currentSeverity = flare.severity;
+        const severityDelta = currentSeverity - previousSeverity;
+
+        if (severityDelta >= 2) {
+          trend = 'worsening';
+        } else if (severityDelta <= -2) {
+          trend = 'improving';
+        } else {
+          trend = 'stable';
+        }
+      }
+
+      return {
+        ...flare,
+        trend,
+      };
+    });
+  },
 };

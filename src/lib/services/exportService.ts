@@ -5,6 +5,7 @@ import {
   triggerRepository,
   dailyEntryRepository,
 } from "../repositories";
+import { photoRepository } from "../repositories/photoRepository";
 import type {
   UserRecord,
   SymptomRecord,
@@ -12,6 +13,14 @@ import type {
   TriggerRecord,
   DailyEntryRecord,
 } from "../db/schema";
+import type { PhotoAttachment } from "../types/photo";
+
+export interface ExportProgress {
+  phase: "collecting-data" | "exporting-photos" | "generating-file";
+  current: number;
+  total: number;
+  message: string;
+}
 
 export interface ExportOptions {
   format: "json" | "csv";
@@ -20,10 +29,20 @@ export interface ExportOptions {
   includeTriggers?: boolean;
   includeDailyEntries?: boolean;
   includeUserData?: boolean;
+  includePhotos?: boolean; // NEW
+  decryptPhotos?: boolean; // NEW (requires includePhotos=true)
   dateRange?: {
     start: string;
     end: string;
   };
+  onProgress?: (progress: ExportProgress) => void;
+}
+
+export interface PhotoExportData {
+  photo: Omit<PhotoAttachment, "encryptedData" | "thumbnailData" | "encryptionKey">;
+  blob: string; // base64
+  encryptionKey?: string; // Only included if encrypted export
+  isEncrypted: boolean;
 }
 
 export interface ExportData {
@@ -34,6 +53,28 @@ export interface ExportData {
   medications?: MedicationRecord[];
   triggers?: TriggerRecord[];
   dailyEntries?: DailyEntryRecord[];
+  photos?: PhotoExportData[]; // NEW
+  photoCount?: number; // NEW
+  photosTotalSize?: number; // NEW (in bytes)
+}
+
+/**
+ * Convert Blob to base64 string
+ */
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
+      const base64Data = base64.split(",")[1] || base64;
+      resolve(base64Data);
+    };
+    reader.onerror = (error) => {
+      reject(new Error(`Failed to convert blob to base64: ${error}`));
+    };
+    reader.readAsDataURL(blob);
+  });
 }
 
 export class ExportService {
@@ -95,6 +136,14 @@ export class ExportService {
       } else {
         data.dailyEntries = await dailyEntryRepository.getAll(userId);
       }
+    }
+
+    // Include photos (opt-in)
+    if (options.includePhotos === true) {
+      const photoData = await this.exportPhotos(userId, options);
+      data.photos = photoData.photos;
+      data.photoCount = photoData.count;
+      data.photosTotalSize = photoData.totalSize;
     }
 
     return data;
@@ -249,6 +298,108 @@ export class ExportService {
         triggers,
         dailyEntries: entries,
       }),
+    };
+  }
+
+  /**
+   * Export photos with optional decryption
+   */
+  private async exportPhotos(
+    userId: string,
+    options: ExportOptions
+  ): Promise<{
+    photos: PhotoExportData[];
+    count: number;
+    totalSize: number;
+  }> {
+    const photos = await photoRepository.getAll(userId);
+    const exportedPhotos: PhotoExportData[] = [];
+    let totalSize = 0;
+    let lastProgressUpdate = Date.now();
+
+    for (let i = 0; i < photos.length; i++) {
+      const photo = photos[i];
+
+      try {
+        let blobData: Blob;
+        let isEncrypted = true;
+
+        // Get the encrypted blob
+        if (!photo.encryptedData) {
+          console.warn(`Photo ${photo.id} has no encrypted data, skipping`);
+          continue;
+        }
+
+        // Decrypt if requested
+        if (options.decryptPhotos) {
+          const { PhotoEncryption } = await import("../utils/photoEncryption");
+          if (!photo.encryptionKey) {
+            console.warn(`Photo ${photo.id} has no encryption key, skipping`);
+            continue;
+          }
+          const key = await PhotoEncryption.importKey(photo.encryptionKey);
+          blobData = await PhotoEncryption.decryptPhoto(
+            photo.encryptedData,
+            key,
+            photo.encryptionIV
+          );
+          isEncrypted = false;
+        } else {
+          blobData = photo.encryptedData;
+        }
+
+        // Convert to base64
+        const base64 = await blobToBase64(blobData);
+
+        // Create export data (exclude blob fields)
+        const { encryptedData, thumbnailData, encryptionKey, ...photoData } =
+          photo;
+
+        const exportData: PhotoExportData = {
+          photo: photoData,
+          blob: base64,
+          isEncrypted,
+        };
+
+        // Include encryption key only for encrypted exports
+        if (isEncrypted && encryptionKey) {
+          exportData.encryptionKey = encryptionKey;
+        }
+
+        exportedPhotos.push(exportData);
+        totalSize += base64.length; // Approximate size in bytes
+
+        // Report progress (throttled to 1 second intervals)
+        const now = Date.now();
+        if (options.onProgress && now - lastProgressUpdate >= 1000) {
+          options.onProgress({
+            phase: "exporting-photos",
+            current: i + 1,
+            total: photos.length,
+            message: `Exporting photo ${i + 1} of ${photos.length}`,
+          });
+          lastProgressUpdate = now;
+        }
+      } catch (error) {
+        console.error(`Failed to export photo ${photo.id}:`, error);
+        // Continue with other photos
+      }
+    }
+
+    // Final progress update
+    if (options.onProgress && exportedPhotos.length > 0) {
+      options.onProgress({
+        phase: "exporting-photos",
+        current: exportedPhotos.length,
+        total: photos.length,
+        message: `Exported ${exportedPhotos.length} photos`,
+      });
+    }
+
+    return {
+      photos: exportedPhotos,
+      count: exportedPhotos.length,
+      totalSize,
     };
   }
 

@@ -1,15 +1,17 @@
 import Dexie, { Table } from "dexie";
 import {
-  AnalysisResultRecord, // Added
+  AnalysisResultRecord,
   AttachmentRecord,
   BodyMapLocationRecord,
   DailyEntryRecord,
   FlareRecord,
+  MedicationEventRecord, // New
   MedicationRecord,
   PhotoAttachmentRecord,
   PhotoComparisonRecord,
   SymptomRecord,
   SymptomInstanceRecord,
+  TriggerEventRecord, // New
   TriggerRecord,
   UserRecord,
 } from "./schema";
@@ -19,14 +21,16 @@ export class SymptomTrackerDatabase extends Dexie {
   symptoms!: Table<SymptomRecord, string>;
   symptomInstances!: Table<SymptomInstanceRecord, string>;
   medications!: Table<MedicationRecord, string>;
+  medicationEvents!: Table<MedicationEventRecord, string>; // New
   triggers!: Table<TriggerRecord, string>;
+  triggerEvents!: Table<TriggerEventRecord, string>; // New
   dailyEntries!: Table<DailyEntryRecord, string>;
   attachments!: Table<AttachmentRecord, string>;
   bodyMapLocations!: Table<BodyMapLocationRecord, string>;
   photoAttachments!: Table<PhotoAttachmentRecord, string>;
   photoComparisons!: Table<PhotoComparisonRecord, string>;
   flares!: Table<FlareRecord, string>;
-  analysisResults!: Table<AnalysisResultRecord, string>; // Added
+  analysisResults!: Table<AnalysisResultRecord, string>;
 
   constructor() {
     super("symptom-tracker");
@@ -84,6 +88,41 @@ export class SymptomTrackerDatabase extends Dexie {
           trigger.isEnabled = true;
         }
       });
+    });
+
+    // Version 9: Add compound index for photo duplicate detection
+    this.version(9).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, userId, symptomId, status, startDate, [userId+status], [userId+startDate]",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+    });
+
+    // Version 10: Add event stream tables (medicationEvents, triggerEvents)
+    // Enhanced flares with severity tracking - Note: 0 users = no migration needed
+    this.version(10).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]", // New
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]", // New
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, userId, symptomId, bodyRegionId, status, startDate, [userId+status], [userId+startDate], [userId+bodyRegionId]", // Added bodyRegionId index
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
     });
   }
 }
