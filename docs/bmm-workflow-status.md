@@ -12,11 +12,11 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation
-- **Current Workflow:** review-story (Story 1.3) - Complete
-- **Overall Progress:** 82.0%
-- **Next Action:** Draft Story 1.4 (Meal Composition Logging)
-- **Command to Run:** `create-story` to draft Story 1.4
-- **Agent to Load:** SM (bmad/bmm/agents/sm.md)
+- **Current Workflow:** story-context (Story 1.4) - Complete
+- **Overall Progress:** 86.0%
+- **Next Action:** Implement Story 1.4 (Meal Composition Logging)
+- **Command to Run:** `dev-story` to implement Story 1.4
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md)
 
 ---
 
@@ -68,15 +68,20 @@
 
 #### TODO (Needs Drafting)
 
-- **Story ID:** 1.4
-- **Story Title:** Meal Composition Logging
-- **Story File:** `docs/stories/story-1.4.md`
+- **Story ID:** 1.5
+- **Story Title:** Food Photo Attachments
+- **Story File:** `docs/stories/story-1.5.md`
 - **Status:** Not created (needs drafting)
-- **Action:** SM should run `create-story` workflow to draft this story
+- **Action:** SM should run `create-story` workflow to draft this story after Story 1.4 is approved
 
 #### IN PROGRESS (Approved for Development)
 
-_None — Story 1.3 approved and moved to DONE._
+- **Story ID:** 1.4
+- **Story Title:** Meal Composition Logging
+- **Story File:** `docs/stories/story-1.4.md`
+- **Status:** Ready
+- **Context File:** `docs/stories/story-context-1.4.xml` ✓
+- **Action:** DEV should run `dev-story` to implement this story (context available)
 
 #### READY FOR REVIEW
 
@@ -96,17 +101,17 @@ _None — Story 1.3 reviewed and moved to DONE._
 
 - Stories in backlog: 11
 - Stories awaiting drafting (TODO): 1
-- Stories ready for development (IN PROGRESS): 0
+- Stories ready for development (IN PROGRESS): 1
 - Stories ready for review: 0
 - Stories completed: 3
 
 ### Next Action Required
 
-**What to do next:** Draft Story 1.4 (Meal Composition Logging) to continue Epic 1 implementation.
+**What to do next:** Implement Story 1.4 (Meal Composition Logging) using the comprehensive context file.
 
-**Command to run:** Run `create-story` workflow to draft Story 1.4.
+**Command to run:** Run `dev-story` workflow to implement the story.
 
-**Agent to load:** SM (bmad/bmm/agents/sm.md)
+**Agent to load:** DEV (bmad/bmm/agents/dev.md)
 
 ---
 
@@ -139,6 +144,9 @@ _None — Story 1.3 reviewed and moved to DONE._
 - **2025-10-16:** Completed story-context for Story 1.3 (Custom Food Creation & Management). Context file: docs/stories/story-context-1.3.xml. Generated comprehensive implementation context including existing code to reuse (foodRepository, FoodContext, AllergenBadge), database schema, 20 test ideas mapped to acceptance criteria, architecture constraints, and development notes. Next: DEV agent should run dev-story to implement. Overall progress: 73.0% → 74.0%.
 - **2025-10-16:** Completed dev-story workflow for Story 1.3 (Custom Food Creation & Management). Implemented all 8 tasks: AddFoodModal (335 lines, 23 tests), EditFoodModal (347 lines, 25 tests), CustomFoodBadge (25 lines, 5 tests), FoodLogModal edit/delete integration (+150 lines), FoodContext custom food methods (+65 lines, 8 tests), confirmation dialogs, validation, accessibility (WCAG 2.1 AA), security (userId isolation, input sanitization). All acceptance criteria met. 76/76 tests passing across 5 suites. ~1,615 lines of production and test code delivered. Story moved to READY FOR REVIEW. Overall progress: 74.0% → 78.0%.
 - **2025-10-16:** Completed review-story workflow for Story 1.3 (Custom Food Creation & Management). Comprehensive senior developer review performed: All 6 acceptance criteria verified, architecture alignment confirmed, security assessment passed, accessibility review (WCAG 2.1 AA) passed, test quality excellent (88.88% AddFoodModal, 84.26% EditFoodModal, 100% CustomFoodBadge, 93.1% foodRepository coverage). No blocking issues identified. Minor observations noted for future optimization (act() warnings in tests, potential form refactoring). Status updated: Ready → Review Passed. Story approved and moved to DONE. Overall progress: 78.0% → 82.0%.
+- **2025-10-16:** Completed create-story for Story 1.4 (Meal Composition Logging). Story file: docs/stories/story-1.4.md created with 7 acceptance criteria and 8 detailed tasks. Story defines multi-food meal logging with MealComposer component, meal type selection, per-food portion sizes, meal notes, mealId grouping, and timeline integration for grouped meal display. Extends foodEventRepository to support foodIds[] arrays and portionMap JSON serialization. Estimated ~800 lines of code (components + repository extensions + timeline updates + tests). Story moved from TODO → IN PROGRESS. Next: Review via story-ready. Overall progress: 82.0% → 84.0%.
+- **2025-10-16:** Story 1.4 (Meal Composition Logging) marked ready for development by SM agent. Status updated: Draft → Ready. Story remains IN PROGRESS awaiting context generation. Next story 1.5 (Food Photo Attachments) already in TODO from create-story. Overall progress: 84.0% → 85.0%.
+- **2025-10-16:** Completed story-context for Story 1.4 (Meal Composition Logging). Context file: docs/stories/story-context-1.4.xml. Generated comprehensive implementation context including existing code to reuse (FoodLogModal, foodEventRepository, foodRepository, AllergenBadge), data models (FoodEventRecord with mealId/foodIds/portionMap JSON serialization), 40+ test ideas mapped to acceptance criteria, architecture constraints (offline-first, compound indexes, WCAG 2.1 AA), meal type defaults logic, timeline integration patterns, and performance requirements (&lt;500ms persistence). Next: DEV agent should run dev-story to implement. Overall progress: 85.0% → 86.0%.
 
 ---
 
