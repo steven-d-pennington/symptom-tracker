@@ -7,6 +7,7 @@ export interface TriggerCorrelation {
   occurrences: number;
   avgSeverityIncrease: number;
   confidence: "low" | "medium" | "high";
+  timeLag?: string; // Most common time delay (e.g., "2-4h")
 }
 
 export interface TriggerPattern {

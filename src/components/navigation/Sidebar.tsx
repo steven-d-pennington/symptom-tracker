@@ -34,7 +34,7 @@ const navSections: NavSection[] = [
   {
     title: "Primary",
     items: [
-      { icon: FileText, label: "Daily Log", href: "/log" },
+      { icon: FileText, label: "Daily Reflection", href: "/log" },
       { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
       { icon: TrendingUp, label: "Analytics", href: "/analytics" },
       { icon: Calendar, label: "Calendar", href: "/calendar" },

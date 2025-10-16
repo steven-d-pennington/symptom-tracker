@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { TriggerCorrelation, TriggerInsight } from "@/lib/types/trigger-correlation";
-import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
+import { triggerEventRepository } from "@/lib/repositories/triggerEventRepository";
+import { symptomInstanceRepository } from "@/lib/repositories/symptomInstanceRepository";
+import { triggerRepository } from "@/lib/repositories/triggerRepository";
+import { calculateTemporalCorrelation } from "@/lib/utils/correlation";
 import { CorrelationMatrix } from "./CorrelationMatrix";
 import { TriggerInsights } from "./TriggerInsights";
 
@@ -23,48 +26,31 @@ export function TriggerCorrelationDashboard({ userId }: TriggerCorrelationDashbo
     try {
       setIsLoading(true);
 
-      // Get last 90 days of entries
-      const entries = await dailyEntryRepository.getAll(userId);
-      const recentEntries = entries.slice(0, 90);
+      // Get last 90 days of data
+      const now = Date.now();
+      const ninetyDaysAgo = now - 90 * 24 * 60 * 60 * 1000;
 
-      // Calculate correlations
-      const triggerSymptomMap = new Map<string, Map<string, number[]>>();
+      // Fetch trigger events and symptom instances
+      const [triggerEvents, symptomInstances, triggerDefinitions] = await Promise.all([
+        triggerEventRepository.findByDateRange(userId, ninetyDaysAgo, now),
+        symptomInstanceRepository.getByDateRange(
+          userId,
+          new Date(ninetyDaysAgo),
+          new Date(now)
+        ),
+        triggerRepository.getAll(userId),
+      ]);
 
-      recentEntries.forEach((entry) => {
-        entry.triggers.forEach((trigger) => {
-          entry.symptoms.forEach((symptom) => {
-            const key = `${trigger.triggerId}-${symptom.symptomId}`;
-            if (!triggerSymptomMap.has(key)) {
-              triggerSymptomMap.set(key, new Map());
-            }
-            const map = triggerSymptomMap.get(key)!;
-            if (!map.has(symptom.symptomId)) {
-              map.set(symptom.symptomId, []);
-            }
-            map.get(symptom.symptomId)!.push(symptom.severity);
-          });
-        });
-      });
+      // Calculate temporal correlations
+      const correlationsList = calculateTemporalCorrelation(triggerEvents, symptomInstances);
 
-      // Build correlation objects
-      const correlationsList: TriggerCorrelation[] = [];
-      triggerSymptomMap.forEach((symptomMap, key) => {
-        const [triggerId, symptomId] = key.split("-");
-        symptomMap.forEach((severities, sid) => {
-          const avgSeverity = severities.reduce((a, b) => a + b, 0) / severities.length;
-          const score = Math.min(severities.length / 10, 1);
+      // Resolve trigger names from IDs
+      const triggerNameMap = new Map(
+        triggerDefinitions.map((t) => [t.id, t.name])
+      );
 
-          correlationsList.push({
-            triggerId,
-            triggerName: `Trigger ${triggerId.slice(0, 8)}`,
-            symptomId: sid,
-            symptomName: `Symptom ${sid.slice(0, 8)}`,
-            correlationScore: score,
-            occurrences: severities.length,
-            avgSeverityIncrease: avgSeverity,
-            confidence: score > 0.7 ? "high" : score > 0.4 ? "medium" : "low",
-          });
-        });
+      correlationsList.forEach((corr) => {
+        corr.triggerName = triggerNameMap.get(corr.triggerId) || corr.triggerId;
       });
 
       setCorrelations(correlationsList);
@@ -76,7 +62,9 @@ export function TriggerCorrelationDashboard({ userId }: TriggerCorrelationDashbo
         .map((c) => ({
           type: c.avgSeverityIncrease > 7 ? "warning" : "info",
           title: `Strong correlation detected`,
-          description: `${c.triggerName} shows a ${(c.correlationScore * 100).toFixed(0)}% correlation with ${c.symptomName}`,
+          description: c.timeLag
+            ? `${c.triggerName} shows a ${(c.correlationScore * 100).toFixed(0)}% correlation with ${c.symptomName}, typically occurring ${c.timeLag} later`
+            : `${c.triggerName} shows a ${(c.correlationScore * 100).toFixed(0)}% correlation with ${c.symptomName}`,
           affectedSymptoms: [c.symptomName],
           recommendation: "Consider avoiding this trigger to reduce symptom severity",
         }));

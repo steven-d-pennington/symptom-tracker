@@ -5,6 +5,8 @@ import {
   BodyMapLocationRecord,
   DailyEntryRecord,
   FlareRecord,
+  FoodEventRecord,
+  FoodRecord,
   MedicationEventRecord, // New
   MedicationRecord,
   PhotoAttachmentRecord,
@@ -31,6 +33,8 @@ export class SymptomTrackerDatabase extends Dexie {
   photoComparisons!: Table<PhotoComparisonRecord, string>;
   flares!: Table<FlareRecord, string>;
   analysisResults!: Table<AnalysisResultRecord, string>;
+  foods!: Table<FoodRecord, string>;
+  foodEvents!: Table<FoodEventRecord, string>;
 
   constructor() {
     super("symptom-tracker");
@@ -123,6 +127,47 @@ export class SymptomTrackerDatabase extends Dexie {
       photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
       flares: "id, userId, symptomId, bodyRegionId, status, startDate, [userId+status], [userId+startDate], [userId+bodyRegionId]", // Added bodyRegionId index
       analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+    });
+
+    // Version 11: Add food logging tables (foods, foodEvents)
+    this.version(11).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, userId, symptomId, bodyRegionId, status, startDate, [userId+status], [userId+startDate], [userId+bodyRegionId]",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]", // New
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]", // New
+    }).upgrade(async (trans) => {
+      // Seed default foods if not already seeded
+      // Use sentinel check to ensure idempotent seeding
+      const { seedFoodsService } = await import("../services/food/seedFoodsService");
+      
+      // Get first user to seed foods for (single-user app pattern)
+      const users = await trans.table("users").toArray();
+      if (users.length > 0) {
+        const userId = users[0].id;
+        const isSeedingComplete = await seedFoodsService.isSeedingComplete(userId, trans.db as SymptomTrackerDatabase);
+        
+        if (!isSeedingComplete) {
+          console.log("[DB Migration v11] Seeding default foods...");
+          const startTime = performance.now();
+          await seedFoodsService.seedDefaultFoods(userId, trans.db as SymptomTrackerDatabase);
+          const endTime = performance.now();
+          console.log(`[DB Migration v11] Seeded foods in ${(endTime - startTime).toFixed(2)}ms`);
+        } else {
+          console.log("[DB Migration v11] Foods already seeded, skipping.");
+        }
+      }
     });
   }
 }

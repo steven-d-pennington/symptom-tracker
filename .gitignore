@@ -16,7 +16,7 @@
 next-env.d.ts
 BMAD-METHOD
 .claude
-bmad
+#bmad
 .gemini
 .github
 

@@ -6,13 +6,21 @@ import {
   dailyEntryRepository,
 } from "../repositories";
 import { photoRepository } from "../repositories/photoRepository";
+import { medicationEventRepository } from "../repositories/medicationEventRepository";
+import { triggerEventRepository } from "../repositories/triggerEventRepository";
+import { symptomInstanceRepository } from "../repositories/symptomInstanceRepository";
+import { flareRepository } from "../repositories/flareRepository";
 import type {
   UserRecord,
   SymptomRecord,
   MedicationRecord,
   TriggerRecord,
   DailyEntryRecord,
+  MedicationEventRecord,
+  TriggerEventRecord,
 } from "../db/schema";
+import type { Symptom } from "../types/symptoms";
+import type { ActiveFlare } from "../types/flare";
 import type { PhotoAttachment } from "../types/photo";
 
 export interface ExportProgress {
@@ -24,13 +32,18 @@ export interface ExportProgress {
 
 export interface ExportOptions {
   format: "json" | "csv";
-  includeSymptoms?: boolean;
-  includeMedications?: boolean;
-  includeTriggers?: boolean;
-  includeDailyEntries?: boolean;
+  includeSymptoms?: boolean; // Legacy: symptom definitions
+  includeMedications?: boolean; // Legacy: medication definitions
+  includeTriggers?: boolean; // Legacy: trigger definitions
+  includeDailyEntries?: boolean; // Legacy: daily entries
   includeUserData?: boolean;
-  includePhotos?: boolean; // NEW
-  decryptPhotos?: boolean; // NEW (requires includePhotos=true)
+  includePhotos?: boolean;
+  decryptPhotos?: boolean; // requires includePhotos=true
+  // NEW: Event stream options
+  includeMedicationEvents?: boolean;
+  includeTriggerEvents?: boolean;
+  includeSymptomInstances?: boolean;
+  includeFlares?: boolean;
   dateRange?: {
     start: string;
     end: string;
@@ -49,13 +62,19 @@ export interface ExportData {
   exportDate: string;
   version: string;
   user?: UserRecord;
+  // Legacy fields
   symptoms?: SymptomRecord[];
   medications?: MedicationRecord[];
   triggers?: TriggerRecord[];
   dailyEntries?: DailyEntryRecord[];
-  photos?: PhotoExportData[]; // NEW
-  photoCount?: number; // NEW
-  photosTotalSize?: number; // NEW (in bytes)
+  photos?: PhotoExportData[];
+  photoCount?: number;
+  photosTotalSize?: number; // in bytes
+  // NEW: Event stream data
+  medicationEvents?: MedicationEventRecord[];
+  triggerEvents?: TriggerEventRecord[];
+  symptomInstances?: Symptom[];
+  flares?: ActiveFlare[];
 }
 
 /**
@@ -102,7 +121,7 @@ export class ExportService {
   ): Promise<ExportData> {
     const data: ExportData = {
       exportDate: new Date().toISOString(),
-      version: "1.0",
+      version: "2.0", // Updated for event stream support
     };
 
     // Include user data
@@ -110,23 +129,23 @@ export class ExportService {
       data.user = await userRepository.getById(userId);
     }
 
-    // Include symptoms
-    if (options.includeSymptoms !== false) {
+    // Legacy: Include symptom definitions
+    if (options.includeSymptoms === true) {
       data.symptoms = await symptomRepository.getAll(userId);
     }
 
-    // Include medications
-    if (options.includeMedications !== false) {
+    // Legacy: Include medication definitions
+    if (options.includeMedications === true) {
       data.medications = await medicationRepository.getAll(userId);
     }
 
-    // Include triggers
-    if (options.includeTriggers !== false) {
+    // Legacy: Include trigger definitions
+    if (options.includeTriggers === true) {
       data.triggers = await triggerRepository.getAll(userId);
     }
 
-    // Include daily entries
-    if (options.includeDailyEntries !== false) {
+    // Legacy: Include daily entries
+    if (options.includeDailyEntries === true) {
       if (options.dateRange) {
         data.dailyEntries = await dailyEntryRepository.getByDateRange(
           userId,
@@ -136,6 +155,58 @@ export class ExportService {
       } else {
         data.dailyEntries = await dailyEntryRepository.getAll(userId);
       }
+    }
+
+    // NEW: Include medication events
+    if (options.includeMedicationEvents !== false) {
+      if (options.dateRange) {
+        const startTimestamp = new Date(options.dateRange.start).getTime();
+        const endTimestamp = new Date(options.dateRange.end).getTime();
+        data.medicationEvents = await medicationEventRepository.findByDateRange(
+          userId,
+          startTimestamp,
+          endTimestamp
+        );
+      } else {
+        data.medicationEvents = await medicationEventRepository.findByUserId(userId);
+      }
+    }
+
+    // NEW: Include trigger events
+    if (options.includeTriggerEvents !== false) {
+      if (options.dateRange) {
+        const startTimestamp = new Date(options.dateRange.start).getTime();
+        const endTimestamp = new Date(options.dateRange.end).getTime();
+        data.triggerEvents = await triggerEventRepository.findByDateRange(
+          userId,
+          startTimestamp,
+          endTimestamp
+        );
+      } else {
+        data.triggerEvents = await triggerEventRepository.findByUserId(userId);
+      }
+    }
+
+    // NEW: Include symptom instances
+    if (options.includeSymptomInstances !== false) {
+      if (options.dateRange) {
+        const startDate = new Date(options.dateRange.start);
+        const endDate = new Date(options.dateRange.end);
+        data.symptomInstances = await symptomInstanceRepository.getByDateRange(
+          userId,
+          startDate,
+          endDate
+        );
+      } else {
+        data.symptomInstances = await symptomInstanceRepository.getAll(userId);
+      }
+    }
+
+    // NEW: Include flares
+    if (options.includeFlares !== false) {
+      data.flares = await flareRepository.getByUserId(userId);
+      // Note: Flares don't have date range filtering currently,
+      // but they have startDate/endDate fields for filtering if needed
     }
 
     // Include photos (opt-in)
@@ -159,87 +230,86 @@ export class ExportService {
 
   /**
    * Export data as CSV
+   * New format: one row per event with columns: type,timestamp,name,details
    */
   private exportAsCSV(data: ExportData): Blob {
     const csvParts: string[] = [];
 
-    // Export daily entries as CSV
-    if (data.dailyEntries && data.dailyEntries.length > 0) {
-      csvParts.push("Daily Entries");
-      csvParts.push(
-        "Date,Overall Health,Energy Level,Sleep Quality,Stress Level,Symptom Count,Medication Count,Trigger Count,Notes"
-      );
+    // Helper function to escape CSV fields
+    const escapeCSV = (value: string): string => {
+      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
 
-      data.dailyEntries.forEach((entry) => {
+    // CSV Header
+    csvParts.push("type,timestamp,name,details");
+
+    // Export medication events
+    if (data.medicationEvents && data.medicationEvents.length > 0) {
+      data.medicationEvents.forEach((event) => {
+        const timestamp = new Date(event.timestamp).toISOString();
+        const details = event.taken ? "taken" : "skipped";
+        const detailsWithDosage = event.dosage
+          ? `${details}, dosage: ${event.dosage}`
+          : details;
+
         csvParts.push(
-          [
-            entry.date,
-            entry.overallHealth,
-            entry.energyLevel,
-            entry.sleepQuality,
-            entry.stressLevel,
-            entry.symptoms?.length || 0,
-            entry.medications?.length || 0,
-            entry.triggers?.length || 0,
-            `"${(entry.notes || "").replace(/"/g, '""')}"`,
-          ].join(",")
+          `medication,${timestamp},${escapeCSV(event.medicationId)},${escapeCSV(detailsWithDosage)}`
         );
       });
-
-      csvParts.push("");
     }
 
-    // Export symptoms as CSV
-    if (data.symptoms && data.symptoms.length > 0) {
-      csvParts.push("Symptoms");
-      csvParts.push("Name,Category,Active,Created Date");
+    // Export trigger events
+    if (data.triggerEvents && data.triggerEvents.length > 0) {
+      data.triggerEvents.forEach((event) => {
+        const timestamp = new Date(event.timestamp).toISOString();
+        const details = `intensity: ${event.intensity}`;
 
-      data.symptoms.forEach((symptom) => {
         csvParts.push(
-          [
-            `"${symptom.name}"`,
-            `"${symptom.category}"`,
-            symptom.isActive ? "Yes" : "No",
-            new Date(symptom.createdAt).toLocaleDateString(),
-          ].join(",")
+          `trigger,${timestamp},${escapeCSV(event.triggerId)},${escapeCSV(details)}`
         );
       });
-
-      csvParts.push("");
     }
 
-    // Export medications as CSV
-    if (data.medications && data.medications.length > 0) {
-      csvParts.push("Medications");
-      csvParts.push("Name,Dosage,Frequency,Active");
+    // Export symptom instances
+    if (data.symptomInstances && data.symptomInstances.length > 0) {
+      data.symptomInstances.forEach((symptom) => {
+        const timestamp = new Date(symptom.timestamp).toISOString();
+        const details = `severity: ${symptom.severity}`;
+        const detailsWithLocation = symptom.location
+          ? `${details}, location: ${symptom.location}`
+          : details;
 
-      data.medications.forEach((medication) => {
         csvParts.push(
-          [
-            `"${medication.name}"`,
-            `"${medication.dosage || ""}"`,
-            `"${medication.frequency}"`,
-            medication.isActive ? "Yes" : "No",
-          ].join(",")
+          `symptom,${timestamp},${escapeCSV(symptom.name)},${escapeCSV(detailsWithLocation)}`
         );
       });
-
-      csvParts.push("");
     }
 
-    // Export triggers as CSV
-    if (data.triggers && data.triggers.length > 0) {
-      csvParts.push("Triggers");
-      csvParts.push("Name,Category,Active");
+    // Export flares
+    if (data.flares && data.flares.length > 0) {
+      data.flares.forEach((flare) => {
+        // Export flare start event
+        const startTimestamp = new Date(flare.startDate).toISOString();
+        const location = flare.bodyRegions.join(", ");
+        const startDetails = `severity: ${flare.severity}, status: ${flare.status}`;
 
-      data.triggers.forEach((trigger) => {
         csvParts.push(
-          [
-            `"${trigger.name}"`,
-            `"${trigger.category}"`,
-            trigger.isActive ? "Yes" : "No",
-          ].join(",")
+          `flare,${startTimestamp},${escapeCSV(location)},${escapeCSV(startDetails)}`
         );
+
+        // Export severity history entries
+        const severityHistory = (flare as any).severityHistory || [];
+        severityHistory.forEach((entry: any) => {
+          const historyTimestamp = new Date(entry.timestamp).toISOString();
+          const historyDetails = `severity: ${entry.severity}, status: ${entry.status}`;
+
+          csvParts.push(
+            `flare,${historyTimestamp},${escapeCSV(location)},${escapeCSV(historyDetails)}`
+          );
+        });
       });
     }
 
@@ -275,28 +345,33 @@ export class ExportService {
    * Get export statistics
    */
   async getExportStats(userId: string) {
-    const [symptoms, medications, triggers, entries] = await Promise.all([
-      symptomRepository.getAll(userId),
-      medicationRepository.getAll(userId),
-      triggerRepository.getAll(userId),
-      dailyEntryRepository.getAll(userId),
+    const [
+      medicationEvents,
+      triggerEvents,
+      symptomInstances,
+      flares,
+    ] = await Promise.all([
+      medicationEventRepository.findByUserId(userId),
+      triggerEventRepository.findByUserId(userId),
+      symptomInstanceRepository.getAll(userId),
+      flareRepository.getByUserId(userId),
     ]);
 
     return {
-      symptomCount: symptoms.length,
-      medicationCount: medications.length,
-      triggerCount: triggers.length,
-      entryCount: entries.length,
+      medicationEventCount: medicationEvents.length,
+      triggerEventCount: triggerEvents.length,
+      symptomInstanceCount: symptomInstances.length,
+      flareCount: flares.length,
       totalRecords:
-        symptoms.length +
-        medications.length +
-        triggers.length +
-        entries.length,
+        medicationEvents.length +
+        triggerEvents.length +
+        symptomInstances.length +
+        flares.length,
       estimatedSize: this.estimateDataSize({
-        symptoms,
-        medications,
-        triggers,
-        dailyEntries: entries,
+        medicationEvents,
+        triggerEvents,
+        symptomInstances,
+        flares,
       }),
     };
   }

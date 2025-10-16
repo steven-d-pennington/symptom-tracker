@@ -10,7 +10,7 @@ import {
 import { generateId } from "../utils/idGenerator";
 import { ActiveFlare, FlareIntervention } from "../types/flare";
 
-export type EventStreamPreset = "first-day" | "one-week" | "heavy-user" | "edge-cases";
+export type EventStreamPreset = "first-day" | "one-week" | "heavy-user" | "one-year-heavy" | "edge-cases";
 
 interface GenerateEventStreamDataOptions {
   userId: string;
@@ -159,6 +159,14 @@ function getPresetConfig(preset: EventStreamPreset): PresetConfig {
         medicationAdherence: 0.85,
         includeEdgeCases: false,
       };
+    case "one-year-heavy":
+      return {
+        daysBack: 364, // ~1 year
+        eventsPerDay: { min: 6, max: 12 },
+        flareCount: { min: 15, max: 25 },
+        medicationAdherence: 0.80,
+        includeEdgeCases: false,
+      };
     case "edge-cases":
       return {
         daysBack: 6,
@@ -197,9 +205,32 @@ async function clearEventData(userId: string): Promise<void> {
 async function getOrCreateSymptoms(userId: string): Promise<SymptomRecord[]> {
   const existing = await db.symptoms.where({ userId }).toArray();
   if (existing.length > 0) {
+    // Ensure we have all the flare-related symptoms
+    const hasFlareSymptoms = existing.some(s => 
+      s.name === "Painful Nodules" || 
+      s.name === "Inflammation" || 
+      s.name === "Drainage" || 
+      s.name === "Skin Tunneling"
+    );
+    
+    if (!hasFlareSymptoms) {
+      // Add the missing flare symptoms
+      const allSymptoms = createSymptoms(userId);
+      const flareSymptoms = allSymptoms.filter(s => 
+        s.name === "Painful Nodules" || 
+        s.name === "Inflammation" || 
+        s.name === "Drainage" || 
+        s.name === "Skin Tunneling"
+      );
+      await db.symptoms.bulkAdd(flareSymptoms);
+      return [...existing, ...flareSymptoms];
+    }
+    
     return existing;
   }
-  return createSymptoms(userId);
+  const newSymptoms = createSymptoms(userId);
+  await db.symptoms.bulkAdd(newSymptoms);
+  return newSymptoms;
 }
 
 async function getOrCreateMedications(userId: string): Promise<MedicationRecord[]> {
@@ -207,7 +238,9 @@ async function getOrCreateMedications(userId: string): Promise<MedicationRecord[
   if (existing.length > 0) {
     return existing;
   }
-  return createMedications(userId);
+  const newMedications = createMedications(userId);
+  await db.medications.bulkAdd(newMedications);
+  return newMedications;
 }
 
 async function getOrCreateTriggers(userId: string): Promise<TriggerRecord[]> {
@@ -215,7 +248,9 @@ async function getOrCreateTriggers(userId: string): Promise<TriggerRecord[]> {
   if (existing.length > 0) {
     return existing;
   }
-  return createTriggers(userId);
+  const newTriggers = createTriggers(userId);
+  await db.triggers.bulkAdd(newTriggers);
+  return newTriggers;
 }
 
 function createSymptoms(userId: string): SymptomRecord[] {
@@ -262,6 +297,34 @@ function createSymptoms(userId: string): SymptomRecord[] {
     {
       id: generateId(),
       userId,
+      name: "Drainage",
+      category: "skin",
+      description: "Discharge from lesions",
+      commonTriggers: ["Active flares", "Infection"],
+      severityScale,
+      isActive: true,
+      isDefault: false,
+      isEnabled: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: generateId(),
+      userId,
+      name: "Skin Tunneling",
+      category: "skin",
+      description: "Tunnels forming under skin connecting lesions",
+      commonTriggers: ["Advanced disease", "Chronic inflammation"],
+      severityScale,
+      isActive: true,
+      isDefault: false,
+      isEnabled: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: generateId(),
+      userId,
       name: "Fatigue",
       category: "fatigue",
       description: "Persistent tiredness and low energy",
@@ -280,6 +343,20 @@ function createSymptoms(userId: string): SymptomRecord[] {
       category: "pain",
       description: "Head pain",
       commonTriggers: ["Stress", "Poor sleep"],
+      severityScale,
+      isActive: true,
+      isDefault: false,
+      isEnabled: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: generateId(),
+      userId,
+      name: "Joint Pain",
+      category: "pain",
+      description: "Aching or stiffness in joints",
+      commonTriggers: ["Inflammation", "Weather changes"],
       severityScale,
       isActive: true,
       isDefault: false,
@@ -535,20 +612,27 @@ function generateSymptomInstances(
   const instances: SymptomInstanceRecord[] = [];
   const now = Date.now();
 
-  // Focus on fatigue and headache symptoms (non-flare)
+  // Focus on fatigue, headache, and joint pain (non-flare symptoms)
   const nonFlareSymptoms = context.symptoms.filter(
-    (s) => s.name === "Fatigue" || s.name === "Headache"
+    (s) => s.name === "Fatigue" || s.name === "Headache" || s.name === "Joint Pain"
   );
+
+  if (nonFlareSymptoms.length === 0) {
+    return instances;
+  }
 
   for (let dayOffset = 0; dayOffset < context.daysToGenerate; dayOffset++) {
     const currentDate = new Date(context.startDate);
     currentDate.setDate(currentDate.getDate() + dayOffset);
 
-    // 30% chance of symptom instance per day
-    if (Math.random() < 0.3) {
+    // Adjust frequency based on preset duration (fewer instances per day for long presets)
+    const baseChance = context.daysToGenerate > 180 ? 0.25 : 0.3;
+    const instancesPerDay = Math.random() < baseChance ? (Math.random() < 0.3 ? 2 : 1) : 0;
+
+    for (let i = 0; i < instancesPerDay; i++) {
       const symptom = nonFlareSymptoms[Math.floor(Math.random() * nonFlareSymptoms.length)];
 
-      // Random time during day
+      // Random time during day - spread throughout waking hours
       const hour = Math.floor(Math.random() * 16) + 6; // 6am-10pm
       const minute = Math.floor(Math.random() * 60);
 
@@ -560,14 +644,31 @@ function generateSymptomInstances(
         continue;
       }
 
+      // Vary severity based on symptom type
+      let severity;
+      if (symptom.name === "Fatigue") {
+        severity = Math.floor(Math.random() * 6) + 3; // 3-8 (can be severe)
+      } else if (symptom.name === "Joint Pain") {
+        severity = Math.floor(Math.random() * 5) + 4; // 4-8 (moderate to severe)
+      } else {
+        severity = Math.floor(Math.random() * 5) + 3; // 3-7 (moderate)
+      }
+
+      // Add location for joint pain
+      let location = undefined;
+      if (symptom.name === "Joint Pain") {
+        const locations = ["knees", "hands", "wrists", "ankles", "shoulders", "hips"];
+        location = locations[Math.floor(Math.random() * locations.length)];
+      }
+
       instances.push({
         id: generateId(),
         userId: context.userId,
         name: symptom.name,
         category: symptom.category,
-        severity: Math.floor(Math.random() * 5) + 3, // 3-7 severity
+        severity,
         severityScale: JSON.stringify(symptom.severityScale),
-        location: undefined,
+        location,
         duration: undefined,
         triggers: undefined,
         notes: undefined,
@@ -592,29 +693,90 @@ function generateFlares(
   const now = new Date();
   const nowTimestamp = now.getTime();
 
-  const flareSymptom = context.symptoms.find((s) => s.name === "Painful Nodules");
-  if (!flareSymptom) {
+  // Get flare-related symptoms
+  const flareSymptoms = context.symptoms.filter(
+    (s) => s.name === "Painful Nodules" || s.name === "Inflammation" || s.name === "Drainage" || s.name === "Skin Tunneling"
+  );
+  
+  console.log("[generateFlares] All symptoms:", context.symptoms.map(s => s.name));
+  console.log("[generateFlares] Flare symptoms found:", flareSymptoms.map(s => s.name));
+  console.log("[generateFlares] Config flare count:", config.flareCount);
+  
+  if (flareSymptoms.length === 0) {
+    console.warn("[generateFlares] No flare symptoms found! Cannot generate flares.");
     return flares;
   }
 
   const flareCount = Math.floor(
     Math.random() * (config.flareCount.max - config.flareCount.min + 1) + config.flareCount.min
   );
+  
+  console.log("[generateFlares] Generating", flareCount, "flares");
 
-  const bodyRegions = ["armpit-right", "armpit-left", "groin-right", "groin-left", "buttock-right"];
+  const bodyRegions = [
+    "armpit-right", 
+    "armpit-left", 
+    "groin-right", 
+    "groin-left", 
+    "buttock-right", 
+    "buttock-left",
+    "chest",
+    "back",
+    "inner-thigh-right",
+    "inner-thigh-left",
+    "neck",
+    "under-breast"
+  ];
+
+  // Distribute flares across the time range
+  const daysPerFlare = Math.max(1, Math.floor(context.daysToGenerate / Math.max(flareCount, 1)));
 
   for (let i = 0; i < flareCount; i++) {
-    // Flare starts 3-7 days ago
-    const daysAgo = Math.floor(Math.random() * 5) + 3;
+    // Select symptom type - favor Painful Nodules and Inflammation
+    const symptomRoll = Math.random();
+    let flareSymptom;
+    if (symptomRoll < 0.5) {
+      flareSymptom = flareSymptoms.find(s => s.name === "Painful Nodules") || flareSymptoms[0];
+    } else if (symptomRoll < 0.8) {
+      flareSymptom = flareSymptoms.find(s => s.name === "Inflammation") || flareSymptoms[0];
+    } else {
+      flareSymptom = flareSymptoms[Math.floor(Math.random() * flareSymptoms.length)];
+    }
+
+    // Distribute flare starts across time range
+    const minDaysAgo = Math.max(0, context.daysToGenerate - (i + 1) * daysPerFlare);
+    const maxDaysAgo = Math.max(0, context.daysToGenerate - i * daysPerFlare);
+    const daysAgo = Math.floor(Math.random() * (maxDaysAgo - minDaysAgo + 1)) + minDaysAgo;
+    
     const startDate = new Date(now);
     startDate.setDate(startDate.getDate() - daysAgo);
-    startDate.setHours(14, 0, 0, 0);
+    startDate.setHours(Math.floor(Math.random() * 12) + 8, Math.floor(Math.random() * 60), 0, 0); // 8am-8pm
 
-    // Initial severity 6-8
-    const initialSeverity = Math.floor(Math.random() * 3) + 6;
+    // Flare duration varies: 3-30 days
+    const flareDuration = Math.floor(Math.random() * 28) + 3;
+    
+    // Initial severity varies by type
+    let initialSeverity;
+    if (flareSymptom.name === "Skin Tunneling") {
+      initialSeverity = Math.floor(Math.random() * 3) + 7; // 7-9 (severe)
+    } else if (flareSymptom.name === "Drainage") {
+      initialSeverity = Math.floor(Math.random() * 4) + 5; // 5-8
+    } else {
+      initialSeverity = Math.floor(Math.random() * 5) + 4; // 4-8
+    }
 
-    // Determine flare pattern: worsening or improving
-    const isImproving = i % 2 === 0; // Alternate patterns
+    // Determine flare pattern with more variety
+    const patternRoll = Math.random();
+    let pattern: "improving" | "worsening" | "stable" | "fluctuating";
+    if (patternRoll < 0.35) {
+      pattern = "improving";
+    } else if (patternRoll < 0.55) {
+      pattern = "worsening";
+    } else if (patternRoll < 0.75) {
+      pattern = "stable";
+    } else {
+      pattern = "fluctuating";
+    }
 
     const severityHistory: Array<{ timestamp: number; severity: number; status: "active" | "improving" | "worsening" }> = [];
     const interventions: FlareIntervention[] = [];
@@ -629,10 +791,12 @@ function generateFlares(
       status: "active",
     });
 
-    // Generate severity progression (2-3 updates)
-    const updateCount = Math.floor(Math.random() * 2) + 2;
-    for (let update = 0; update < updateCount; update++) {
-      const daysSinceStart = update + 1;
+    // Generate severity progression with more realistic updates
+    const maxUpdates = Math.min(flareDuration, Math.floor(Math.random() * 8) + 3); // 3-10 updates
+    const updateInterval = Math.max(1, Math.floor(flareDuration / maxUpdates));
+    
+    for (let update = 1; update <= maxUpdates; update++) {
+      const daysSinceStart = update * updateInterval;
       const updateDate = new Date(startDate);
       updateDate.setDate(updateDate.getDate() + daysSinceStart);
 
@@ -641,13 +805,33 @@ function generateFlares(
         break;
       }
 
-      // Update severity
-      if (isImproving) {
-        currentSeverity = Math.max(1, currentSeverity - Math.floor(Math.random() * 2) - 1);
-        currentStatus = currentSeverity < initialSeverity - 2 ? "improving" : "active";
-      } else {
-        currentSeverity = Math.min(10, currentSeverity + Math.floor(Math.random() * 2));
-        currentStatus = currentSeverity > initialSeverity + 2 ? "worsening" : "active";
+      // Update severity based on pattern
+      const severityChange = Math.floor(Math.random() * 2) + 1; // 1-2 points
+      
+      switch (pattern) {
+        case "improving":
+          currentSeverity = Math.max(1, currentSeverity - severityChange);
+          currentStatus = currentSeverity < initialSeverity - 2 ? "improving" : "active";
+          break;
+        case "worsening":
+          currentSeverity = Math.min(10, currentSeverity + severityChange);
+          currentStatus = currentSeverity > initialSeverity + 2 ? "worsening" : "active";
+          break;
+        case "stable":
+          // Small fluctuations ±1
+          currentSeverity = Math.max(1, Math.min(10, currentSeverity + (Math.random() < 0.5 ? -1 : 1)));
+          currentStatus = "active";
+          break;
+        case "fluctuating":
+          // Random changes
+          if (Math.random() < 0.5) {
+            currentSeverity = Math.max(1, currentSeverity - severityChange);
+            currentStatus = currentSeverity < initialSeverity - 2 ? "improving" : "active";
+          } else {
+            currentSeverity = Math.min(10, currentSeverity + severityChange);
+            currentStatus = currentSeverity > initialSeverity + 2 ? "worsening" : "active";
+          }
+          break;
       }
 
       severityHistory.push({
@@ -656,28 +840,79 @@ function generateFlares(
         status: currentStatus,
       });
 
-      // Add intervention occasionally
-      if (Math.random() < 0.4) {
-        const interventionTypes: Array<{ type: "medication" | "treatment" | "lifestyle" | "other"; description: string }> = [
-          { type: "treatment", description: "Applied ice pack" },
-          { type: "medication", description: "Took ibuprofen" },
+      // Add interventions more frequently for severe flares
+      const interventionChance = currentSeverity >= 7 ? 0.6 : 0.35;
+      if (Math.random() < interventionChance) {
+        const interventionTypes: Array<{ 
+          type: "medication" | "treatment" | "lifestyle" | "other"; 
+          description: string 
+        }> = [
+          { type: "treatment", description: "Applied ice pack for 20 minutes" },
+          { type: "treatment", description: "Warm compress applied" },
+          { type: "medication", description: "Took ibuprofen 400mg" },
+          { type: "medication", description: "Applied antibiotic ointment" },
+          { type: "medication", description: "Took prescribed pain medication" },
           { type: "lifestyle", description: "Rested and avoided friction" },
-          { type: "other", description: "Warm compress" },
+          { type: "lifestyle", description: "Changed to loose clothing" },
+          { type: "lifestyle", description: "Applied clean dressing" },
+          { type: "treatment", description: "Cleaned area with gentle soap" },
+          { type: "other", description: "Elevated affected area" },
+          { type: "other", description: "Applied medical honey dressing" },
         ];
         const intervention = interventionTypes[Math.floor(Math.random() * interventionTypes.length)];
+        
+        // Some interventions are more effective than others (1-5 scale)
+        let effectiveness: number | undefined;
+        if (pattern === "improving") {
+          effectiveness = Math.floor(Math.random() * 2) + 4; // 4-5 (effective)
+        } else if (pattern === "worsening") {
+          effectiveness = Math.floor(Math.random() * 3) + 1; // 1-3 (less effective)
+        } else {
+          effectiveness = Math.floor(Math.random() * 3) + 2; // 2-4 (moderate)
+        }
+        
         interventions.push({
           id: generateId(),
           type: intervention.type,
           description: intervention.description,
           appliedAt: updateDate,
-          effectiveness: undefined,
+          effectiveness,
           notes: undefined,
         });
       }
     }
 
-    // Determine if flare should be resolved (30% chance if improving to low severity)
-    const shouldResolve = isImproving && currentSeverity <= 3 && Math.random() < 0.3;
+    // Determine if flare should be resolved
+    const flareAge = daysAgo;
+    const shouldResolve = 
+      (pattern === "improving" && currentSeverity <= 2 && Math.random() < 0.4) ||
+      (flareAge > flareDuration && Math.random() < 0.5);
+
+    // Select body region(s) - some flares affect multiple areas
+    const regionCount = Math.random() < 0.2 ? 2 : 1; // 20% chance of multiple regions
+    const selectedRegions: string[] = [];
+    for (let r = 0; r < regionCount; r++) {
+      const region = bodyRegions[Math.floor(Math.random() * bodyRegions.length)];
+      if (!selectedRegions.includes(region)) {
+        selectedRegions.push(region);
+      }
+    }
+
+    // Generate notes for some flares
+    let notes = "";
+    if (Math.random() < 0.3) {
+      const noteOptions = [
+        "Started suddenly after stressful week",
+        "Noticed after wearing tight clothing",
+        "Woke up with this flare",
+        "Seems related to recent dietary changes",
+        "Similar to previous flare in this area",
+        "Very painful, affecting daily activities",
+        "Moderate discomfort, manageable",
+        "Area feels warm to touch",
+      ];
+      notes = noteOptions[Math.floor(Math.random() * noteOptions.length)];
+    }
 
     flares.push({
       id: generateId(),
@@ -685,12 +920,12 @@ function generateFlares(
       symptomId: flareSymptom.id,
       symptomName: flareSymptom.name,
       startDate,
-      endDate: shouldResolve ? new Date(startDate.getTime() + daysAgo * 24 * 60 * 60 * 1000) : undefined,
+      endDate: shouldResolve ? new Date(startDate.getTime() + flareDuration * 24 * 60 * 60 * 1000) : undefined,
       severity: currentSeverity,
-      bodyRegions: [bodyRegions[i % bodyRegions.length]],
+      bodyRegions: selectedRegions,
       status: shouldResolve ? "resolved" : currentStatus,
       interventions,
-      notes: "",
+      notes,
       photoIds: [],
       createdAt: now,
       updatedAt: now,

@@ -1,5 +1,20 @@
 require('@testing-library/jest-dom');
 
+// Make jest available globally for ES modules
+global.jest = jest;
+
+// Mock IndexedDB for Dexie
+global.indexedDB = {
+  open: () => ({}),
+  deleteDatabase: () => ({}),
+  databases: () => Promise.resolve([]),
+};
+
+// Mock Dexie
+jest.mock('@/lib/db/client', () => ({
+  db: {},
+}));
+
 // Mock ResizeObserver for Radix UI components
 global.ResizeObserver = class ResizeObserver {
   constructor(callback) {

@@ -1,0 +1,253 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.4</storyId>
+    <title>Medication Timing Warnings and Smart Notes</title>
+    <status>TODO</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user taking scheduled medications and user logging repeated events</asA>
+    <iWant>to see early or late timing warnings and reuse recent notes when logging</iWant>
+    <soThat>I can keep medication routines consistent and avoid retyping common context</soThat>
+    <tasks>
+      <task id="1">Implement timing warning detection in MedicationLogModal to compare current time to MedicationSchedule entries, support multiple daily slots, and skip PRN medications (AC-Timing 1,4).</task>
+      <task id="2">Create a severity-coded warning banner in MedicationLogModal with yellow/red states and contextual messaging that remains informational only (AC-Timing 2,3,5).</task>
+      <task id="3">Extend medication smart notes to query the last 10 events, deduplicate note strings, and wire suggestion chips to the notes textarea (AC-SmartNotes 1-3).</task>
+      <task id="4">Surface smart note chips within SymptomLogModal and TriggerLogModal using their repositories with isolated caches per event type (AC-SmartNotes 4,5).</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="Timing-1">MedicationLogModal calculates expected time from the medication schedule.</criterion>
+    <criterion id="Timing-2">Displays a warning banner when the current time is outside a +/-2 hour window.</criterion>
+    <criterion id="Timing-3">Warning banner uses yellow for 1-2 hours off and red for more than 2 hours.</criterion>
+    <criterion id="Timing-4">No warning appears for as-needed (PRN) medications.</criterion>
+    <criterion id="Timing-5">Warnings are informational only and never block logging.</criterion>
+    <criterion id="Smart-1">MedicationLogModal queries the last 10 medication events for the same medication and extracts unique notes.</criterion>
+    <criterion id="Smart-2">Displays note suggestions as chips under the logging controls.</criterion>
+    <criterion id="Smart-3">Selecting a chip auto-fills the notes field while keeping it editable.</criterion>
+    <criterion id="Smart-4">Symptom and trigger log modals also surface recent notes as suggestions.</criterion>
+    <criterion id="Smart-5">Notes remain scoped per event type so medication, symptom, and trigger suggestions do not mix.</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
+        <title>Event Stream Redesign Epics</title>
+        <section>Story 3.4: Medication Timing Warnings and Smart Notes</section>
+        <snippet>Defines +/-2 hour timing tolerance, yellow versus red warning states, and smart note chip requirements for medication, symptom, and trigger modals.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-PRD.md</path>
+        <title>Event Stream Redesign PRD</title>
+        <section>Epic 3: Integration &amp; Feature Updates</section>
+        <snippet>Highlights that Epic 3 must add medication timing warnings and smart note suggestions during quick logging without slowing the streamlined workflow.</snippet>
+      </doc>
+      <doc>
+        <path>build-docs/07-medication-management.md</path>
+        <title>Medication Management - Implementation Plan</title>
+        <section>MedicationSchedule and Scheduling Logic</section>
+        <snippet>Details the MedicationSchedule structure with time plus daysOfWeek values and explains how schedules drive adherence checks and timing reminders.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.5.md</path>
+        <title>Story 2.5: Medication, Symptom, and Trigger Log Modals</title>
+        <section>Smart Notes Implementation</section>
+        <snippet>Documents existing quick-log modal behavior, smart note expectations, and repository hooks that Story 3.4 extends for cross-modal suggestions.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <entry>
+        <path>src/components/medications/MedicationLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>MedicationLogModal</symbol>
+        <lines>1-260</lines>
+        <reason>Loads scheduled medications, note chips, and checkbox logging; requires enhanced timing warnings and visual severity cues.</reason>
+      </entry>
+      <entry>
+        <path>src/components/medications/__tests__/MedicationLogModal.test.tsx</path>
+        <kind>test</kind>
+        <symbol>MedicationLogModal tests</symbol>
+        <lines>1-360</lines>
+        <reason>Existing tests cover timing warnings and note chips; need updates for new banner messaging, PRN skips, and auto-fill behavior.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/medicationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>medicationRepository</symbol>
+        <lines>1-200</lines>
+        <reason>Provides getScheduledForDay() and schedule metadata used to compute expected dosing times.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/medicationEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>medicationEventRepository</symbol>
+        <lines>1-320</lines>
+        <reason>Generates timingWarning flags, stores notes, and exposes getRecentNotes(); must support banner copy and PRN handling.</reason>
+      </entry>
+      <entry>
+        <path>src/components/symptoms/SymptomLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>SymptomLogModal</symbol>
+        <lines>1-340</lines>
+        <reason>Handles quick symptom logging; needs smart note chips sourced from recent symptom instances.</reason>
+      </entry>
+      <entry>
+        <path>src/components/triggers/TriggerLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>TriggerLogModal</symbol>
+        <lines>1-320</lines>
+        <reason>Logs trigger exposures with progressive disclosure; must display trigger-specific note suggestions.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>symptomInstanceRepository</symbol>
+        <lines>1-220</lines>
+        <reason>Provides date-range queries and update() for symptom instances; extend with recent notes helper for smart suggestions.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/triggerEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>triggerEventRepository</symbol>
+        <lines>1-320</lines>
+        <reason>Supplies trigger event analytics plus getRecentNotes(); feeds trigger smart note chips.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/db/schema.ts</path>
+        <kind>types</kind>
+        <symbol>MedicationSchedule, MedicationEventRecord</symbol>
+        <lines>80-300</lines>
+        <reason>Defines schedule structure and timingWarning field that timing calculations and persistence must respect.</reason>
+      </entry>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="15.5.4" />
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="lucide-react" version="^0.544.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="jest" version="^30.2.0" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1">Timing warnings must compare Date.now() to each MedicationSchedule.time for the current day and handle multiple scheduled doses per medication.</constraint>
+    <constraint id="2">Skip warnings when medications are marked as as-needed or lack schedule entries, and fail gracefully if schedule data is malformed.</constraint>
+    <constraint id="3">Persist timingWarning state through medicationEventRepository.create/update so adherence analytics can reuse the classification.</constraint>
+    <constraint id="4">Warning banners remain informational only: checkbox logging stays enabled, auto-save flow unchanged, and no modal blocking occurs.</constraint>
+    <constraint id="5">Smart note suggestions are deduplicated, truncated for display, and limited to at most 10 entries per event type to avoid UI clutter.</constraint>
+    <constraint id="6">Symptom and trigger note queries should rely on [userId+timestamp] or relevant compound indexes to prevent IndexedDB scans.</constraint>
+    <constraint id="7">Suggestion chips must remain accessible buttons with visible focus outlines and announce updates per accessibility guidance in AGENTS.md.</constraint>
+    <constraint id="8">Maintain TypeScript strictness: avoid any implicit any usage and keep functional components aligned with existing architecture.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>medicationRepository.getScheduledForDay</name>
+      <kind>repository method</kind>
+      <signature>async getScheduledForDay(userId: string, dayOfWeek: number): Promise&lt;MedicationRecord[]&gt;</signature>
+      <path>src/lib/repositories/medicationRepository.ts</path>
+      <notes>Primary lookup for scheduled medications per weekday; provides schedule.time strings consumed by timing warning logic.</notes>
+    </interface>
+    <interface>
+      <name>medicationEventRepository.getRecentNotes</name>
+      <kind>repository method</kind>
+      <signature>async getRecentNotes(userId: string, medicationId: string, limit?: number): Promise&lt;string[]&gt;</signature>
+      <path>src/lib/repositories/medicationEventRepository.ts</path>
+      <notes>Returns deduplicated medication notes used to populate note chips in MedicationLogModal.</notes>
+    </interface>
+    <interface>
+      <name>medicationEventRepository.create</name>
+      <kind>repository method</kind>
+      <signature>async create(eventData: MedicationEventDraft): Promise&lt;string&gt;</signature>
+      <path>src/lib/repositories/medicationEventRepository.ts</path>
+      <notes>Persists medication events and calculates timingWarning; must honour PRN skip rules and note updates.</notes>
+    </interface>
+    <interface>
+      <name>medicationEventRepository.update</name>
+      <kind>repository method</kind>
+      <signature>async update(id: string, updates: Partial&lt;MedicationEventDraft&gt;): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/medicationEventRepository.ts</path>
+      <notes>Supports note edits and timing recalculations when timestamps change; reuse for auto-save flows.</notes>
+    </interface>
+    <interface>
+      <name>symptomInstanceRepository.getByDateRange</name>
+      <kind>repository method</kind>
+      <signature>async getByDateRange(userId: string, startDate: Date, endDate: Date): Promise&lt;Symptom[]&gt;</signature>
+      <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+      <notes>Provides recent symptom instances so smart note queries can focus on the latest history.</notes>
+    </interface>
+    <interface>
+      <name>symptomInstanceRepository.update</name>
+      <kind>repository method</kind>
+      <signature>async update(id: string, updates: Partial&lt;SymptomDraft&gt;): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+      <notes>Allows note text to be appended or edited after quick-log creation when chips autofill content.</notes>
+    </interface>
+    <interface>
+      <name>symptomInstanceRepository.getRecentNotes</name>
+      <kind>repository method (new)</kind>
+      <signature>async getRecentNotes(userId: string, symptomId: string, limit?: number): Promise&lt;string[]&gt;</signature>
+      <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+      <notes>New helper to surface symptom-specific note history for chip suggestions while keeping medication notes separate.</notes>
+    </interface>
+    <interface>
+      <name>triggerEventRepository.getRecentNotes</name>
+      <kind>repository method</kind>
+      <signature>async getRecentNotes(userId: string, triggerId: string, limit?: number): Promise&lt;string[]&gt;</signature>
+      <path>src/lib/repositories/triggerEventRepository.ts</path>
+      <notes>Already available note helper; integrate into TriggerLogModal chip rendering.</notes>
+    </interface>
+    <interface>
+      <name>triggerEventRepository.findByDateRange</name>
+      <kind>repository method</kind>
+      <signature>async findByDateRange(userId: string, startTimestamp: number, endTimestamp: number): Promise&lt;TriggerEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/triggerEventRepository.ts</path>
+      <notes>Used to locate recent trigger events when building note suggestion pools and ensuring chip freshness.</notes>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Use Jest 30.2.0 with React Testing Library 16.3.0 under jsdom. Mock Dexie repositories with jest.fn() and restore timers after manipulating system time for timing window tests. Maintain 80 percent coverage across components and repositories, asserting ARIA roles for accessibility changes introduced by warning banners and chips.</standards>
+    <locations>
+      <location>src/components/medications/__tests__/MedicationLogModal.test.tsx</location>
+      <location>src/components/symptoms/__tests__/SymptomLogModal.test.tsx</location>
+      <location>src/components/triggers/__tests__/TriggerLogModal.test.tsx</location>
+      <location>src/lib/repositories/__tests__/medicationEventRepository.test.ts</location>
+      <location>jest.setup.js</location>
+    </locations>
+    <ideas>
+      <idea ac="Timing-1,Timing-2">
+        <test>Mock schedules with multiple time slots and assert helper returns warning when current time exceeds +/-2 hours.</test>
+        <test>Use fake timers to simulate early and late scenarios and verify banner text renders the correct hour difference.</test>
+      </idea>
+      <idea ac="Timing-3,Timing-5">
+        <test>Snapshot or style assertion that warning banner toggles yellow versus red classes based on severity.</test>
+        <test>Ensure checkbox remains enabled when warning is visible and logging still calls medicationEventRepository.create()</test>
+      </idea>
+      <idea ac="Timing-4">
+        <test>Provide medications with frequency "as-needed" and confirm no warning banner renders even if current time differs.</test>
+      </idea>
+      <idea ac="Smart-1,Smart-2,Smart-3">
+        <test>Mock getRecentNotes to return duplicates and verify chips render deduped, truncated labels.</test>
+        <test>Simulate clicking a chip and assert textarea value updates without losing manual edits.</test>
+        <test>Confirm only the first 10 notes render when more are returned.</test>
+      </idea>
+      <idea ac="Smart-4,Smart-5">
+        <test>Add repository mocks for symptom and trigger recent notes and ensure chips render in the correct modals.</test>
+        <test>Assert selecting a trigger chip does not alter medication notes and vice versa.</test>
+      </idea>
+      <idea general="regression">
+        <test>Run accessibility checks verifying warning banner has role="status" or aria-live for announcements.</test>
+        <test>Integration test combining medication warning and smart notes to confirm repository calls and UI updates occur without console errors.</test>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

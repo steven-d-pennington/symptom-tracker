@@ -112,7 +112,7 @@ export function FlareUpdateModal({
 
   if (!isOpen) return null;
 
-  const flareLocation = flare.bodyRegions?.[0] || flare.bodyRegionId || "Unknown";
+  const flareLocation = flare.bodyRegions?.[0] || "Unknown";
   const flareDay = getFlareDay();
   const statusDisplay = getStatusDisplay(selectedStatus || suggestedStatus);
 

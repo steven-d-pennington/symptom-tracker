@@ -51,12 +51,18 @@ export function CorrelationMatrix({ correlations }: CorrelationMatrixProps) {
               />
             </div>
 
-            <div className="flex gap-4 text-xs text-muted-foreground">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span>{(correlation.correlationScore * 100).toFixed(0)}% correlation</span>
               <span>•</span>
               <span>{correlation.occurrences} occurrences</span>
               <span>•</span>
               <span>Avg severity: {correlation.avgSeverityIncrease.toFixed(1)}/10</span>
+              {correlation.timeLag && (
+                <>
+                  <span>•</span>
+                  <span>Time-lag: {correlation.timeLag}</span>
+                </>
+              )}
             </div>
           </div>
         ))}

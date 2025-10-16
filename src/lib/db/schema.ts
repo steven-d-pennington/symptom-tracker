@@ -303,3 +303,37 @@ export interface FlareRecord {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Food Logging Models (Epic E1)
+
+export interface FoodRecord {
+  id: string;
+  userId: string;
+  name: string;
+  category: string; // JSON-stringified category metadata
+  allergenTags: string; // JSON-stringified string[] per local-first convention
+  preparationMethod?: string;
+  isDefault: boolean; // true for seeded foods, false for custom
+  isActive: boolean; // soft-delete flag
+  createdAt: number; // epoch ms
+  updatedAt: number; // epoch ms
+}
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export type PortionSize = 'small' | 'medium' | 'large';
+
+export interface FoodEventRecord {
+  id: string;
+  userId: string;
+  mealId: string; // uuid groups foods logged together
+  foodIds: string; // JSON-stringified string[]
+  timestamp: number; // epoch ms
+  mealType: MealType;
+  portionMap: string; // JSON-stringified Record<foodId, PortionSize>
+  notes?: string;
+  photoIds?: string; // JSON-stringified string[]
+  favoritesSnapshot?: string; // JSON-stringified foodIds favorited at log time
+  createdAt: number;
+  updatedAt: number;
+}
+

@@ -5,6 +5,7 @@ import { flareRepository } from "@/lib/repositories/flareRepository";
 import { ActiveFlare } from "@/lib/types/flare";
 import { ArrowUp, ArrowRight, ArrowDown, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { FlareUpdateModal, FlareUpdate } from "./FlareUpdateModal";
 
 type FlareWithTrend = ActiveFlare & { trend: "worsening" | "stable" | "improving" };
 type SortOption = "severity" | "recency";
@@ -12,7 +13,7 @@ type SortOption = "severity" | "recency";
 interface ActiveFlareCardsProps {
   userId: string;
   onUpdateFlare?: (flareId: string) => void;
-  repository?: Pick<typeof flareRepository, "getActiveFlaresWithTrend" | "resolve">;
+  repository?: Pick<typeof flareRepository, "getActiveFlaresWithTrend" | "resolve" | "updateSeverity" | "addIntervention" | "update">;
 }
 
 export function ActiveFlareCards({
@@ -24,6 +25,8 @@ export function ActiveFlareCards({
   const [sortBy, setSortBy] = useState<SortOption>("severity");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedFlare, setSelectedFlare] = useState<ActiveFlare | null>(null);
 
   const loadFlares = async () => {
     try {
@@ -60,11 +63,46 @@ export function ActiveFlareCards({
   };
 
   const handleUpdate = (flareId: string) => {
-    // TODO: Open FlareUpdateModal when implemented in Story 2.4
+    const flare = flares.find(f => f.id === flareId);
+    if (flare) {
+      setSelectedFlare(flare);
+      setUpdateModalOpen(true);
+    }
+    
+    // Call optional callback if provided
     if (onUpdateFlare) {
       onUpdateFlare(flareId);
-    } else {
-      alert("Flare update modal will be implemented in Story 2.4");
+    }
+  };
+
+  const handleFlareUpdateSave = async (update: FlareUpdate) => {
+    if (!selectedFlare) return;
+
+    try {
+      // Update severity and status
+      await repository.updateSeverity(
+        selectedFlare.id,
+        update.severity,
+        update.status
+      );
+
+      // Add intervention if selected
+      if (update.intervention) {
+        await repository.addIntervention(
+          selectedFlare.id,
+          update.intervention,
+          update.notes
+        );
+      } else if (update.notes) {
+        // Update notes if provided but no intervention
+        await repository.update(selectedFlare.id, { notes: update.notes });
+      }
+
+      // Refresh flares list
+      await loadFlares();
+    } catch (err) {
+      console.error("Failed to save flare update:", err);
+      throw err; // Re-throw to let modal handle error display
     }
   };
 
@@ -260,6 +298,19 @@ export function ActiveFlareCards({
         <p className="text-xs text-muted-foreground text-center">
           Showing 5 of {flares.length} active flares
         </p>
+      )}
+
+      {/* Flare Update Modal */}
+      {selectedFlare && (
+        <FlareUpdateModal
+          flare={selectedFlare}
+          isOpen={updateModalOpen}
+          onClose={() => {
+            setUpdateModalOpen(false);
+            setSelectedFlare(null);
+          }}
+          onSave={handleFlareUpdateSave}
+        />
       )}
     </section>
   );

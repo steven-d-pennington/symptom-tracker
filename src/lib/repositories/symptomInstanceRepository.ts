@@ -228,6 +228,31 @@ export class SymptomInstanceRepository {
     symptoms.forEach(s => names.add(s.name));
     return Array.from(names).sort();
   }
+
+  /**
+   * Get recent notes for a symptom (for smart suggestions)
+   */
+  async getRecentNotes(
+    userId: string,
+    symptomName: string,
+    limit: number = 10
+  ): Promise<string[]> {
+    const records = await db.symptomInstances
+      .where("userId")
+      .equals(userId)
+      .reverse()
+      .limit(limit * 3) // Get more to filter by name
+      .toArray();
+
+    // Filter by symptom name and extract notes
+    const notes = records
+      .filter(r => r.name === symptomName && r.notes && r.notes.trim().length > 0)
+      .map(r => r.notes!)
+      .slice(0, limit);
+
+    // Return unique notes
+    return Array.from(new Set(notes));
+  }
 }
 
 export const symptomInstanceRepository = new SymptomInstanceRepository();
