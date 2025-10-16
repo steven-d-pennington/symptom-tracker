@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Search, Plus } from "lucide-react";
+import { X, Search, Plus, Pencil, Trash2 } from "lucide-react";
 import { useFoodContext } from "@/contexts/FoodContext";
 import { handleModalKeyboard, focusFirstElement } from "@/lib/utils/a11y";
 import { cn } from "@/lib/utils/cn";
@@ -10,6 +10,9 @@ import { foodEventRepository } from "@/lib/repositories/foodEventRepository";
 import { generateId } from "@/lib/utils/idGenerator";
 import { AllergenBadgeList } from "@/components/food/AllergenBadge";
 import { AddFoodModal } from "@/components/food/AddFoodModal";
+import { EditFoodModal } from "@/components/food/EditFoodModal";
+import { CustomFoodBadge } from "@/components/food/CustomFoodBadge";
+import { ConfirmDialog } from "@/components/manage/ConfirmDialog";
 import type { FoodRecord, MealType } from "@/lib/db/schema";
 import type { AllergenType } from "@/lib/constants/allergens";
 
@@ -30,6 +33,10 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isAddFoodModalOpen, setIsAddFoodModalOpen] = useState(false);
+  const [isEditFoodModalOpen, setIsEditFoodModalOpen] = useState(false);
+  const [editingFood, setEditingFood] = useState<FoodRecord | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deletingFood, setDeletingFood] = useState<FoodRecord | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -199,13 +206,13 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
       });
 
       // Reload foods to include the new custom food
-      const results = searchQuery
-        ? await foodRepository.search(userId, searchQuery)
-        : await foodRepository.getDefault(userId);
-      setFoods(results);
+      await refreshFoods();
 
       // Auto-select the newly created food
-      const newFood = results.find((f) => f.id === foodId);
+      const updatedFoods = searchQuery
+        ? await foodRepository.search(userId, searchQuery)
+        : await foodRepository.getDefault(userId);
+      const newFood = updatedFoods.find((f) => f.id === foodId);
       if (newFood) {
         handleFoodSelect(foodId, newFood.name);
       }
@@ -219,6 +226,85 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
     } catch (err) {
       console.error("Failed to create custom food:", err);
       setError(err instanceof Error ? err.message : "Failed to create custom food. Please try again.");
+    }
+  };
+
+  // Helper to refresh foods list
+  const refreshFoods = async () => {
+    const results = searchQuery
+      ? await foodRepository.search(userId, searchQuery)
+      : await foodRepository.getDefault(userId);
+    setFoods(results);
+  };
+
+  // Handle custom food edit
+  const handleEditFood = (food: FoodRecord) => {
+    setEditingFood(food);
+    setIsEditFoodModalOpen(true);
+  };
+
+  const handleCustomFoodUpdate = async (updates: {
+    name: string;
+    category?: string;
+    allergenTags: AllergenType[];
+    preparationMethod?: string;
+  }) => {
+    if (!editingFood) return;
+
+    try {
+      await foodRepository.update(editingFood.id, {
+        name: updates.name,
+        category: updates.category || "Snacks",
+        allergenTags: JSON.stringify(updates.allergenTags),
+        preparationMethod: updates.preparationMethod,
+      });
+
+      // Reload foods to reflect the update
+      await refreshFoods();
+
+      // Close the EditFoodModal
+      setIsEditFoodModalOpen(false);
+      setEditingFood(null);
+
+      // Show success message
+      setSuccessMessage(`Custom food "${updates.name}" updated successfully!`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error("Failed to update custom food:", err);
+      setError(err instanceof Error ? err.message : "Failed to update custom food. Please try again.");
+    }
+  };
+
+  // Handle custom food delete
+  const handleDeleteFood = (food: FoodRecord) => {
+    setDeletingFood(food);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingFood) return;
+
+    try {
+      // Soft delete (archive) the custom food
+      await foodRepository.archive(deletingFood.id);
+
+      // If the deleted food was selected, clear selection
+      if (selectedFood === deletingFood.id) {
+        setSelectedFood(null);
+      }
+
+      // Reload foods to remove the deleted item
+      await refreshFoods();
+
+      // Show success message
+      setSuccessMessage(`Custom food "${deletingFood.name}" deleted successfully.`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error("Failed to delete custom food:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete custom food. Please try again.");
+    } finally {
+      setDeletingFood(null);
+      setIsDeleteConfirmOpen(false);
     }
   };
 
@@ -316,32 +402,78 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
               <div className="grid grid-cols-2 gap-3">
                 {foods.map((food) => {
                   const allergens = JSON.parse(food.allergenTags) as AllergenType[];
+                  const isCustomFood = !food.isDefault;
+                  
                   return (
-                    <button
-                      key={food.id}
-                      type="button"
-                      onClick={() => handleFoodSelect(food.id, food.name)}
-                      className={cn(
-                        "px-4 py-3 rounded-lg text-left transition-all",
-                        "border-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                        selectedFood === food.id
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50 hover:bg-muted"
-                      )}
-                      aria-pressed={selectedFood === food.id}
-                    >
-                      <div className="font-medium text-foreground text-sm">
-                        {food.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {food.category}
-                      </div>
-                      {allergens.length > 0 && (
-                        <div className="mt-1.5">
-                          <AllergenBadgeList allergens={allergens} maxVisible={2} />
+                    <div key={food.id} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => handleFoodSelect(food.id, food.name)}
+                        className={cn(
+                          "w-full px-4 py-3 rounded-lg text-left transition-all",
+                          "border-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                          selectedFood === food.id
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/50 hover:bg-muted"
+                        )}
+                        aria-pressed={selectedFood === food.id}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-foreground text-sm">
+                              {food.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {food.category}
+                            </div>
+                          </div>
+                          {isCustomFood && (
+                            <CustomFoodBadge className="flex-shrink-0" />
+                          )}
+                        </div>
+                        {allergens.length > 0 && (
+                          <div className="mt-1.5">
+                            <AllergenBadgeList allergens={allergens} maxVisible={2} />
+                          </div>
+                        )}
+                      </button>
+                      
+                      {/* Edit/Delete buttons for custom foods */}
+                      {isCustomFood && (
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditFood(food);
+                            }}
+                            className={cn(
+                              "p-1.5 rounded-md transition-colors",
+                              "bg-white/90 hover:bg-blue-100 border border-border",
+                              "focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            )}
+                            aria-label={`Edit ${food.name}`}
+                          >
+                            <Pencil className="w-3 h-3 text-blue-600" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteFood(food);
+                            }}
+                            className={cn(
+                              "p-1.5 rounded-md transition-colors",
+                              "bg-white/90 hover:bg-red-100 border border-border",
+                              "focus:outline-none focus:ring-2 focus:ring-red-500"
+                            )}
+                            aria-label={`Delete ${food.name}`}
+                          >
+                            <Trash2 className="w-3 h-3 text-red-600" />
+                          </button>
                         </div>
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -484,6 +616,34 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
         isOpen={isAddFoodModalOpen}
         onClose={() => setIsAddFoodModalOpen(false)}
         onSave={handleCustomFoodSave}
+      />
+
+      {/* EditFoodModal for editing custom foods */}
+      {editingFood && (
+        <EditFoodModal
+          food={editingFood}
+          isOpen={isEditFoodModalOpen}
+          onClose={() => {
+            setIsEditFoodModalOpen(false);
+            setEditingFood(null);
+          }}
+          onSave={handleCustomFoodUpdate}
+        />
+      )}
+
+      {/* ConfirmDialog for deleting custom foods */}
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setDeletingFood(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Custom Food"
+        message={deletingFood ? `Are you sure you want to delete "${deletingFood.name}"?\n\nThis action cannot be undone.` : ''}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
       />
     </div>
   );

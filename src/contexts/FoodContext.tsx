@@ -12,6 +12,7 @@ import {
 import { foodRepository } from "@/lib/repositories/foodRepository";
 import { foodEventRepository } from "@/lib/repositories/foodEventRepository";
 import type { FoodRecord, FoodEventRecord } from "@/lib/db/schema";
+import type { AllergenType } from "@/lib/constants/allergens";
 
 interface FoodContextValue {
   isFoodLogModalOpen: boolean;
@@ -19,6 +20,19 @@ interface FoodContextValue {
   openFoodLog: () => void;
   closeFoodLog: () => void;
   markFoodLogReady: () => void;
+  addCustomFood: (userId: string, foodData: {
+    name: string;
+    category?: string;
+    allergenTags: AllergenType[];
+    preparationMethod?: string;
+  }) => Promise<string>;
+  updateCustomFood: (foodId: string, updates: {
+    name?: string;
+    category?: string;
+    allergenTags?: AllergenType[];
+    preparationMethod?: string;
+  }) => Promise<void>;
+  deleteCustomFood: (foodId: string) => Promise<void>;
 }
 
 const FoodContext = createContext<FoodContextValue | undefined>(undefined);
@@ -41,6 +55,55 @@ export function FoodProvider({ children }: { children: ReactNode }) {
     setIsLaunchingFoodLog(false);
   }, []);
 
+  // Custom food management methods
+  const addCustomFood = useCallback(async (
+    userId: string,
+    foodData: {
+      name: string;
+      category?: string;
+      allergenTags: AllergenType[];
+      preparationMethod?: string;
+    }
+  ): Promise<string> => {
+    const foodId = await foodRepository.create({
+      userId,
+      name: foodData.name,
+      category: foodData.category || "Snacks",
+      allergenTags: JSON.stringify(foodData.allergenTags),
+      preparationMethod: foodData.preparationMethod,
+      isDefault: false,
+      isActive: true,
+    });
+    return foodId;
+  }, []);
+
+  const updateCustomFood = useCallback(async (
+    foodId: string,
+    updates: {
+      name?: string;
+      category?: string;
+      allergenTags?: AllergenType[];
+      preparationMethod?: string;
+    }
+  ): Promise<void> => {
+    const updateData: Partial<FoodRecord> = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.allergenTags !== undefined) {
+      updateData.allergenTags = JSON.stringify(updates.allergenTags);
+    }
+    if (updates.preparationMethod !== undefined) {
+      updateData.preparationMethod = updates.preparationMethod;
+    }
+
+    await foodRepository.update(foodId, updateData);
+  }, []);
+
+  const deleteCustomFood = useCallback(async (foodId: string): Promise<void> => {
+    await foodRepository.archive(foodId);
+  }, []);
+
   const value = useMemo(
     () => ({
       isFoodLogModalOpen,
@@ -48,6 +111,9 @@ export function FoodProvider({ children }: { children: ReactNode }) {
       openFoodLog,
       closeFoodLog,
       markFoodLogReady,
+      addCustomFood,
+      updateCustomFood,
+      deleteCustomFood,
     }),
     [
       isFoodLogModalOpen,
@@ -55,6 +121,9 @@ export function FoodProvider({ children }: { children: ReactNode }) {
       openFoodLog,
       closeFoodLog,
       markFoodLogReady,
+      addCustomFood,
+      updateCustomFood,
+      deleteCustomFood,
     ],
   );
 

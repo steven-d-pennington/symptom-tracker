@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { focusFirstElement } from "@/lib/utils/a11y";
 import { AllergenBadge } from "@/components/food/AllergenBadge";
 import { ALLERGEN_TYPES, type AllergenType, validateAllergens } from "@/lib/constants/allergens";
+import type { FoodRecord } from "@/lib/db/schema";
 
 // Food categories from seedFoodsService
 const FOOD_CATEGORIES = [
@@ -34,10 +34,11 @@ const PREPARATION_METHODS = [
   "boiled",
 ] as const;
 
-interface AddFoodModalProps {
+interface EditFoodModalProps {
+  food: FoodRecord;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (food: {
+  onSave: (updates: {
     name: string;
     category: string;
     allergenTags: AllergenType[];
@@ -45,7 +46,7 @@ interface AddFoodModalProps {
   }) => Promise<void>;
 }
 
-export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
+export function EditFoodModal({ food, isOpen, onClose, onSave }: EditFoodModalProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<string>("");
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenType[]>([]);
@@ -55,6 +56,25 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
 
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Pre-fill form when food changes or modal opens
+  useEffect(() => {
+    if (isOpen && food) {
+      setName(food.name);
+      setCategory(food.category || "");
+      
+      // Parse allergen tags (stored as JSON string in DB)
+      try {
+        const allergens = JSON.parse(food.allergenTags || "[]") as AllergenType[];
+        setSelectedAllergens(allergens);
+      } catch {
+        setSelectedAllergens([]);
+      }
+      
+      setPreparationMethod(food.preparationMethod || "");
+      setErrors({});
+    }
+  }, [food, isOpen]);
 
   // Focus name input when modal opens
   useEffect(() => {
@@ -135,34 +155,30 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
     try {
       await onSave({
         name: name.trim(),
-        category: category || "Snacks", // Default to Snacks if not selected
+        category: category || "Snacks",
         allergenTags: selectedAllergens,
         preparationMethod: preparationMethod || undefined,
       });
 
-      // Reset form after successful save
-      setName("");
-      setCategory("");
-      setSelectedAllergens([]);
-      setPreparationMethod("");
-      setErrors({});
       setIsSaving(false);
-      
-      // Close modal after save completes
       onClose();
     } catch (error) {
-      console.error("Failed to save custom food:", error);
+      console.error("Failed to update custom food:", error);
       setIsSaving(false);
-      // Error handling will be done in parent component
     }
   };
 
-  // Handle cancel
+  // Handle cancel - reset to original values
   const handleCancel = () => {
-    setName("");
-    setCategory("");
-    setSelectedAllergens([]);
-    setPreparationMethod("");
+    setName(food.name);
+    setCategory(food.category || "");
+    try {
+      const allergens = JSON.parse(food.allergenTags || "[]") as AllergenType[];
+      setSelectedAllergens(allergens);
+    } catch {
+      setSelectedAllergens([]);
+    }
+    setPreparationMethod(food.preparationMethod || "");
     setErrors({});
     onClose();
   };
@@ -176,7 +192,7 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="add-food-modal-title"
+      aria-labelledby="edit-food-modal-title"
     >
       <div
         ref={modalRef}
@@ -185,10 +201,10 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b bg-white">
           <div className="flex items-center gap-2">
-            <h2 id="add-food-modal-title" className="text-xl font-semibold">
-              Add Custom Food
+            <h2 id="edit-food-modal-title" className="text-xl font-semibold">
+              Edit Custom Food
             </h2>
-            {/* Custom badge preview */}
+            {/* Custom badge */}
             <span
               className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-sky-100 text-sky-800"
               aria-label="Custom food badge"
@@ -207,7 +223,7 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Name Field (Required) */}
+          {/* Name Field */}
           <div>
             <label htmlFor="food-name" className="block text-sm font-medium text-gray-700 mb-1">
               Food Name <span className="text-red-500">*</span>
@@ -219,10 +235,10 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               className={cn(
-                "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
                 errors.name ? "border-red-500" : "border-gray-300"
               )}
-              placeholder="Enter food name"
+              placeholder="e.g., Grandma's Chicken Soup"
               aria-required="true"
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? "name-error" : undefined}
@@ -232,12 +248,9 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
                 {errors.name}
               </p>
             )}
-            <p className="mt-1 text-xs text-gray-500">
-              {name.length}/100 characters
-            </p>
           </div>
 
-          {/* Category Dropdown (Optional) */}
+          {/* Category Field */}
           <div>
             <label htmlFor="food-category" className="block text-sm font-medium text-gray-700 mb-1">
               Category
@@ -246,7 +259,7 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
               id="food-category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select a category (optional)</option>
               {FOOD_CATEGORIES.map((cat) => (
@@ -257,7 +270,7 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
             </select>
           </div>
 
-          {/* Allergen Tags (Multi-select) */}
+          {/* Allergen Tags */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Allergen Tags
@@ -281,14 +294,12 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
                 </button>
               ))}
             </div>
-            {selectedAllergens.length > 0 && (
-              <p className="mt-2 text-sm text-gray-600">
-                Selected: {selectedAllergens.length} allergen{selectedAllergens.length > 1 ? "s" : ""}
-              </p>
-            )}
+            <p className="mt-1 text-sm text-gray-500">
+              Click to toggle allergen tags
+            </p>
           </div>
 
-          {/* Preparation Method (Optional) */}
+          {/* Preparation Method */}
           <div>
             <label htmlFor="preparation-method" className="block text-sm font-medium text-gray-700 mb-1">
               Preparation Method
@@ -297,7 +308,7 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
               id="preparation-method"
               value={preparationMethod}
               onChange={(e) => setPreparationMethod(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select a preparation method (optional)</option>
               {PREPARATION_METHODS.map((method) => (
@@ -308,12 +319,12 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
             </select>
           </div>
 
-          {/* Form Actions */}
+          {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <button
               type="button"
               onClick={handleCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               disabled={isSaving}
             >
               Cancel
@@ -322,14 +333,13 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
               type="submit"
               disabled={!isFormValid || isSaving}
               className={cn(
-                "px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+                "px-4 py-2 text-white rounded-lg transition-colors",
                 isFormValid && !isSaving
-                  ? "hover:bg-blue-700"
-                  : "opacity-50 cursor-not-allowed"
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-300 cursor-not-allowed"
               )}
-              aria-busy={isSaving}
             >
-              {isSaving ? "Saving..." : "Add Food"}
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

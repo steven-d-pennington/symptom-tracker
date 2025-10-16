@@ -93,6 +93,17 @@ describe('FoodRepository', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       },
+      {
+        id: 'food-4',
+        userId: 'user-1',
+        name: 'Custom Smoothie',
+        category: 'Beverages',
+        allergenTags: JSON.stringify([]),
+        isDefault: false,
+        isActive: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
     ];
 
     beforeEach(() => {
@@ -128,6 +139,18 @@ describe('FoodRepository', () => {
 
       expect(result.every((f) => f.isActive)).toBe(true);
       expect(result.find((f) => f.name === 'Bread')).toBeUndefined();
+    });
+
+    it('should include both default and custom foods in search results', async () => {
+      const result = await foodRepository.search('user-1', '');
+
+      // Verify both default and custom foods are returned
+      const hasDefaultFoods = result.some((f) => f.isDefault === true);
+      const hasCustomFoods = result.some((f) => f.isDefault === false);
+      
+      expect(hasDefaultFoods).toBe(true);
+      expect(hasCustomFoods).toBe(true);
+      expect(result.length).toBeGreaterThan(1);
     });
   });
 
