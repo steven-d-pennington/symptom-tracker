@@ -77,6 +77,23 @@ export class SymptomInstanceRepository {
   }
 
   /**
+   * Find symptom instances by date range (epoch milliseconds)
+   * Used for correlation analysis
+   */
+  async findByDateRange(
+    userId: string,
+    startMs: number,
+    endMs: number
+  ): Promise<SymptomInstanceRecord[]> {
+    const records = await db.symptomInstances
+      .where("[userId+timestamp]")
+      .between([userId, new Date(startMs)], [userId, new Date(endMs)], true, true)
+      .toArray();
+    
+    return records.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  /**
    * Create a new symptom instance
    */
   async create(symptomData: SymptomDraft): Promise<string> {

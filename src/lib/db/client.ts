@@ -147,27 +147,6 @@ export class SymptomTrackerDatabase extends Dexie {
       analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
       foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]", // New
       foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]", // New
-    }).upgrade(async (trans) => {
-      // Seed default foods if not already seeded
-      // Use sentinel check to ensure idempotent seeding
-      const { seedFoodsService } = await import("../services/food/seedFoodsService");
-      
-      // Get first user to seed foods for (single-user app pattern)
-      const users = await trans.table("users").toArray();
-      if (users.length > 0) {
-        const userId = users[0].id;
-        const isSeedingComplete = await seedFoodsService.isSeedingComplete(userId, trans.db as SymptomTrackerDatabase);
-        
-        if (!isSeedingComplete) {
-          console.log("[DB Migration v11] Seeding default foods...");
-          const startTime = performance.now();
-          await seedFoodsService.seedDefaultFoods(userId, trans.db as SymptomTrackerDatabase);
-          const endTime = performance.now();
-          console.log(`[DB Migration v11] Seeded foods in ${(endTime - startTime).toFixed(2)}ms`);
-        } else {
-          console.log("[DB Migration v11] Foods already seeded, skipping.");
-        }
-      }
     });
   }
 }

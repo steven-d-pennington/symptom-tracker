@@ -133,7 +133,7 @@ This architecture extends the existing symptom-tracker application with a Food J
 **Existing Routes (Enhanced):**
 - `/dashboard` - Add food quick-log button
 - `/log` - Daily Reflection (existing, unchanged)
-- `/timeline` - Extend to render food events
+- `/timeline` - Extend to render food events grouped by `mealId`, with collapsed/expanded meal entries and edit affordance (reopen FoodLogModal pre-filled)
 - `/triggers` - Extend with food correlation tab
 
 **No New Routes Required** - Food journal integrates into existing pages per UX design.
@@ -1408,7 +1408,7 @@ if (!success) return new Response("Rate limit exceeded", { status: 429 });
 
 | Epic | Core Outcomes | Key Modules & Services | Primary Data Surfaces | Test Focus |
 | --- | --- | --- | --- | --- |
-| E1 – Food Logging & Management | Rapid meal capture (<500ms), searchable catalog, timeline integration, favorites | `FoodLogModal`, `MealComposer`, `foodRepository`, `foodEventRepository`, `FoodContext`, timeline adapters | Dexie `foods`/`foodEvents`, timeline view, quick-log dashboard, food history panel | Repository CRUD, modal UX, Dexie migrations, offline queue, photo encryption |
+| E1 – Food Logging & Management | Rapid meal capture (<500ms), searchable catalog, timeline integration (grouped by mealId) + edit flow, favorites | `FoodLogModal`, `MealComposer`, `foodRepository`, `foodEventRepository`, `FoodContext`, timeline adapters | Dexie `foods`/`foodEvents`, timeline view, quick-log dashboard, food history panel | Repository CRUD, modal UX, Dexie migrations, timeline grouping/hydration, offline queue, photo encryption |
 | E2 – Food-Symptom Correlation Analysis | Time-window correlations, dose-response, combination insights, exports | `CorrelationService`, `FoodCorrelationService`, `FoodCorrelationWidget`, API routes under `/api/correlation/*`, Vercel Cron job, export extension | Prisma `FoodCorrelation`/`FoodCombination`, correlation cache, trigger analysis dashboard, export payloads | Statistical engines (chi-square, Pearson), API integration, cron scheduling, dashboard rendering, export pipelines |
 
 **Traceability:**

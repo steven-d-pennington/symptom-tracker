@@ -113,6 +113,30 @@ flowchart TD
     L --> M[Timeline refreshed]
 ```
 
+### Flow: Timeline — Grouped Meal Entries
+
+- Goal: Present meals as grouped entries with clear, accessible expand/collapse and quick actions.
+- Entry Points: Timeline list item (keyboard or pointer).
+- Steps:
+  1. Collapsed row shows: "MealType: Food1 (M), Food2 (S)…" with timestamp and food icon.
+  2. Activating row toggles expansion (`aria-expanded`) and reveals details region (`aria-controls`).
+  3. Expanded details list portions, notes, allergen tags, and optional thumbnail photo.
+  4. Actions: [Edit] reopens FoodLogModal pre-filled; [Delete] soft-deletes the meal event (confirm first).
+  5. Focus returns to the toggler after closing details or completing actions.
+
+```
+flowchart TD
+    A[Collapsed meal row] -->|Enter/Click| B{Expanded?}
+    B -- No --> C[Expand row]
+    B -- Yes --> D[Collapse row]
+    C --> E[Show details: portions, notes, tags, photo]
+    E --> F[Actions: Edit/Delete]
+    F --> G[On Edit: open FoodLogModal pre-filled]
+    F --> H[On Delete: confirm, then soft-delete]
+    G --> I[Return focus to toggler]
+    H --> I
+```
+
 ### Flow: Filtering Food History by Allergen
 
 - **Goal:** Investigate patterns for a suspected allergen.
@@ -234,6 +258,15 @@ WCAG 2.1 Level AA for all new and updated components.
 - Focus states use 2px outline with sufficient contrast (primary blue on light surfaces, white outline on dark).
 - Ensure timeline and history lists maintain logical tab order and support keyboard shortcuts.
 
+### 7.3 Timeline A11y Requirements
+
+- Collapsed meal rows expose a toggle button with `aria-expanded` and `aria-controls` pointing to details region.
+- Expanded details region uses `role="region"` with `aria-labelledby` referencing the row label.
+- Foods and portions are announced as labeled lists; icons have `aria-hidden` unless they convey meaning not present in text.
+- [Edit] and [Delete] buttons include descriptive `aria-label` (e.g., "Edit meal Breakfast 8:00 AM").
+- Focus management: after actions or closing the details region, move focus back to the row toggle.
+- Keyboard: Space/Enter toggles expansion; Tab order includes action buttons within the region.
+
 ---
 
 ## 8. Interaction and Motion
@@ -250,6 +283,10 @@ WCAG 2.1 Level AA for all new and updated components.
 - Filter chips animate between selected/unselected with background color transition.
 - Timeline expansion uses accordion slide (max 200ms) to reveal details.
 - Sync banner slides from top and auto-dismisses after 3 seconds with manual close.
+
+Additional Timeline Motion Notes:
+- Keep [Edit]/[Delete] button feedback within 150–200ms; avoid excessive motion.
+- Preserve scroll position when expanding/collapsing grouped meal entries.
 
 ---
 

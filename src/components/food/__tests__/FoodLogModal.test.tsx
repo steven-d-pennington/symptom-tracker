@@ -37,18 +37,46 @@ jest.mock("@/components/food/AddFoodModal", () => ({
   },
 }));
 
+// Create mock functions first
+const mockGetDefault = jest.fn();
+const mockSearch = jest.fn();
+const mockCreate = jest.fn();
+const mockGetById = jest.fn();
+const mockGetAll = jest.fn();
+const mockGetActive = jest.fn();
+const mockUpdate = jest.fn();
+const mockArchive = jest.fn();
+const mockFoodEventCreate = jest.fn();
+const mockGetOrCreateCurrentUser = jest.fn();
+const mockGetFoodFavorites = jest.fn();
+const mockToggleFoodFavorite = jest.fn();
+
 // Mock repositories
 jest.mock("@/lib/repositories/foodRepository", () => ({
   foodRepository: {
-    getDefault: jest.fn(),
-    search: jest.fn(),
-    create: jest.fn(),
+    getDefault: (...args: any[]) => mockGetDefault(...args),
+    search: (...args: any[]) => mockSearch(...args),
+    create: (...args: any[]) => mockCreate(...args),
+    getById: (...args: any[]) => mockGetById(...args),
+    getAll: (...args: any[]) => mockGetAll(...args),
+    getActive: (...args: any[]) => mockGetActive(...args),
+    update: (...args: any[]) => mockUpdate(...args),
+    archive: (...args: any[]) => mockArchive(...args),
   },
 }));
 
 jest.mock("@/lib/repositories/foodEventRepository", () => ({
   foodEventRepository: {
-    create: jest.fn(),
+    create: (...args: any[]) => mockFoodEventCreate(...args),
+  },
+  FoodEventRepository: jest.fn(),
+}));
+
+jest.mock("@/lib/repositories/userRepository", () => ({
+  userRepository: {
+    getOrCreateCurrentUser: (...args: any[]) => mockGetOrCreateCurrentUser(...args),
+    getFoodFavorites: (...args: any[]) => mockGetFoodFavorites(...args),
+    toggleFoodFavorite: (...args: any[]) => mockToggleFoodFavorite(...args),
   },
 }));
 
@@ -95,15 +123,20 @@ describe("FoodLogModal", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Setup default mock implementations
-    (foodRepository.getDefault as jest.MockedFunction<typeof foodRepository.getDefault>).mockResolvedValue(mockFoods);
-    (foodRepository.search as jest.MockedFunction<typeof foodRepository.search>).mockImplementation(async (userId, query) => {
+    // Setup mock return values
+    mockGetDefault.mockResolvedValue(mockFoods);
+    mockGetActive.mockResolvedValue(mockFoods);
+    mockSearch.mockImplementation(async (userId: string, query: string) => {
       return mockFoods.filter((food) =>
         food.name.toLowerCase().includes(query.toLowerCase())
       );
     });
-    (foodRepository.create as jest.MockedFunction<typeof foodRepository.create>).mockResolvedValue("new-food-id");
-    (foodEventRepository.create as jest.MockedFunction<typeof foodEventRepository.create>).mockResolvedValue("event-123");
+    mockCreate.mockResolvedValue("new-food-id");
+    mockFoodEventCreate.mockResolvedValue("event-123");
+    // Setup userRepository mocks
+    mockGetOrCreateCurrentUser.mockResolvedValue({ id: mockUserId, createdAt: Date.now(), updatedAt: Date.now() });
+    mockGetFoodFavorites.mockResolvedValue([]);
+    mockToggleFoodFavorite.mockResolvedValue(undefined);
   });
 
   describe("AC2: Modal opens and follows quick-log patterns", () => {
@@ -491,12 +524,10 @@ describe("FoodLogModal", () => {
       };
 
       // Mock foodRepository.create to return the new food ID
-      (foodRepository.create as jest.MockedFunction<typeof foodRepository.create>) = jest
-        .fn()
-        .mockResolvedValue("custom-food-1");
+      mockCreate.mockResolvedValue("custom-food-1");
 
       // Mock getDefault to return the new food after creation
-      (foodRepository.getDefault as jest.MockedFunction<typeof foodRepository.getDefault>).mockResolvedValue([
+      mockGetDefault.mockResolvedValue([
         ...mockFoods,
         mockCustomFood,
       ]);

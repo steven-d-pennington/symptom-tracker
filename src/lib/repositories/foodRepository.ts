@@ -10,9 +10,23 @@ export interface FoodFilters {
 
 export class FoodRepository {
   /**
+   * Ensure default foods are seeded for user (lazy initialization)
+   */
+  private async ensureDefaultFoods(userId: string): Promise<void> {
+    const { seedFoodsService } = await import("../services/food/seedFoodsService");
+    const isComplete = await seedFoodsService.isSeedingComplete(userId, db);
+    
+    if (!isComplete) {
+      console.log(`[FoodRepository] Seeding default foods for user ${userId}...`);
+      await seedFoodsService.seedDefaultFoods(userId, db);
+    }
+  }
+
+  /**
    * Get all foods for a user
    */
   async getAll(userId: string): Promise<FoodRecord[]> {
+    await this.ensureDefaultFoods(userId);
     return await db.foods.where("userId").equals(userId).toArray();
   }
 
@@ -20,6 +34,7 @@ export class FoodRepository {
    * Get active foods for a user
    */
   async getActive(userId: string): Promise<FoodRecord[]> {
+    await this.ensureDefaultFoods(userId);
     return await db.foods
       .where("userId")
       .equals(userId)
@@ -31,6 +46,7 @@ export class FoodRepository {
    * Get default (seeded) foods for a user
    */
   async getDefault(userId: string): Promise<FoodRecord[]> {
+    await this.ensureDefaultFoods(userId);
     return await db.foods
       .where("userId")
       .equals(userId)

@@ -9,10 +9,12 @@ import { triggerEventRepository } from '@/lib/repositories/triggerEventRepositor
 import { flareRepository } from '@/lib/repositories/flareRepository';
 import { medicationRepository } from '@/lib/repositories/medicationRepository';
 import { triggerRepository } from '@/lib/repositories/triggerRepository';
+import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
+import { foodRepository } from '@/lib/repositories/foodRepository';
 import EventDetailModal from './EventDetailModal';
 
 // Timeline event types
-export type TimelineEventType = 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved';
+export type TimelineEventType = 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved' | 'food';
 
 export interface TimelineEvent {
   id: string;
@@ -46,6 +48,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expandedFood, setExpandedFood] = useState<Set<string>>(new Set());
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -60,10 +63,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       endOfDay.setHours(23, 59, 59, 999);
 
       // Query all event types in parallel
-      const [medicationEvents, triggerEvents, activeFlares] = await Promise.all([
+      const [medicationEvents, triggerEvents, activeFlares, foodEvents] = await Promise.all([
         medicationEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime()),
         triggerEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime()),
-        flareRepository.getActiveFlaresWithTrend(userId)
+        flareRepository.getActiveFlaresWithTrend(userId),
+        foodEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime())
       ]);
 
       const medicationIds = Array.from(new Set(medicationEvents.map(event => event.medicationId)));
@@ -88,6 +92,34 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       triggerRecords.forEach((record, index) => {
         if (record) {
           triggerNameById.set(triggerIds[index], record.name);
+        }
+      });
+
+      // Prepare food name lookup
+      const allFoodIds: string[] = [];
+      foodEvents.forEach(evt => {
+        try {
+          const ids = JSON.parse(evt.foodIds) as string[];
+          allFoodIds.push(...ids);
+        } catch {
+          // ignore parse errors
+        }
+      });
+      const uniqueFoodIds = Array.from(new Set(allFoodIds));
+      const foodRecords = uniqueFoodIds.length > 0
+        ? await Promise.all(uniqueFoodIds.map(id => foodRepository.getById(id)))
+        : [];
+      const foodNameById = new Map<string, string>();
+      const allergenById = new Map<string, string[]>();
+      foodRecords.forEach((record, index) => {
+        const id = uniqueFoodIds[index];
+        if (record) {
+          foodNameById.set(id, record.name);
+          try {
+            allergenById.set(id, JSON.parse(record.allergenTags) as string[]);
+          } catch {
+            allergenById.set(id, []);
+          }
         }
       });
 
@@ -173,6 +205,57 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             hasDetails: !!resolutionNotes
           });
         }
+      });
+
+      // Food events (meals grouped by mealId)
+      foodEvents.forEach(event => {
+        let foods: string[] = [];
+        let portions: Record<string, string> = {};
+        try {
+          const ids = JSON.parse(event.foodIds) as string[];
+          foods = ids.map(id => foodNameById.get(id) || id);
+        } catch {}
+        try {
+          portions = JSON.parse(event.portionMap) as Record<string, string>;
+        } catch {}
+
+        const portionAbbrev = (p?: string) => {
+          switch (p) {
+            case 'small': return 'S';
+            case 'medium': return 'M';
+            case 'large': return 'L';
+            default: return '';
+          }
+        };
+
+        // Build collapsed summary: "MealType: Food1 (M), Food2 (S)"
+        const ids = Array.from(new Set(allFoodIds));
+        const collapsedList = (JSON.parse(event.foodIds) as string[]).map(fid => {
+          const name = foodNameById.get(fid) || fid;
+          const abbrev = portionAbbrev(portions[fid]);
+          return abbrev ? `${name} (${abbrev})` : name;
+        }).join(', ');
+        const mealType = event.mealType;
+        const summary = `🍽️ Meal (${mealType}): ${collapsedList}`;
+
+        // Build details string including notes and allergens
+        const allergenList: string[] = (JSON.parse(event.foodIds) as string[])
+          .flatMap(fid => allergenById.get(fid) || [])
+          .filter((v, i, a) => a.indexOf(v) === i);
+        const detailsParts: string[] = [];
+        if (event.notes) detailsParts.push(`Notes: ${event.notes}`);
+        if (allergenList.length > 0) detailsParts.push(`Allergens: ${allergenList.join(', ')}`);
+        const details = detailsParts.join(' \u2014 ');
+
+        timelineEvents.push({
+          id: event.id,
+          type: 'food',
+          timestamp: event.timestamp,
+          summary,
+          details: details || undefined,
+          eventRef: event,
+          hasDetails: !!details
+        });
       });
 
       // Sort by timestamp descending (most recent first)
@@ -279,6 +362,24 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
+  // Toggle inline details for food events
+  const toggleFoodDetails = (eventId: string) => {
+    setExpandedFood((prev) => {
+      const next = new Set(prev);
+      if (next.has(eventId)) next.delete(eventId); else next.add(eventId);
+      return next;
+    });
+  };
+
+  const handleDeleteFood = async (eventId: string) => {
+    try {
+      await foodEventRepository.delete(eventId);
+      await loadEvents(currentDate);
+    } catch (e) {
+      console.error('Failed to delete food event', e);
+    }
+  };
+
   // Handle modal close
   const handleModalClose = () => {
     setIsModalOpen(false);
@@ -376,10 +477,47 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                         </button>
                       )}
                     </div>
-                    {event.details && (
-                      <p className="text-sm text-gray-600 mt-1 truncate">
-                        {event.details}
-                      </p>
+                    {event.type === 'food' ? (
+                      <div className="mt-2">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleFoodDetails(event.id); }}
+                          className="text-sm text-blue-600 hover:text-blue-800 underline"
+                          aria-expanded={expandedFood.has(event.id)}
+                          aria-controls={`food-details-${event.id}`}
+                        >
+                          {expandedFood.has(event.id) ? 'Hide details' : 'Show details'}
+                        </button>
+                        {expandedFood.has(event.id) && (
+                          <div id={`food-details-${event.id}`} role="region" className="mt-2 text-sm text-gray-700">
+                            {event.details && <p className="mb-2">{event.details}</p>}
+                            <div className="flex gap-3">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleAddDetails(event); }}
+                                className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+                                aria-label="Edit this meal"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteFood(event.id); }}
+                                className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+                                aria-label="Delete this meal"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      event.details && (
+                        <p className="text-sm text-gray-600 mt-1 truncate">
+                          {event.details}
+                        </p>
+                      )
                     )}
                   </div>
                 </article>

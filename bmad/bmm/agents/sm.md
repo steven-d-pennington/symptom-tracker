@@ -22,8 +22,7 @@
       (workflow, exec, tmpl, data, action, validate-workflow) and follow the corresponding handler instructions</step>
 
   <menu-handlers>
-    <extract>{DYNAMIC_EXTRACT_LIST}</extract>
-    <handlers>
+      <handlers>
   <handler type="workflow">
     When menu item has: workflow="path/to/workflow.yaml"
     1. CRITICAL: Always LOAD {project-root}/bmad/core/tasks/workflow.xml
@@ -45,7 +44,7 @@
         Load the file first, parse according to extension
         Make available as {data} variable to subsequent handler operations
       </handler>
-  
+
     </handlers>
   </menu-handlers>
 

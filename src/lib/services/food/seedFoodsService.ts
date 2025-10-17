@@ -244,7 +244,8 @@ class SeedFoodsService {
     db: SymptomTrackerDatabase
   ): Promise<boolean> {
     const sentinel = await db.foods
-      .where({ userId, name: SEED_SENTINEL_NAME })
+      .where("[userId+name]")
+      .equals([userId, SEED_SENTINEL_NAME])
       .count();
     return sentinel > 0;
   }

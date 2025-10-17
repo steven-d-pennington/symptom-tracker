@@ -28,6 +28,18 @@ jest.mock('@/lib/repositories/flareRepository', () => ({
   }
 }));
 
+jest.mock('@/lib/repositories/foodEventRepository', () => ({
+  foodEventRepository: {
+    findByDateRange: jest.fn().mockResolvedValue([]),
+  },
+}));
+
+jest.mock('@/lib/repositories/foodRepository', () => ({
+  foodRepository: {
+    getById: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
 jest.mock('@/lib/repositories/medicationRepository', () => ({
   medicationRepository: {
     getById: jest.fn().mockResolvedValue(undefined)

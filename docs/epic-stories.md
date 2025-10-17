@@ -131,14 +131,18 @@ Total: 15 stories across 2 epics
 
 **Acceptance Criteria:**
 - Food events appear in timeline view with distinct icon
-- Food events show meal type, food names, and timestamp
-- Clicking food event expands to show full details (portion, notes, photo)
-- Timeline sorts all events chronologically
+- Group meals by shared `mealId`; collapsed entry shows: "MealType: Food1 (M), Food2 (S), …"
+- Food events show timestamp; expanding reveals portion sizes, notes, allergen tags, and photo (if present)
+- Expanded entry includes accessible actions: [Edit] (reopens FoodLogModal pre-filled) and [Delete]
+- Timeline sorts all events chronologically and supports keyboard-accessible expand/collapse
 - Food events color-coded consistently with food logging UI
 
 **Technical Notes:**
-- Extend timeline component to handle foodEvent type
-- Ensure unified event stream query includes foods table
+- Group by `mealId`; hydrate food details with `foodRepository.getByIds()`
+- Parse JSON arrays/objects (`foodIds`, `portionMap`) per Dexie stringification convention
+- Memoize hydration/grouping to avoid redundant lookups in large histories
+- Extend timeline component to handle `foodEvent` type with accessible expand/collapse (`aria-expanded`, `aria-controls`) and focus management
+- Ensure unified event stream query includes foods data and uses compound indexes for performance
 
 ---
 

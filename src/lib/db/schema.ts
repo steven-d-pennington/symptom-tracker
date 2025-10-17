@@ -45,6 +45,8 @@ export interface UserPreferences {
   symptomCategories?: SymptomCategoryRecord[];
   entryTemplates?: EntryTemplateRecord[];
   activeTemplateId?: string;
+  // Food-specific preferences (extensible JSON payload; backward compatible)
+  foodFavorites?: string[]; // array of foodIds favorited by the user
 }
 
 export interface UserRecord {
@@ -336,4 +338,3 @@ export interface FoodEventRecord {
   createdAt: number;
   updatedAt: number;
 }
-

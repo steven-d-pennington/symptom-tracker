@@ -6,6 +6,7 @@ import { TimelineEvent } from './TimelineView';
 import { medicationEventRepository } from '@/lib/repositories/medicationEventRepository';
 import { triggerEventRepository } from '@/lib/repositories/triggerEventRepository';
 import { flareRepository } from '@/lib/repositories/flareRepository';
+import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
 import { photoRepository } from '@/lib/repositories/photoRepository';
 import { PhotoCapture } from '@/components/photos/PhotoCapture';
 import { PhotoEncryption } from '@/lib/utils/photoEncryption';
@@ -199,6 +200,12 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
           });
           break;
 
+        case 'food':
+          await foodEventRepository.update(event.id, {
+            notes: notes || undefined,
+          } as any);
+          break;
+
         default:
           throw new Error('Unknown event type');
       }
@@ -243,6 +250,10 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
         case 'flare-resolved':
           // Delete the entire flare
           await flareRepository.delete(event.eventRef.id);
+          break;
+
+        case 'food':
+          await foodEventRepository.delete(event.id);
           break;
 
         default:

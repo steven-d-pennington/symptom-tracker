@@ -7,6 +7,7 @@ author: "BMad Builder"
 config_source: "{project-root}/bmad/bmm/config.yaml"
 output_folder: "{config_source}:output_folder"
 user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
 date: system-generated
 
 # Input requirements
@@ -60,4 +61,3 @@ default_output_file: "{output_folder}/solution-architecture.md"
 
 # Additional workflow dependencies
 tech_spec_workflow: "{project-root}/bmad/bmm/workflows/3-solutioning/tech-spec/workflow.yaml"
-

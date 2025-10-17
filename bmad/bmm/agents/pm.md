@@ -12,7 +12,7 @@
       - VERIFY: If config not loaded, STOP and report error to user
       - DO NOT PROCEED to step 3 until config is successfully loaded and variables stored</step>
   <step n="3">Remember: user's name is {user_name}</step>
-  
+
   <step n="4">Show greeting using {user_name} from config, communicate in {communication_language}, then display numbered list of
       ALL menu items from menu section</step>
   <step n="5">STOP and WAIT for user input - do NOT execute menu items automatically - accept number or trigger text</step>
@@ -22,8 +22,7 @@
       (workflow, exec, tmpl, data, action, validate-workflow) and follow the corresponding handler instructions</step>
 
   <menu-handlers>
-    <extract>{DYNAMIC_EXTRACT_LIST}</extract>
-    <handlers>
+      <handlers>
   <handler type="workflow">
     When menu item has: workflow="path/to/workflow.yaml"
     1. CRITICAL: Always LOAD {project-root}/bmad/core/tasks/workflow.xml
@@ -38,7 +37,7 @@
         Actually LOAD and EXECUTE the file at that path - do not improvise
         Read the complete file and follow all instructions within it
       </handler>
-  
+
     </handlers>
   </menu-handlers>
 
@@ -60,7 +59,8 @@
   <menu>
     <item cmd="*help">Show numbered menu</item>
     <item cmd="*workflow-status" workflow="{project-root}/bmad/bmm/workflows/1-analysis/workflow-status/workflow.yaml">Check workflow status and get recommendations (START HERE!)</item>
-    <item cmd="*plan-project" workflow="{project-root}/bmad/bmm/workflows/2-plan/workflow.yaml">Analyze Project Scope and Create PRD or Smaller Tech Spec</item>
+    <item cmd="*prd" workflow="{project-root}/bmad/bmm/workflows/2-plan-workflows/prd/workflow.yaml">Create Product Requirements Document (PRD) for Level 2-4 projects</item>
+    <item cmd="*tech-spec" workflow="{project-root}/bmad/bmm/workflows/2-plan-workflows/tech-spec/workflow.yaml">Create Tech Spec for Level 0-1 projects</item>
     <item cmd="*correct-course" workflow="{project-root}/bmad/bmm/workflows/4-implementation/correct-course/workflow.yaml">Course Correction Analysis</item>
     <item cmd="*validate" exec="{project-root}/bmad/core/tasks/validate-workflow.xml">Validate any document against its workflow checklist</item>
     <item cmd="*exit">Exit with confirmation</item>

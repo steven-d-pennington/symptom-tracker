@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { X, Search, Plus, Pencil, Trash2, Coffee, Sunset, Moon, Cookie } from "lucide-react";
 import { useFoodContext } from "@/contexts/FoodContext";
 import { handleModalKeyboard, focusFirstElement } from "@/lib/utils/a11y";
 import { cn } from "@/lib/utils/cn";
@@ -13,24 +13,56 @@ import { AddFoodModal } from "@/components/food/AddFoodModal";
 import { EditFoodModal } from "@/components/food/EditFoodModal";
 import { CustomFoodBadge } from "@/components/food/CustomFoodBadge";
 import { ConfirmDialog } from "@/components/manage/ConfirmDialog";
-import type { FoodRecord, MealType } from "@/lib/db/schema";
+import { MealComposer } from "@/components/food/MealComposer";
+import type { SelectedFoodItem } from "@/components/food/MealComposer";
+import type { FoodRecord, MealType, PortionSize } from "@/lib/db/schema";
+import { userRepository } from "@/lib/repositories/userRepository";
 import type { AllergenType } from "@/lib/constants/allergens";
 
 interface FoodLogModalProps {
   userId: string;
 }
 
+// Helper function to determine default meal type based on current time
+function getDefaultMealType(): MealType {
+  const hour = new Date().getHours();
+  
+  if (hour >= 5 && hour < 11) {
+    return "breakfast";
+  } else if (hour >= 11 && hour < 14) {
+    return "lunch";
+  } else if (hour >= 17 && hour < 21) {
+    return "dinner";
+  } else {
+    return "snack";
+  }
+}
+
+// Helper function to get meal type icon
+function getMealTypeIcon(mealType: MealType) {
+  switch (mealType) {
+    case "breakfast":
+      return Coffee;
+    case "lunch":
+      return Sunset;
+    case "dinner":
+      return Moon;
+    case "snack":
+      return Cookie;
+  }
+}
+
 export function FoodLogModal({ userId }: FoodLogModalProps) {
   const { isFoodLogModalOpen, closeFoodLog, markFoodLogReady } = useFoodContext();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFood, setSelectedFood] = useState<string | null>(null);
-  const [mealType, setMealType] = useState<MealType>("breakfast");
-  const [portionSize, setPortionSize] = useState<"small" | "medium" | "large">("medium");
+  const [selectedFoods, setSelectedFoods] = useState<SelectedFoodItem[]>([]);
+  const [mealType, setMealType] = useState<MealType>(getDefaultMealType());
   const [notes, setNotes] = useState("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [foods, setFoods] = useState<FoodRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [isAddFoodModalOpen, setIsAddFoodModalOpen] = useState(false);
   const [isEditFoodModalOpen, setIsEditFoodModalOpen] = useState(false);
@@ -55,7 +87,20 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
           ? await foodRepository.search(userId, searchQuery)
           : await foodRepository.getDefault(userId);
 
-        setFoods(results);
+        // Load favorites for ranking
+        const user = await userRepository.getOrCreateCurrentUser();
+        const favs = await userRepository.getFoodFavorites(user.id);
+        setFavoriteIds(favs);
+
+        // Rank favorites first
+        const ranked = [...results].sort((a, b) => {
+          const aFav = favs.includes(a.id) ? 1 : 0;
+          const bFav = favs.includes(b.id) ? 1 : 0;
+          if (aFav !== bFav) return bFav - aFav; // favorites first
+          return a.name.localeCompare(b.name);
+        });
+
+        setFoods(ranked);
 
         const endTime = performance.now();
         const searchTime = endTime - startTime;
@@ -111,9 +156,8 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
   useEffect(() => {
     if (!isFoodLogModalOpen) {
       setSearchQuery("");
-      setSelectedFood(null);
-      setMealType("breakfast");
-      setPortionSize("medium");
+      setSelectedFoods([]);
+      setMealType(getDefaultMealType()); // Reset to time-based default
       setNotes("");
       setSuccessMessage(null);
       setError(null);
@@ -122,15 +166,61 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
     }
   }, [isFoodLogModalOpen]);
 
-  const handleFoodSelect = (foodId: string, foodName: string) => {
-    setSelectedFood(foodId);
-    setSuccessMessage(`${foodName} selected`);
+  const handleFoodSelect = (food: FoodRecord) => {
+    // Check if food is already selected
+    const isAlreadySelected = selectedFoods.some((item) => item.food.id === food.id);
+    
+    if (isAlreadySelected) {
+      setError(`${food.name} is already selected`);
+      setTimeout(() => setError(null), 2000);
+      return;
+    }
+
+    // Add food with default medium portion
+    setSelectedFoods([...selectedFoods, { food, portion: "medium" }]);
+    setSuccessMessage(`${food.name} added to meal`);
     setTimeout(() => setSuccessMessage(null), 2000);
   };
 
+  const handleRemoveFood = (foodId: string) => {
+    const removedFood = selectedFoods.find((item) => item.food.id === foodId);
+    setSelectedFoods(selectedFoods.filter((item) => item.food.id !== foodId));
+    
+    if (removedFood) {
+      setSuccessMessage(`${removedFood.food.name} removed from meal`);
+      setTimeout(() => setSuccessMessage(null), 2000);
+    }
+  };
+
+  const toggleFavorite = async (food: FoodRecord) => {
+    try {
+      const user = await userRepository.getOrCreateCurrentUser();
+      await userRepository.toggleFoodFavorite(user.id, food.id);
+      const updated = await userRepository.getFoodFavorites(user.id);
+      setFavoriteIds(updated);
+      // Re-rank current list
+      setFoods((prev) => [...prev].sort((a, b) => {
+        const aFav = updated.includes(a.id) ? 1 : 0;
+        const bFav = updated.includes(b.id) ? 1 : 0;
+        if (aFav !== bFav) return bFav - aFav;
+        return a.name.localeCompare(b.name);
+      }));
+    } catch (e) {
+      console.error("Failed to toggle favorite", e);
+    }
+  };
+
+  const handlePortionChange = (foodId: string, portion: PortionSize) => {
+    setSelectedFoods(
+      selectedFoods.map((item) =>
+        item.food.id === foodId ? { ...item, portion } : item
+      )
+    );
+  };
+
   const handleSave = async () => {
-    if (!selectedFood) {
-      setError("Please select a food item");
+    if (selectedFoods.length === 0) {
+      setError("Please select at least one food item");
       return;
     }
 
@@ -140,17 +230,24 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
       
       const startTime = performance.now();
 
-      // Create food event with proper structure
+      // Create food event with meal composition
       const mealId = generateId(); // Group foods logged together
       const timestamp = Date.now();
+      
+      // Build foodIds array and portionMap
+      const foodIds = selectedFoods.map((item) => item.food.id);
+      const portionMap: Record<string, PortionSize> = {};
+      selectedFoods.forEach((item) => {
+        portionMap[item.food.id] = item.portion;
+      });
       
       const eventId = await foodEventRepository.create({
         userId,
         mealId,
-        foodIds: JSON.stringify([selectedFood]), // Single food for now
+        foodIds: JSON.stringify(foodIds),
         timestamp,
         mealType,
-        portionMap: JSON.stringify({ [selectedFood]: portionSize }),
+        portionMap: JSON.stringify(portionMap),
         notes: notes.trim() || undefined,
       });
 
@@ -163,8 +260,8 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
         console.warn(`[Performance] Food save took ${saveTime.toFixed(2)}ms (target: <500ms)`);
       }
 
-      const foodItem = foods.find((f) => f.id === selectedFood);
-      setSuccessMessage(`${foodItem?.name} logged successfully!`);
+      const foodCount = selectedFoods.length;
+      setSuccessMessage(`Meal logged with ${foodCount} ${foodCount === 1 ? "food" : "foods"}!`);
 
       // Close modal after brief delay
       setTimeout(() => {
@@ -214,7 +311,7 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
         : await foodRepository.getDefault(userId);
       const newFood = updatedFoods.find((f) => f.id === foodId);
       if (newFood) {
-        handleFoodSelect(foodId, newFood.name);
+        handleFoodSelect(newFood);
       }
 
       // Close the AddFoodModal
@@ -288,10 +385,8 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
       // Soft delete (archive) the custom food
       await foodRepository.archive(deletingFood.id);
 
-      // If the deleted food was selected, clear selection
-      if (selectedFood === deletingFood.id) {
-        setSelectedFood(null);
-      }
+      // If the deleted food was selected, remove it from selectedFoods
+      setSelectedFoods(selectedFoods.filter((item) => item.food.id !== deletingFood.id));
 
       // Reload foods to remove the deleted item
       await refreshFoods();
@@ -403,20 +498,21 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
                 {foods.map((food) => {
                   const allergens = JSON.parse(food.allergenTags) as AllergenType[];
                   const isCustomFood = !food.isDefault;
+                  const isSelected = selectedFoods.some((item) => item.food.id === food.id);
                   
                   return (
                     <div key={food.id} className="relative">
                       <button
                         type="button"
-                        onClick={() => handleFoodSelect(food.id, food.name)}
+                        onClick={() => handleFoodSelect(food)}
                         className={cn(
                           "w-full px-4 py-3 rounded-lg text-left transition-all",
                           "border-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                          selectedFood === food.id
+                          isSelected
                             ? "border-primary bg-primary/10"
                             : "border-border hover:border-primary/50 hover:bg-muted"
                         )}
-                        aria-pressed={selectedFood === food.id}
+                        aria-pressed={isSelected}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
@@ -473,6 +569,24 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
                           </button>
                         </div>
                       )}
+
+                      {/* Favorite toggle */}
+                      <div className="absolute bottom-2 right-2">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(food); }}
+                          className={cn(
+                            "px-2 py-1 rounded text-xs font-medium border",
+                            favoriteIds.includes(food.id)
+                              ? "bg-yellow-100 border-yellow-300 text-yellow-800"
+                              : "bg-white/90 border-border text-muted-foreground hover:bg-muted"
+                          )}
+                          aria-pressed={favoriteIds.includes(food.id)}
+                          aria-label={favoriteIds.includes(food.id) ? `Unfavorite ${food.name}` : `Favorite ${food.name}`}
+                        >
+                          {favoriteIds.includes(food.id) ? '★ Favorite' : '☆ Favorite'}
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -495,89 +609,82 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
             </button>
           </div>
 
-          {/* Meal Type & Portion Size */}
-          {selectedFood && (
-            <>
-              <div className="mb-4 grid grid-cols-2 gap-3">
-                {/* Meal Type */}
-                <div>
-                  <label
-                    htmlFor="meal-type"
-                    className="block text-sm font-medium text-foreground mb-2"
-                  >
-                    Meal Type
-                  </label>
-                  <select
-                    id="meal-type"
-                    value={mealType}
-                    onChange={(e) => setMealType(e.target.value as MealType)}
-                    className={cn(
-                      "w-full px-4 py-2.5 rounded-lg",
-                      "border border-border bg-background",
-                      "text-foreground",
-                      "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
-                      "transition-shadow"
-                    )}
-                  >
-                    <option value="breakfast">Breakfast</option>
-                    <option value="lunch">Lunch</option>
-                    <option value="dinner">Dinner</option>
-                    <option value="snack">Snack</option>
-                  </select>
-                </div>
+          {/* MealComposer - shows selected foods with portion controls */}
+          <MealComposer
+            selectedFoods={selectedFoods}
+            onRemoveFood={handleRemoveFood}
+            onPortionChange={handlePortionChange}
+          />
 
-                {/* Portion Size */}
-                <div>
-                  <label
-                    htmlFor="portion-size"
-                    className="block text-sm font-medium text-foreground mb-2"
-                  >
-                    Portion Size
-                  </label>
-                  <select
-                    id="portion-size"
-                    value={portionSize}
-                    onChange={(e) => setPortionSize(e.target.value as "small" | "medium" | "large")}
-                    className={cn(
-                      "w-full px-4 py-2.5 rounded-lg",
-                      "border border-border bg-background",
-                      "text-foreground",
-                      "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
-                      "transition-shadow"
-                    )}
-                  >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </select>
-                </div>
+          {/* Meal Type & Notes - always visible */}
+          <div className="mb-4">
+            <label
+              htmlFor="meal-type"
+              className="block text-sm font-medium text-foreground mb-2"
+            >
+              Meal Type
+            </label>
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                {(() => {
+                  const Icon = getMealTypeIcon(mealType);
+                  return <Icon className="w-4 h-4 text-muted-foreground" />;
+                })()}
               </div>
+              <select
+                id="meal-type"
+                value={mealType}
+                onChange={(e) => setMealType(e.target.value as MealType)}
+                className={cn(
+                  "w-full pl-10 pr-4 py-2.5 rounded-lg",
+                  "border border-border bg-background",
+                  "text-foreground",
+                  "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
+                  "transition-shadow"
+                )}
+              >
+                <option value="breakfast">🌅 Breakfast</option>
+                <option value="lunch">☀️ Lunch</option>
+                <option value="dinner">🌙 Dinner</option>
+                <option value="snack">🍪 Snack</option>
+              </select>
+            </div>
+          </div>
 
-              {/* Optional Notes */}
-              <div className="mb-6">
-                <label
-                  htmlFor="food-notes"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  Notes (optional)
-                </label>
-                <textarea
-                  id="food-notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add any details about preparation, reactions, etc."
-                  rows={3}
-                  className={cn(
-                    "w-full px-4 py-2.5 rounded-lg resize-none",
-                    "border border-border bg-background",
-                    "text-foreground placeholder:text-muted-foreground",
-                    "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
-                    "transition-shadow"
-                  )}
-                />
-              </div>
-            </>
-          )}
+          {/* Optional Notes */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <label
+                htmlFor="food-notes"
+                className="block text-sm font-medium text-foreground"
+              >
+                Notes (optional)
+              </label>
+              <span className="text-xs text-muted-foreground">
+                {notes.length}/500
+              </span>
+            </div>
+            <textarea
+              id="food-notes"
+              value={notes}
+              onChange={(e) => {
+                // Limit to 500 characters
+                if (e.target.value.length <= 500) {
+                  setNotes(e.target.value);
+                }
+              }}
+              placeholder="Optional: Add context about this meal (location, preparation, etc.)"
+              rows={3}
+              className={cn(
+                "w-full px-4 py-2.5 rounded-lg resize-none",
+                "border border-border bg-background",
+                "text-foreground placeholder:text-muted-foreground",
+                "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
+                "transition-shadow"
+              )}
+              maxLength={500}
+            />
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 justify-end">
@@ -596,7 +703,7 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
             <button
               type="button"
               onClick={handleSave}
-              disabled={!selectedFood || saving}
+              disabled={selectedFoods.length === 0 || saving}
               className={cn(
                 "px-4 py-2.5 rounded-lg font-medium",
                 "bg-primary text-primary-foreground",
