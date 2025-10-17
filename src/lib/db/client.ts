@@ -5,6 +5,7 @@ import {
   BodyMapLocationRecord,
   DailyEntryRecord,
   FlareRecord,
+  FoodCombinationRecord, // New
   FoodEventRecord,
   FoodRecord,
   MedicationEventRecord, // New
@@ -35,6 +36,7 @@ export class SymptomTrackerDatabase extends Dexie {
   analysisResults!: Table<AnalysisResultRecord, string>;
   foods!: Table<FoodRecord, string>;
   foodEvents!: Table<FoodEventRecord, string>;
+  foodCombinations!: Table<FoodCombinationRecord, string>;
 
   constructor() {
     super("symptom-tracker");
@@ -147,6 +149,27 @@ export class SymptomTrackerDatabase extends Dexie {
       analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
       foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]", // New
       foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]", // New
+    });
+
+    // Version 12: Add foodCombinations table for synergistic combination analysis
+    this.version(12).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, userId, symptomId, bodyRegionId, status, startDate, [userId+status], [userId+startDate], [userId+bodyRegionId]",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], lastAnalyzedAt", // New
     });
   }
 }

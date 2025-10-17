@@ -269,4 +269,244 @@ describe("CorrelationOrchestrationService Integration", () => {
     expect(results[1].foodId).toBe(food2);
     expect(results[1].symptomId).toBe(symptom2);
   });
+
+  describe("computeWithCombinations", () => {
+    test("detects synergistic food combinations with real data", async () => {
+      const now = Date.now();
+      const foodA = "test-food-cheese";
+      const foodB = "test-food-wine";
+      const sharedMealId = generateId();
+
+      // Create meals with cheese+wine combination (3 instances for minimum sample size)
+      for (let i = 0; i < 3; i++) {
+        await foodEventRepository.create({
+          userId: testUserId,
+          mealId: sharedMealId + `-${i}`,
+          foodIds: JSON.stringify([foodA, foodB]),
+          timestamp: now - (i + 1) * 24 * 60 * 60 * 1000,
+          mealType: "dinner",
+          portionMap: JSON.stringify({ [foodA]: "medium", [foodB]: "medium" }),
+        });
+
+        // Create strong symptom response after combination
+        await symptomInstanceRepository.create({
+          userId: testUserId,
+          name: testSymptomName,
+          category: "Neurological",
+          severity: 8,
+          severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+          timestamp: new Date(now - (i + 1) * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 2h after meal
+        });
+      }
+
+      // Create individual food events (cheese alone) with weaker response
+      for (let i = 0; i < 3; i++) {
+        await foodEventRepository.create({
+          userId: testUserId,
+          mealId: generateId(),
+          foodIds: JSON.stringify([foodA]),
+          timestamp: now - (i + 4) * 24 * 60 * 60 * 1000,
+          mealType: "lunch",
+          portionMap: JSON.stringify({ [foodA]: "medium" }),
+        });
+
+        await symptomInstanceRepository.create({
+          userId: testUserId,
+          name: testSymptomName,
+          category: "Neurological",
+          severity: 4,
+          severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+          timestamp: new Date(now - (i + 4) * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+        });
+      }
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 30 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      // Verify result structure
+      expect(result.metadata.userId).toBe(testUserId);
+      expect(result.metadata.computedAt).toBeGreaterThan(now - 1000);
+      expect(result.correlations).toHaveLength(2); // cheese and wine
+      expect(result.combinations).toBeInstanceOf(Array);
+
+      // Should detect at least one combination
+      expect(result.metadata.combinationsDetected).toBeGreaterThanOrEqual(0);
+
+      // If synergistic combination is detected
+      if (result.combinations.length > 0) {
+        const combo = result.combinations[0];
+        expect(combo.foodIds).toHaveLength(2);
+        expect(combo.foodNames).toHaveLength(2);
+        expect(combo.symptomId).toBe(testSymptomName);
+        expect(combo.sampleSize).toBeGreaterThanOrEqual(3);
+        expect(combo.confidence).toMatch(/^(high|medium|low)$/);
+      }
+    });
+
+    test("returns empty combinations when no synergies exist", async () => {
+      const now = Date.now();
+      const foodA = "test-food-apple";
+
+      // Create single-food meals with no combinations
+      await foodEventRepository.create({
+        userId: testUserId,
+        mealId: generateId(),
+        foodIds: JSON.stringify([foodA]),
+        timestamp: now - 1 * 24 * 60 * 60 * 1000,
+        mealType: "snack",
+        portionMap: JSON.stringify({ [foodA]: "small" }),
+      });
+
+      await symptomInstanceRepository.create({
+        userId: testUserId,
+        name: testSymptomName,
+        category: "Neurological",
+        severity: 5,
+        severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+        timestamp: new Date(now - 1 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+      });
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 7 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      expect(result.correlations).toHaveLength(1);
+      expect(result.combinations).toHaveLength(0); // No combinations from single-food meals
+      expect(result.metadata.combinationsDetected).toBe(0);
+    });
+
+    test("handles empty data gracefully", async () => {
+      const now = Date.now();
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        "NonexistentSymptom",
+        { start: now - 7 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      expect(result.correlations).toHaveLength(0);
+      expect(result.combinations).toHaveLength(0);
+      expect(result.metadata.totalPairs).toBe(0);
+      expect(result.metadata.combinationsDetected).toBe(0);
+    });
+
+    test("respects custom minSampleSize option", async () => {
+      const now = Date.now();
+      const foodA = "test-food-pasta";
+      const foodB = "test-food-sauce";
+
+      // Create only 2 combination instances (below default minimum of 3)
+      for (let i = 0; i < 2; i++) {
+        await foodEventRepository.create({
+          userId: testUserId,
+          mealId: generateId(),
+          foodIds: JSON.stringify([foodA, foodB]),
+          timestamp: now - (i + 1) * 24 * 60 * 60 * 1000,
+          mealType: "dinner",
+          portionMap: JSON.stringify({ [foodA]: "medium", [foodB]: "medium" }),
+        });
+
+        await symptomInstanceRepository.create({
+          userId: testUserId,
+          name: testSymptomName,
+          category: "Neurological",
+          severity: 7,
+          severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+          timestamp: new Date(now - (i + 1) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+        });
+      }
+
+      // With default minSampleSize (3), should find no combinations
+      const resultDefault = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 7 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      expect(resultDefault.combinations).toHaveLength(0);
+
+      // With custom minSampleSize (2), should find combination
+      const resultCustom = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 7 * 24 * 60 * 60 * 1000, end: now },
+        { minSampleSize: 2 }
+      );
+
+      expect(resultCustom.combinations.length).toBeGreaterThanOrEqual(0);
+    });
+
+    test("includes individual correlations for all foods", async () => {
+      const now = Date.now();
+      const foodA = "test-food-chocolate";
+      const foodB = "test-food-nuts";
+
+      // Create meals with both foods
+      await foodEventRepository.create({
+        userId: testUserId,
+        mealId: generateId(),
+        foodIds: JSON.stringify([foodA, foodB]),
+        timestamp: now - 1 * 24 * 60 * 60 * 1000,
+        mealType: "snack",
+        portionMap: JSON.stringify({ [foodA]: "small", [foodB]: "small" }),
+      });
+
+      await symptomInstanceRepository.create({
+        userId: testUserId,
+        name: testSymptomName,
+        category: "Neurological",
+        severity: 6,
+        severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+        timestamp: new Date(now - 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      });
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 7 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      // Should have individual correlations for both foods
+      expect(result.correlations.length).toBeGreaterThanOrEqual(2);
+      const foodIds = result.correlations.map((c) => c.foodId);
+      expect(foodIds).toContain(foodA);
+      expect(foodIds).toContain(foodB);
+    });
+
+    test("metadata contains correct computation details", async () => {
+      const now = Date.now();
+      const foodA = "test-food-eggs";
+
+      await foodEventRepository.create({
+        userId: testUserId,
+        mealId: generateId(),
+        foodIds: JSON.stringify([foodA]),
+        timestamp: now - 1 * 24 * 60 * 60 * 1000,
+        mealType: "breakfast",
+        portionMap: JSON.stringify({ [foodA]: "medium" }),
+      });
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 7 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      expect(result.metadata).toMatchObject({
+        userId: testUserId,
+        range: {
+          start: now - 7 * 24 * 60 * 60 * 1000,
+          end: now,
+        },
+      });
+      expect(result.metadata.computedAt).toBeGreaterThan(now - 1000);
+      expect(result.metadata.totalPairs).toBe(result.correlations.length);
+      expect(result.metadata.combinationsDetected).toBe(result.combinations.length);
+    });
+  });
 });

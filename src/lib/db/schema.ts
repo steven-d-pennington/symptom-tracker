@@ -338,3 +338,22 @@ export interface FoodEventRecord {
   createdAt: number;
   updatedAt: number;
 }
+
+// Food Combination Analysis (Epic E2 - Story 2.3)
+export interface FoodCombinationRecord {
+  id: string;
+  userId: string;
+  foodIds: string; // JSON-stringified string[] (sorted for consistency)
+  foodNames: string; // JSON-stringified string[]
+  symptomId: string;
+  symptomName: string;
+  combinationCorrelation: number; // 0-1 percentage as decimal
+  individualMax: number; // Max individual correlation from pair
+  synergistic: boolean; // combinationCorrelation > individualMax + 0.15
+  pValue: number;
+  confidence: 'high' | 'medium' | 'low';
+  sampleSize: number;
+  lastAnalyzedAt: number; // epoch ms
+  createdAt: number;
+  updatedAt: number;
+}

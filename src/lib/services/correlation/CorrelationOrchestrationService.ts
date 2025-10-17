@@ -21,6 +21,12 @@ import {
   normalizePortionSize,
   type DoseResponseResult,
 } from "../food/DoseResponseService";
+import {
+  detectCombinations,
+  type FoodCombination,
+  type MealEvent,
+  type IndividualCorrelation,
+} from "../food/CombinationAnalysisService";
 
 export interface CorrelationRequest {
   userId: string;
@@ -37,6 +43,18 @@ export interface CorrelationResult {
   computedAt: number;
   sampleSize: number;
   doseResponse?: DoseResponseResult; // Dose-response analysis when portion data available
+}
+
+export interface EnhancedCorrelationResult {
+  correlations: CorrelationResult[];
+  combinations: FoodCombination[]; // Synergistic food combinations
+  metadata: {
+    userId: string;
+    range: TimeRange;
+    computedAt: number;
+    totalPairs: number;
+    combinationsDetected: number;
+  };
 }
 
 export class CorrelationOrchestrationService {
@@ -196,6 +214,118 @@ export class CorrelationOrchestrationService {
   }
 
   /**
+   * Compute enhanced correlations with combination effects detection
+   * Analyzes both individual food-symptom correlations and synergistic combinations
+   */
+  async computeWithCombinations(
+    userId: string,
+    symptomId: string,
+    range: TimeRange,
+    options?: {
+      minSampleSize?: number;
+      onlyUnique?: boolean;
+    }
+  ): Promise<EnhancedCorrelationResult> {
+    // Step 1: Hydrate all food events and symptom instances
+    const allFoodEvents = await foodEventRepository.findByDateRange(
+      userId,
+      range.start,
+      range.end
+    );
+
+    const allSymptomInstances = await symptomInstanceRepository.findByDateRange(
+      userId,
+      range.start,
+      range.end
+    );
+
+    // Filter symptom instances for the specific symptom
+    const symptomName = await this.getSymptomName(symptomId);
+    const relevantSymptoms = allSymptomInstances.filter(
+      (instance: SymptomInstanceRecord) => instance.name === symptomName
+    );
+
+    // Step 2: Extract unique food IDs from all events
+    const uniqueFoodIds = new Set<string>();
+    allFoodEvents.forEach((event) => {
+      const foodIds = JSON.parse(event.foodIds) as string[];
+      foodIds.forEach((id) => uniqueFoodIds.add(id));
+    });
+
+    // Step 3: Compute individual correlations for each food
+    const individualCorrelations: CorrelationResult[] = [];
+    for (const foodId of uniqueFoodIds) {
+      const result = await this.computeCorrelation({
+        userId,
+        foodId,
+        symptomId,
+        range,
+      });
+      individualCorrelations.push(result);
+    }
+
+    // Step 4: Build individual correlation array for CombinationAnalysisService
+    const individualCorrelationArray: IndividualCorrelation[] = [];
+    const foodNameMap: Record<string, string> = {}; // Store food names for combination detection
+    
+    for (const result of individualCorrelations) {
+      if (result.bestWindow && result.bestWindow.score > 0) {
+        // Get food name from food events
+        const foodName = await this.getFoodName(result.foodId);
+        foodNameMap[result.foodId] = foodName;
+        
+        individualCorrelationArray.push({
+          foodId: result.foodId,
+          foodName,
+          symptomId,
+          symptomName,
+          correlation: result.bestWindow.score, // Use score as correlation strength
+        });
+      }
+    }
+
+    // Step 5: Transform food events to MealEvent format for combination detection
+    const mealEvents: MealEvent[] = allFoodEvents.map((event) => {
+      const foodIds = JSON.parse(event.foodIds) as string[];
+      const foodNames = foodIds.map((id) => foodNameMap[id] || id); // Use mapped names or fallback to ID
+      
+      return {
+        mealId: event.mealId || `meal-${event.id}`, // Use mealId if available, fallback to event ID
+        foodIds,
+        foodNames,
+        timestamp: event.timestamp,
+      };
+    });
+
+    // Step 6: Transform symptom instances for combination detection
+    const symptomEvents: SymptomInstanceLike[] = relevantSymptoms.map((s) => ({
+      timestamp: s.timestamp instanceof Date ? s.timestamp.getTime() : new Date(s.timestamp).getTime(),
+    }));
+
+    // Step 7: Detect combinations using CombinationAnalysisService
+    const combinations = detectCombinations(
+      mealEvents,
+      symptomEvents,
+      individualCorrelationArray,
+      range,
+      options?.minSampleSize
+    );
+
+    // Step 8: Return enhanced result
+    return {
+      correlations: individualCorrelations,
+      combinations,
+      metadata: {
+        userId,
+        range,
+        computedAt: Date.now(),
+        totalPairs: individualCorrelations.length,
+        combinationsDetected: combinations.length,
+      },
+    };
+  }
+
+  /**
    * Helper: Get symptom name by ID
    * TODO: Use symptomRepository when available
    */
@@ -203,6 +333,16 @@ export class CorrelationOrchestrationService {
     // Temporary: In current schema, symptomInstances store name directly
     // In future, might need to look up from symptoms table
     return symptomId; // Assuming symptomId is actually the symptom name for now
+  }
+
+  /**
+   * Helper: Get food name by ID
+   * TODO: Use foodRepository when available
+   */
+  private async getFoodName(foodId: string): Promise<string> {
+    // Temporary: Return food ID as name
+    // In future, look up from foods table to get actual name
+    return foodId;
   }
 }
 
