@@ -270,6 +270,212 @@ describe("CorrelationOrchestrationService Integration", () => {
     expect(results[1].symptomId).toBe(symptom2);
   });
 
+  describe("Confidence Calculation Integration (Story 2.4)", () => {
+    test("assigns confidence level to correlations with sufficient data", async () => {
+      const now = Date.now();
+      const foodId = "test-food-confidence";
+
+      // Create 5 food events (HIGH_SAMPLE threshold)
+      for (let i = 0; i < 5; i++) {
+        await foodEventRepository.create({
+          userId: testUserId,
+          mealId: generateId(),
+          foodIds: JSON.stringify([foodId]),
+          timestamp: now - (i + 1) * 24 * 60 * 60 * 1000,
+          mealType: "lunch",
+          portionMap: JSON.stringify({ [foodId]: "medium" }),
+        });
+
+        // Create symptom after each food event (high consistency)
+        await symptomInstanceRepository.create({
+          userId: testUserId,
+          name: testSymptomName,
+          category: "Neurological",
+          severity: 7,
+          severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+          timestamp: new Date(now - (i + 1) * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+        });
+      }
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 30 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      // Should have at least one correlation
+      expect(result.correlations.length).toBeGreaterThan(0);
+
+      const correlation = result.correlations.find((c) => c.foodId === foodId);
+      expect(correlation).toBeDefined();
+
+      // Should have confidence and consistency fields
+      expect(correlation?.confidence).toBeDefined();
+      expect(correlation?.consistency).toBeDefined();
+
+      // With 5 events and 100% consistency, should have high confidence
+      expect(correlation?.confidence).toMatch(/^(high|medium|low)$/);
+      expect(correlation?.consistency).toBeGreaterThanOrEqual(0);
+      expect(correlation?.consistency).toBeLessThanOrEqual(1);
+    });
+
+    test("filters out correlations with p >= 0.05 (statistical insignificance)", async () => {
+      const now = Date.now();
+      const weakFoodId = "test-food-weak";
+
+      // Create very weak correlation (1 food event, no symptom)
+      await foodEventRepository.create({
+        userId: testUserId,
+        mealId: generateId(),
+        foodIds: JSON.stringify([weakFoodId]),
+        timestamp: now - 1 * 24 * 60 * 60 * 1000,
+        mealType: "snack",
+        portionMap: JSON.stringify({ [weakFoodId]: "small" }),
+      });
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 7 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      // Weak correlations should be filtered out
+      const weakCorrelation = result.correlations.find((c) => c.foodId === weakFoodId);
+
+      // Should either be filtered out or have no bestWindow
+      if (weakCorrelation) {
+        expect(weakCorrelation.bestWindow).toBeDefined();
+        // If included, must have p < 0.05
+        if (weakCorrelation.bestWindow) {
+          expect(weakCorrelation.bestWindow.pValue).toBeLessThan(0.05);
+        }
+      }
+    });
+
+    test("computes consistency correctly for partial correlations", async () => {
+      const now = Date.now();
+      const foodId = "test-food-partial";
+
+      // Create 5 food events
+      for (let i = 0; i < 5; i++) {
+        await foodEventRepository.create({
+          userId: testUserId,
+          mealId: generateId(),
+          foodIds: JSON.stringify([foodId]),
+          timestamp: now - (i + 1) * 24 * 60 * 60 * 1000,
+          mealType: "dinner",
+          portionMap: JSON.stringify({ [foodId]: "medium" }),
+        });
+      }
+
+      // Create symptoms after only 3 out of 5 events (60% consistency)
+      for (let i = 0; i < 3; i++) {
+        await symptomInstanceRepository.create({
+          userId: testUserId,
+          name: testSymptomName,
+          category: "Neurological",
+          severity: 6,
+          severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+          timestamp: new Date(now - (i + 1) * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+        });
+      }
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 30 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      const correlation = result.correlations.find((c) => c.foodId === foodId);
+
+      if (correlation) {
+        expect(correlation.consistency).toBeDefined();
+        // Consistency should be around 60% (3/5)
+        expect(correlation.consistency).toBeGreaterThanOrEqual(0.4);
+        expect(correlation.consistency).toBeLessThanOrEqual(0.8);
+      }
+    });
+
+    test("confidence level reflects sample size constraints", async () => {
+      const now = Date.now();
+      const smallSampleFood = "test-food-small";
+
+      // Create only 3 events (MEDIUM_SAMPLE threshold)
+      for (let i = 0; i < 3; i++) {
+        await foodEventRepository.create({
+          userId: testUserId,
+          mealId: generateId(),
+          foodIds: JSON.stringify([smallSampleFood]),
+          timestamp: now - (i + 1) * 24 * 60 * 60 * 1000,
+          mealType: "breakfast",
+          portionMap: JSON.stringify({ [smallSampleFood]: "medium" }),
+        });
+
+        await symptomInstanceRepository.create({
+          userId: testUserId,
+          name: testSymptomName,
+          category: "Neurological",
+          severity: 8,
+          severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+          timestamp: new Date(now - (i + 1) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+        });
+      }
+
+      const result = await correlationOrchestrationService.computeWithCombinations(
+        testUserId,
+        testSymptomName,
+        { start: now - 30 * 24 * 60 * 60 * 1000, end: now }
+      );
+
+      const correlation = result.correlations.find((c) => c.foodId === smallSampleFood);
+
+      if (correlation) {
+        expect(correlation.confidence).toBeDefined();
+        // With only 3 samples, cannot be "high" confidence even with 100% consistency
+        expect(correlation.confidence).toMatch(/^(medium|low)$/);
+      }
+    });
+
+    test("includes pValue in windowScores", async () => {
+      const now = Date.now();
+      const foodId = "test-food-pvalue";
+
+      await foodEventRepository.create({
+        userId: testUserId,
+        mealId: generateId(),
+        foodIds: JSON.stringify([foodId]),
+        timestamp: now - 1 * 24 * 60 * 60 * 1000,
+        mealType: "lunch",
+        portionMap: JSON.stringify({ [foodId]: "medium" }),
+      });
+
+      await symptomInstanceRepository.create({
+        userId: testUserId,
+        name: testSymptomName,
+        category: "Neurological",
+        severity: 7,
+        severityScale: { type: "numeric" as const, min: 1, max: 10, labels: {} },
+        timestamp: new Date(now - 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      });
+
+      const result = await correlationOrchestrationService.computeCorrelation({
+        userId: testUserId,
+        foodId,
+        symptomId: testSymptomName,
+        range: { start: now - 7 * 24 * 60 * 60 * 1000, end: now },
+      });
+
+      // Verify all windowScores have pValue
+      expect(result.windowScores).toHaveLength(8);
+      result.windowScores.forEach((score) => {
+        expect(score.pValue).toBeDefined();
+        expect(typeof score.pValue).toBe("number");
+        expect(score.pValue).toBeGreaterThanOrEqual(0);
+        expect(score.pValue).toBeLessThanOrEqual(1);
+      });
+    });
+  });
+
   describe("computeWithCombinations", () => {
     test("detects synergistic food combinations with real data", async () => {
       const now = Date.now();

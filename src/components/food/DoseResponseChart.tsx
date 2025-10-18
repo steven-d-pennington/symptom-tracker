@@ -85,10 +85,9 @@ export function DoseResponseChart({ doseResponse, foodName }: DoseResponseChartP
         pointRadius: 0,
         pointHoverRadius: 0,
         showLine: true,
-        type: 'line' as const,
       },
     ],
-  };
+  } as any; // Chart.js mixed type datasets require looser typing
 
   const options = {
     responsive: true,

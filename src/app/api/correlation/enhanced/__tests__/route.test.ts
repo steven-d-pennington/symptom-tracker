@@ -1,22 +1,22 @@
 /**
  * Tests for /api/correlation/enhanced route
  * Tests POST and GET endpoints for enhanced correlation with combinations
+ * @jest-environment node
  */
 
-import { POST, GET } from "../route";
 import { NextRequest } from "next/server";
 import { jest } from "@jest/globals";
 
-// Mock the orchestration service
+// Mock the orchestration service BEFORE importing the route
 const mockComputeWithCombinations = jest.fn();
-jest.unstable_mockModule(
-  "@/lib/services/correlation/CorrelationOrchestrationService",
-  () => ({
-    correlationOrchestrationService: {
-      computeWithCombinations: mockComputeWithCombinations,
-    },
-  })
-);
+jest.mock("@/lib/services/correlation/CorrelationOrchestrationService", () => ({
+  correlationOrchestrationService: {
+    computeWithCombinations: mockComputeWithCombinations,
+  },
+}));
+
+// Now import the route handlers AFTER the mock is set up
+const { POST, GET } = await import("../route");
 
 describe("Enhanced Correlation API Route", () => {
   const mockEnhancedResult = {

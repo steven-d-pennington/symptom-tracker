@@ -27,6 +27,7 @@ export interface FoodCombination {
   synergistic: boolean; // combinationCorrelation > individualMax + SYNERGY_THRESHOLD
   pValue: number;
   confidence: "high" | "medium" | "low";
+  consistency: number; // Story 2.4: 0-1 decimal representing temporal stability
   sampleSize: number;
   computedAt: number;
 }
@@ -301,6 +302,10 @@ export function detectCombinations(
     // Determine confidence level
     const confidence = determineConfidence(mealsWithPair.length, pValue);
 
+    // Story 2.4: Consistency placeholder (will be calculated by ConfidenceCalculationService)
+    // For now, use combinationCorrelation as proxy (0-1 decimal)
+    const consistency = combinationCorrelation;
+
     combinations.push({
       foodIds,
       foodNames,
@@ -311,6 +316,7 @@ export function detectCombinations(
       synergistic,
       pValue,
       confidence,
+      consistency,
       sampleSize: mealsWithPair.length,
       computedAt: Date.now(),
     });

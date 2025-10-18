@@ -2,23 +2,28 @@
  * @jest-environment jsdom
  */
 
-import { photoRepository } from "../photoRepository";
 import { PhotoAttachment } from "@/lib/types/photo";
 
-// Mock the database
-jest.mock("@/lib/db", () => ({
+// Mock the database BEFORE any imports that use it
+const mockWhere = jest.fn();
+const mockToArray = jest.fn();
+const mockGet = jest.fn();
+const mockUpdate = jest.fn();
+
+jest.mock("@/lib/db/client", () => ({
   db: {
     photoAttachments: {
-      where: jest.fn(),
-      toArray: jest.fn(),
-      get: jest.fn(),
-      update: jest.fn(),
+      where: mockWhere,
+      toArray: mockToArray,
+      get: mockGet,
+      update: mockUpdate,
     },
   },
 }));
 
-// Import db after mocking
-import { db } from "@/lib/db";
+// Now import after the mock is set up
+import { photoRepository } from "../photoRepository";
+import { db } from "@/lib/db/client";
 
 describe("photoRepository - Auto-Linking Features", () => {
   const mockUserId = "test-user-123";
@@ -52,13 +57,13 @@ describe("photoRepository - Auto-Linking Features", () => {
   describe("getByDailyEntry", () => {
     it("should retrieve photos linked to a specific daily entry", async () => {
       const mockPhotos = [mockPhoto];
-      const mockWhere = jest.fn().mockReturnValue({
+      const localMockWhere = jest.fn().mockReturnValue({
         and: jest.fn().mockReturnValue({
           toArray: jest.fn().mockResolvedValue(mockPhotos),
         }),
       });
-      (db.photoAttachments.where as jest.Mock).mockReturnValue({
-        equals: jest.fn().mockReturnValue(mockWhere()),
+      mockWhere.mockReturnValue({
+        equals: jest.fn().mockReturnValue(localMockWhere()),
       });
 
       const result = await photoRepository.getByDailyEntry(
@@ -67,17 +72,17 @@ describe("photoRepository - Auto-Linking Features", () => {
       );
 
       expect(result).toEqual(mockPhotos);
-      expect(db.photoAttachments.where).toHaveBeenCalledWith("userId");
+      expect(mockWhere).toHaveBeenCalledWith("userId");
     });
 
     it("should return empty array when no photos linked to entry", async () => {
-      const mockWhere = jest.fn().mockReturnValue({
+      const localMockWhere = jest.fn().mockReturnValue({
         and: jest.fn().mockReturnValue({
           toArray: jest.fn().mockResolvedValue([]),
         }),
       });
-      (db.photoAttachments.where as jest.Mock).mockReturnValue({
-        equals: jest.fn().mockReturnValue(mockWhere()),
+      mockWhere.mockReturnValue({
+        equals: jest.fn().mockReturnValue(localMockWhere()),
       });
 
       const result = await photoRepository.getByDailyEntry(
@@ -91,25 +96,25 @@ describe("photoRepository - Auto-Linking Features", () => {
 
   describe("unlinkFromEntry", () => {
     it("should clear dailyEntryId when photo is linked to the specified entry", async () => {
-      (db.photoAttachments.get as jest.Mock).mockResolvedValue(mockPhoto);
-      (db.photoAttachments.update as jest.Mock).mockResolvedValue(1);
+      mockGet.mockResolvedValue(mockPhoto);
+      mockUpdate.mockResolvedValue(1);
 
       await photoRepository.unlinkFromEntry(mockPhotoId, mockDailyEntryId);
 
-      expect(db.photoAttachments.get).toHaveBeenCalledWith(mockPhotoId);
-      expect(db.photoAttachments.update).toHaveBeenCalledWith(mockPhotoId, {
+      expect(mockGet).toHaveBeenCalledWith(mockPhotoId);
+      expect(mockUpdate).toHaveBeenCalledWith(mockPhotoId, {
         dailyEntryId: undefined,
       });
     });
 
     it("should throw error if photo does not exist", async () => {
-      (db.photoAttachments.get as jest.Mock).mockResolvedValue(undefined);
+      mockGet.mockResolvedValue(undefined);
 
       await expect(
         photoRepository.unlinkFromEntry(mockPhotoId, mockDailyEntryId)
       ).rejects.toThrow(`Photo not found: ${mockPhotoId}`);
 
-      expect(db.photoAttachments.update).not.toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
 
     it("should not update if photo is linked to a different entry", async () => {
@@ -117,14 +122,12 @@ describe("photoRepository - Auto-Linking Features", () => {
         ...mockPhoto,
         dailyEntryId: "different-entry-id",
       };
-      (db.photoAttachments.get as jest.Mock).mockResolvedValue(
-        photoLinkedToOtherEntry
-      );
+      mockGet.mockResolvedValue(photoLinkedToOtherEntry);
 
       await photoRepository.unlinkFromEntry(mockPhotoId, mockDailyEntryId);
 
-      expect(db.photoAttachments.get).toHaveBeenCalledWith(mockPhotoId);
-      expect(db.photoAttachments.update).not.toHaveBeenCalled();
+      expect(mockGet).toHaveBeenCalledWith(mockPhotoId);
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
 
     it("should not update if photo is not linked to any entry", async () => {
@@ -132,12 +135,12 @@ describe("photoRepository - Auto-Linking Features", () => {
         ...mockPhoto,
         dailyEntryId: undefined,
       };
-      (db.photoAttachments.get as jest.Mock).mockResolvedValue(unlinkedPhoto);
+      mockGet.mockResolvedValue(unlinkedPhoto);
 
       await photoRepository.unlinkFromEntry(mockPhotoId, mockDailyEntryId);
 
-      expect(db.photoAttachments.get).toHaveBeenCalledWith(mockPhotoId);
-      expect(db.photoAttachments.update).not.toHaveBeenCalled();
+      expect(mockGet).toHaveBeenCalledWith(mockPhotoId);
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 });

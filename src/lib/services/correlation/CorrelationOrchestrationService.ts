@@ -11,10 +11,13 @@ import type { FoodEventRecord, SymptomInstanceRecord } from "../../db/schema";
 import {
   computePairWithData,
   bestWindow,
+  computeConsistency,
+  WINDOW_SET,
   type WindowScore,
   type TimeRange,
   type FoodEventLike,
   type SymptomInstanceLike,
+  type WindowRange,
 } from "./CorrelationService";
 import {
   computeDoseResponse,
@@ -27,6 +30,10 @@ import {
   type MealEvent,
   type IndividualCorrelation,
 } from "../food/CombinationAnalysisService";
+import {
+  determineConfidence,
+  P_VALUE_THRESHOLD,
+} from "./ConfidenceCalculationService";
 
 export interface CorrelationRequest {
   userId: string;
@@ -43,6 +50,8 @@ export interface CorrelationResult {
   computedAt: number;
   sampleSize: number;
   doseResponse?: DoseResponseResult; // Dose-response analysis when portion data available
+  confidence?: "high" | "medium" | "low"; // Confidence level from multi-factor analysis
+  consistency?: number; // Consistency metric (0-1 decimal)
 }
 
 export interface EnhancedCorrelationResult {
@@ -252,7 +261,7 @@ export class CorrelationOrchestrationService {
       foodIds.forEach((id) => uniqueFoodIds.add(id));
     });
 
-    // Step 3: Compute individual correlations for each food
+    // Step 3: Compute individual correlations for each food with confidence
     const individualCorrelations: CorrelationResult[] = [];
     for (const foodId of uniqueFoodIds) {
       const result = await this.computeCorrelation({
@@ -261,14 +270,56 @@ export class CorrelationOrchestrationService {
         symptomId,
         range,
       });
+
+      // Compute confidence if bestWindow exists
+      if (result.bestWindow) {
+        // Filter to food events containing this specific foodId
+        const foodEventsForThisFood = allFoodEvents.filter((event) => {
+          const foodIds = JSON.parse(event.foodIds) as string[];
+          return foodIds.includes(foodId);
+        });
+
+        // Convert to lightweight interfaces
+        const foodEvents: FoodEventLike[] = foodEventsForThisFood.map((e) => ({
+          timestamp: e.timestamp,
+        }));
+
+        const symptoms: SymptomInstanceLike[] = relevantSymptoms.map((s) => ({
+          timestamp: s.timestamp instanceof Date ? s.timestamp.getTime() : new Date(s.timestamp).getTime(),
+        }));
+
+        // Get time window from bestWindow
+        const timeWindow: WindowRange = this.getTimeWindowFromLabel(result.bestWindow.window);
+
+        // Compute consistency
+        const consistency = computeConsistency(foodEvents, symptoms, timeWindow);
+
+        // Determine confidence level
+        const confidence = determineConfidence(
+          result.sampleSize,
+          consistency,
+          result.bestWindow.pValue
+        );
+
+        // Add confidence and consistency to result
+        result.confidence = confidence;
+        result.consistency = consistency;
+      }
+
       individualCorrelations.push(result);
     }
 
+    // Filter out correlations with insufficient statistical significance (p >= 0.05)
+    const significantCorrelations = individualCorrelations.filter((result) => {
+      return result.bestWindow && result.bestWindow.pValue < P_VALUE_THRESHOLD;
+    });
+
     // Step 4: Build individual correlation array for CombinationAnalysisService
+    // Use only significant correlations
     const individualCorrelationArray: IndividualCorrelation[] = [];
     const foodNameMap: Record<string, string> = {}; // Store food names for combination detection
     
-    for (const result of individualCorrelations) {
+    for (const result of significantCorrelations) {
       if (result.bestWindow && result.bestWindow.score > 0) {
         // Get food name from food events
         const foodName = await this.getFoodName(result.foodId);
@@ -311,15 +362,15 @@ export class CorrelationOrchestrationService {
       options?.minSampleSize
     );
 
-    // Step 8: Return enhanced result
+    // Step 8: Return enhanced result with only significant correlations
     return {
-      correlations: individualCorrelations,
+      correlations: significantCorrelations,
       combinations,
       metadata: {
         userId,
         range,
         computedAt: Date.now(),
-        totalPairs: individualCorrelations.length,
+        totalPairs: significantCorrelations.length,
         combinationsDetected: combinations.length,
       },
     };
@@ -343,6 +394,18 @@ export class CorrelationOrchestrationService {
     // Temporary: Return food ID as name
     // In future, look up from foods table to get actual name
     return foodId;
+  }
+
+  /**
+   * Helper: Convert WindowLabel to WindowRange
+   * Uses WINDOW_SET from CorrelationService
+   */
+  private getTimeWindowFromLabel(label: string): WindowRange {
+    const window = WINDOW_SET.find((w: WindowRange) => w.label === label);
+    if (!window) {
+      throw new Error(`Unknown window label: ${label}`);
+    }
+    return window;
   }
 }
 

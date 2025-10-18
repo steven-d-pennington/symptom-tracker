@@ -25,33 +25,36 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
-Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
-  value: () => ({
-    fillRect: () => {},
-    clearRect: () => {},
-    getImageData: (x, y, w, h) => ({
-      data: new Array(w * h * 4),
+// Only mock DOM APIs when they're available (jsdom environment)
+if (typeof HTMLCanvasElement !== 'undefined') {
+  Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+    value: () => ({
+      fillRect: () => {},
+      clearRect: () => {},
+      getImageData: (x, y, w, h) => ({
+        data: new Array(w * h * 4),
+      }),
+      putImageData: () => {},
+      createImageData: () => [],
+      setTransform: () => {},
+      drawImage: () => {},
+      save: () => {},
+      fillText: () => {},
+      restore: () => {},
+      beginPath: () => {},
+      moveTo: () => {},
+      lineTo: () => {},
+      closePath: () => {},
+      stroke: () => {},
+      translate: () => {},
+      scale: () => {},
+      rotate: () => {},
+      arc: () => {},
+      fill: () => {},
+      measureText: () => ({ width: 0 }),
+      transform: () => {},
+      rect: () => {},
+      clip: () => {},
     }),
-    putImageData: () => {},
-    createImageData: () => [],
-    setTransform: () => {},
-    drawImage: () => {},
-    save: () => {},
-    fillText: () => {},
-    restore: () => {},
-    beginPath: () => {},
-    moveTo: () => {},
-    lineTo: () => {},
-    closePath: () => {},
-    stroke: () => {},
-    translate: () => {},
-    scale: () => {},
-    rotate: () => {},
-    arc: () => {},
-    fill: () => {},
-    measureText: () => ({ width: 0 }),
-    transform: () => {},
-    rect: () => {},
-    clip: () => {},
-  }),
-});
+  });
+}

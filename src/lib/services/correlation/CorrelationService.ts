@@ -24,6 +24,7 @@ export interface WindowScore {
   window: WindowLabel;
   score: number; // statistical score (higher = stronger signal)
   sampleSize: number; // number of paired observations considered in this window
+  pValue: number; // p-value from chi-square test (statistical significance)
 }
 
 export interface TimeRange {
@@ -79,9 +80,75 @@ function chiSquare(a: number, b: number, c: number, d: number): number {
   return x2;
 }
 
+/**
+ * Convert chi-square score to approximate p-value (df=1)
+ * Simplified approximation for chi-square distribution with 1 degree of freedom
+ * 
+ * @param chiSquareScore Chi-square test statistic
+ * @returns Approximate p-value
+ * 
+ * @see Story 2.4: Confidence calculations require p-value for statistical significance
+ */
+export function chiSquareToPValue(chiSquareScore: number): number {
+  // Critical values for chi-square distribution (df=1)
+  // p=0.05: 3.841, p=0.01: 6.635, p=0.001: 10.828
+  if (chiSquareScore >= 10.828) return 0.001;
+  if (chiSquareScore >= 6.635) return 0.01;
+  if (chiSquareScore >= 3.841) return 0.05;
+  if (chiSquareScore >= 2.706) return 0.10;
+  if (chiSquareScore >= 1.0) return 0.20;
+  return 0.30; // Weak or no association
+}
+
 function withinWindow(foodTs: number, symTs: number, win: WindowRange): boolean {
   const diff = symTs - foodTs;
   return diff >= win.startMs && diff <= win.endMs;
+}
+
+/**
+ * Computes consistency metric for food-symptom correlation.
+ * 
+ * Consistency is the percentage of food occurrences followed by symptom within the time window.
+ * Formula: (number of food events followed by symptom) / (total food events)
+ * 
+ * @param foodEvents Array of food event timestamps
+ * @param symptomEvents Array of symptom instance timestamps
+ * @param timeWindow Time window to check for symptom occurrence after food event
+ * @returns Consistency as decimal 0-1 (e.g., 0.75 for 75% consistency)
+ * 
+ * @example
+ * // User logs "Dairy" 10 times; symptom appears after 7 occurrences within 4-hour window
+ * computeConsistency(dairyEvents, symptomEvents, { startMs: 0, endMs: 4 * 60 * 60 * 1000 })
+ * // => 0.70 (70% consistency)
+ * 
+ * @see Story 2.4, Task 2: Consistency Metric Calculation
+ */
+export function computeConsistency(
+  foodEvents: FoodEventLike[],
+  symptomEvents: SymptomInstanceLike[],
+  timeWindow: WindowRange
+): number {
+  // Edge case: no food events means no consistency data
+  if (foodEvents.length === 0) {
+    return 0;
+  }
+
+  // Count how many food events are followed by at least one symptom within the time window
+  let foodFollowedBySymptom = 0;
+
+  for (const foodEvent of foodEvents) {
+    const hasSymptomWithinWindow = symptomEvents.some((symptomEvent) =>
+      withinWindow(foodEvent.timestamp, symptomEvent.timestamp, timeWindow)
+    );
+
+    if (hasSymptomWithinWindow) {
+      foodFollowedBySymptom++;
+    }
+  }
+
+  // Calculate consistency as decimal (0-1)
+  const consistency = foodFollowedBySymptom / foodEvents.length;
+  return consistency;
 }
 
 export function bestWindow(scores: WindowScore[]): WindowScore | undefined {
@@ -130,7 +197,8 @@ export function computePairWithData(
 
     const score = chiSquare(afterFoodWithSymptom, afterFoodNoSymptom, baselineWithSymptom, baselineNoSymptom);
     const sampleSize = events.length;
-    return { window: w.label, score, sampleSize };
+    const pValue = chiSquareToPValue(score);
+    return { window: w.label, score, sampleSize, pValue };
   });
 }
 

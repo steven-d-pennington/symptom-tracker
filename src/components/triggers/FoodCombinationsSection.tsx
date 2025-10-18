@@ -140,7 +140,7 @@ function FoodCombinationsSection({
           <p className="mt-1 text-sm text-gray-500">
             {showOnlySynergistic
               ? "Try toggling the filter to see all combinations, or log more meals to discover patterns."
-              : "Log meals with multiple foods to detect combination effects."}
+              : "No statistically significant combinations found. Log more meals to discover patterns."}
           </p>
         </div>
       )}

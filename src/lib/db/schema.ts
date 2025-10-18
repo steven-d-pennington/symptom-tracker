@@ -339,7 +339,7 @@ export interface FoodEventRecord {
   updatedAt: number;
 }
 
-// Food Combination Analysis (Epic E2 - Story 2.3)
+// Food Combination Analysis (Epic E2 - Story 2.3, 2.4)
 export interface FoodCombinationRecord {
   id: string;
   userId: string;
@@ -351,7 +351,8 @@ export interface FoodCombinationRecord {
   individualMax: number; // Max individual correlation from pair
   synergistic: boolean; // combinationCorrelation > individualMax + 0.15
   pValue: number;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: 'high' | 'medium' | 'low'; // Story 2.4: Multi-factor confidence level
+  consistency: number; // Story 2.4: 0-1 decimal (% of food occurrences followed by symptom)
   sampleSize: number;
   lastAnalyzedAt: number; // epoch ms
   createdAt: number;

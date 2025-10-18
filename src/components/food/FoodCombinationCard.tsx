@@ -2,9 +2,11 @@
  * FoodCombinationCard Component
  * Displays a detected food combination with synergy analysis
  * Shows combination correlation vs individual food correlations
+ * Story 2.4: Now uses ConfidenceBadge component with consistency metrics
  */
 
 import type { FoodCombination } from "@/lib/services/food/CombinationAnalysisService";
+import { ConfidenceBadge } from "@/components/correlation/ConfidenceBadge";
 
 export interface FoodCombinationCardProps {
   combination: FoodCombination;
@@ -19,6 +21,7 @@ function FoodCombinationCard({ combination, onSelect }: FoodCombinationCardProps
     individualMax,
     synergistic,
     confidence,
+    consistency,
     sampleSize,
     pValue,
   } = combination;
@@ -112,16 +115,24 @@ function FoodCombinationCard({ combination, onSelect }: FoodCombinationCardProps
         {/* Statistical details */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
           <span
-            className={`px-2 py-1 text-xs font-medium rounded border ${
-              confidence === "high"
-                ? "bg-green-100 text-green-800 border-green-300"
-                : confidence === "medium"
-                ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                : "bg-orange-100 text-orange-800 border-orange-300"
-            }`}
             aria-label={`Confidence level: ${confidence}`}
+            className={
+              confidence === "high"
+                ? "bg-green-100 text-green-800"
+                : confidence === "medium"
+                ? "bg-yellow-100 text-yellow-800"
+                : "bg-orange-100 text-orange-800"
+            }
           >
-            {confidence.charAt(0).toUpperCase() + confidence.slice(1)} confidence
+            <span className="sr-only">
+              {`${confidence.charAt(0).toUpperCase()}${confidence.slice(1)} confidence`}
+            </span>
+            <ConfidenceBadge
+              confidence={confidence}
+              sampleSize={sampleSize}
+              consistency={consistency}
+              pValue={pValue}
+            />
           </span>
 
           <span
