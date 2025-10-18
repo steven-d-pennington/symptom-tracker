@@ -1,0 +1,103 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>6</storyId>
+    <title>Food Events in Timeline</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-17</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>view my food events in the timeline grouped as meals</iWant>
+    <soThat>I can see my complete health event stream with clear meal context and quickly edit entries</soThat>
+    <tasks>
+      - Add grouped meal rendering to timeline (group by mealId, collapsed summary, icon/colors)
+      - Hydrate groups with food details via foodRepository.getByIds(); parse JSON foodIds and portionMap
+      - Implement accessible expand/collapse (aria-expanded, aria-controls), focus management, motion ≤200ms
+      - Add Edit (reopen FoodLogModal pre-filled) and Delete actions with confirmations
+      - Tests for grouped display, hydration, expand/collapse, edit/delete, a11y
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1) Distinct food icon in timeline
+    2) Group meals by shared mealId; collapsed entry shows: "MealType: Food1 (M), Food2 (S), …"
+    3) Expanded view shows portions, notes, allergen tags, and photo (if present)
+    4) Expanded entry includes actions: Edit (reopen FoodLogModal pre-filled) and Delete
+    5) Chronological sorting; keyboard-accessible expand/collapse (aria-expanded/aria-controls)
+    6) Consistent color coding aligned with food logging UI
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - docs/PRD.md (FR004, FR005, FR012 timeline/edit requirements)
+      - docs/solution-architecture.md (/timeline grouped by mealId, hydration join, edit affordance)
+      - docs/tech-spec-epic-E1.md (Data models: FoodEventRecord with mealId, foodIds, portionMap; services)
+      - docs/ux-specification.md (Timeline grouped meal entries, ARIA/keyboard, motion ≤200ms)
+      - docs/epic-stories.md (Story 1.6 acceptance criteria and technical notes)
+    </docs>
+    <code>
+      - src/lib/repositories/foodEventRepository.ts (create/update/findByMealType/findByDateRange)
+      - src/lib/repositories/foodRepository.ts (getByIds/search)
+      - src/components/food/FoodLogModal.tsx (save payload construction; pre-fill for Edit)
+      - src/components/food/MealComposer.tsx (portions per food; selection semantics)
+      - src/contexts/FoodContext.tsx (open/close FoodLogModal; state wiring)
+      - src/components/food/__tests__/MealComposer.test.tsx (selection/portion/a11y tests)
+      - src/components/food/__tests__/FoodLogModal.test.tsx (modal behavior, repo calls)
+      - src/lib/repositories/__tests__/foodEventRepository.test.ts (repo validation and queries)
+      - src/lib/db/schema.ts (FoodEventRecord fields and types)
+      - src/lib/types/calendar.ts (timeline type enum)
+    </code>
+    <dependencies>
+      - Dexie/IndexedDB (local-first persistence; JSON-stringified arrays/objects)
+      - React + TypeScript (functional components, strict mode)
+      - Lucide React (icons)
+      - Testing: Jest + React Testing Library (jsdom)
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Local-first repository pattern; all IndexedDB arrays/objects JSON-stringified (AGENTS.md)
+    - Always query via compound indexes first (e.g., [userId+mealType], future [userId+timestamp])
+    - Performance: save & hydrate should remain responsive; memoize hydration for large histories
+    - Accessibility: keyboard support and ARIA semantics for expand/collapse and action buttons
+    - Error handling with try/catch in async operations (TypeScript strict)
+  </constraints>
+
+  <interfaces>
+    - foodEventRepository
+      - create(event: Omit&lt;FoodEventRecord, "id"|"createdAt"|"updatedAt"&gt;): Promise&lt;string&gt;
+      - update(id: string, updates: Partial&lt;FoodEventRecord&gt;): Promise&lt;void&gt;
+      - findByDateRange(userId: string, startMs: number, endMs: number): Promise&lt;FoodEventRecord[]&gt;
+      - findByMealType(userId: string, mealType: MealType): Promise&lt;FoodEventRecord[]&gt;
+      - findByMealId(userId: string, mealId: string): Promise&lt;FoodEventRecord[]&gt;
+    - foodRepository
+      - getByIds(userId: string, ids: string[]): Promise&lt;FoodRecord[]&gt;
+    - Timeline grouping adapter
+      - input: FoodEventRecord[]; output: { mealId, timestamp, mealType, items: { foodId, name, portion }[], notes, photoIds? }
+      - hydrate: join foods by ids; compute collapsed label string and expanded detail model
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use Jest + React Testing Library (jsdom). Aim for ≥80% coverage; use accessible queries and deterministic assertions. Mock Dexie for repository tests.
+    </standards>
+    <locations>
+      - src/components/timeline/__tests__/**
+      - src/components/food/__tests__/**
+      - src/lib/repositories/__tests__/**
+    </locations>
+    <ideas>
+      - AC1: Renders distinct food icon and chronological order
+      - AC2: Groups by mealId; collapsed text shows MealType and foods with portion abbreviations
+      - AC3: Expanded details list portions, notes, allergen tags, and thumbnail when present
+      - AC4: Edit reopens FoodLogModal pre-filled; Delete removes entry with confirmation
+      - AC5: Keyboard toggles expand/collapse; aria-expanded/aria-controls set correctly; focus returns to toggler
+      - AC6: Snapshot styles align with food UI color tokens
+    </ideas>
+  </tests>
+</story-context>
+

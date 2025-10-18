@@ -1,0 +1,79 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/output" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>8</storyId>
+    <title>Export Correlation Insights and Food Journal</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.8.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>export my food journal data and correlation insights</iWant>
+    <soThat>I can share findings with my healthcare provider</soThat>
+    <tasks>
+      - Task 1: Food Journal export (CSV/JSON) with fields: date, time, food names, portions/quantity, meal type, allergen tags, notes. Use `[userId+timestamp]` index and date-range filtering.
+      - Task 2: Correlation export (CSV/PDF) including food–symptom pairs, correlation %, confidence, best time window, sample size, significance flag (p &lt; 0.05 gating).
+      - Task 3: UI entry points: Export page/section with date range picker, format toggles, non-blocking progress and accessibility affordances.
+      - Task 4: Services wiring: FoodJournalExportService and CorrelationExportService; read from Dexie repositories and `analysisResults` cache (24h TTL).
+      - Task 5: Tests: transformation correctness, date filtering, significance gating, component interactions, performance with large datasets.
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - Users can export food journal in CSV or JSON format
+    - Export includes: date, time, foods, portions, meal type, allergen tags, notes
+    - Users can export correlation report in PDF or CSV
+    - Correlation export includes: food–symptom pairs, correlation %, confidence, time delays
+    - Export respects date range filters
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - docs/epic-stories.md (Epic 2, Story 2.8)
+      - docs/PRD.md (FR013 Export requirements; user workflows)
+      - docs/solution-architecture.md (Export service extension; hybrid model)
+      - docs/ARCHITECTURE/overview.md (Layering; exportService placement)
+      - AGENTS.md (Dexie patterns; JSON stringification; testing)
+    </docs>
+    <code>
+      - src/components/data-management/ (Export UI components)
+      - src/lib/services/export/ (Export services and formatters)
+      - src/lib/repositories/* (Dexie repositories for foods, foodEvents, analysisResults)
+      - src/lib/hooks/* (Date range state; progress callbacks)
+    </code>
+    <dependencies>
+      - Dexie (IndexedDB) — local-first data source
+      - CSV/JSON/PDF formatters — existing or to be extended
+      - Chart/image utilities for PDF where applicable
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Use compound indexes first in queries, then in-memory filters
+    - Arrays stored as JSON strings — parse on read, stringify as needed for exports
+    - Respect significance threshold (p &lt; 0.05) and indicate “Insufficient data” when applicable
+    - Provide progress callbacks; do not block UI thread
+  </constraints>
+
+  <interfaces>
+    - Export options DTO: { dateRange, include: { foodJournalCSV, foodJournalJSON, correlationCSV, correlationPDF } }
+    - FoodJournalExportService.export(options) → Blob | File
+    - CorrelationExportService.export(options) → Blob | File
+  </interfaces>
+
+  <tests>
+    <standards>Jest + React Testing Library; 80% coverage min; jsdom env with IndexedDB/Canvas mocks.</standards>
+    <locations>src/lib/services/export/__tests__/, src/components/data-management/__tests__/</locations>
+    <ideas>
+      - AC1/2: Verify CSV/JSON rows for foods include all required fields; array serialization stable.
+      - AC3/4: Correlation CSV/PDF includes pairs, %, confidence, delays; significance gating applied.
+      - AC5: Date-range filter limits output rows appropriately.
+      - Performance: Mock large datasets; ensure progress callbacks and responsive UI.
+      - Accessibility: Controls keyboard operable; status messages announced.
+    </ideas>
+  </tests>
+</story-context>
+

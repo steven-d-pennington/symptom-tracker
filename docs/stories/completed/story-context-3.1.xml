@@ -1,0 +1,253 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.1</storyId>
+    <title>Redesign Home/Dashboard Page</title>
+    <status>TODO</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\story-3.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user opening the app</asA>
+    <iWant>to see active flares, quick-log buttons, and today's timeline</iWant>
+    <soThat>I can immediately log events or review my day</soThat>
+    <tasks>
+      <task id="1">Update dashboard page layout (AC: 1,2,3,4,5) - Stack components: ActiveFlareCards → QuickLogButtons → TimelineView, keep navigation unchanged, implement collapse for >5 active flares</task>
+      <task id="2">Optimize page load performance (AC: 6) - Use React Server Components, parallel queries, measure and optimize to &lt;1 second load time</task>
+      <task id="3">Implement scroll to timeline item (AC: 7) - Accept URL parameter for target event ID, smooth scroll, temporary highlight</task>
+      <task id="4">Add refresh mechanisms (AC: 8) - Pull-to-refresh on mobile, refresh button on desktop</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">New layout: Active Flares (top) → Quick-Log Buttons → Timeline View → Navigation</criterion>
+    <criterion id="2">Active Flares section shows 0-5 flare cards, collapses to 1-line summary if > 5</criterion>
+    <criterion id="3">Quick-Log Buttons prominently displayed below Active Flares</criterion>
+    <criterion id="4">Timeline View shows today's events, scrollable</criterion>
+    <criterion id="5">Navigation remains at bottom (mobile) or sidebar (desktop) - unchanged from Phase 2</criterion>
+    <criterion id="6">Page loads in &lt;1 second for typical data (5 active flares + 10 today events)</criterion>
+    <criterion id="7">Smooth scroll to timeline item when tapped from notification/link</criterion>
+    <criterion id="8">Refresh mechanism: pull-to-refresh on mobile, refresh button on desktop</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
+        <title>Event Stream Redesign Epics</title>
+        <section>Epic 3: Story 3.1 - Redesign Home/Dashboard Page</section>
+        <snippet>Complete acceptance criteria and technical notes for integrating Epic 2 components into the dashboard page. Key requirements: Active Flares (top) → Quick-Log Buttons → Timeline View layout, &lt;1 second load time, pull-to-refresh, smooth scroll to timeline items.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-PRD.md</path>
+        <title>Event Stream Redesign PRD</title>
+        <section>Problem Statement &amp; User Goals</section>
+        <snippet>PRD defining the shift from daily summary to event stream model. Goal: reduce logging time from 2-5 minutes to 2-15 seconds through discrete timestamped events.</snippet>
+      </doc>
+      <doc>
+        <path>docs/event-stream-redesign-spec.md</path>
+        <title>Event Stream Technical Specification</title>
+        <section>UI Architecture &amp; Components</section>
+        <snippet>Technical architecture for event stream components including performance requirements, React Server Components usage, and data fetching patterns.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1: QuickLog Buttons Component</title>
+        <section>Component Implementation Details</section>
+        <snippet>Complete implementation of QuickLogButtons component - 4 buttons in 2x2 grid (mobile) / single row (desktop), with modal integration, accessibility, and 44px tap targets.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.2.md</path>
+        <title>Story 2.2: Active Flare Cards Component</title>
+        <section>Component Implementation Details</section>
+        <snippet>ActiveFlareCards component displays 0-5 flare cards with location, severity, trend arrows, and quick action buttons. Includes collapse logic for >5 flares.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.3.md</path>
+        <title>Story 2.3: Timeline View Component</title>
+        <section>Component Implementation Details</section>
+        <snippet>TimelineView component shows chronological event feed with day grouping, pagination ("Load previous day"), and event detail modal integration.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <entry>
+        <path>src/app/(protected)/dashboard/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DashboardPage</symbol>
+        <lines>1-105</lines>
+        <reason>Current dashboard page to be redesigned. Currently shows feature cards and quick stats. Needs complete overhaul to display Active Flares, QuickLogButtons, and TimelineView in vertical stack layout.</reason>
+      </entry>
+      <entry>
+        <path>src/components/quick-log/QuickLogButtons.tsx</path>
+        <kind>component</kind>
+        <symbol>QuickLogButtons</symbol>
+        <lines>1-end</lines>
+        <reason>Epic 2 component to integrate - provides 4 quick-log buttons for new flare, medication, symptom, and trigger logging. Already built with modal integration and accessibility.</reason>
+      </entry>
+      <entry>
+        <path>src/components/flares/ActiveFlareCards.tsx</path>
+        <kind>component</kind>
+        <symbol>ActiveFlareCards</symbol>
+        <lines>1-end</lines>
+        <reason>Epic 2 component to integrate - displays 0-5 active flare cards with severity, trend arrows, and quick actions. Needs collapse logic for >5 flares (AC 2).</reason>
+      </entry>
+      <entry>
+        <path>src/components/timeline/TimelineView.tsx</path>
+        <kind>component</kind>
+        <symbol>TimelineView</symbol>
+        <lines>1-396</lines>
+        <reason>Epic 2 component to integrate - shows chronological event feed. Provides timeline display for today's events (AC 4). Includes event tap handlers and modal integration.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getActiveFlaresWithTrend</symbol>
+        <lines>n/a</lines>
+        <reason>Repository method to fetch active flares with trend indicators for ActiveFlareCards component. Used for top section of dashboard.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/medicationEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>findByDateRange</symbol>
+        <lines>n/a</lines>
+        <reason>Repository method to fetch medication events for timeline. Part of today's events query for TimelineView component.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/triggerEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>findByDateRange</symbol>
+        <lines>n/a</lines>
+        <reason>Repository method to fetch trigger events for timeline. Part of today's events query for TimelineView component.</reason>
+      </entry>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="next" version="15.5.4" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="lucide-react" version="^0.544.0" />
+        <package name="tailwindcss" version="^4" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1">Use Next.js 15 App Router with React Server Components for initial data load (SSR-compatible). Client components only for interactive modals.</constraint>
+    <constraint id="2">Layout must be vertical stack: ActiveFlareCards (top) → QuickLogButtons → TimelineView → Navigation (unchanged).</constraint>
+    <constraint id="3">Page load performance target: &lt;1 second for typical data (5 active flares + 10 today events). Use parallel queries.</constraint>
+    <constraint id="4">Responsive design: full width mobile, constrained max-width desktop. All components already mobile-responsive from Epic 2.</constraint>
+    <constraint id="5">ActiveFlareCards collapse logic: if > 5 active flares, show 1-line summary instead of full cards (AC 2).</constraint>
+    <constraint id="6">Smooth scroll implementation using scrollIntoView({ behavior: 'smooth' }) with URL parameter or state for target event ID (AC 7).</constraint>
+    <constraint id="7">Pull-to-refresh on mobile (touch gesture), refresh button on desktop. Refresh all data (flares + timeline) (AC 8).</constraint>
+    <constraint id="8">Navigation remains unchanged from Phase 2 - bottom tabs (mobile) or sidebar (desktop) (AC 5).</constraint>
+    <constraint id="9">Maintain accessibility standards from Story 2.7: ARIA labels, keyboard navigation, WCAG 2.1 AA compliance.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>ActiveFlareCards</name>
+      <kind>component</kind>
+      <signature>function ActiveFlareCards(props?: { onUpdate?: (flare: Flare) => void, onResolve?: (flare: Flare) => void, maxCards?: number }): JSX.Element</signature>
+      <path>src/components/flares/ActiveFlareCards.tsx</path>
+      <notes>Pass maxCards={5} to limit display. Component handles collapse to summary if > maxCards automatically. Provides onUpdate/onResolve callbacks for modal integration.</notes>
+    </interface>
+    <interface>
+      <name>QuickLogButtons</name>
+      <kind>component</kind>
+      <signature>function QuickLogButtons(): JSX.Element</signature>
+      <path>src/components/quick-log/QuickLogButtons.tsx</path>
+      <notes>Self-contained component managing all modal state internally. No props needed. Renders 4 buttons with integrated modals for flare, medication, symptom, trigger logging.</notes>
+    </interface>
+    <interface>
+      <name>TimelineView</name>
+      <kind>component</kind>
+      <signature>function TimelineView(props?: { onEventTap?: (event: TimelineEvent) => void, onAddDetails?: (event: TimelineEvent) => void }): JSX.Element</signature>
+      <path>src/components/timeline/TimelineView.tsx</path>
+      <notes>Provides event tap handlers. Component handles date-based pagination internally with "Load previous day" button. Displays today's events by default. Integrates EventDetailModal.</notes>
+    </interface>
+    <interface>
+      <name>flareRepository.getActiveFlaresWithTrend</name>
+      <kind>repository method</kind>
+      <signature>async getActiveFlaresWithTrend(userId: string): Promise&lt;FlareWithTrend[]&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <notes>Returns active flares (status != 'resolved', endDate == null) with calculated trend indicators (↑↓→) based on severity history in last 24 hours. Used for ActiveFlareCards data fetching.</notes>
+    </interface>
+    <interface>
+      <name>medicationEventRepository.findByDateRange</name>
+      <kind>repository method</kind>
+      <signature>async findByDateRange(userId: string, startTimestamp: number, endTimestamp: number): Promise&lt;MedicationEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/medicationEventRepository.ts</path>
+      <notes>Fetches medication events within timestamp range. Used by TimelineView to load today's medication logs. Efficient query using [userId+timestamp] compound index.</notes>
+    </interface>
+    <interface>
+      <name>triggerEventRepository.findByDateRange</name>
+      <kind>repository method</kind>
+      <signature>async findByDateRange(userId: string, startTimestamp: number, endTimestamp: number): Promise&lt;TriggerEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/triggerEventRepository.ts</path>
+      <notes>Fetches trigger events within timestamp range. Used by TimelineView to load today's trigger logs. Efficient query using [userId+timestamp] compound index.</notes>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Project uses Jest 30.2.0 with React Testing Library (@testing-library/react 16.3.0) and @testing-library/jest-dom 6.9.1 for component testing. TypeScript with strict mode enabled. Tests must mock Dexie database using jest.mock() with factory functions. Repository methods should be mocked with jest.fn().mockResolvedValue(). Component tests should verify rendering, user interactions, accessibility (ARIA labels), and error states. Integration tests verify data flow from repositories to components. Target 80%+ test coverage. Test files located in __tests__ directories alongside components or in src/app/__tests__ for page components.
+    </standards>
+    <locations>
+      <location>src/app/(protected)/dashboard/__tests__/page.test.tsx</location>
+      <location>src/components/**/__tests__/*.test.tsx</location>
+    </locations>
+    <ideas>
+      <idea ac="1,2,3,4">
+        <test>Dashboard page renders all three main sections: ActiveFlareCards at top, QuickLogButtons in middle, TimelineView at bottom</test>
+        <test>Components render in correct vertical stack order when page loads</test>
+        <test>ActiveFlareCards displays 0-5 flare cards when active flares ≤ 5</test>
+        <test>ActiveFlareCards collapses to 1-line summary when active flares > 5 (test with 6+ mock flares)</test>
+        <test>QuickLogButtons renders 4 buttons prominently below ActiveFlareCards section</test>
+        <test>TimelineView renders today's events below QuickLogButtons</test>
+      </idea>
+      <idea ac="5">
+        <test>Navigation component renders unchanged (bottom mobile / sidebar desktop)</test>
+        <test>Existing navigation links still functional after dashboard redesign</test>
+      </idea>
+      <idea ac="6">
+        <test>Page loads active flares and timeline events in parallel (verify concurrent queries)</test>
+        <test>Mock typical dataset (5 flares, 10 events) and verify render completes quickly</test>
+        <test>Loading states display while data fetching (skeleton UI or spinners)</test>
+        <test>Error states handled gracefully if repository queries fail</test>
+      </idea>
+      <idea ac="7">
+        <test>URL parameter ?eventId=123 triggers smooth scroll to timeline item with that ID</test>
+        <test>scrollIntoView called with { behavior: 'smooth' } when eventId parameter present</test>
+        <test>Target timeline item temporarily highlighted after scroll (visual feedback)</test>
+        <test>Scroll-to-event works when event is not initially loaded (pagination scenario)</test>
+      </idea>
+      <idea ac="8">
+        <test>Pull-to-refresh gesture (touch simulation) triggers data refresh on mobile</test>
+        <test>Refresh button visible and functional on desktop viewport (≥768px)</test>
+        <test>Refresh action re-fetches both active flares and timeline events</test>
+        <test>Loading indicator shown during refresh operation</test>
+      </idea>
+      <idea general="integration">
+        <test>Mock userRepository.getOrCreateCurrentUser() returns test user</test>
+        <test>Mock flareRepository.getActiveFlaresWithTrend() returns test flares with trends</test>
+        <test>Mock event repositories (medication, trigger, symptom) return test events for today</test>
+        <test>Component integration: ActiveFlareCards onUpdate callback integration with modals</test>
+        <test>Component integration: TimelineView onEventTap opens EventDetailModal</test>
+        <test>Empty states: dashboard with no flares and no events displays helpful messaging</test>
+      </idea>
+      <idea general="accessibility">
+        <test>Page has proper semantic HTML structure (main, section, article tags)</test>
+        <test>Keyboard navigation works through all interactive elements (Tab order)</test>
+        <test>ARIA labels present on all buttons and interactive elements</test>
+        <test>Screen reader announcements for refresh action ("Data refreshed")</test>
+      </idea>
+      <idea general="responsive">
+        <test>Mobile viewport (&lt;768px): full-width layout, components stack vertically</test>
+        <test>Desktop viewport (≥768px): constrained max-width, centered layout</test>
+        <test>ActiveFlareCards responsive: 1 column mobile, multiple columns desktop (if space allows)</test>
+        <test>QuickLogButtons responsive: 2x2 grid mobile, single row desktop</test>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

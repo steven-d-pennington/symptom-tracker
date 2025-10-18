@@ -1,0 +1,390 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.4</storyId>
+    <title>Flare Creation and Update Modals</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\story-2.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user experiencing a flare</asA>
+    <iWant>to quickly log new flares and update existing ones</iWant>
+    <soThat>I can track flare progression over hours/days</soThat>
+    <tasks>
+      <task id="1" complete="false">
+        <description>Create FlareCreationModal (AC-Creation: 1-9)</description>
+        <subtasks>
+          <subtask>Set up component file `src/components/flares/FlareCreationModal.tsx`</subtask>
+          <subtask>Integrate BodyMapViewer in compact mode for location selection</subtask>
+          <subtask>Add severity slider (1-10) with labels ("Minimal" to "Excruciating")</subtask>
+          <subtask>Add optional notes field</subtask>
+          <subtask>Implement [Save] and [Add Details] buttons</subtask>
+          <subtask>Form validation (location + severity required)</subtask>
+          <subtask>Call `flareRepository.create()` on save</subtask>
+          <subtask>Handle modal open/close state</subtask>
+        </subtasks>
+      </task>
+      <task id="2" complete="false">
+        <description>Create FlareUpdateModal (AC-Update: 1-10)</description>
+        <subtasks>
+          <subtask>Set up component file `src/components/flares/FlareUpdateModal.tsx`</subtask>
+          <subtask>Display flare context (location, day count: "Right Armpit - Day 3")</subtask>
+          <subtask>Show previous severity: "Severity was: 7/10"</subtask>
+          <subtask>Add severity slider for new severity</subtask>
+          <subtask>Add status buttons (optional, with auto-detection): [Getting Worse] [Same] [Improving]</subtask>
+          <subtask>Add quick intervention buttons: [Ice] [Meds] [Rest] [Other]</subtask>
+          <subtask>Add optional notes field</subtask>
+          <subtask>Call `flareRepository.updateSeverity()` on save</subtask>
+          <subtask>Call `flareRepository.addIntervention()` if intervention selected</subtask>
+        </subtasks>
+      </task>
+      <task id="3" complete="false">
+        <description>Implement responsive design (AC-Creation: 9)</description>
+        <subtasks>
+          <subtask>Full-screen modal on mobile (&lt;768px)</subtask>
+          <subtask>Centered dialog on desktop</subtask>
+          <subtask>Touch-optimized controls (larger tap targets)</subtask>
+        </subtasks>
+      </task>
+      <task id="4" complete="false">
+        <description>Auto-detect status based on severity change (AC-Update: 4)</description>
+        <subtasks>
+          <subtask>If severity delta ≥+2: suggest "worsening"</subtask>
+          <subtask>If severity delta ≤-2: suggest "improving"</subtask>
+          <subtask>Otherwise: suggest "stable"</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <group name="FlareCreationModal">
+      <criterion id="1">Step 1: Compact body map for location selection (reuse existing BodyMapViewer in compact mode)</criterion>
+      <criterion id="2">Step 2: Severity slider 1-10 with clear labels (1="Minimal", 10="Excruciating")</criterion>
+      <criterion id="3">Step 3: Optional notes field with placeholder "Any details? (optional)"</criterion>
+      <criterion id="4">Two save buttons: [Save] (quick 10-15 sec flow) and [Add Details] (opens EventDetailModal after save)</criterion>
+      <criterion id="5">Timestamp auto-captured on save</criterion>
+      <criterion id="6">Creates FlareRecord with initial severity in severityHistory</criterion>
+      <criterion id="7">Modal closes after save, returns to home with flare in Active Flares section</criterion>
+      <criterion id="8">Form validation: body location required, severity required, notes optional</criterion>
+      <criterion id="9">Mobile responsive: full-screen modal on mobile, centered dialog on desktop</criterion>
+    </group>
+    <group name="FlareUpdateModal">
+      <criterion id="10">Shows flare context: "Right Armpit - Day 3"</criterion>
+      <criterion id="11">Shows previous severity: "Severity was: 7/10"</criterion>
+      <criterion id="12">Severity slider for new severity</criterion>
+      <criterion id="13">Status buttons: [Getting Worse] [Same] [Improving] (optional, auto-detected if not selected)</criterion>
+      <criterion id="14">Quick intervention buttons: [Ice] [Meds] [Rest] [Other] (optional)</criterion>
+      <criterion id="15">Optional notes field</criterion>
+      <criterion id="16">Calls `flareRepository.updateSeverity()` with new data</criterion>
+      <criterion id="17">If intervention selected, calls `flareRepository.addIntervention()`</criterion>
+      <criterion id="18">Timeline shows update event after save</criterion>
+      <criterion id="19">Completed in 5-10 seconds for typical update</criterion>
+    </group>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/event-stream-redesign-spec.md</path>
+        <title>Event Stream Redesign Technical Specification</title>
+        <section>Component Architecture - FlareCreationModal & FlareUpdateModal</section>
+        <snippet>
+          FlareCreationModal specification (lines 260-281):
+          - Location: src/components/flares/FlareCreationModal.tsx
+          - Purpose: Quick flare logging with body map + severity
+          - Props: isOpen, onClose, onSave
+          - Steps: 1) Compact body map, 2) Severity slider (1-10), 3) Optional notes
+          - Buttons: [Save] or [Add Details]
+          - Target time: 10-15 seconds
+
+          FlareUpdateModal specification (lines 283-307):
+          - Location: src/components/flares/FlareUpdateModal.tsx
+          - Purpose: Quick severity update for active flares
+          - Props: flare, isOpen, onClose, onSave
+          - Shows previous severity, slider for new severity, status buttons, intervention buttons
+          - Target time: 5-10 seconds
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
+        <title>Event Stream Redesign Epics</title>
+        <section>Story 2.4: Flare Creation and Update Modals</section>
+        <snippet>
+          Story defines requirements for two modal components:
+          - FlareCreationModal: Quick flare logging (body location + severity + optional notes)
+          - FlareUpdateModal: Quick flare updates (severity + status + interventions)
+          - Both modals optimized for speed (10-15 sec creation, 5-10 sec updates)
+          - Auto-capture timestamps, track severity history
+          - Progressive disclosure: quick save vs add details
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/DEVELOPMENT/component-library.md</path>
+        <title>Component Library Reference</title>
+        <section>Body Mapping Components</section>
+        <snippet>
+          Existing body mapping system:
+          - BodyMapViewer: Interactive body map with zoom/pan controls, region selection
+          - BodyRegionSelector: Clickable body regions with severity coloring
+          - ZoomPanControls: Zoom in/out/reset controls
+          - Usage: BodyMapViewer can be used in compact mode for quick region selection
+          - Props: view, onRegionSelect, multiSelect, readOnly
+          - Component location: src/components/body-mapping/
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/PRODUCT/ux-specification.md</path>
+        <title>UX/UI Specification</title>
+        <section>Modal Components & Forms</section>
+        <snippet>
+          Modal design patterns:
+          - Full-screen on mobile (&lt;768px), centered dialog on desktop
+          - Backdrop overlay with click-to-close
+          - [X] close button in top-right
+          - Form validation with inline error messages
+          - Touch-optimized controls (44x44px minimum tap targets)
+          - Slider controls: Clear min/max labels, visual feedback
+          - Button hierarchy: Primary action (Save) vs secondary (Cancel)
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>flareRepository.create</symbol>
+        <lines>6-16</lines>
+        <reason>Creates new flare record - called by FlareCreationModal on save. Returns created flare with generated ID.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>flareRepository.updateSeverity</symbol>
+        <lines>105-150</lines>
+        <reason>Updates flare severity with auto-detection of status (worsening/improving/stable) based on ±2 threshold. Tracks severity history. Called by FlareUpdateModal.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>flareRepository.addIntervention</symbol>
+        <lines>155-181</lines>
+        <reason>Adds intervention (ice/medication/rest/other) to flare. Called by FlareUpdateModal when user selects quick intervention button.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/types/flare.ts</path>
+        <kind>type-definition</kind>
+        <symbol>ActiveFlare</symbol>
+        <lines>1-16</lines>
+        <reason>Core flare data structure with severity, status, bodyRegions, interventions, severityHistory fields.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-162</lines>
+        <reason>Interactive body map component with zoom/pan controls. Use in compact mode for region selection in FlareCreationModal. Props: view, selectedRegion, onRegionSelect, multiSelect, readOnly.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flare/FlareCard.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareCard</symbol>
+        <lines>1-109</lines>
+        <reason>Reference for flare display patterns - shows how to display flare context (location, duration, severity) for FlareUpdateModal header.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^19.0.0">Core React library for component creation</package>
+        <package name="react-dom" version="^19.0.0">React DOM rendering</package>
+        <package name="next" version="^15.0.0">Next.js framework for routing and SSR</package>
+        <package name="typescript" version="^5.0.0">TypeScript for type safety</package>
+        <package name="lucide-react" version="latest">Icon library for UI icons (close, check, etc)</package>
+        <package name="tailwindcss" version="^4.0.0">CSS framework for styling</package>
+        <package name="dexie" version="^4.0.0">IndexedDB wrapper for data persistence</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      Create two separate modal components in src/components/flares/:
+      - FlareCreationModal.tsx (for creating new flares)
+      - FlareUpdateModal.tsx (for updating existing flares)
+      Use functional React components with hooks (useState, useEffect).
+      Components must be client-side ("use client" directive for Next.js 15).
+    </constraint>
+    <constraint type="body-map-integration">
+      Reuse existing BodyMapViewer component for location selection.
+      Use compact mode: Disable zoom/pan controls, show simple view picker (front/back/left/right).
+      Props: view, selectedRegion, onRegionSelect, readOnly=false.
+      Body map should allow single region selection (multiSelect=false).
+    </constraint>
+    <constraint type="severity-slider">
+      Use HTML5 range input: &lt;input type="range" min="1" max="10" step="1" /&gt;
+      Display current value prominently: "Severity: 7/10"
+      Label endpoints: 1="Minimal", 10="Excruciating"
+      Visual feedback: Color gradient or severity markers.
+      Accessible: ARIA labels, keyboard navigation (arrow keys work natively).
+    </constraint>
+    <constraint type="auto-detection">
+      FlareUpdateModal: Auto-detect status from severity delta (AC: Update-4)
+      - If newSeverity - previousSeverity ≥ +2: suggest "worsening"
+      - If newSeverity - previousSeverity ≤ -2: suggest "improving"
+      - Otherwise: suggest "stable"
+      User can override suggested status by clicking status buttons.
+      If user doesn't select status, use auto-detected value.
+    </constraint>
+    <constraint type="progressive-disclosure">
+      FlareCreationModal has two save options:
+      - [Save] button: Quick save, close modal immediately (10-15 sec flow)
+      - [Add Details] button: Save flare, then open EventDetailModal (Story 2.6)
+      EventDetailModal not yet implemented - use placeholder/TODO for [Add Details] button.
+    </constraint>
+    <constraint type="form-validation">
+      FlareCreationModal validation:
+      - Body location: REQUIRED (show error if not selected)
+      - Severity: REQUIRED (default to 5 if not changed)
+      - Notes: OPTIONAL
+      Show validation errors inline, prevent save until required fields filled.
+    </constraint>
+    <constraint type="modal-behavior">
+      Both modals:
+      - Open prop controls visibility
+      - onClose prop for close action (X button, backdrop click, Escape key)
+      - onSave prop with flare data
+      - Close automatically after successful save
+      - Show loading state during save operation
+      - Handle save errors gracefully with error messages
+    </constraint>
+    <constraint type="responsive-design">
+      Mobile (&lt;768px): Full-screen modal, use full viewport height/width
+      Desktop (≥768px): Centered dialog, max-width 600px, rounded corners, shadow
+      Touch optimization: Button min size 44x44px, slider thumb larger on touch devices.
+      Keyboard support: Tab navigation, Enter to submit, Escape to close.
+    </constraint>
+    <constraint type="ui-patterns">
+      Use Tailwind CSS utility classes for styling.
+      Modal backdrop: bg-black/50 overlay.
+      Modal content: bg-white p-6 rounded-lg shadow-xl.
+      Button styles: primary (bg-primary text-white), secondary (border).
+      Severity slider: Track with gradient, prominent thumb control.
+      Status buttons: Toggle style (selected = filled, unselected = outline).
+      Intervention buttons: Icon + label, toggle on/off.
+    </constraint>
+    <constraint type="accessibility">
+      WCAG 2.1 AA compliance required.
+      Modal traps focus (Tab cycles within modal).
+      ARIA labels for all controls (role="dialog", aria-labelledby, aria-describedby).
+      Screen reader announcements for validation errors and save success.
+      Keyboard shortcuts: Escape closes modal, Enter submits form.
+      Minimum 4.5:1 text contrast ratio.
+    </constraint>
+    <constraint type="performance">
+      Both modals should render instantly (&lt;100ms).
+      Save operations should complete in &lt;200ms.
+      Use optimistic UI updates where possible.
+      Debounce slider changes to prevent excessive re-renders.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FlareCreationModalProps</name>
+      <kind>component-props</kind>
+      <signature>interface FlareCreationModalProps { isOpen: boolean; onClose: () =&gt; void; onSave: (data: NewFlareData) =&gt; Promise&lt;void&gt;; }</signature>
+      <path>src/components/flares/FlareCreationModal.tsx (to be created)</path>
+      <usage>Props for FlareCreationModal component</usage>
+    </interface>
+    <interface>
+      <name>NewFlareData</name>
+      <kind>type-interface</kind>
+      <signature>interface NewFlareData { bodyRegionId: string; severity: number; notes?: string; }</signature>
+      <path>src/components/flares/FlareCreationModal.tsx (to be created)</path>
+      <usage>Data structure for creating new flare</usage>
+    </interface>
+    <interface>
+      <name>FlareUpdateModalProps</name>
+      <kind>component-props</kind>
+      <signature>interface FlareUpdateModalProps { flare: ActiveFlare; isOpen: boolean; onClose: () =&gt; void; onSave: (update: FlareUpdate) =&gt; Promise&lt;void&gt;; }</signature>
+      <path>src/components/flares/FlareUpdateModal.tsx (to be created)</path>
+      <usage>Props for FlareUpdateModal component</usage>
+    </interface>
+    <interface>
+      <name>FlareUpdate</name>
+      <kind>type-interface</kind>
+      <signature>interface FlareUpdate { severity: number; status: 'active' | 'improving' | 'worsening'; intervention?: 'ice' | 'medication' | 'rest' | 'other'; notes?: string; }</signature>
+      <path>src/components/flares/FlareUpdateModal.tsx (to be created)</path>
+      <usage>Data structure for updating flare severity and interventions</usage>
+    </interface>
+    <interface>
+      <name>flareRepository.create</name>
+      <kind>repository-method</kind>
+      <signature>async create(flare: Omit&lt;ActiveFlare, "id" | "createdAt" | "updatedAt"&gt;): Promise&lt;ActiveFlare&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts:6-16</path>
+      <usage>Creates new flare record with generated ID and timestamps</usage>
+    </interface>
+    <interface>
+      <name>flareRepository.updateSeverity</name>
+      <kind>repository-method</kind>
+      <signature>async updateSeverity(id: string, newSeverity: number, status?: 'active' | 'improving' | 'worsening'): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts:105-150</path>
+      <usage>Updates flare severity with auto-detection of status and severity history tracking</usage>
+    </interface>
+    <interface>
+      <name>flareRepository.addIntervention</name>
+      <kind>repository-method</kind>
+      <signature>async addIntervention(id: string, type: 'ice' | 'medication' | 'rest' | 'other', notes?: string): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts:155-181</path>
+      <usage>Adds intervention to flare with timestamp</usage>
+    </interface>
+    <interface>
+      <name>BodyMapViewer</name>
+      <kind>react-component</kind>
+      <signature>interface BodyMapViewerProps { view: "front" | "back" | "left" | "right"; selectedRegion?: string; onRegionSelect: (regionId: string) =&gt; void; readOnly?: boolean; multiSelect?: boolean; }</signature>
+      <path>src/components/body-mapping/BodyMapViewer.tsx:8-18</path>
+      <usage>Interactive body map for region selection - use in compact mode for FlareCreationModal</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Jest 30.2.0 with React Testing Library.
+      Coverage target: 80%+ for all new components.
+      Test files co-located: __tests__/ComponentName.test.tsx
+      Test user behavior, not implementation details.
+      Mock repository methods using Jest mocks.
+      Use data-testid for complex selectors when needed.
+      Modal testing: Use @testing-library/user-event for interactions.
+    </standards>
+    <locations>
+      <location>src/components/flares/__tests__/FlareCreationModal.test.tsx</location>
+      <location>src/components/flares/__tests__/FlareUpdateModal.test.tsx</location>
+      <location>src/lib/repositories/__tests__/flareRepository.enhanced.test.ts (existing - may need updates)</location>
+    </locations>
+    <ideas>
+      <testIdea criterion="Creation-1">Test: BodyMapViewer integration. Render FlareCreationModal, verify BodyMapViewer displayed, simulate region selection, verify selected region state updated.</testIdea>
+      <testIdea criterion="Creation-2">Test: Severity slider. Render modal, verify slider range 1-10, change slider value, verify display updates to "Severity: X/10".</testIdea>
+      <testIdea criterion="Creation-3">Test: Optional notes field. Verify notes field present with correct placeholder, type text, verify value captured.</testIdea>
+      <testIdea criterion="Creation-4">Test: Save buttons. Verify both [Save] and [Add Details] buttons present, click [Save], verify onSave called with correct data.</testIdea>
+      <testIdea criterion="Creation-5">Test: Timestamp auto-capture. Mock Date.now(), click save, verify timestamp in saved data matches mocked value.</testIdea>
+      <testIdea criterion="Creation-6">Test: Severity history initialization. Call flareRepository.create, verify returned flare has severityHistory array with initial entry.</testIdea>
+      <testIdea criterion="Creation-7">Test: Modal close after save. Click save, wait for promise resolution, verify onClose called and modal hidden.</testIdea>
+      <testIdea criterion="Creation-8">Test: Form validation. Try to save without selecting location, verify error message shown, verify save blocked.</testIdea>
+      <testIdea criterion="Creation-9">Test: Responsive design. Render at mobile viewport, verify full-screen class. Render at desktop viewport, verify centered dialog class.</testIdea>
+      <testIdea criterion="Update-10">Test: Flare context display. Pass flare prop, verify header shows "Location - Day X" format.</testIdea>
+      <testIdea criterion="Update-11">Test: Previous severity display. Pass flare with severity 7, verify "Severity was: 7/10" displayed.</testIdea>
+      <testIdea criterion="Update-12">Test: Severity slider. Change slider, verify new severity captured.</testIdea>
+      <testIdea criterion="Update-13">Test: Status auto-detection. Set previous severity 7, slide to 9, verify "worsening" suggested. Override by clicking [Same], verify status updated.</testIdea>
+      <testIdea criterion="Update-14">Test: Intervention buttons. Click [Ice] button, verify selected state, click save, verify addIntervention called with 'ice'.</testIdea>
+      <testIdea criterion="Update-15">Test: Optional notes. Add notes, verify captured in update data.</testIdea>
+      <testIdea criterion="Update-16">Test: updateSeverity called. Click save, verify flareRepository.updateSeverity called with correct flareId, severity, status.</testIdea>
+      <testIdea criterion="Update-17">Test: addIntervention called conditionally. Save with intervention, verify called. Save without intervention, verify not called.</testIdea>
+      <testIdea criterion="loading">Test: Loading state. Mock slow save, verify loading spinner shown, verify save button disabled during save.</testIdea>
+      <testIdea criterion="error">Test: Error handling. Mock repository to throw error, click save, verify error message displayed to user.</testIdea>
+    </ideas>
+  </tests>
+</story-context>

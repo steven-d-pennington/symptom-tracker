@@ -1,0 +1,104 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>6</storyId>
+    <title>Allergen Tag Filtering and Investigation</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>filter timeline and reports by allergen tags</iWant>
+    <soThat>I can investigate specific allergen categories</soThat>
+    <tasks>
+      Task 1: Add AllergenFilter UI (chips with labels and counts) to Timeline.
+      Task 2: Persist selection across navigation via context + URL and localStorage.
+      Task 3: Apply filter to hydrated food events using Dexie indexed fetches, then in-memory filtering.
+      Task 4: Aggregate correlation summaries by allergen tag from cached analysisResults and display in widgets/detail views.
+      Task 5: Testing: components, integration (timeline filtering), services (aggregation), accessibility.
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1) Filter timeline by allergen tag (e.g., dairy).&#10;
+    2) View correlation summary for an allergen category.&#10;
+    3) Filter persists across app navigation and back/forward until cleared.&#10;
+    4) Filtered results show count of matching food events.&#10;
+    5) Filter chips refine correlation lists and detail views and reflect selection.&#10;
+    6) Accessibility: controls keyboard navigable and labeled for screen readers.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epic-stories.md" reason="Epic 2, Story 2.6 authoritative ACs and technical notes" />
+      <doc path="docs/tech-spec-epic-E2.md" reason="Acceptance criteria 6 (Allergen filter chips persistence and refinement); dashboard integration" />
+      <doc path="docs/solution-architecture.md" reason="Data model, Dexie usage, caching strategy (24h TTL), component structure (AllergenFilter placement)" />
+      <doc path="docs/PRD.md" reason="FR009 filtering/search, FR007 correlation insights, UX principles (accessibility, consistency)" />
+      <doc path="AGENTS.md" reason="Testing requirements, code style, Dexie JSON stringification, compound index usage" />
+      <doc path="TESTING_GUIDE.md" reason="jsdom environment, IndexedDB/Canvas mocks, RTL patterns" />
+    </docs>
+    <code>
+      <file path="src/components/timeline/TimelineView.tsx" kind="component" symbol="TimelineView" lines="113-247" reason="Hydrates allergens for display; foundation for filter application and count reporting" />
+      <file path="src/components/food/AllergenBadge.tsx" kind="component" symbol="AllergenBadge, AllergenBadgeList" reason="Existing visual badges and labels for allergen chips" />
+      <file path="src/lib/constants/allergens.ts" kind="constants" symbol="ALLERGEN_TYPES, ALLERGEN_LABELS, ALLERGEN_COLORS, validateAllergens" reason="Authoritative taxonomy and labels for filter chips and validation" />
+      <file path="src/lib/repositories/foodRepository.ts" kind="repository" symbol="getAll/filter by allergens" reason="Filtering logic patterns and JSON parsing conventions for allergenTags" />
+      <file path="src/contexts/FoodContext.tsx" kind="context" symbol="FoodContext" reason="JSON stringification patterns and update handling for allergenTags" />
+      <file path="src/components/triggers/__tests__/TriggerCorrelationDashboard.test.tsx" kind="test" symbol="dashboard tests" reason="Existing patterns for integrating allergen-related data into correlation UI" />
+      <file path="src/components/timeline/__tests__" kind="tests" symbol="Timeline tests" reason="Placement for new filter + count integration tests" />
+      <file path="src/lib/services/food/CorrelationCacheService.ts" kind="service" symbol="Correlation cache" reason="TTL rules and refresh triggers relevant to category aggregation" />
+    </code>
+    <dependencies>
+      <pkg name="next" version="15.5.4" />
+      <pkg name="react" version="19.1.0" />
+      <pkg name="react-dom" version="19.1.0" />
+      <pkg name="dexie" version="^4.2.0" />
+      <pkg name="chart.js" version="^4.5.0" />
+      <pkg name="react-chartjs-2" version="^5.3.0" />
+      <pkg name="@radix-ui/react-tooltip" version="^1.2.8" />
+      <pkg name="jest" version="^30.2.0" />
+      <pkg name="@testing-library/react" version="^16.3.0" />
+      <pkg name="@testing-library/jest-dom" version="^6.9.1" />
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Local-first: Dexie as source for timeline and cached analysisResults.&#10;
+    - JSON stringification: arrays stored as JSON strings; parse on read (foodIds, allergenTags).&#10;
+    - Compound indexes: query using indexed fields first (e.g., [userId+timestamp]), then filter in memory.&#10;
+    - Component architecture: functional components; custom hooks in src/lib/hooks; components grouped by feature.&#10;
+    - Accessibility: WCAG 2.1 AA; use ARIA labels, aria-pressed for chips, keyboard focus management.&#10;
+    - Testing: 80% coverage; mock IndexedDB/Canvas; RTL with accessible queries.&#10;
+    - Performance: avoid N+1 Dexie calls; batch hydration (getByIds), memoize derived lists; 24h TTL for cached analytics.
+  </constraints>
+
+  <interfaces>
+    <ui name="AllergenFilter" kind="component" path="src/components/timeline/AllergenFilter.tsx">
+      <signature>function AllergenFilter(props: { selected: string[]; onChange: (tags: string[]) =&gt; void })</signature>
+    </ui>
+    <hook name="useAllergenFilter" kind="hook" path="src/lib/hooks/useAllergenFilter.ts">
+      <signature>function useAllergenFilter(): { selected: string[]; setSelected: (tags: string[]) =&gt; void; persist: () =&gt; void }</signature>
+    </hook>
+    <state name="AllergenFilterState" kind="context">
+      <signature>{ selected: string[]; persistInUrl?: boolean }</signature>
+    </state>
+  </interfaces>
+
+  <tests>
+    <standards>Use Jest + RTL with jsdom, mocking IndexedDB via jest.setup.js. Use getByRole/getByLabelText for accessibility. Ensure chips expose aria-pressed and accessible names. Service tests mock Dexie repositories.</standards>
+    <locations>
+      src/components/timeline/__tests__&#10;src/lib/hooks/__tests__&#10;src/lib/services/**/__tests__
+    </locations>
+    <ideas>
+      AC1: Timeline filters to only events whose foods include selected allergen; verify count equals rendered items.&#10;
+      AC2: Aggregation groups correlation results by tag; verify totals and top symptoms render.&#10;
+      AC3: Persist selection via URL + localStorage; reload and navigation maintain selection.&#10;
+      AC4: Count updates as filters change; empty state messaging.&#10;
+      AC5: Correlation list/detail views honor filter; toggling chips updates both surfaces.&#10;
+      AC6: Accessibility: keyboard toggling, proper labels, focus ring order; axe checks where available.
+    </ideas>
+  </tests>
+</story-context>
+

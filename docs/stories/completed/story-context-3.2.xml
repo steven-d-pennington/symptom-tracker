@@ -1,0 +1,222 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.2</storyId>
+    <title>Update Analytics to Query Event Stream</title>
+    <status>Ready for Review</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user viewing analytics</asA>
+    <iWant>insights driven by event stream data</iWant>
+    <soThat>trend analysis and correlations reflect accurate timestamped events</soThat>
+    <tasks>
+      <task id="1">Refactor TrendAnalysisService to consume event tables instead of daily entries (AC: 1,2,4) - replace symptom queries with symptomInstances lookups, pull flare severity history, and normalize frequency aggregations by day/week/month.</task>
+      <task id="2">Implement medication adherence calculations using medicationEvents (AC: 3) - count taken vs scheduled doses per medication, roll up overall adherence, and expose results for dashboard consumption.</task>
+      <task id="3">Update analytics UI wiring to use the refactored service (AC: 5,6) - adjust AnalyticsDashboard, DashboardProvider, and TrendWidget to pass event-aware data and verify chart rendering paths.</task>
+      <task id="4">Validate performance and caching across new queries (AC: 7) - leverage compound indexes, ensure analysisResults cache invalidates when event data changes, and benchmark 90-day datasets under two seconds.</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">TrendAnalysisService queries symptomInstances instead of dailyEntries.symptoms.</criterion>
+    <criterion id="2">Flare-specific trends query flares table using severityHistory.</criterion>
+    <criterion id="3">Medication adherence derived from medicationEvents (% taken vs scheduled).</criterion>
+    <criterion id="4">Symptom frequency aggregated from symptomInstances by date/week/month.</criterion>
+    <criterion id="5">Analytics dashboard displays correctly with event-based data sources.</criterion>
+    <criterion id="6">No regressions: existing charts continue to render properly.</criterion>
+    <criterion id="7">Performance target: analytics queries finish in under 2 seconds for 90-day datasets.</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
+        <title>Event Stream Redesign Epics</title>
+        <section>Story 3.2: Update Analytics to Query Event Stream</section>
+        <snippet>Defines acceptance criteria and technical notes for migrating analytics from dailyEntries to event stream tables, including flare severity trends, medication adherence, and performance expectations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/event-stream-redesign-spec.md</path>
+        <title>Event Stream Technical Specification</title>
+        <section>Integration Points &gt; Analytics Dashboard</section>
+        <snippet>Explains how analytics must transition to symptomInstances and flares, outlines migration strategy, and highlights adapter considerations while the daily entry model is phased out.</snippet>
+      </doc>
+      <doc>
+        <path>build-docs/13-data-analysis.md</path>
+        <title>Data Analysis Implementation Plan</title>
+        <section>System Architecture &amp; Analysis Data</section>
+        <snippet>Details analysis result structures, trend modeling requirements, and expectations for actionable insights that the updated event-driven service must deliver.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-3.2.md</path>
+        <title>Story 3.2: Update Analytics to Query Event Stream</title>
+        <section>Tasks / Subtasks</section>
+        <snippet>Breaks down implementation steps for refactoring TrendAnalysisService, computing medication adherence, visualizing flare severity histories, and validating performance.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <entry>
+        <path>src/lib/services/TrendAnalysisService.ts</path>
+        <kind>service</kind>
+        <symbol>TrendAnalysisService</symbol>
+        <lines>1-200</lines>
+        <reason>Currently tied to dailyEntryRepository; must be reworked to fetch and aggregate data from symptomInstances, flares, and medicationEvents.</reason>
+      </entry>
+      <entry>
+        <path>src/components/analytics/AnalyticsDashboard.tsx</path>
+        <kind>component</kind>
+        <symbol>AnalyticsDashboard</symbol>
+        <lines>1-80</lines>
+        <reason>Instantiates TrendAnalysisService with repositories; update injection to use event repositories and verify client-side rendering of TrendWidget.</reason>
+      </entry>
+      <entry>
+        <path>src/components/analytics/DashboardContext.tsx</path>
+        <kind>context</kind>
+        <symbol>DashboardProvider</symbol>
+        <lines>1-200</lines>
+        <reason>Coordinates analyzeTrend and fetchMetricData calls; needs adjustments for new data shapes and caching behavior.</reason>
+      </entry>
+      <entry>
+        <path>src/components/analytics/TrendWidget.tsx</path>
+        <kind>component</kind>
+        <symbol>TrendWidget</symbol>
+        <lines>1-200</lines>
+        <reason>Displays trend interpretations and charts; must continue rendering correctly when supplied with event-derived datasets.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>symptomInstanceRepository.getByDateRange</symbol>
+        <lines>1-200</lines>
+        <reason>Provides indexed access to symptomInstances over time; key for symptom frequency aggregation by day/week/month.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/medicationEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>medicationEventRepository.getAdherenceStats</symbol>
+        <lines>1-220</lines>
+        <reason>Encapsulates medication event queries and adherence calculations; should power AC 3 without duplicating logic in the service.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>flareRepository.getByUserId</symbol>
+        <lines>1-200</lines>
+        <reason>Stores severityHistory data required for flare trend extraction and status tracking.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/analysisRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>analysisRepository.getResult</symbol>
+        <lines>1-160</lines>
+        <reason>Handles caching of analysis results with 24-hour TTL; must remain consistent after changing data sources.</reason>
+      </entry>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="15.5.4" />
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="chart.js" version="^4.5.0" />
+        <package name="react-chartjs-2" version="^5.3.0" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1">Replace daily entry lookups with event stream repositories (symptomInstances, flares, medicationEvents) while keeping API parity for analytics consumers.</constraint>
+    <constraint id="2">Use existing compound indexes such as [userId+timestamp] to satisfy the &lt;2s query target for 90-day datasets.</constraint>
+    <constraint id="3">Preserve analysisResults caching semantics (24h TTL, metric+timeRange key) and invalidate caches when new event data is ingested.</constraint>
+    <constraint id="4">Ensure data normalization handles JSON-string fields stored in Dexie (severityScale, triggers, photos) before aggregation.</constraint>
+    <constraint id="5">Support multiple aggregation granularities (daily, weekly, monthly) when summarizing symptom frequency.</constraint>
+    <constraint id="6">Maintain client-side rendering compatibility in AnalyticsDashboard and TrendWidget, ensuring chart.js continues to receive time-sorted data points.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>TrendAnalysisService.analyzeTrend</name>
+      <kind>service method</kind>
+      <signature>async analyzeTrend(userId: string, metric: string, timeRange: string): Promise&lt;RegressionResult | null&gt;</signature>
+      <path>src/lib/services/TrendAnalysisService.ts</path>
+      <notes>Primary analytics entry point; must aggregate event stream data, compute regression, and cache results via analysisRepository.</notes>
+    </interface>
+    <interface>
+      <name>TrendAnalysisService.fetchMetricData</name>
+      <kind>service method</kind>
+      <signature>async fetchMetricData(userId: string, metric: string, timeRange: string): Promise&lt;unknown[]&gt;</signature>
+      <path>src/lib/services/TrendAnalysisService.ts</path>
+      <notes>Currently returns DailyEntryRecord arrays; refactor to return event-based records (symptomInstances, flares, medicationEvents) that downstream components can map to chart points.</notes>
+    </interface>
+    <interface>
+      <name>symptomInstanceRepository.getByDateRange</name>
+      <kind>repository method</kind>
+      <signature>async getByDateRange(userId: string, startDate: Date, endDate: Date): Promise&lt;Symptom[]&gt;</signature>
+      <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+      <notes>Uses [userId+timestamp] index for efficient lookups; essential for symptom frequency aggregation.</notes>
+    </interface>
+    <interface>
+      <name>medicationEventRepository.getAdherenceStats</name>
+      <kind>repository method</kind>
+      <signature>async getAdherenceStats(userId: string, medicationId: string, startTimestamp: number, endTimestamp: number): Promise&lt;AdherenceSummary&gt;</signature>
+      <path>src/lib/repositories/medicationEventRepository.ts</path>
+      <notes>Calculates taken/skipped counts and adherence rate; reuse instead of duplicating calculations in the service.</notes>
+    </interface>
+    <interface>
+      <name>flareRepository.getByUserId</name>
+      <kind>repository method</kind>
+      <signature>async getByUserId(userId: string): Promise&lt;ActiveFlare[]&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <notes>Returns flares with severityHistory arrays; provide helpers to transform severityHistory into time series for trend charts.</notes>
+    </interface>
+    <interface>
+      <name>analysisRepository.getResult</name>
+      <kind>repository method</kind>
+      <signature>async getResult(userId: string, metric: string, timeRange: string): Promise&lt;AnalysisResultRecord | undefined&gt;</signature>
+      <path>src/lib/repositories/analysisRepository.ts</path>
+      <notes>Ensures cached regression results remain valid for 24 hours; consider invalidation when event stream data changes.</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Project uses Jest 30.2.0 with React Testing Library (@testing-library/react 16.3.0) and @testing-library/jest-dom 6.9.1 for component testing. TypeScript with strict mode enabled. Tests must mock Dexie database using jest.mock() with factory functions. Repository methods should be mocked with jest.fn().mockResolvedValue(). Component tests should verify rendering, user interactions, accessibility (ARIA labels), and error states. Integration tests verify data flow from repositories to components. Target 80%+ test coverage. Test files located in __tests__ directories alongside source files.
+    </standards>
+    <locations>
+      <location>src/components/analytics/__tests__/*.test.tsx</location>
+      <location>src/lib/repositories/__tests__/*.test.ts</location>
+      <location>src/lib/services/__tests__/TrendAnalysisService.test.ts</location>
+      <location>jest.setup.js</location>
+    </locations>
+    <ideas>
+      <idea ac="1,4">
+        <test>Unit test TrendAnalysisService.fetchMetricData uses symptomInstanceRepository and groups results into daily/weekly/monthly buckets for symptom metrics.</test>
+        <test>Verify extractTimeSeriesPoints converts symptomInstances into time-ordered severity points with parsed JSON fields.</test>
+      </idea>
+      <idea ac="2">
+        <test>Service method creates flare severity trend points from severityHistory entries and handles missing history gracefully.</test>
+        <test>Ensure flare trend regression results cache invalidates if severityHistory updates.</test>
+      </idea>
+      <idea ac="3">
+        <test>Medication adherence calculation pulls counts from medicationEventRepository.getAdherenceStats and produces overall adherence percentage.</test>
+        <test>Edge cases: zero scheduled doses returns 0% adherence without throwing.</test>
+      </idea>
+      <idea ac="5,6">
+        <test>AnalyticsDashboard renders TrendWidget with event-based data mocks and existing chart components continue to display.</test>
+        <test>DashboardProvider handles errors from new repositories and shows retry UI.</test>
+      </idea>
+      <idea ac="7">
+        <test>Performance harness: mock large 90-day dataset and assert service completes within threshold using jest.setTimeout benchmarks.</test>
+        <test>Ensure event queries use indexed repository methods ([userId+timestamp]) by spying on repository calls.</test>
+      </idea>
+      <idea general="integration">
+        <test>End-to-end service test combining symptomInstances, flares, and medicationEvents to verify combined analytics payload matches expected structure.</test>
+        <test>Cache integration test: first call caches result, subsequent call served from analysisRepository until TTL expires.</test>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>
