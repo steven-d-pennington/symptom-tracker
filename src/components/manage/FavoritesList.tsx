@@ -13,7 +13,7 @@ import { CustomFoodBadge } from "@/components/food/CustomFoodBadge";
 export function FavoritesList() {
   const [userId, setUserId] = useState<string>("");
   const [foodsByCategory, setFoodsByCategory] = useState<Map<string, FoodRecord[]>>(new Map());
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set(["__favorites__"]));
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<FoodRecord[]>([]);
@@ -48,8 +48,8 @@ export function FavoritesList() {
       const grouped = await foodRepository.getAllByCategory(user.id);
       setFoodsByCategory(grouped);
 
-      // Start with all categories collapsed
-      setCollapsedCategories(new Set(grouped.keys()));
+      // Start with all categories collapsed (including favorites)
+      setCollapsedCategories(new Set([...grouped.keys(), "__favorites__"]));
     } catch (err) {
       console.error("Failed to load foods:", err);
       setError("Failed to load foods. Please try again.");
