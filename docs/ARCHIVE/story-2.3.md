@@ -1,6 +1,6 @@
 # Story 2.3: Combination Effects Detection
 
-Status: Complete
+Status: Done
 
 Completion Date: 2025-10-18
 

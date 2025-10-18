@@ -1,6 +1,6 @@
 # Story 2.4: Correlation Confidence Calculations
 
-Status: Complete (All acceptance criteria implemented)
+Status: Done
 
 ## Story
 

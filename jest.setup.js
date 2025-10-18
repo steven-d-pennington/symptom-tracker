@@ -3,12 +3,22 @@ require('@testing-library/jest-dom');
 // Make jest available globally for ES modules
 global.jest = jest;
 
-// Mock IndexedDB for Dexie
-global.indexedDB = {
-  open: () => ({}),
-  deleteDatabase: () => ({}),
-  databases: () => Promise.resolve([]),
-};
+// Mock IndexedDB for Dexie using fake-indexeddb
+const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+global.indexedDB = indexedDB;
+global.IDBKeyRange = IDBKeyRange;
+
+// Add Blob.text() method if it doesn't exist (for Node < 18)
+if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
+  Blob.prototype.text = function() {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsText(this);
+    });
+  };
+}
 
 // Mock Dexie
 jest.mock('@/lib/db/client', () => ({
