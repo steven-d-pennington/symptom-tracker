@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight, Tag } from "lucide-react";
+import { Activity, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight, Tag, ChevronDown, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 import { SymptomRecord } from "@/lib/db/schema";
 import { EmptyState } from "./EmptyState";
 import { SymptomForm } from "./SymptomForm";
@@ -31,6 +32,7 @@ export const SymptomList = () => {
     symptom: SymptomRecord;
     usageCount: number;
   } | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set(categories));
 
   const handleAddClick = () => {
     setEditingSymptom(null);

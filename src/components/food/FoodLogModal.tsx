@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Search, Plus, Pencil, Trash2, Coffee, Sunset, Moon, Cookie } from "lucide-react";
+import { X, Search, Plus, Pencil, Trash2, Coffee, Sunset, Moon, Cookie, ChevronDown, ChevronRight } from "lucide-react";
 import { useFoodContext } from "@/contexts/FoodContext";
 import { handleModalKeyboard, focusFirstElement } from "@/lib/utils/a11y";
 import { cn } from "@/lib/utils/cn";
@@ -63,6 +63,10 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
   const [foods, setFoods] = useState<FoodRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [favoritesByCategory, setFavoritesByCategory] = useState<Map<string, FoodRecord[]>>(new Map());
+  const [allFoodsByCategory, setAllFoodsByCategory] = useState<Map<string, FoodRecord[]>>(new Map());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"favorites" | "all">("favorites");
   const [saving, setSaving] = useState(false);
   const [isAddFoodModalOpen, setIsAddFoodModalOpen] = useState(false);
   const [isEditFoodModalOpen, setIsEditFoodModalOpen] = useState(false);
@@ -82,25 +86,43 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
         setLoading(true);
         const startTime = performance.now();
 
-        // Use search if query exists, otherwise get default foods
-        const results = searchQuery
-          ? await foodRepository.search(userId, searchQuery)
-          : await foodRepository.getDefault(userId);
-
-        // Load favorites for ranking
+        // Load favorites
         const user = await userRepository.getOrCreateCurrentUser();
         const favs = await userRepository.getFoodFavorites(user.id);
         setFavoriteIds(favs);
 
-        // Rank favorites first
-        const ranked = [...results].sort((a, b) => {
-          const aFav = favs.includes(a.id) ? 1 : 0;
-          const bFav = favs.includes(b.id) ? 1 : 0;
-          if (aFav !== bFav) return bFav - aFav; // favorites first
-          return a.name.localeCompare(b.name);
-        });
-
-        setFoods(ranked);
+        // If user is searching, show search results
+        if (searchQuery) {
+          const results = await foodRepository.search(userId, searchQuery);
+          // Rank favorites first in search results
+          const ranked = [...results].sort((a, b) => {
+            const aFav = favs.includes(a.id) ? 1 : 0;
+            const bFav = favs.includes(b.id) ? 1 : 0;
+            if (aFav !== bFav) return bFav - aFav;
+            return a.name.localeCompare(b.name);
+          });
+          setFoods(ranked);
+          setFavoritesByCategory(new Map());
+          setAllFoodsByCategory(new Map());
+        } else if (viewMode === "all") {
+          // Show all foods grouped by category
+          const grouped = await foodRepository.getAllByCategory(userId);
+          setAllFoodsByCategory(grouped);
+          setFavoritesByCategory(new Map());
+          setFoods([]);
+        } else if (favs.length > 0) {
+          // Show favorites grouped by category
+          const grouped = await foodRepository.getFavoritesByCategory(userId, favs);
+          setFavoritesByCategory(grouped);
+          setAllFoodsByCategory(new Map());
+          setFoods([]);
+        } else {
+          // No favorites, show default foods
+          const results = await foodRepository.getDefault(userId);
+          setFoods(results);
+          setFavoritesByCategory(new Map());
+          setAllFoodsByCategory(new Map());
+        }
 
         const endTime = performance.now();
         const searchTime = endTime - startTime;
@@ -119,7 +141,7 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
     };
 
     loadFoods();
-  }, [isFoodLogModalOpen, searchQuery, userId]);
+  }, [isFoodLogModalOpen, searchQuery, userId, viewMode]);
 
   // Focus search input when modal opens
   useEffect(() => {
@@ -302,14 +324,18 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
         isActive: true,
       });
 
+      // Auto-favorite the custom food
+      const user = await userRepository.getOrCreateCurrentUser();
+      await userRepository.toggleFoodFavorite(user.id, foodId);
+      const updatedFavs = await userRepository.getFoodFavorites(user.id);
+      setFavoriteIds(updatedFavs);
+
       // Reload foods to include the new custom food
       await refreshFoods();
 
       // Auto-select the newly created food
-      const updatedFoods = searchQuery
-        ? await foodRepository.search(userId, searchQuery)
-        : await foodRepository.getDefault(userId);
-      const newFood = updatedFoods.find((f) => f.id === foodId);
+      const allFoods = await foodRepository.getActive(userId);
+      const newFood = allFoods.find((f) => f.id === foodId);
       if (newFood) {
         handleFoodSelect(newFood);
       }
@@ -318,7 +344,7 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
       setIsAddFoodModalOpen(false);
 
       // Show success message
-      setSuccessMessage(`Custom food "${foodData.name}" created and selected!`);
+      setSuccessMessage(`Custom food "${foodData.name}" created, favorited, and selected!`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       console.error("Failed to create custom food:", err);
@@ -328,10 +354,28 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
 
   // Helper to refresh foods list
   const refreshFoods = async () => {
-    const results = searchQuery
-      ? await foodRepository.search(userId, searchQuery)
-      : await foodRepository.getDefault(userId);
-    setFoods(results);
+    const user = await userRepository.getOrCreateCurrentUser();
+    const favs = await userRepository.getFoodFavorites(user.id);
+    
+    if (searchQuery) {
+      const results = await foodRepository.search(userId, searchQuery);
+      const ranked = [...results].sort((a, b) => {
+        const aFav = favs.includes(a.id) ? 1 : 0;
+        const bFav = favs.includes(b.id) ? 1 : 0;
+        if (aFav !== bFav) return bFav - aFav;
+        return a.name.localeCompare(b.name);
+      });
+      setFoods(ranked);
+      setFavoritesByCategory(new Map());
+    } else if (favs.length > 0) {
+      const grouped = await foodRepository.getFavoritesByCategory(userId, favs);
+      setFavoritesByCategory(grouped);
+      setFoods([]);
+    } else {
+      const results = await foodRepository.getDefault(userId);
+      setFoods(results);
+      setFavoritesByCategory(new Map());
+    }
   };
 
   // Handle custom food edit
@@ -480,20 +524,274 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
             </div>
           </div>
 
-          {/* Favorites Grid (AC3: favorites visible) */}
+          {/* Food Display Section */}
           <div className="mb-6">
-            <h4 className="text-sm font-medium text-muted-foreground mb-3">
-              {searchQuery ? "Search Results" : "Default Foods"}
-            </h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium text-muted-foreground">
+                {searchQuery ? "Search Results" : viewMode === "all" ? "All Foods" : favoritesByCategory.size > 0 ? "Your Favorites" : "Default Foods"}
+              </h4>
+              {!searchQuery && favoriteIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setViewMode(viewMode === "favorites" ? "all" : "favorites")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                    "border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
+                    viewMode === "all"
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "bg-background border-border text-foreground hover:bg-muted"
+                  )}
+                >
+                  {viewMode === "favorites" ? "View All" : "View Favorites"}
+                </button>
+              )}
+            </div>
             {loading ? (
               <p className="text-center py-8 text-muted-foreground text-sm">
                 Loading foods...
               </p>
+            ) : allFoodsByCategory.size > 0 && viewMode === "all" && !searchQuery ? (
+              /* Show all foods grouped by collapsible categories */
+              <div className="space-y-3">
+                {Array.from(allFoodsByCategory.entries()).map(([category, categoryFoods]) => {
+                  const isCollapsed = collapsedCategories.has(category);
+                  return (
+                    <div key={category} className="border border-border rounded-lg overflow-hidden">
+                      {/* Category Header */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newCollapsed = new Set(collapsedCategories);
+                          if (isCollapsed) {
+                            newCollapsed.delete(category);
+                          } else {
+                            newCollapsed.add(category);
+                          }
+                          setCollapsedCategories(newCollapsed);
+                        }}
+                        className="w-full px-4 py-3 bg-muted/50 hover:bg-muted flex items-center justify-between transition-colors"
+                      >
+                        <span className="font-medium text-foreground">{category}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {categoryFoods.length} {categoryFoods.length === 1 ? "item" : "items"}
+                          </span>
+                          {isCollapsed ? (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Category Foods */}
+                      {!isCollapsed && (
+                        <div className="p-3 grid grid-cols-2 gap-3">
+                          {categoryFoods.map((food) => {
+                            const allergens = JSON.parse(food.allergenTags) as AllergenType[];
+                            const isCustomFood = !food.isDefault;
+                            const isSelected = selectedFoods.some((item) => item.food.id === food.id);
+                            const isFavorite = favoriteIds.includes(food.id);
+                            
+                            return (
+                              <div key={food.id} className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => handleFoodSelect(food)}
+                                  className={cn(
+                                    "w-full px-4 py-3 rounded-lg text-left transition-all",
+                                    "border-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                                    isSelected
+                                      ? "border-primary bg-primary/10"
+                                      : "border-border hover:border-primary/50 hover:bg-muted"
+                                  )}
+                                  aria-pressed={isSelected}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-foreground text-sm flex items-center gap-1">
+                                        {food.name}
+                                        {isFavorite && <span className="text-yellow-600">★</span>}
+                                      </div>
+                                    </div>
+                                    {isCustomFood && (
+                                      <CustomFoodBadge className="flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  {allergens.length > 0 && (
+                                    <div className="mt-1.5">
+                                      <AllergenBadgeList allergens={allergens} maxVisible={2} />
+                                    </div>
+                                  )}
+                                </button>
+                                
+                                {/* Edit/Delete buttons for custom foods */}
+                                {isCustomFood && (
+                                  <div className="absolute top-2 right-2 flex gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditFood(food);
+                                      }}
+                                      className={cn(
+                                        "p-1.5 rounded-md transition-colors",
+                                        "bg-white/90 hover:bg-blue-100 border border-border",
+                                        "focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      )}
+                                      aria-label={`Edit ${food.name}`}
+                                    >
+                                      <Pencil className="w-3 h-3 text-blue-600" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteFood(food);
+                                      }}
+                                      className={cn(
+                                        "p-1.5 rounded-md transition-colors",
+                                        "bg-white/90 hover:bg-red-100 border border-border",
+                                        "focus:outline-none focus:ring-2 focus:ring-red-500"
+                                      )}
+                                      aria-label={`Delete ${food.name}`}
+                                    >
+                                      <Trash2 className="w-3 h-3 text-red-600" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : favoritesByCategory.size > 0 && !searchQuery ? (
+              /* Show favorites grouped by collapsible categories */
+              <div className="space-y-3">
+                {Array.from(favoritesByCategory.entries()).map(([category, categoryFoods]) => {
+                  const isCollapsed = collapsedCategories.has(category);
+                  return (
+                    <div key={category} className="border border-border rounded-lg overflow-hidden">
+                      {/* Category Header */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newCollapsed = new Set(collapsedCategories);
+                          if (isCollapsed) {
+                            newCollapsed.delete(category);
+                          } else {
+                            newCollapsed.add(category);
+                          }
+                          setCollapsedCategories(newCollapsed);
+                        }}
+                        className="w-full px-4 py-3 bg-muted/50 hover:bg-muted flex items-center justify-between transition-colors"
+                      >
+                        <span className="font-medium text-foreground">{category}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {categoryFoods.length} {categoryFoods.length === 1 ? "item" : "items"}
+                          </span>
+                          {isCollapsed ? (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Category Foods */}
+                      {!isCollapsed && (
+                        <div className="p-3 grid grid-cols-2 gap-3">
+                          {categoryFoods.map((food) => {
+                            const allergens = JSON.parse(food.allergenTags) as AllergenType[];
+                            const isCustomFood = !food.isDefault;
+                            const isSelected = selectedFoods.some((item) => item.food.id === food.id);
+                            
+                            return (
+                              <div key={food.id} className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => handleFoodSelect(food)}
+                                  className={cn(
+                                    "w-full px-4 py-3 rounded-lg text-left transition-all",
+                                    "border-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                                    isSelected
+                                      ? "border-primary bg-primary/10"
+                                      : "border-border hover:border-primary/50 hover:bg-muted"
+                                  )}
+                                  aria-pressed={isSelected}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-foreground text-sm">
+                                        {food.name}
+                                      </div>
+                                    </div>
+                                    {isCustomFood && (
+                                      <CustomFoodBadge className="flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  {allergens.length > 0 && (
+                                    <div className="mt-1.5">
+                                      <AllergenBadgeList allergens={allergens} maxVisible={2} />
+                                    </div>
+                                  )}
+                                </button>
+                                
+                                {/* Edit/Delete buttons for custom foods */}
+                                {isCustomFood && (
+                                  <div className="absolute top-2 right-2 flex gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditFood(food);
+                                      }}
+                                      className={cn(
+                                        "p-1.5 rounded-md transition-colors",
+                                        "bg-white/90 hover:bg-blue-100 border border-border",
+                                        "focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      )}
+                                      aria-label={`Edit ${food.name}`}
+                                    >
+                                      <Pencil className="w-3 h-3 text-blue-600" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteFood(food);
+                                      }}
+                                      className={cn(
+                                        "p-1.5 rounded-md transition-colors",
+                                        "bg-white/90 hover:bg-red-100 border border-border",
+                                        "focus:outline-none focus:ring-2 focus:ring-red-500"
+                                      )}
+                                      aria-label={`Delete ${food.name}`}
+                                    >
+                                      <Trash2 className="w-3 h-3 text-red-600" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             ) : foods.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground text-sm">
                 No food items found
               </p>
             ) : (
+              /* Show flat list for search results or when no favorites */
               <div className="grid grid-cols-2 gap-3">
                 {foods.map((food) => {
                   const allergens = JSON.parse(food.allergenTags) as AllergenType[];

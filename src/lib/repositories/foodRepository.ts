@@ -197,6 +197,72 @@ export class FoodRepository {
   }
 
   /**
+   * Get favorite foods grouped by category
+   */
+  async getFavoritesByCategory(
+    userId: string,
+    favoriteIds: string[]
+  ): Promise<Map<string, FoodRecord[]>> {
+    if (favoriteIds.length === 0) {
+      return new Map();
+    }
+
+    const foods = await this.getActive(userId);
+    const favorites = foods.filter((food) => favoriteIds.includes(food.id));
+    
+    const grouped = new Map<string, FoodRecord[]>();
+    for (const food of favorites) {
+      const category = food.category;
+      if (!grouped.has(category)) {
+        grouped.set(category, []);
+      }
+      grouped.get(category)!.push(food);
+    }
+
+    // Sort foods within each category
+    for (const [, foods] of grouped) {
+      foods.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return grouped;
+  }
+
+  /**
+   * Get custom foods for a user (non-default foods)
+   */
+  async getCustom(userId: string): Promise<FoodRecord[]> {
+    await this.ensureDefaultFoods(userId);
+    return await db.foods
+      .where("userId")
+      .equals(userId)
+      .filter((food) => !food.isDefault && food.isActive)
+      .toArray();
+  }
+
+  /**
+   * Get all active foods grouped by category
+   */
+  async getAllByCategory(userId: string): Promise<Map<string, FoodRecord[]>> {
+    const foods = await this.getActive(userId);
+    
+    const grouped = new Map<string, FoodRecord[]>();
+    for (const food of foods) {
+      const category = food.category;
+      if (!grouped.has(category)) {
+        grouped.set(category, []);
+      }
+      grouped.get(category)!.push(food);
+    }
+
+    // Sort foods within each category
+    for (const [, categoryFoods] of grouped) {
+      categoryFoods.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return grouped;
+  }
+
+  /**
    * Get food statistics
    */
   async getStats(userId: string) {
