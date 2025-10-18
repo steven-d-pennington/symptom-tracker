@@ -1,191 +1,89 @@
 <story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
   <metadata>
     <epicId>2</epicId>
-    <storyId>2.1</storyId>
-    <title>QuickLog Buttons Component</title>
+    <storyId>1</storyId>
+    <title>Time-window Correlation Engine with Extended Windows</title>
     <status>Ready</status>
-    <generatedAt>2025-10-14</generatedAt>
+    <generatedAt>2025-10-17</generatedAt>
     <generator>BMAD Story Context Workflow</generator>
     <sourceStoryPath>docs/stories/story-2.1.md</sourceStoryPath>
   </metadata>
 
   <story>
-    <asA>user wanting to log an event</asA>
-    <iWant>see 4 prominent quick-log buttons on the home screen</iWant>
-    <soThat>I have clear entry points for each event type</soThat>
-    <tasks><![CDATA[
-- Create QuickLogButtons component (AC: 1,2,3,7)
-  - Set up component file `src/components/quick-log/QuickLogButtons.tsx`
-  - Implement 2x2 grid layout with Tailwind (mobile) and single row (desktop)
-  - Add 4 buttons with emoji icons and labels
-  - Apply color coding: red (flare), blue (medication), yellow (symptom), orange (trigger)
-- Implement modal state management (AC: 5,6)
-  - Add React state to track which modal is open
-  - Pass modal open/close handlers as props
-  - Disable buttons when any modal is open
-- Ensure mobile accessibility (AC: 4)
-  - Set minimum tap target size to 44px
-  - Add ARIA labels for screen readers
-  - Test on mobile devices
-- Add loading states (AC: 8)
-  - Show loading indicator while modals initialize
-  - Disable buttons during loading
-    ]]></tasks>
+    <asA>user</asA>
+    <iWant>see correlations between foods and symptoms across various time delays</iWant>
+    <soThat>I can identify triggers that appear hours or even days after consumption</soThat>
+    <tasks>
+      - Define window boundaries and binning strategy (ms ranges)
+      - Implement chi-square based correlation per window with alternative coefficient approach
+      - Build background job (cron + API) and cache results by pair+window
+      - Integrate with repositories using indexed queries first; batch data loads
+      - Add unit/integration/performance tests and best-window selection
+    </tasks>
   </story>
 
-  <acceptanceCriteria><![CDATA[
-1. Renders 4 buttons in 2x2 grid: "🔥 New Flare", "💊 Medication", "😣 Symptom", "⚠️ Trigger"
-2. Each button displays emoji icon and label text
-3. Buttons are visually prominent with appropriate color coding (red for flare, blue for med, etc.)
-4. Tap target size ≥44px for mobile accessibility
-5. Buttons disabled state when modals are open (prevent double-tap)
-6. Each button opens its corresponding modal: FlareCreationModal, MedicationLogModal, SymptomLogModal, TriggerLogModal
-7. Responsive layout: 2x2 grid on mobile, single row on desktop
-8. Loading states while modals initialize
-  ]]></acceptanceCriteria>
+  <acceptanceCriteria>
+    1) Analyze windows: 15min, 30min, 1hr, 2–4hrs, 6–12hrs, 24hrs, 48hrs, 72hrs
+    2) For each food–symptom pair, identify strongest window
+    3) Use statistical methods (chi-square preferred; correlation coefficient as needed)
+    4) Non-blocking background job performs analysis; UI remains responsive
+  </acceptanceCriteria>
 
   <artifacts>
     <docs>
-      <doc>
-        <path>docs/PRODUCT/event-stream-redesign-PRD.md</path>
-        <title>Event Stream Redesign PRD</title>
-        <section>Functional Requirements - FR1. Quick-Log Buttons</section>
-        <snippet><![CDATA[FR1. Quick-Log Buttons - System shall provide 4 prominent quick-log buttons on home screen: "🔥 New Flare", "💊 Medication", "😣 Symptom", "⚠️ Trigger", each opening a focused modal for that event type.]]></snippet>
-      </doc>
-      <doc>
-        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
-        <title>Event Stream Redesign Epics</title>
-        <section>Story 2.1: QuickLog Buttons Component</section>
-        <snippet><![CDATA[Technical notes call for QuickLogButtons.tsx using React state to manage which modal is open, passing modal handlers as props, following existing button patterns, and providing ARIA labels alongside the emoji icons.]]></snippet>
-      </doc>
-      <doc>
-        <path>docs/event-stream-redesign-spec.md</path>
-        <title>Event Stream Redesign Spec</title>
-        <section>Component Architecture - QuickLogButtons</section>
-        <snippet><![CDATA[interface QuickLogButtonsProps { onLogFlare: () => void; onLogMedication: () => void; onLogSymptom: () => void; onLogTrigger: () => void; } // Renders 4 prominent buttons with emoji icons]]></snippet>
-      </doc>
-      <doc>
-        <path>docs/event-stream-kickoff-plan.md</path>
-        <title>Event Stream Kickoff Plan</title>
-        <section>Phase 4: Home Screen Integration</section>
-        <snippet><![CDATA[Dashboard layout stacks ActiveFlareCards, QuickLogButtons, and TimelineView with grid showing [🔥 Flare] [💊 Med] / [😣 Symptom] [⚠️ Trigger] as primary quick log entry points.]]></snippet>
-      </doc>
-      <doc>
-        <path>docs/design-thinking-2025-10-13.md</path>
-        <title>Design Thinking Notes (2025-10-13)</title>
-        <section>Quick Log Flow (Symptom Example)</section>
-        <snippet><![CDATA[Step-by-step flow shows tapping 😣 Symptom opens recent/favorite symptom picker, logs event in 3-5 seconds, and relies on progressive disclosure for details.]]></snippet>
-      </doc>
-      <doc>
-        <path>docs/PRODUCT/ux-spec.md</path>
-        <title>UX Specification</title>
-        <section>Touch Target Sizes</section>
-        <snippet><![CDATA[Touch target guidance specifies minimum 44x44px, preferred 48x48px, with icon buttons sized accordingly to satisfy mobile accessibility requirements.]]></snippet>
-      </doc>
+      - docs/PRD.md (FR006/FR007 correlation requirements)
+      - docs/solution-architecture.md (correlation engine, background jobs, caching)
+      - docs/tech-spec-epic-E2.md (Epic 2 technical specification)
+      - docs/epic-stories.md (Story 2.1 ACs and scope)
     </docs>
     <code>
-      <ref>
-        <path>src/app/(protected)/dashboard/page.tsx</path>
-        <kind>page</kind>
-        <symbol>DashboardPage</symbol>
-        <lines>1-84</lines>
-        <reason><![CDATA[Current dashboard surface that must be refactored to embed ActiveFlareCards, QuickLogButtons, and TimelineView stack per Epic 2 plan.]]></reason>
-      </ref>
-      <ref>
-        <path>src/components/daily-entry/QuickEntry.tsx</path>
-        <kind>component</kind>
-        <symbol>QuickEntry</symbol>
-        <lines>1-150</lines>
-        <reason><![CDATA[Provides existing quick interaction patterns (grid layout, status messaging) that can inform QuickLog button styling and accessibility.]]></reason>
-      </ref>
-      <ref>
-        <path>src/components/flare/NewFlareDialog.tsx</path>
-        <kind>component</kind>
-        <symbol>NewFlareDialog</symbol>
-        <lines>1-200</lines>
-        <reason><![CDATA[Existing flare creation modal to trigger from 🔥 button; shows expected props, accessibility, and state management conventions.]]></reason>
-      </ref>
-      <ref>
-        <path>src/lib/repositories/medicationEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>medicationEventRepository.create</symbol>
-        <lines>1-180</lines>
-        <reason><![CDATA[Handles medication event persistence with timing warnings; QuickLog must reuse this API rather than duplicating storage logic.]]></reason>
-      </ref>
-      <ref>
-        <path>src/lib/repositories/triggerEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>triggerEventRepository.create</symbol>
-        <lines>1-160</lines>
-        <reason><![CDATA[Provides validated creation logic for trigger events, ensuring intensity values and compound indexes are respected when logging.]]></reason>
-      </ref>
-      <ref>
-        <path>src/lib/repositories/flareRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>flareRepository.create</symbol>
-        <lines>1-140</lines>
-        <reason><![CDATA[Creates ActiveFlare records and maintains status history; invoked when users start a new flare from QuickLog.]]></reason>
-      </ref>
+      - src/lib/repositories/medicationEventRepository.ts ([userId+timestamp] index pattern)
+      - src/lib/repositories/triggerEventRepository.ts ([userId+timestamp] index pattern)
+      - src/lib/repositories/foodEventRepository.ts (events source; add [userId+timestamp] for efficient range scans)
+      - src/lib/db/schema.ts (event models; AnalysisResultRecord/analysisResults table for caching)
+      - src/lib/services/correlation/CorrelationService.ts (NEW)
+      - api routes: /api/correlation/* (cron trigger + fetch endpoints)
     </code>
     <dependencies>
-      <ecosystem name="node">
-        <package name="next" version="15.5.4" />
-        <package name="react" version="19.1.0" />
-        <package name="react-dom" version="19.1.0" />
-        <package name="tailwindcss" version="4.0.0" />
-        <package name="dexie" version="4.2.0" />
-        <package name="lucide-react" version="0.544.0" />
-        <package name="@radix-ui/react-tooltip" version="1.2.8" />
-      </ecosystem>
+      - Dexie/IndexedDB (local-first event storage)
+      - Background jobs (Vercel Cron)
+      - TypeScript/Jest for logic and tests
     </dependencies>
   </artifacts>
 
   <constraints>
-    <constraint source="docs/stories/story-2.1.md"><![CDATA[Dev notes require creating `src/components/quick-log/QuickLogButtons.tsx`, managing modal state locally, following existing button patterns, and using emoji icons 🔥 💊 😣 ⚠️.]]></constraint>
-    <constraint source="docs/PRODUCT/event-stream-redesign-PRD.md"><![CDATA[FR1 mandates four prominent quick-log buttons on the home screen, each opening a focused modal for its event type.]]></constraint>
-    <constraint source="docs/PRODUCT/ux-spec.md"><![CDATA[Touch targets must be at least 44x44px (preferred 48x48px) to satisfy mobile accessibility.]]></constraint>
-    <constraint source="DEVELOPMENT_GUIDE.md"><![CDATA[All React components use function declarations (no arrow components) and maintain strict TypeScript typing for props.]]></constraint>
-    <constraint source="COMPONENT_LIBRARY.md"><![CDATA[Component architecture emphasizes Tailwind utility classes, accessibility-first patterns, and hook-based state management.]]></constraint>
+    - Performance: always use indexed range scans ([userId+timestamp]) then bin; avoid full scans
+    - Local-first: scope datasets (e.g., last N days) when running locally; offload heavy compute to server cron
+    - Caching: 24h TTL for results; invalidate on new events; prefer last-known results when recomputing
+    - Confidence: initial heuristic (sample size + effect size); formal model deferred to Story 2.4
+    - Error handling: strict TypeScript, try/catch around IO; avoid blocking UI paths
   </constraints>
 
   <interfaces>
-    <interface>
-      <name>QuickLogButtonsProps</name>
-      <kind>component-props</kind>
-      <signature>(onLogFlare: () => void, onLogMedication: () => void, onLogSymptom: () => void, onLogTrigger: () => void)</signature>
-      <path>docs/event-stream-redesign-spec.md</path>
-    </interface>
-    <interface>
-      <name>medicationEventRepository.create</name>
-      <kind>repository-method</kind>
-      <signature>(eventData: MedicationEventDraft) =&gt; Promise&lt;string&gt;</signature>
-      <path>src/lib/repositories/medicationEventRepository.ts</path>
-    </interface>
-    <interface>
-      <name>triggerEventRepository.create</name>
-      <kind>repository-method</kind>
-      <signature>(eventData: TriggerEventDraft) =&gt; Promise&lt;string&gt;</signature>
-      <path>src/lib/repositories/triggerEventRepository.ts</path>
-    </interface>
-    <interface>
-      <name>flareRepository.create</name>
-      <kind>repository-method</kind>
-      <signature>(flare: Omit&lt;ActiveFlare, "id" | "createdAt" | "updatedAt"&gt;) =&gt; Promise&lt;ActiveFlare&gt;</signature>
-      <path>src/lib/repositories/flareRepository.ts</path>
-    </interface>
+    - CorrelationService
+      - computePair(userId: string, foodId: string, symptomId: string, range: {start:number; end:number}): WindowScores[]
+      - bestWindow(scores: WindowScores[]): { window: string; score: number; sampleSize: number }
+      - scheduleRecompute(userId: string, dateRange?: {start:number; end:number}): Promise<void>
+    - Repositories (read-only for analysis)
+      - foodEventRepository.findByDateRange(userId, start, end)
+      - symptomInstanceRepository.findByDateRange(userId, start, end) (add if not present)
+    - Cache (analysisResults)
+      - get(userId, key)
+      - set(userId, key, data, ttlMs)
   </interfaces>
 
   <tests>
-    <standards><![CDATA[Jest with React Testing Library (jsdom) is required, with IndexedDB mocked via jest.setup.js and a global 80% coverage threshold (branches, functions, lines, statements).]]></standards>
+    <standards>Use Jest for unit/integration tests. Favor deterministic synthetic datasets to validate known correlations. Maintain ≥80% coverage for correlation service.</standards>
     <locations>
-      <location>src/components/**/__tests__/*.test.tsx</location>
-      <location>src/lib/repositories/__tests__/*.test.ts</location>
+      - src/lib/services/correlation/__tests__/**
+      - src/lib/repositories/__tests__/** (mocks)
     </locations>
     <ideas>
-      <idea criteria="AC1,AC2,AC3"><![CDATA[Render QuickLogButtons and assert four buttons exist with the expected emoji labels and color classes, ensuring prominence on initial layout.]]></idea>
-      <idea criteria="AC4"><![CDATA[Use getComputedStyle or class assertions to confirm min-h/min-w 44px classes and verify accessible aria-labels map to each button.]]></idea>
-      <idea criteria="AC5,AC6,AC8"><![CDATA[Simulate modal open/loading states via props/state and confirm buttons disable and invoke the correct callbacks only once per interaction.]]></idea>
-      <idea criteria="AC7"><![CDATA[Test responsive behavior by rendering within container queries (or mocking matchMedia) to ensure mobile view uses 2x2 grid and desktop collapses to single row.]]></idea>
+      - Binning correctness for each window range
+      - Chi-square score trends with increasing signal; select best window
+      - Background job invokes compute over changed date ranges; cache set/get behavior
+      - Performance: ensure compute under threshold for typical datasets
     </ideas>
   </tests>
 </story-context>
+

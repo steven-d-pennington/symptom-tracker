@@ -113,6 +113,7 @@ export class UserRepository {
         },
         exportFormat: "json",
         symptomFilterPresets: [],
+        foodFavorites: [],
       },
     });
 
@@ -152,6 +153,25 @@ export class UserRepository {
     await this.updatePreferences(userId, {
       symptomFilterPresets: updated,
     });
+  }
+
+  /**
+   * Get food favorites
+   */
+  async getFoodFavorites(userId: string): Promise<string[]> {
+    const user = await this.getById(userId);
+    return user?.preferences.foodFavorites || [];
+  }
+
+  /**
+   * Toggle a food favorite (add/remove)
+   */
+  async toggleFoodFavorite(userId: string, foodId: string): Promise<void> {
+    const user = await this.getById(userId);
+    if (!user) throw new Error(`User not found: ${userId}`);
+    const current = new Set(user.preferences.foodFavorites || []);
+    if (current.has(foodId)) current.delete(foodId); else current.add(foodId);
+    await this.updatePreferences(userId, { foodFavorites: Array.from(current) });
   }
 
   /**

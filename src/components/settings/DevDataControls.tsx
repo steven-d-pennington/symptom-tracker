@@ -132,6 +132,14 @@ export function DevDataControls() {
           </button>
           <button
             type="button"
+            onClick={() => handleEventStreamClick("one-year-heavy")}
+            disabled={isLoading}
+            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? "Generating…" : "1 Year Heavy User"}
+          </button>
+          <button
+            type="button"
             onClick={() => handleEventStreamClick("edge-cases")}
             disabled={isLoading}
             className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
@@ -144,6 +152,7 @@ export function DevDataControls() {
           <strong>First Day:</strong> 2-4 events today, 1 active flare<br />
           <strong>One Week:</strong> 3-5 events/day, 1-2 active flares with progression<br />
           <strong>Heavy User:</strong> 5-8 events/day for 30 days, 3-5 flares<br />
+          <strong>1 Year Heavy User:</strong> 6-12 events/day for 364 days, 15-25 flares with varied progressions<br />
           <strong>Edge Cases:</strong> Variable patterns, missed meds, unusual timing
         </p>
 

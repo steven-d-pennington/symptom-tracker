@@ -1,0 +1,299 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.3</storyId>
+    <title>Update Exports and Trigger Correlation</title>
+    <status>TODO</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user exporting data and analyzing triggers</asA>
+    <iWant>to export all event types in CSV/JSON and see trigger-symptom correlations with temporal analysis</iWant>
+    <soThat>I can share comprehensive data with my doctor, analyze externally, and identify cause-and-effect relationships</soThat>
+    <tasks>
+      <task id="1">Update export service to query event stream tables and generate CSV/JSON exports with all event types including flare severityHistory (AC-Export: 1,2,3,4,5)</task>
+      <task id="2">Implement CSV export format with one row per event (type, timestamp, name, details) using ISO 8601 timestamps (AC-Export: 1,4)</task>
+      <task id="3">Implement JSON export format structured by event type with full event data preservation (AC-Export: 2,3)</task>
+      <task id="4">Update trigger correlation dashboard to query triggerEvents, symptomInstances, and flares tables (AC-Correlation: 1,2)</task>
+      <task id="5">Implement temporal correlation analysis with time-bucket windows (0-2h, 2-4h, etc.) and calculate correlation coefficients (AC-Correlation: 3,5)</task>
+      <task id="6">Create correlation matrix visualization showing triggers vs symptoms with color-coded coefficients (AC-Correlation: 4)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="Export-1">CSV export includes all event types: one row per event with columns: type, timestamp, name, details</criterion>
+    <criterion id="Export-2">JSON export structured by event type: { medicationEvents: [...], triggerEvents: [...], ... }</criterion>
+    <criterion id="Export-3">Export includes flare progression: severity history and interventions</criterion>
+    <criterion id="Export-4">Export preserves timestamps in ISO 8601 format for external tools</criterion>
+    <criterion id="Export-5">File size reasonable for 1 year of data (under 5MB for typical user)</criterion>
+    <criterion id="Correlation-1">Correlation dashboard queries triggerEvents table for exposures</criterion>
+    <criterion id="Correlation-2">Queries symptomInstances and flares for symptom data</criterion>
+    <criterion id="Correlation-3">Correlation calculation uses timestamps for temporal analysis (trigger at T, symptom at T+2h)</criterion>
+    <criterion id="Correlation-4">Displays correlation matrix: triggers vs symptoms with correlation coefficients</criterion>
+    <criterion id="Correlation-5">Time-lag analysis: shows most common delay between trigger and symptom</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
+        <title>Event Stream Redesign Epics</title>
+        <section>Story 3.3: Update Exports and Trigger Correlation</section>
+        <snippet>Defines acceptance criteria for CSV/JSON exports with all event types, flare progression data, ISO 8601 timestamps, and trigger correlation analysis using temporal analysis with time-bucket windows.</snippet>
+      </doc>
+      <doc>
+        <path>docs/event-stream-redesign-spec.md</path>
+        <title>Event Stream Technical Specification</title>
+        <section>Export and Analytics Integration</section>
+        <snippet>Describes how export functionality must transition to event stream tables and how temporal correlation analysis should leverage compound indexes for performance.</snippet>
+      </doc>
+      <doc>
+        <path>build-docs/19-data-import-export.md</path>
+        <title>Data Import/Export Implementation Plan</title>
+        <section>Export Formats (JSON, CSV, PDF)</section>
+        <snippet>Provides detailed implementation patterns for JSON exports with metadata, CSV exports with proper escaping, progress indicators, and data size estimation methods.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-3.3.md</path>
+        <title>Story 3.3: Update Exports and Trigger Correlation</title>
+        <section>Tasks / Subtasks and Dev Notes</section>
+        <snippet>Contains CSV/JSON format examples, temporal correlation calculation approach with time buckets (0-2h, 2-4h, 4-6h, 6-12h, 12-24h), and Pearson correlation coefficient algorithm reference.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <entry>
+        <path>src/lib/services/exportService.ts</path>
+        <kind>service</kind>
+        <symbol>ExportService</symbol>
+        <lines>1-416</lines>
+        <reason>Currently exports from dailyEntries and legacy repositories; must be refactored to export from medicationEvents, triggerEvents, symptomInstances, and flares with CSV/JSON formats matching Story 3.3 requirements.</reason>
+      </entry>
+      <entry>
+        <path>src/components/triggers/TriggerCorrelationDashboard.tsx</path>
+        <kind>component</kind>
+        <symbol>TriggerCorrelationDashboard</symbol>
+        <lines>1-137</lines>
+        <reason>Currently queries dailyEntryRepository; must be updated to query triggerEvents and symptomInstances tables with temporal correlation analysis using time-bucket windows.</reason>
+      </entry>
+      <entry>
+        <path>src/components/triggers/CorrelationMatrix.tsx</path>
+        <kind>component</kind>
+        <symbol>CorrelationMatrix</symbol>
+        <lines>1-67</lines>
+        <reason>Visualizes trigger-symptom correlations; will display results from updated correlation analysis with color-coded coefficients and time-lag information.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/types/trigger-correlation.ts</path>
+        <kind>types</kind>
+        <symbol>TriggerCorrelation, TriggerInsight</symbol>
+        <lines>1-33</lines>
+        <reason>Type definitions for correlation analysis; may need extension to support time-lag analysis and temporal bucket results.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/medicationEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>medicationEventRepository</symbol>
+        <lines>1-317</lines>
+        <reason>Provides findByDateRange() method for querying medication events; essential for export functionality and adherence calculations.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/triggerEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>triggerEventRepository</symbol>
+        <lines>1-312</lines>
+        <reason>Provides findByDateRange() and getTriggerFrequency() methods for correlation analysis; uses [userId+timestamp] compound index for performance.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>symptomInstanceRepository</symbol>
+        <lines>estimated 1-200</lines>
+        <reason>Provides getByDateRange() method for querying symptom instances; required for temporal correlation analysis to find symptoms within time windows after triggers.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>flareRepository</symbol>
+        <lines>estimated 1-300</lines>
+        <reason>Provides getByUserId() method and flare records with severityHistory arrays; export must include full flare progression data.</reason>
+      </entry>
+      <entry>
+        <path>src/components/data-management/ExportDialog.tsx</path>
+        <kind>component</kind>
+        <symbol>ExportDialog</symbol>
+        <lines>estimated 1-150</lines>
+        <reason>UI for export functionality; needs to support event-based exports and display progress indicators during CSV/JSON generation.</reason>
+      </entry>
+      <entry>
+        <path>src/components/calendar/ExportTools.tsx</path>
+        <kind>component</kind>
+        <symbol>ExportTools</symbol>
+        <lines>estimated 1-100</lines>
+        <reason>Calendar export utilities; may need updates to work with event stream data.</reason>
+      </entry>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="15.5.4" />
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="chart.js" version="^4.5.0" />
+        <package name="react-chartjs-2" version="^5.3.0" />
+        <package name="uuid" version="^13.0.0" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1">Replace daily entry lookups in exportService with event stream repositories (medicationEvents, triggerEvents, symptomInstances, flares) while maintaining backwards compatibility with existing export options.</constraint>
+    <constraint id="2">CSV export format must have header row: type,timestamp,name,details with one event per row, ISO 8601 timestamps, and proper CSV escaping for fields containing commas/quotes.</constraint>
+    <constraint id="3">JSON export must structure data by event type with top-level keys: medicationEvents, triggerEvents, symptomInstances, flares; preserve full event structure including nested arrays like severityHistory.</constraint>
+    <constraint id="4">Export file size must remain under 5MB for 1 year of typical user data; implement streaming or chunking if necessary for large datasets.</constraint>
+    <constraint id="5">Temporal correlation analysis must use time-bucket windows (0-2h, 2-4h, 4-6h, 6-12h, 12-24h) to identify when symptoms occur after trigger events.</constraint>
+    <constraint id="6">Correlation calculations should use Pearson or Spearman correlation coefficients with confidence levels (high/medium/low) based on occurrence counts and statistical significance.</constraint>
+    <constraint id="7">Update TriggerCorrelationDashboard to query triggerEvents and symptomInstances using [userId+timestamp] compound indexes for performance.</constraint>
+    <constraint id="8">Maintain existing ExportDialog UI patterns and progress indicators while switching to event-based data sources.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>ExportService.exportData</name>
+      <kind>service method</kind>
+      <signature>async exportData(userId: string, options: ExportOptions): Promise&lt;Blob&gt;</signature>
+      <path>src/lib/services/exportService.ts</path>
+      <notes>Main export method; must be updated to query event repositories instead of dailyEntries. Options should include format (json|csv), date range, and event type selection.</notes>
+    </interface>
+    <interface>
+      <name>ExportService.exportAsCSV</name>
+      <kind>service method (private)</kind>
+      <signature>private exportAsCSV(data: ExportData): Blob</signature>
+      <path>src/lib/services/exportService.ts</path>
+      <notes>Generates CSV format; refactor to produce one row per event with columns: type,timestamp,name,details. Handle flare severityHistory expansion.</notes>
+    </interface>
+    <interface>
+      <name>ExportService.exportAsJSON</name>
+      <kind>service method (private)</kind>
+      <signature>private exportAsJSON(data: ExportData): Blob</signature>
+      <path>src/lib/services/exportService.ts</path>
+      <notes>Generates JSON format; update ExportData type to include medicationEvents, triggerEvents, symptomInstances, flares arrays instead of dailyEntries.</notes>
+    </interface>
+    <interface>
+      <name>medicationEventRepository.findByDateRange</name>
+      <kind>repository method</kind>
+      <signature>async findByDateRange(userId: string, startTimestamp: number, endTimestamp: number): Promise&lt;MedicationEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/medicationEventRepository.ts</path>
+      <notes>Uses [userId+timestamp] compound index for efficient date range queries; essential for export functionality.</notes>
+    </interface>
+    <interface>
+      <name>triggerEventRepository.findByDateRange</name>
+      <kind>repository method</kind>
+      <signature>async findByDateRange(userId: string, startTimestamp: number, endTimestamp: number): Promise&lt;TriggerEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/triggerEventRepository.ts</path>
+      <notes>Queries trigger events in date range; required for both export and correlation analysis.</notes>
+    </interface>
+    <interface>
+      <name>symptomInstanceRepository.getByDateRange</name>
+      <kind>repository method</kind>
+      <signature>async getByDateRange(userId: string, startDate: Date, endDate: Date): Promise&lt;Symptom[]&gt;</signature>
+      <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+      <notes>Queries symptom instances in date range; used for temporal correlation analysis to find symptoms within time windows after triggers.</notes>
+    </interface>
+    <interface>
+      <name>flareRepository.getByUserId</name>
+      <kind>repository method</kind>
+      <signature>async getByUserId(userId: string): Promise&lt;ActiveFlare[]&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <notes>Returns flares with severityHistory arrays; export must include full progression data for each flare.</notes>
+    </interface>
+    <interface>
+      <name>TriggerCorrelationDashboard.loadCorrelations</name>
+      <kind>component method</kind>
+      <signature>async loadCorrelations(): Promise&lt;void&gt;</signature>
+      <path>src/components/triggers/TriggerCorrelationDashboard.tsx</path>
+      <notes>Refactor to query triggerEvents and symptomInstances; implement temporal analysis with time buckets; calculate correlation coefficients.</notes>
+    </interface>
+    <interface>
+      <name>calculateTemporalCorrelation</name>
+      <kind>utility function (new)</kind>
+      <signature>function calculateTemporalCorrelation(triggers: TriggerEventRecord[], symptoms: Symptom[], timeBuckets: number[]): TriggerCorrelation[]</signature>
+      <path>src/lib/utils/correlation.ts (new file)</path>
+      <notes>New utility to calculate trigger-symptom correlations with time-lag analysis; returns correlation scores, confidence levels, and most common time delays.</notes>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Project uses Jest 30.2.0 with React Testing Library (@testing-library/react 16.3.0) and @testing-library/jest-dom 6.9.1 for component testing. TypeScript with strict mode enabled. Tests must mock Dexie database using jest.mock() with factory functions. Repository methods should be mocked with jest.fn().mockResolvedValue(). Component tests should verify rendering, user interactions, accessibility (ARIA labels), and error states. Integration tests verify data flow from repositories to export service. Target 80%+ test coverage. Test files located in __tests__ directories alongside source files.
+    </standards>
+    <locations>
+      <location>src/lib/services/__tests__/exportService.test.ts</location>
+      <location>src/components/triggers/__tests__/TriggerCorrelationDashboard.test.tsx</location>
+      <location>src/components/data-management/__tests__/ExportDialog.test.tsx</location>
+      <location>src/lib/utils/__tests__/correlation.test.ts</location>
+      <location>jest.setup.js</location>
+    </locations>
+    <ideas>
+      <idea ac="Export-1">
+        <test>Unit test ExportService.exportAsCSV generates proper CSV format with header: type,timestamp,name,details</test>
+        <test>Verify CSV includes medication events: type="medication", ISO 8601 timestamp, medication name, taken/skipped status</test>
+        <test>Verify CSV includes trigger events: type="trigger", ISO 8601 timestamp, trigger name, intensity level</test>
+        <test>Verify CSV includes symptom events: type="symptom", ISO 8601 timestamp, symptom name, severity value</test>
+        <test>Verify CSV includes flare events: type="flare", ISO 8601 timestamp, flare location, severity value</test>
+        <test>Test CSV escaping for fields with commas, quotes, and newlines</test>
+      </idea>
+      <idea ac="Export-2">
+        <test>Unit test ExportService.exportAsJSON structures data with top-level keys: medicationEvents, triggerEvents, symptomInstances, flares</test>
+        <test>Verify JSON preserves full event structure including all fields and nested data</test>
+        <test>Test JSON export includes metadata: exportDate, version, userId</test>
+      </idea>
+      <idea ac="Export-3">
+        <test>Verify JSON export includes flares with full severityHistory arrays</test>
+        <test>Test export preserves intervention data within flare records</test>
+        <test>Ensure severityHistory timestamps and severity values are intact</test>
+      </idea>
+      <idea ac="Export-4">
+        <test>Verify all timestamps in CSV use ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)</test>
+        <test>Verify all timestamps in JSON use ISO 8601 format</test>
+        <test>Test timezone handling to ensure timestamps are in UTC</test>
+      </idea>
+      <idea ac="Export-5">
+        <test>Performance test: generate 1-year dataset with DevDataControls and verify export completes</test>
+        <test>Measure file size for 1-year typical dataset (assume ~3 events/day = ~1000 events)</test>
+        <test>Test that file size remains under 5MB threshold; implement warning if exceeded</test>
+      </idea>
+      <idea ac="Correlation-1,2">
+        <test>Unit test TriggerCorrelationDashboard queries triggerEventRepository.findByDateRange</test>
+        <test>Verify dashboard queries symptomInstanceRepository.getByDateRange for symptom data</test>
+        <test>Test 90-day lookback period for correlation analysis</test>
+      </idea>
+      <idea ac="Correlation-3">
+        <test>Unit test temporal correlation calculation with time-bucket windows: 0-2h, 2-4h, 4-6h, 6-12h, 12-24h</test>
+        <test>Verify trigger at timestamp T finds symptoms in windows: [T, T+2h], [T+2h, T+4h], etc.</test>
+        <test>Test edge case: trigger at end of day, symptoms next day within 24h window</test>
+      </idea>
+      <idea ac="Correlation-4">
+        <test>Verify CorrelationMatrix displays triggers in rows and symptoms in columns</test>
+        <test>Test correlation coefficient rendering: positive (red), negative (blue), neutral (gray)</test>
+        <test>Verify coefficient values display correctly (0-1 range or -1 to +1 for Pearson)</test>
+      </idea>
+      <idea ac="Correlation-5">
+        <test>Test time-lag analysis identifies most common delay bucket (e.g., 2-4h)</test>
+        <test>Verify time-lag display shows human-readable format ("2-4 hours later")</test>
+        <test>Test multiple triggers with same symptom show individual time-lag results</test>
+      </idea>
+      <idea general="integration">
+        <test>End-to-end export test: create events, export CSV, parse CSV, verify all events present</test>
+        <test>End-to-end export test: create events, export JSON, parse JSON, verify structure and data</test>
+        <test>Integration test: TriggerCorrelationDashboard with mocked repositories returns correlation results</test>
+        <test>Test ExportDialog UI: select format, trigger export, verify download initiated</test>
+      </idea>
+      <idea general="error-handling">
+        <test>Test export with empty dataset returns valid empty CSV/JSON</test>
+        <test>Test export error handling when repository queries fail</test>
+        <test>Test correlation analysis with insufficient data (&lt;2 weeks) shows appropriate message</test>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

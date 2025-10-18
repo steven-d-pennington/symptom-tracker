@@ -5,14 +5,25 @@ import {
   triggerRepository,
   dailyEntryRepository,
 } from "../repositories";
+import { foodEventRepository } from "../repositories/foodEventRepository";
+import { foodRepository } from "../repositories/foodRepository";
+import { db } from "../db/client";
 import { photoRepository } from "../repositories/photoRepository";
+import { medicationEventRepository } from "../repositories/medicationEventRepository";
+import { triggerEventRepository } from "../repositories/triggerEventRepository";
+import { symptomInstanceRepository } from "../repositories/symptomInstanceRepository";
+import { flareRepository } from "../repositories/flareRepository";
 import type {
   UserRecord,
   SymptomRecord,
   MedicationRecord,
   TriggerRecord,
   DailyEntryRecord,
+  MedicationEventRecord,
+  TriggerEventRecord,
 } from "../db/schema";
+import type { Symptom } from "../types/symptoms";
+import type { ActiveFlare } from "../types/flare";
 import type { PhotoAttachment } from "../types/photo";
 
 export interface ExportProgress {
@@ -24,13 +35,23 @@ export interface ExportProgress {
 
 export interface ExportOptions {
   format: "json" | "csv";
-  includeSymptoms?: boolean;
-  includeMedications?: boolean;
-  includeTriggers?: boolean;
-  includeDailyEntries?: boolean;
+  includeSymptoms?: boolean; // Legacy: symptom definitions
+  includeMedications?: boolean; // Legacy: medication definitions
+  includeTriggers?: boolean; // Legacy: trigger definitions
+  includeDailyEntries?: boolean; // Legacy: daily entries
   includeUserData?: boolean;
-  includePhotos?: boolean; // NEW
-  decryptPhotos?: boolean; // NEW (requires includePhotos=true)
+  includePhotos?: boolean;
+  decryptPhotos?: boolean; // requires includePhotos=true
+  // NEW: Event stream options
+  includeMedicationEvents?: boolean;
+  includeTriggerEvents?: boolean;
+  includeSymptomInstances?: boolean;
+  includeFlares?: boolean;
+  // Food journal and correlations
+  includeFoodJournal?: boolean;
+  includeCorrelations?: boolean;
+  // Optional: when includeCorrelations is true, include only significant results (p < 0.05)
+  onlySignificant?: boolean;
   dateRange?: {
     start: string;
     end: string;
@@ -49,13 +70,49 @@ export interface ExportData {
   exportDate: string;
   version: string;
   user?: UserRecord;
+  // Legacy fields
   symptoms?: SymptomRecord[];
   medications?: MedicationRecord[];
   triggers?: TriggerRecord[];
   dailyEntries?: DailyEntryRecord[];
-  photos?: PhotoExportData[]; // NEW
-  photoCount?: number; // NEW
-  photosTotalSize?: number; // NEW (in bytes)
+  photos?: PhotoExportData[];
+  photoCount?: number;
+  photosTotalSize?: number; // in bytes
+  // NEW: Event stream data
+  medicationEvents?: MedicationEventRecord[];
+  triggerEvents?: TriggerEventRecord[];
+  symptomInstances?: Symptom[];
+  flares?: ActiveFlare[];
+  // Food Journal (hydrated for convenience)
+  foodJournal?: FoodJournalRow[];
+  // Correlation summaries (optional)
+  correlations?: CorrelationSummary[];
+}
+
+export interface FoodJournalRow {
+  timestamp: number;
+  date: string; // ISO date
+  time: string; // HH:mm
+  mealType: string;
+  foods: string[]; // food names
+  portions?: Record<string, string>; // foodName -> portion size
+  allergenTags?: string[]; // merged, unique
+  notes?: string;
+}
+
+export interface CorrelationSummary {
+  computedAt: number;
+  date: string; // ISO date
+  foodId: string;
+  foodName: string;
+  symptomId: string;
+  symptomName: string;
+  bestWindow?: string;
+  sampleSize: number;
+  consistency?: number; // 0-1
+  confidence?: "high" | "medium" | "low";
+  pValue?: number;
+  score?: number; // chi-square score (for reference)
 }
 
 /**
@@ -94,7 +151,7 @@ export class ExportService {
   }
 
   /**
-   * Collect data based on export options
+   * Collect data according to options, including food journal and correlations
    */
   private async collectData(
     userId: string,
@@ -103,30 +160,28 @@ export class ExportService {
     const data: ExportData = {
       exportDate: new Date().toISOString(),
       version: "1.0",
-    };
+    } as ExportData;
 
-    // Include user data
-    if (options.includeUserData !== false) {
-      data.user = await userRepository.getById(userId);
+    // Optionally include user
+    if (options.includeUserData === true) {
+      data.user = (await userRepository.getById?.(userId)) as any;
     }
 
-    // Include symptoms
-    if (options.includeSymptoms !== false) {
+    // Legacy and event stream collections (existing logic moved from previous method)
+    // Legacy: Include symptoms
+    if (options.includeSymptoms === true) {
       data.symptoms = await symptomRepository.getAll(userId);
     }
 
-    // Include medications
-    if (options.includeMedications !== false) {
+    if (options.includeMedications === true) {
       data.medications = await medicationRepository.getAll(userId);
     }
 
-    // Include triggers
-    if (options.includeTriggers !== false) {
+    if (options.includeTriggers === true) {
       data.triggers = await triggerRepository.getAll(userId);
     }
 
-    // Include daily entries
-    if (options.includeDailyEntries !== false) {
+    if (options.includeDailyEntries === true) {
       if (options.dateRange) {
         data.dailyEntries = await dailyEntryRepository.getByDateRange(
           userId,
@@ -138,12 +193,172 @@ export class ExportService {
       }
     }
 
-    // Include photos (opt-in)
+    // Medication events
+    if (options.includeMedicationEvents !== false) {
+      if (options.dateRange) {
+        const startTimestamp = new Date(options.dateRange.start).getTime();
+        const endTimestamp = new Date(options.dateRange.end).getTime();
+        data.medicationEvents = await medicationEventRepository.findByDateRange(
+          userId,
+          startTimestamp,
+          endTimestamp
+        );
+      } else {
+        data.medicationEvents = await medicationEventRepository.findByUserId(userId);
+      }
+    }
+
+    // Trigger events
+    if (options.includeTriggerEvents !== false) {
+      if (options.dateRange) {
+        const startTimestamp = new Date(options.dateRange.start).getTime();
+        const endTimestamp = new Date(options.dateRange.end).getTime();
+        data.triggerEvents = await triggerEventRepository.findByDateRange(
+          userId,
+          startTimestamp,
+          endTimestamp
+        );
+      } else {
+        data.triggerEvents = await triggerEventRepository.findByUserId(userId);
+      }
+    }
+
+    // Symptom instances
+    if (options.includeSymptomInstances !== false) {
+      if (options.dateRange) {
+        const startDate = new Date(options.dateRange.start);
+        const endDate = new Date(options.dateRange.end);
+        data.symptomInstances = await symptomInstanceRepository.getByDateRange(
+          userId,
+          startDate,
+          endDate
+        );
+      } else {
+        data.symptomInstances = await symptomInstanceRepository.getAll(userId);
+      }
+    }
+
+    // Flares
+    if (options.includeFlares !== false) {
+      data.flares = await flareRepository.getByUserId(userId);
+    }
+
+    // Photos (opt-in)
     if (options.includePhotos === true) {
       const photoData = await this.exportPhotos(userId, options);
       data.photos = photoData.photos;
       data.photoCount = photoData.count;
       data.photosTotalSize = photoData.totalSize;
+    }
+
+    // Food Journal (opt-in)
+    if (options.includeFoodJournal) {
+      const foodEvents = options.dateRange
+        ? await foodEventRepository.findByDateRange(
+            userId,
+            new Date(options.dateRange.start).getTime(),
+            new Date(options.dateRange.end).getTime()
+          )
+        : await foodEventRepository.getAll(userId);
+
+      // Hydrate food names and allergen tags
+      const foodMap = new Map<string, { name: string; allergens: string[] }>();
+      const uniqueFoodIds = new Set<string>();
+      foodEvents.forEach((e) => {
+        JSON.parse(e.foodIds as any as string).forEach((id: string) =>
+          uniqueFoodIds.add(id)
+        );
+      });
+      for (const id of uniqueFoodIds) {
+        const rec = await foodRepository.getById(id);
+        if (rec) {
+          foodMap.set(id, {
+            name: rec.name,
+            allergens: JSON.parse(rec.allergenTags) as string[],
+          });
+        }
+      }
+
+      data.foodJournal = foodEvents.map((e) => {
+        const foodIds: string[] = JSON.parse(e.foodIds);
+        const names = foodIds.map((id) => foodMap.get(id)?.name || id);
+        const portionMap = e.portionMap
+          ? (JSON.parse(e.portionMap) as Record<string, string>)
+          : undefined;
+        const portionsByName = portionMap
+          ? Object.fromEntries(
+              Object.entries(portionMap).map(([id, size]) => [
+                foodMap.get(id)?.name || id,
+                size,
+              ])
+            )
+          : undefined;
+        const allergenSet = new Set<string>();
+        foodIds.forEach((id) => {
+          (foodMap.get(id)?.allergens || []).forEach((a) => allergenSet.add(a));
+        });
+        const dt = new Date(e.timestamp);
+        const date = dt.toISOString().split("T")[0];
+        const time = dt.toISOString().split("T")[1]?.slice(0, 5) || "";
+        return {
+          timestamp: e.timestamp,
+          date,
+          time,
+          mealType: e.mealType,
+          foods: names,
+          portions: portionsByName,
+          allergenTags: Array.from(allergenSet),
+          notes: e.notes,
+        } as FoodJournalRow;
+      });
+    }
+
+    // Correlation summaries (opt-in)
+    if (options.includeCorrelations) {
+      const records = await db.analysisResults
+        .where("userId")
+        .equals(userId)
+        .toArray();
+
+      const corrRecords = records.filter((r) =>
+        r.metric.startsWith("correlation:")
+      );
+
+      const summaries: CorrelationSummary[] = [];
+      for (const rec of corrRecords) {
+        const result: any = rec.result as any;
+        const parts = rec.metric.split(":");
+        // metric format: correlation:userId:foodId:symptomId
+        const foodId = parts[2];
+        const symptomId = parts[3];
+        // Map names
+        const foodName = (await foodRepository.getById(foodId))?.name || foodId;
+        // SymptomRepository stores by id; fallback to symptomId string
+        const symptomName = (await symptomRepository.getById(symptomId))?.name || symptomId;
+
+        // Optionally filter by significance
+        const bw = result?.bestWindow;
+        if (options.onlySignificant && (!bw || bw.pValue >= 0.05)) {
+          continue;
+        }
+
+        summaries.push({
+          computedAt: Number(rec.timeRange) || rec.createdAt.getTime(),
+          date: new Date(rec.createdAt).toISOString().split("T")[0],
+          foodId,
+          foodName,
+          symptomId,
+          symptomName,
+          bestWindow: bw?.window,
+          sampleSize: result?.sampleSize || 0,
+          consistency: result?.consistency,
+          confidence: result?.confidence,
+          pValue: bw?.pValue,
+          score: bw?.score,
+        });
+      }
+
+      data.correlations = summaries;
     }
 
     return data;
@@ -159,86 +374,129 @@ export class ExportService {
 
   /**
    * Export data as CSV
+   * New format: one row per event with columns: type,timestamp,name,details
    */
   private exportAsCSV(data: ExportData): Blob {
     const csvParts: string[] = [];
 
-    // Export daily entries as CSV
-    if (data.dailyEntries && data.dailyEntries.length > 0) {
-      csvParts.push("Daily Entries");
-      csvParts.push(
-        "Date,Overall Health,Energy Level,Sleep Quality,Stress Level,Symptom Count,Medication Count,Trigger Count,Notes"
-      );
+    // Helper function to escape CSV fields
+    const escapeCSV = (value: string): string => {
+      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
 
-      data.dailyEntries.forEach((entry) => {
+    // CSV Header
+    csvParts.push("type,timestamp,name,details");
+
+    // Export medication events
+    if (data.medicationEvents && data.medicationEvents.length > 0) {
+      data.medicationEvents.forEach((event) => {
+        const timestamp = new Date(event.timestamp).toISOString();
+        const details = event.taken ? "taken" : "skipped";
+        const detailsWithDosage = event.dosage
+          ? `${details}, dosage: ${event.dosage}`
+          : details;
+
         csvParts.push(
-          [
-            entry.date,
-            entry.overallHealth,
-            entry.energyLevel,
-            entry.sleepQuality,
-            entry.stressLevel,
-            entry.symptoms?.length || 0,
-            entry.medications?.length || 0,
-            entry.triggers?.length || 0,
-            `"${(entry.notes || "").replace(/"/g, '""')}"`,
-          ].join(",")
+          `medication,${timestamp},${escapeCSV(event.medicationId)},${escapeCSV(detailsWithDosage)}`
         );
       });
-
-      csvParts.push("");
     }
 
-    // Export symptoms as CSV
-    if (data.symptoms && data.symptoms.length > 0) {
-      csvParts.push("Symptoms");
-      csvParts.push("Name,Category,Active,Created Date");
+    // Export trigger events
+    if (data.triggerEvents && data.triggerEvents.length > 0) {
+      data.triggerEvents.forEach((event) => {
+        const timestamp = new Date(event.timestamp).toISOString();
+        const details = `intensity: ${event.intensity}`;
 
-      data.symptoms.forEach((symptom) => {
         csvParts.push(
-          [
-            `"${symptom.name}"`,
-            `"${symptom.category}"`,
-            symptom.isActive ? "Yes" : "No",
-            new Date(symptom.createdAt).toLocaleDateString(),
-          ].join(",")
+          `trigger,${timestamp},${escapeCSV(event.triggerId)},${escapeCSV(details)}`
         );
       });
-
-      csvParts.push("");
     }
 
-    // Export medications as CSV
-    if (data.medications && data.medications.length > 0) {
-      csvParts.push("Medications");
-      csvParts.push("Name,Dosage,Frequency,Active");
+    // Export symptom instances
+    if (data.symptomInstances && data.symptomInstances.length > 0) {
+      data.symptomInstances.forEach((symptom) => {
+        const timestamp = new Date(symptom.timestamp).toISOString();
+        const details = `severity: ${symptom.severity}`;
+        const detailsWithLocation = symptom.location
+          ? `${details}, location: ${symptom.location}`
+          : details;
 
-      data.medications.forEach((medication) => {
         csvParts.push(
-          [
-            `"${medication.name}"`,
-            `"${medication.dosage || ""}"`,
-            `"${medication.frequency}"`,
-            medication.isActive ? "Yes" : "No",
-          ].join(",")
+          `symptom,${timestamp},${escapeCSV(symptom.name)},${escapeCSV(detailsWithLocation)}`
         );
       });
-
-      csvParts.push("");
     }
 
-    // Export triggers as CSV
-    if (data.triggers && data.triggers.length > 0) {
-      csvParts.push("Triggers");
-      csvParts.push("Name,Category,Active");
+    // Export flares
+    if (data.flares && data.flares.length > 0) {
+      data.flares.forEach((flare) => {
+        // Export flare start event
+        const startTimestamp = new Date(flare.startDate).toISOString();
+        const location = flare.bodyRegions.join(", ");
+        const startDetails = `severity: ${flare.severity}, status: ${flare.status}`;
 
-      data.triggers.forEach((trigger) => {
         csvParts.push(
-          [
-            `"${trigger.name}"`,
-            `"${trigger.category}"`,
-            trigger.isActive ? "Yes" : "No",
-          ].join(",")
+          `flare,${startTimestamp},${escapeCSV(location)},${escapeCSV(startDetails)}`
+        );
+
+        // Export severity history entries
+        const severityHistory = (flare as any).severityHistory || [];
+        severityHistory.forEach((entry: any) => {
+          const historyTimestamp = new Date(entry.timestamp).toISOString();
+          const historyDetails = `severity: ${entry.severity}, status: ${entry.status}`;
+
+          csvParts.push(
+            `flare,${historyTimestamp},${escapeCSV(location)},${escapeCSV(historyDetails)}`
+          );
+        });
+      });
+    }
+
+    // Export food journal rows
+    if (data.foodJournal && data.foodJournal.length > 0) {
+      data.foodJournal.forEach((row) => {
+        const timestamp = new Date(row.timestamp).toISOString();
+        const name = row.foods.join("; ");
+        const portions = row.portions
+          ? Object.entries(row.portions)
+              .map(([food, size]) => `${food}:${size}`)
+              .join("; ")
+          : "";
+        const allergens = row.allergenTags ? row.allergenTags.join(";") : "";
+        const details = `mealType: ${row.mealType}${
+          portions ? ", portions: " + portions : ""
+        }${allergens ? ", allergens: " + allergens : ""}${
+          row.notes ? ", notes: " + row.notes : ""
+        }`;
+        csvParts.push(
+          `food,${timestamp},${escapeCSV(name)},${escapeCSV(details)}`
+        );
+      });
+    }
+
+    // Export correlation summaries
+    if (data.correlations && data.correlations.length > 0) {
+      data.correlations.forEach((c) => {
+        const timestamp = new Date(c.computedAt).toISOString();
+        const name = `${c.foodName} → ${c.symptomName}`;
+        const percent = c.consistency !== undefined
+          ? `${Math.round(c.consistency * 100)}%`
+          : "";
+        const detailsParts = [
+          percent ? `correlation: ${percent}` : undefined,
+          c.confidence ? `confidence: ${c.confidence}` : undefined,
+          c.bestWindow ? `bestWindow: ${c.bestWindow}` : undefined,
+          `sampleSize: ${c.sampleSize}`,
+          c.pValue !== undefined ? `p: ${c.pValue}` : undefined,
+        ].filter(Boolean) as string[];
+        const details = detailsParts.join(", ");
+        csvParts.push(
+          `correlation,${timestamp},${escapeCSV(name)},${escapeCSV(details)}`
         );
       });
     }
@@ -275,28 +533,33 @@ export class ExportService {
    * Get export statistics
    */
   async getExportStats(userId: string) {
-    const [symptoms, medications, triggers, entries] = await Promise.all([
-      symptomRepository.getAll(userId),
-      medicationRepository.getAll(userId),
-      triggerRepository.getAll(userId),
-      dailyEntryRepository.getAll(userId),
+    const [
+      medicationEvents,
+      triggerEvents,
+      symptomInstances,
+      flares,
+    ] = await Promise.all([
+      medicationEventRepository.findByUserId(userId),
+      triggerEventRepository.findByUserId(userId),
+      symptomInstanceRepository.getAll(userId),
+      flareRepository.getByUserId(userId),
     ]);
 
     return {
-      symptomCount: symptoms.length,
-      medicationCount: medications.length,
-      triggerCount: triggers.length,
-      entryCount: entries.length,
+      medicationEventCount: medicationEvents.length,
+      triggerEventCount: triggerEvents.length,
+      symptomInstanceCount: symptomInstances.length,
+      flareCount: flares.length,
       totalRecords:
-        symptoms.length +
-        medications.length +
-        triggers.length +
-        entries.length,
+        medicationEvents.length +
+        triggerEvents.length +
+        symptomInstances.length +
+        flares.length,
       estimatedSize: this.estimateDataSize({
-        symptoms,
-        medications,
-        triggers,
-        dailyEntries: entries,
+        medicationEvents,
+        triggerEvents,
+        symptomInstances,
+        flares,
       }),
     };
   }

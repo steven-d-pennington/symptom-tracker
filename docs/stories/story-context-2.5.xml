@@ -1,356 +1,92 @@
-<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+<story-context id="story-2.5-trigger-analysis-dashboard-integration" v="1.0">
   <metadata>
     <epicId>2</epicId>
     <storyId>2.5</storyId>
-    <title>Medication, Symptom, and Trigger Log Modals</title>
+    <title>Trigger Analysis Dashboard Integration</title>
     <status>Ready</status>
-    <generatedAt>2025-10-14</generatedAt>
-    <generator>BMAD Story Context Workflow</generator>
-    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\story-2.5.md</sourceStoryPath>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow (manually assembled)</generator>
+    <sourceStoryPath>docs/stories/story-2.5.md</sourceStoryPath>
   </metadata>
 
   <story>
-    <asA>user logging routine health events</asA>
-    <iWant>fast, purpose-built modals for medications, symptoms, and triggers</iWant>
-    <soThat>I can capture daily events in under five seconds per action</soThat>
-    <tasks>
-      <task id="1" complete="false">
-        <description>Implement MedicationLogModal (AC-Med: 1-7)</description>
-        <subtasks>
-          <subtask>Create `src/components/medications/MedicationLogModal.tsx` with "use client" at top.</subtask>
-          <subtask>Fetch scheduled medications for current day via `medicationRepository.getScheduledForDay(userId, dayOfWeek)`.</subtask>
-          <subtask>Render checkbox list with medication name, dosage, and timing warning indicator.</subtask>
-          <subtask>Calculate ±2 hour timing window using medication schedule metadata and current time.</subtask>
-          <subtask>Pull recent note suggestions with `medicationEventRepository.getRecentNotes(userId, medicationId)`.</subtask>
-          <subtask>Auto-create medication events through `medicationEventRepository.create()` whenever checkbox toggles.</subtask>
-          <subtask>Persist optional notes (typed or chip-selected) and reset state after save.</subtask>
-        </subtasks>
-      </task>
-      <task id="2" complete="false">
-        <description>Implement SymptomLogModal (AC-Sym: 1-6)</description>
-        <subtasks>
-          <subtask>Create `src/components/symptoms/SymptomLogModal.tsx` with functional component export.</subtask>
-          <subtask>Query recent symptom usage (last 30 days) by combining `symptomInstanceRepository.getAll(userId)` and grouping by symptomId.</subtask>
-          <subtask>Display favorites section sorted by last logged timestamp, followed by categorized full list from `symptomRepository.getActive()`.</subtask>
-          <subtask>Implement one-tap logging that immediately invokes `symptomInstanceRepository.create()` with minimal payload.</subtask>
-          <subtask>Support second-tap progressive disclosure to surface severity slider and notes before updating the same record.</subtask>
-          <subtask>Add typeahead search filter with debounce for larger symptom catalogs.</subtask>
-        </subtasks>
-      </task>
-      <task id="3" complete="false">
-        <description>Implement TriggerLogModal (AC-Trig: 1-5)</description>
-        <subtasks>
-          <subtask>Create `src/components/triggers/TriggerLogModal.tsx` mirroring modal layout conventions.</subtask>
-          <subtask>Load common triggers via `triggerEventRepository.getMostCommonTriggers(userId)` and hydrate details from `triggerRepository.getById()`.</subtask>
-          <subtask>Render full trigger catalog grouped by category using `triggerRepository.getActive(userId)`.</subtask>
-          <subtask>On first tap, auto-create trigger event with default medium intensity via `triggerEventRepository.create()`.</subtask>
-          <subtask>Provide optional intensity selector and notes form when user taps same trigger again.</subtask>
-        </subtasks>
-      </task>
-      <task id="4" complete="false">
-        <description>Shared modal infrastructure &amp; smart notes (AC-Med:4, cross-modals)</description>
-        <subtasks>
-          <subtask>Build reusable modal shell (backdrop, focus trap, mobile full-screen) or leverage existing dialog pattern from `NewFlareDialog`.</subtask>
-          <subtask>Implement smart note chips that deduplicate strings and allow click-to-apply across medication, symptom, trigger flows.</subtask>
-          <subtask>Ensure auto-save events update timeline data sources so QuickLogButtons reflect new state immediately.</subtask>
-          <subtask>Integrate optional "Add details" action that will open EventDetailModal (Story 2.6) when available.</subtask>
-        </subtasks>
-      </task>
-    </tasks>
+    <asA>user</asA>
+    <iWant>to see food-related triggers in the existing Trigger Analysis dashboard</iWant>
+    <soThat>I have a unified view of all my triggers (environmental, food, etc.)</soThat>
+    <acceptanceCriteria>
+      <ac id="AC1">Food triggers appear in Trigger Analysis dashboard alongside existing triggers</ac>
+      <ac id="AC2">Food triggers visually distinguished with a food icon</ac>
+      <ac id="AC3">Dashboard shows top food triggers ranked by correlation strength</ac>
+      <ac id="AC4">Clicking a food trigger opens a detailed correlation report</ac>
+      <ac id="AC5">Dashboard supports filtering by trigger type (food vs. environmental)</ac>
+    </acceptanceCriteria>
   </story>
 
-  <acceptanceCriteria>
-    <group name="MedicationLogModal">
-      <criterion id="Med-1">Show today's scheduled medications sourced from medications table.</criterion>
-      <criterion id="Med-2">Display each medication with quick checkbox toggle for taken/not taken.</criterion>
-      <criterion id="Med-3">Surface timing warning when outside ±2 hour schedule window (text and icon).</criterion>
-      <criterion id="Med-4">Render recent note chips gathered from latest medication events.</criterion>
-      <criterion id="Med-5">Provide optional free-form notes input beneath checkbox list.</criterion>
-      <criterion id="Med-6">Persist event automatically at checkbox toggle without explicit save button.</criterion>
-      <criterion id="Med-7">Total interaction time &lt;=5 seconds for checkbox-only flow, &lt;=10 seconds with notes.</criterion>
-    </group>
-    <group name="SymptomLogModal">
-      <criterion id="Sym-1">Prioritize recent or favorite symptoms logged in last 30 days.</criterion>
-      <criterion id="Sym-2">List full catalog with category headers for browsing.</criterion>
-      <criterion id="Sym-3">One-tap logging immediately records event and gives feedback.</criterion>
-      <criterion id="Sym-4">Second tap reveals severity and notes for progressive disclosure.</criterion>
-      <criterion id="Sym-5">Include search filter for quick lookup by name.</criterion>
-      <criterion id="Sym-6">Interaction completes within 3-5 seconds for quick tap, 10-15 with details.</criterion>
-    </group>
-    <group name="TriggerLogModal">
-      <criterion id="Trig-1">Highlight most common triggers (dietary, stress, sleep, weather) at top.</criterion>
-      <criterion id="Trig-2">Provide complete trigger library grouped or alphabetized.</criterion>
-      <criterion id="Trig-3">First tap instantly logs trigger with medium intensity.</criterion>
-      <criterion id="Trig-4">Second tap allows adjusting intensity and adding notes.</criterion>
-      <criterion id="Trig-5">Median logging flow stays within 3-5 seconds for one-tap usage.</criterion>
-    </group>
-  </acceptanceCriteria>
+  <relevantCode>
+    <component path="src/components/triggers/TriggerCorrelationDashboard.tsx" reason="Primary dashboard surface for trigger correlations."/>
+    <component path="src/components/triggers/CorrelationMatrix.tsx" reason="Visualization of correlations grid; extend to include food type and icon."/>
+    <component path="src/components/triggers/TriggerInsights.tsx" reason="Insights list; may include food-trigger insights."/>
+    <component path="src/components/navigation/Sidebar.tsx" reason="Contains "/triggers" route entry."/>
+    <component path="src/components/navigation/NavLayout.tsx" reason="Page title mapping for "/triggers"."/>
+    <route path="src/app/page.tsx" reason="Landing shows quick link to Trigger Analysis."/>
+    <repository path="src/lib/repositories/triggerEventRepository.ts" reason="Environmental trigger events (existing)."/>
+    <repository path="src/lib/repositories/triggerRepository.ts" reason="Trigger definitions and names."/>
+    <repository path="src/lib/repositories/foodEventRepository.ts" reason="Food events source data (for food triggers)."/>
+    <service path="src/lib/services/correlation/CorrelationOrchestrationService.ts" reason="Provides correlation + confidence; reuse for food-related insights."/>
+    <service path="src/lib/services/food/CombinationAnalysisService.ts" reason="Combination effects; may feed food-trigger ranking."/>
+    <types path="src/lib/types/trigger-correlation.ts" reason="Dashboard correlation types; extend with type: 'food' | 'environment'."/>
+  </relevantCode>
 
-  <artifacts>
-    <docs>
-      <doc>
-        <path>docs/event-stream-redesign-spec.md</path>
-        <title>Event Stream Redesign Technical Specification</title>
-        <section>Component Architecture - MedicationLogModal, SymptomLogModal, TriggerLogModal</section>
-        <snippet>
-          Component specs (sections 6-8) outline props, data flow, and UX goals:
-          - MedicationLogModal shows scheduled meds, timing warnings, note suggestions.
-          - SymptomLogModal prioritizes recent symptoms, supports one-tap logging with optional severity.
-          - TriggerLogModal highlights common triggers and progressive intensity controls.
-        </snippet>
-      </doc>
-      <doc>
-        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
-        <title>Event Stream Redesign Epics</title>
-        <section>Story 2.5: Medication, Symptom, and Trigger Log Modals</section>
-        <snippet>
-          Story definition lists detailed acceptance criteria for each modal, technical notes on repository usage, and timing expectations (2-5 second flows).
-          Emphasizes smart note suggestions and immediate auto-save behavior.</snippet>
-      </doc>
-      <doc>
-        <path>build-docs/03-daily-entry-system.md</path>
-        <title>Daily Entry System - Implementation Notes</title>
-        <section>Quick Logging Workflow</section>
-        <snippet>
-          Highlights daily entry UX goals:
-          - Quick logging flows must complete in under 5 seconds.
-          - Frequently used symptoms and triggers surface first.
-          - Progressive disclosure preserves speed while allowing details later.
-        </snippet>
-      </doc>
-      <doc>
-        <path>docs/COMPONENT_LIBRARY.md</path>
-        <title>Component Library Overview</title>
-        <section>Modal &amp; Dialog Patterns</section>
-        <snippet>
-          Documents reusable modal structure (backdrop, focus trapping, responsive sizing) used by components like NewFlareDialog.
-          Provides Tailwind class conventions for mobile full-screen dialogs.</snippet>
-      </doc>
-    </docs>
-    <code>
-      <artifact>
-        <path>src/lib/repositories/medicationRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>medicationRepository.getScheduledForDay</symbol>
-        <lines>92-115</lines>
-        <reason>Retrieves the scheduled medications per weekday, enabling MedicationLogModal to populate checkbox list.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/medicationEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>medicationEventRepository.getRecentNotes</symbol>
-        <lines>209-235</lines>
-        <reason>Provides recent note suggestions for smart chips and supports AC-Med-4.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/medicationEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>medicationEventRepository.create</symbol>
-        <lines>118-168</lines>
-        <reason>Auto-save entry point when checkbox toggles; includes timing warning calculation helper.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/symptomRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>symptomRepository.getActive</symbol>
-        <lines>12-24</lines>
-        <reason>Source of active symptom catalog to render in SymptomLogModal.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>symptomInstanceRepository.create</symbol>
-        <lines>52-101</lines>
-        <reason>Persists symptom quick-log events; ensures JSON conversions handled correctly.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/triggerRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>triggerRepository.getActive</symbol>
-        <lines>12-26</lines>
-        <reason>Fetches trigger catalog by category for TriggerLogModal full list.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/triggerEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>triggerEventRepository.getMostCommonTriggers</symbol>
-        <lines>173-206</lines>
-        <reason>Provides frequency-based ordering for common triggers section.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/triggerEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>triggerEventRepository.create</symbol>
-        <lines>64-125</lines>
-        <reason>Used for auto-saving trigger events and ensuring intensity validation.</reason>
-      </artifact>
-      <artifact>
-        <path>src/components/flare/NewFlareDialog.tsx</path>
-        <kind>component</kind>
-        <symbol>NewFlareDialog</symbol>
-        <lines>1-170</lines>
-        <reason>Reference implementation for modal layout, focus management, and Tailwind styling.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/db/schema.ts</path>
-        <kind>type-definition</kind>
-        <symbol>MedicationRecord</symbol>
-        <lines>120-165</lines>
-        <reason>Defines medication schedule structure (time, daysOfWeek) required for timing warning logic.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/db/schema.ts</path>
-        <kind>type-definition</kind>
-        <symbol>TriggerRecord</symbol>
-        <lines>210-245</lines>
-        <reason>Provides trigger metadata (category, isActive) needed for trigger list grouping.</reason>
-      </artifact>
-    </code>
-    <dependencies>
-      <ecosystem name="node">
-        <package name="react" version="^19.0.0">Core React rendering for modal components.</package>
-        <package name="react-dom" version="^19.0.0">Portal support for overlays if needed.</package>
-        <package name="next" version="^15.0.0">Next.js app router environment requiring client components.</package>
-        <package name="typescript" version="^5.0.0">Strict typing for modal props and repository interfaces.</package>
-        <package name="tailwindcss" version="^4.0.0">Utility classes for responsive modal styling.</package>
-        <package name="lucide-react" version="latest">Icon set for warnings, search, and close buttons.</package>
-        <package name="dexie" version="^4.0.0">IndexedDB abstraction used by repositories invoked during logging.</package>
-        <package name="date-fns" version="latest">Optional helper for schedule comparisons and relative timestamps.</package>
-      </ecosystem>
-    </dependencies>
-  </artifacts>
+  <design>
+    <model>
+      <note>Unify visualization model with a `type` discriminator.</note>
+      <fields>
+        <field name="type">food | environmental</field>
+        <field name="name">Display label (food name or trigger name)</field>
+        <field name="symptomName">Associated symptom</field>
+        <field name="correlationScore">0..1 numeric for ranking</field>
+        <field name="confidence">high|medium|low (reuse ConfidenceCalculationService)</field>
+        <field name="icon">If type==food, show a food icon</field>
+      </fields>
+    </model>
+    <ui>
+      <note>Introduce a filter control: tabs or segmented toggle (All | Food | Environmental).</note>
+      <note>Ensure accessible labels and keyboard navigation (WCAG 2.1 AA).</note>
+    </ui>
+  </design>
 
-  <constraints>
-    <constraint type="architecture">
-      Create three dedicated modal components within their feature directories (medications, symptoms, triggers).
-      Export functional components only, mark each file with "use client" directive for client-side behavior.
-      Ensure modal shell follows existing dialog accessibility patterns (focus trap, ESC close, backdrop click handling).
-    </constraint>
-    <constraint type="data-fetching">
-      Derive data exclusively through repository layer:
-      - Medications: `medicationRepository.getScheduledForDay` + `medicationEventRepository.getRecentNotes` for chips.
-      - Symptoms: combine `symptomRepository.getActive` with recent usage derived from `symptomInstanceRepository.getAll` filtered to 30 days.
-      - Triggers: use `triggerEventRepository.getMostCommonTriggers` for top section, `triggerRepository.getActive` for catalog, plus `triggerEventRepository.getRecentNotes` for smart notes.
-      Always pass `userId` (currently "user-123" in tests) to maintain future multi-user readiness.
-    </constraint>
-    <constraint type="auto-save">
-      One-tap interactions must immediately persist events.
-      - Medication checkbox change triggers create/update without further confirmation.
-      - Symptom and trigger taps write events instantly, then surface optional detail controls without blocking initial save.
-      Handle optimistic feedback (checkmark animation or toast) and catch repository errors with inline messaging.
-    </constraint>
-    <constraint type="smart-notes">
-      Note suggestion chips should deduplicate values, trim whitespace, and handle long text via truncation with tooltip.
-      Selecting a chip appends text to notes input and focuses field for quick edits.
-    </constraint>
-    <constraint type="progressive-disclosure">
-      Implement secondary actions for richer detail:
-      - Medication: "Add details" button reserved to open EventDetailModal (Story 2.6); include TODO linking once modal exists.
-      - Symptom/Trigger: second tap toggles expanded card with severity/intensity selectors and notes.
-      Maintain minimal default UI to keep first interaction under 5 seconds.
-    </constraint>
-    <constraint type="ux-patterns">
-      Tailwind utility guidance:
-      - Mobile: `fixed inset-0` full-screen modals, primary actions anchored near bottom thumb zone.
-      - Desktop: centered `max-w-xl` dialogs with rounded corners.
-      - Use semantic controls (checkbox, button, search input) and provide iconography from lucide-react.
-      Provide skeleton or shimmer placeholders if repository queries delay more than 200ms.
-    </constraint>
-    <constraint type="accessibility">
-      WCAG 2.1 AA compliance: focus trap, aria labels for checkboxes/buttons, announce auto-save success via polite live region.
-      Ensure keyboard shortcuts (Enter confirms optional detail forms, Escape closes modal) work throughout.
-  Provide `aria-live="polite"` region for "Medication logged" announcements.
-    </constraint>
-    <constraint type="performance">
-      Minimize re-render cost: memoize heavy lists, virtualize if symptom/trigger list &gt;100 items.
-      Batch Dexie writes when logging multiple medications in quick succession (Promise.all on toggled items) to avoid blocking UI.
-      Debounce search input to 150ms to reduce filtering churn.
-    </constraint>
-    <constraint type="testing">
-      Add Jest + React Testing Library coverage per modal (≥80%).
-      Mock repository modules via jest.mock to isolate UI behavior.
-      Ensure tests cover edge cases: no scheduled medications, empty favorites list, Dexie error handling.
-    </constraint>
-  </constraints>
+  <dataFlow>
+    <step>Fetch trigger events (environmental) via triggerEventRepository.</step>
+    <step>Fetch food correlations via correlationOrchestrationService (computeWithCombinations for pairs; or a specific summary for food triggers).</step>
+    <step>Transform both sets to a unified dashboard item model with type=food/environmental.</step>
+    <step>Rank by correlationScore; decorate with confidence and icons.</step>
+    <step>Render in CorrelationMatrix and insights; apply filter.</step>
+    <drilldown>On click of a food item, route to food correlation detail (Story 2.7).</drilldown>
+  </dataFlow>
 
-  <interfaces>
-    <interface>
-      <name>MedicationLogModalProps</name>
-      <kind>component-props</kind>
-      <signature>interface MedicationLogModalProps { userId: string; isOpen: boolean; onClose: () =&gt; void; onLogged?: () =&gt; void; }</signature>
-      <path>src/components/medications/MedicationLogModal.tsx (to be created)</path>
-      <usage>Controls modal visibility and notifies parent when a medication event logs successfully.</usage>
-    </interface>
-    <interface>
-      <name>MedicationQuickLogItem</name>
-      <kind>type-interface</kind>
-      <signature>interface MedicationQuickLogItem { medicationId: string; name: string; scheduledTime?: string; timingWarning?: 'early' | 'late' | null; lastNoteChips: string[]; taken: boolean; }</signature>
-      <path>src/components/medications/MedicationLogModal.tsx (to be created)</path>
-      <usage>Derived view model powering checkbox list plus smart note chips.</usage>
-    </interface>
-    <interface>
-      <name>SymptomLogModalProps</name>
-      <kind>component-props</kind>
-      <signature>interface SymptomLogModalProps { userId: string; isOpen: boolean; onClose: () =&gt; void; onLogged?: () =&gt; void; }</signature>
-      <path>src/components/symptoms/SymptomLogModal.tsx (to be created)</path>
-      <usage>Symptom logging modal props mirroring medication/trigger variants for consistency.</usage>
-    </interface>
-    <interface>
-      <name>TriggerLogModalProps</name>
-      <kind>component-props</kind>
-      <signature>interface TriggerLogModalProps { userId: string; isOpen: boolean; onClose: () =&gt; void; onLogged?: () =&gt; void; }</signature>
-      <path>src/components/triggers/TriggerLogModal.tsx (to be created)</path>
-      <usage>Trigger logging modal interface, supports optional callback for timeline refresh.</usage>
-    </interface>
-    <interface>
-      <name>triggerEventRepository.create</name>
-      <kind>repository-method</kind>
-      <signature>async create(event: TriggerEventDraft): Promise&lt;string&gt;</signature>
-      <path>src/lib/repositories/triggerEventRepository.ts:64-125</path>
-      <usage>Persists trigger quick-log events; invoked on first tap with default medium intensity.</usage>
-    </interface>
-    <interface>
-      <name>symptomInstanceRepository.create</name>
-      <kind>repository-method</kind>
-      <signature>async create(symptom: SymptomDraft): Promise&lt;string&gt;</signature>
-      <path>src/lib/repositories/symptomInstanceRepository.ts:62-101</path>
-      <usage>Creates symptom quick-log entries; ensures JSON string fields formatted correctly.</usage>
-    </interface>
-    <interface>
-      <name>medicationEventRepository.create</name>
-      <kind>repository-method</kind>
-      <signature>async create(event: MedicationEventDraft): Promise&lt;string&gt;</signature>
-      <path>src/lib/repositories/medicationEventRepository.ts:118-168</path>
-      <usage>Handles medication auto-save and timing warning calculation.</usage>
-    </interface>
-  </interfaces>
-
-  <tests>
-    <standards>
-      Testing framework: Jest 30.2.0 + React Testing Library.
-      Maintain &gt;=80% coverage for statements/branches per repo guidelines.
-      Co-locate tests under `__tests__` directories next to each modal.
-      Mock Dexie repositories to simulate quick-log responses and error states.
-    </standards>
-    <locations>
-      <location>src/components/medications/__tests__/MedicationLogModal.test.tsx</location>
-      <location>src/components/symptoms/__tests__/SymptomLogModal.test.tsx</location>
-      <location>src/components/triggers/__tests__/TriggerLogModal.test.tsx</location>
-    </locations>
+  <testing>
+    <standards>Use React Testing Library for component tests; mock repositories/services; jsdom environment.</standards>
+    <locations>src/components/triggers/__tests__</locations>
     <ideas>
-      <testIdea criterion="Med-1">Mock scheduled meds and verify checkbox list renders sorted by schedule time.</testIdea>
-      <testIdea criterion="Med-3">Simulate current time outside ±2h window, assert warning icon/text appears.</testIdea>
-      <testIdea criterion="Med-4">Provide recent notes array, ensure chips render unique values and apply to notes field when clicked.</testIdea>
-      <testIdea criterion="Med-6">Toggle checkbox and confirm `medicationEventRepository.create` called with expected payload.</testIdea>
-      <testIdea criterion="Sym-1">Seed recent symptom events, verify favorites section displays before full list.</testIdea>
-      <testIdea criterion="Sym-3">Click symptom once and assert `symptomInstanceRepository.create` invoked instantly.</testIdea>
-      <testIdea criterion="Sym-4">Click same symptom twice, ensure severity slider and notes input become visible.</testIdea>
-      <testIdea criterion="Sym-5">Type into search field, confirm list filters to matching symptom names.</testIdea>
-      <testIdea criterion="Trig-1">Mock frequency data to show dietary/stress triggers first, verify ordering.</testIdea>
-      <testIdea criterion="Trig-3">Single tap on trigger should call `triggerEventRepository.create` with intensity "medium".</testIdea>
-      <testIdea criterion="Trig-4">Trigger second tap, ensure intensity selector appears and adjusting it updates payload.</testIdea>
-      <testIdea criterion="error">Force repository rejection and assert inline error message plus no modal close.</testIdea>
-      <testIdea criterion="a11y">Use axe checks to validate modal focus trap and aria attributes.</testIdea>
+      <idea ac="AC1">Renders both food and environmental items together.</idea>
+      <idea ac="AC2">Food items display a food icon and correct aria-label.</idea>
+      <idea ac="AC3">Items are sorted descending by correlationScore across types.</idea>
+      <idea ac="AC4">Clicking a food row calls handler with identifiers for detail route.</idea>
+      <idea ac="AC5">Filter toggles show only selected type; All shows both.</idea>
     </ideas>
-  </tests>
+  </testing>
+
+  <references>
+    <doc path="docs/epic-stories.md" section="Story 2.5"/>
+    <doc path="docs/ARCHITECTURE/general-architecture.md" section="Trigger Analysis navigation"/>
+    <doc path="docs/PRODUCT/epics.md" section="Trigger analysis patterns (if present)"/>
+  </references>
+
+  <devNotes>
+    <note>Prefer reusing correlation services; avoid duplicate computation in dashboard.</note>
+    <note>TypeScript strict mode: extend types without any usage of any.</note>
+    <note>Accessible filters: role="tablist" or role="radiogroup" with aria-checked.</note>
+    <note>Performance: compute rankings in memory after fetching; memoize where appropriate.</note>
+  </devNotes>
 </story-context>
+

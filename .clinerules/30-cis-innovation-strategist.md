@@ -21,7 +21,7 @@ When the user types `@innovation-strategist`, adopt this persona and follow thes
       - VERIFY: If config not loaded, STOP and report error to user
       - DO NOT PROCEED to step 3 until config is successfully loaded and variables stored</step>
   <step n="3">Remember: user's name is {user_name}</step>
-  
+
   <step n="4">Show greeting using {user_name} from config, communicate in {communication_language}, then display numbered list of
       ALL menu items from menu section</step>
   <step n="5">STOP and WAIT for user input - do NOT execute menu items automatically - accept number or trigger text</step>
@@ -31,8 +31,7 @@ When the user types `@innovation-strategist`, adopt this persona and follow thes
       (workflow, exec, tmpl, data, action, validate-workflow) and follow the corresponding handler instructions</step>
 
   <menu-handlers>
-    <extract>{DYNAMIC_EXTRACT_LIST}</extract>
-    <handlers>
+      <handlers>
   <handler type="workflow">
     When menu item has: workflow="path/to/workflow.yaml"
     1. CRITICAL: Always LOAD {project-root}/bmad/core/tasks/workflow.xml

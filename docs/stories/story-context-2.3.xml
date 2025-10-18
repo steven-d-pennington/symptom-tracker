@@ -1,342 +1,486 @@
-<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context>
   <metadata>
-    <epicId>2</epicId>
-    <storyId>2.3</storyId>
-    <title>Timeline View Component</title>
+    <story-id>2.3</story-id>
+    <epic-id>2</epic-id>
+    <title>Combination Effects Detection</title>
     <status>Ready</status>
-    <generatedAt>2025-10-14</generatedAt>
-    <generator>BMAD Story Context Workflow</generator>
-    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\story-2.3.md</sourceStoryPath>
+    <generated-at>2025-10-17T14:30:00Z</generated-at>
+    <agent>SM (Scrum Master Bob)</agent>
   </metadata>
 
   <story>
-    <asA>user wanting to see what happened today</asA>
-    <iWant>to view a chronological feed of all events</iWant>
-    <soThat>I can understand my day's health patterns at a glance</soThat>
+    <user-story>As a user, I want to see if food combinations trigger symptoms more than individual foods, so that I can identify synergistic dietary triggers</user-story>
+    
+    <acceptance-criteria>
+      <criterion id="AC1">
+        <description>System identifies meals where combinations correlate with symptoms</description>
+        <technical-notes>Group meals by mealId, enumerate unique food pairs from meal events</technical-notes>
+      </criterion>
+      <criterion id="AC2">
+        <description>System compares combination correlation vs individual food max correlation</description>
+        <technical-notes>Compute individual correlations for each food in pair, compare against combination correlation</technical-notes>
+      </criterion>
+      <criterion id="AC3">
+        <description>System highlights significantly stronger correlation (>15% delta)</description>
+        <technical-notes>Synergy threshold: combinationCorrelation > maxIndividual + 0.15</technical-notes>
+      </criterion>
+      <criterion id="AC4">
+        <description>System enforces minimum 3 instances required for analysis</description>
+        <technical-notes>Sample size filter before Chi-square test execution</technical-notes>
+      </criterion>
+      <criterion id="AC5">
+        <description>Dashboard displays synergy indicators</description>
+        <technical-notes>Visual badges, color coding, confidence levels in FoodCombinationCard</technical-notes>
+      </criterion>
+      <criterion id="AC6">
+        <description>System uses Chi-square test (p &lt; 0.05) per ADR-008</description>
+        <technical-notes>Statistical significance validation using existing chi-square implementation</technical-notes>
+      </criterion>
+    </acceptance-criteria>
+
     <tasks>
-      <task id="1" complete="false">
-        <description>Create TimelineView component (AC: 1,2,3,9)</description>
-        <subtasks>
-          <subtask>Set up component file `src/components/timeline/TimelineView.tsx`</subtask>
-          <subtask>Query all event types from repositories (medicationEvents, triggerEvents, symptomInstances, flares)</subtask>
-          <subtask>Aggregate and sort events by timestamp descending</subtask>
-          <subtask>Group events by day with date headers ("Today", "Yesterday", "Oct 12")</subtask>
-          <subtask>Implement responsive width (full on mobile, 2/3 on desktop)</subtask>
-        </subtasks>
+      <task id="1" acs="1,2,4,6">
+        <title>Implement CombinationAnalysisService core logic</title>
+        <details>
+          - Create src/lib/services/food/CombinationAnalysisService.ts with combination detection
+          - Implement meal grouping by mealId to identify food combinations
+          - Build unique food pair enumeration from meal events
+          - Calculate combination correlation using Chi-square test
+          - Compare combination correlation vs. individual food max correlation
+          - Enforce minimum 3-instance threshold before analysis
+          - Add unit tests for combination detection with known datasets (15+ tests)
+        </details>
       </task>
-      <task id="2" complete="false">
-        <description>Format timeline items (AC: 2)</description>
-        <subtasks>
-          <subtask>Medication: "💊 Humira (taken)" or "💊 Metformin (skipped)"</subtask>
-          <subtask>Symptom: "😣 Headache" with severity if present</subtask>
-          <subtask>Trigger: "⚠️ Ate dairy (medium intensity)"</subtask>
-          <subtask>Flare created: "🔥 Right armpit flare started, severity 7/10"</subtask>
-          <subtask>Flare updated: "🔥 Right armpit updated: 8/10 (+1)"</subtask>
-          <subtask>Flare resolved: "🔥 Right armpit flare resolved"</subtask>
-        </subtasks>
+      <task id="2" acs="1,5">
+        <title>Extend data model with FoodCombination entity</title>
+        <details>
+          - Add FoodCombination Prisma model to schema (userId, foodIds[], foodNames[], symptomId, correlationPct, individualMax, synergistic flag, p-value, confidence, sample size)
+          - Add compound index on [userId, foodIds[], symptomId]
+          - Generate Prisma migration
+          - NOTE: This project uses IndexedDB/Dexie, not Prisma - adapt to Dexie schema instead
+        </details>
       </task>
-      <task id="3" complete="false">
-        <description>Implement interactivity (AC: 4,5,6)</description>
-        <subtasks>
-          <subtask>Tap timeline item opens EventDetailModal (Story 2.6)</subtask>
-          <subtask>Show "Add details →" link for minimal events</subtask>
-          <subtask>Add "Load previous day" button with pagination</subtask>
-          <subtask>Track currentDate state for pagination</subtask>
-        </subtasks>
+      <task id="3" acs="1,2,6">
+        <title>Integrate with CorrelationOrchestrationService</title>
+        <details>
+          - Extend CorrelationOrchestrationService to invoke CombinationAnalysisService
+          - Pass grouped meal events after individual correlations computed
+          - Wire combination results into cache alongside individual correlations
+        </details>
       </task>
-      <task id="4" complete="false">
-        <description>Add loading and empty states (AC: 7,8)</description>
-        <subtasks>
-          <subtask>Skeleton UI while initial query loads</subtask>
-          <subtask>Spinner for "Load more" action</subtask>
-          <subtask>Empty state message: "No events today yet. Use quick-log buttons above to get started!"</subtask>
-        </subtasks>
+      <task id="4" acs="3,5">
+        <title>Build FoodCombinationCard component</title>
+        <details>
+          - Create src/components/food/FoodCombinationCard.tsx
+          - Display food pair names, synergy indicator (>15% delta), confidence badges
+          - Show comparison: "Dairy + Gluten: 65% correlation (vs. 42% individually)"
+          - Add accessible tooltips explaining synergy calculations
+          - Implement 8+ component tests (rendering, synergy badge display, accessibility)
+        </details>
       </task>
-      <task id="5" complete="false">
-        <description>Optimize for performance (AC: Performance)</description>
-        <subtasks>
-          <subtask>Use pagination: load 1 day at a time</subtask>
-          <subtask>Consider virtualization for 100+ events (react-window or similar)</subtask>
-        </subtasks>
+      <task id="5" acs="1,2,3,6">
+        <title>Extend API routes for combination queries</title>
+        <details>
+          - Add combination results to /api/correlation/compute response payload
+          - Add query param includeCombinations to /api/correlation/results
+          - Ensure cron job (/api/correlation/cron) invokes CombinationAnalysisService
+        </details>
+      </task>
+      <task id="6" acs="5">
+        <title>Integrate combination cards into Trigger Analysis dashboard</title>
+        <details>
+          - Add FoodCombinationCard section to TriggerCorrelationDashboard.tsx
+          - Filter combinations by minConfidence, allergen tags (if applicable)
+          - Sort by synergy strength (correlationPct - individualMax)
+          - Add toggle to show/hide combination analysis section
+        </details>
+      </task>
+      <task id="7" acs="1,2,3,4,6">
+        <title>Comprehensive testing and validation</title>
+        <details>
+          - Unit tests: CombinationAnalysisService (15+ tests covering pair enumeration, chi-square, thresholds, edge cases)
+          - Component tests: FoodCombinationCard (8+ tests covering synergy display, accessibility, confidence badges)
+          - Integration tests: CorrelationOrchestrationService (6+ tests covering end-to-end combination detection with mocked repositories)
+          - Validate minimum coverage: 80% branches, functions, lines, statements
+        </details>
       </task>
     </tasks>
   </story>
 
-  <acceptanceCriteria>
-    <criterion id="1">Displays events in reverse chronological order (most recent first)</criterion>
-    <criterion id="2">Each timeline item shows: time (HH:MM am/pm), emoji icon, summary text, optional details preview</criterion>
-    <criterion id="3">Events grouped by day with date headers ("Today", "Yesterday", "Oct 12", etc.)</criterion>
-    <criterion id="4">Tap timeline item to open EventDetailModal for that event</criterion>
-    <criterion id="5">"Add details →" link shown on events with minimal data</criterion>
-    <criterion id="6">"Load previous day" button at bottom, loads one more day on tap</criterion>
-    <criterion id="7">Loading states: skeleton UI while querying, spinner for "Load more"</criterion>
-    <criterion id="8">Empty state: "No events today yet. Use quick-log buttons above to get started!"</criterion>
-    <criterion id="9">Responsive: full width on mobile, 2/3 width on desktop</criterion>
-  </acceptanceCriteria>
-
   <artifacts>
     <docs>
-      <doc>
-        <path>docs/event-stream-redesign-spec.md</path>
-        <title>Event Stream Redesign Technical Specification</title>
-        <section>Component Architecture - TimelineView</section>
-        <snippet>
-          TimelineView component specification (lines 236-258):
-          - Location: src/components/timeline/TimelineView.tsx
-          - Purpose: Chronological feed of today's events
-          - TimelineEvent interface: {id, type ('medication'|'symptom'|'trigger'|'flare'|'photo'), timestamp, summary, details?}
-          - Props: events[], onEventTap, onAddDetails
-          - Features: Chronological list, tap to expand, "Add details" button for quick-logged items
-          - Aggregates events from all repositories (medication, trigger, symptom, flare)
-        </snippet>
-      </doc>
-      <doc>
-        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
-        <title>Event Stream Redesign Epics</title>
-        <section>Story 2.3: Timeline View Component</section>
-        <snippet>
-          Story defines requirements for TimelineView:
-          - Display events in reverse chronological order
-          - Group by day with date headers ("Today", "Yesterday", "Oct 12")
-          - Each item: time (HH:MM am/pm), emoji icon, summary text, optional details preview
-          - Tap to open EventDetailModal
-          - "Add details →" link for minimal events
-          - "Load previous day" button for pagination
-          - Empty state and loading states
-          - Responsive: full width mobile, 2/3 desktop
-        </snippet>
-      </doc>
-      <doc>
-        <path>docs/DEVELOPMENT/component-library.md</path>
-        <title>Component Library Reference</title>
-        <section>Calendar Components - TimelineView</section>
-        <snippet>
-          Existing timeline/calendar components for reference:
-          - TimelineView: Horizontal timeline of events with zoom controls
-          - CalendarView: Main calendar page with month/week/day views
-          - DayView: Detailed view of single day's entry
-          - Design patterns: Timeline markers, event grouping, responsive layouts
-          - Related components in src/components/calendar/
-        </snippet>
-      </doc>
-      <doc>
-        <path>docs/PRODUCT/ux-specification.md</path>
-        <title>UX/UI Specification</title>
-        <section>Component Library - Timeline &amp; List Components</section>
-        <snippet>
-          UX patterns for timeline displays:
-          - Reverse chronological order (most recent first)
-          - Day grouping with relative dates ("Today", "Yesterday")
-          - Loading states: skeleton UI, progressive loading
-          - Empty states with helpful guidance messages
-          - Touch-friendly interactions (tap to expand)
-          - Responsive breakpoints: full width mobile, constrained desktop
-          - Accessibility: keyboard navigation, screen reader support
-        </snippet>
-      </doc>
+      <artifact>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>Services and Modules</section>
+        <snippet>CombinationAnalysisService detects synergistic food pairs/meals and compares against individual correlations. Input: grouped meal events; Output: FoodCombinationResult. Owner: Data Science.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>Data Models and Contracts</section>
+        <snippet>FoodCombination model with foodIds[], foodNames[], symptomId, combinationCorrelation, individualMax, synergistic flag, pValue, confidence, sampleSize. Compound index on [userId, foodIds[], symptomId]. NOTE: This project uses Dexie, not Prisma - adapt schema accordingly.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>APIs and Interfaces</section>
+        <snippet>CombinationAnalysisService.buildPairs(mealEvents) → enumerates unique combinations with sample size thresholds. CorrelationJobRunner invokes both individual and combination analysis. /api/correlation/results supports includeCombinations query param.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epic-stories.md</path>
+        <title>Epic Breakdown: Story 2.3</title>
+        <section>Story 2.3: Combination Effects Detection</section>
+        <snippet>User story: See if food combinations trigger symptoms more than individual foods. AC includes meal analysis, correlation comparison, Chi-square test, 15% synergy threshold. Technical notes: meal-level analysis, combination enumeration, statistical significance testing.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture: Application Architecture</title>
+        <section>Epic Alignment Matrix</section>
+        <snippet>E2 Food-Symptom Correlation Analysis includes CorrelationService, FoodCorrelationService, CombinationAnalysisService using chi-square and Pearson statistics. Prisma FoodCorrelation/FoodCombination models, correlation cache, trigger analysis dashboard. NOTE: Project actually uses IndexedDB/Dexie, not Prisma.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>ADR-008: Statistical Correlation Methods (Chi-Square + Pearson)</title>
+        <section>Decision</section>
+        <snippet>Use Chi-Square test for categorical food-symptom correlation (p &lt; 0.05 significance threshold). Industry-standard method providing p-value calculation. Balances statistical rigor with simplicity. Requires minimum sample size (3-5 occurrences).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR018: Combination Effects Analysis</section>
+        <snippet>System analyzes combination effects, identifying when specific food pairs correlate with symptoms more strongly than individual foods alone. Enables discovery of synergistic dietary triggers.</snippet>
+      </artifact>
+      <artifact>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guide</title>
+        <section>Database Architecture</section>
+        <snippet>Local-First: All data stored in IndexedDB via Dexie.js, no backend. Schema at version 9, migrations in src/lib/db/client.ts. Compound indexes critical for performance - always query using [userId+field] patterns. Arrays stored as JSON strings in database (must parse on read).</snippet>
+      </artifact>
+      <artifact>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guide</title>
+        <section>Testing Requirements</section>
+        <snippet>Coverage: 80% minimum across branches, functions, lines, statements. Use React Testing Library with accessible queries. Repository testing: mock Dexie operations, test business logic. Component testing: test accessibility, user interactions, error states.</snippet>
+      </artifact>
     </docs>
+
     <code>
       <artifact>
-        <path>src/lib/repositories/medicationEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>medicationEventRepository.findByDateRange</symbol>
-        <lines>104-114</lines>
-        <reason>Primary method for querying medication events by date range - essential for timeline aggregation. Uses optimized [userId+timestamp] compound index.</reason>
+        <path>src/lib/services/correlation/CorrelationService.ts</path>
+        <kind>service</kind>
+        <symbol>CorrelationService</symbol>
+        <lines>1-187</lines>
+        <reason>REUSABLE - Pure correlation computation layer with chi-square implementation. Shows pattern for statistical analysis services. CombinationAnalysisService should follow similar design (pure, testable, stateless). Contains chiSquare() function to reuse for combination analysis.</reason>
       </artifact>
       <artifact>
-        <path>src/lib/repositories/medicationEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>medicationEventRepository.getTodayEvents</symbol>
-        <lines>303-314</lines>
-        <reason>Helper method to get today's medication events - useful pattern for timeline queries</reason>
+        <path>src/lib/services/correlation/CorrelationOrchestrationService.ts</path>
+        <kind>service</kind>
+        <symbol>CorrelationOrchestrationService</symbol>
+        <lines>1-138</lines>
+        <reason>EXTEND - Orchestrates correlation computation by hydrating data from repositories. Need to add CombinationAnalysisService invocation when meal data is available. Shows pattern for repository integration and error handling.</reason>
       </artifact>
       <artifact>
-        <path>src/lib/repositories/triggerEventRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>triggerEventRepository.findByDateRange</symbol>
-        <lines>1-50</lines>
-        <reason>Query trigger events by date range for timeline - parallel to medicationEventRepository pattern</reason>
+        <path>src/lib/services/food/DoseResponseService.ts</path>
+        <kind>service</kind>
+        <symbol>DoseResponseService</symbol>
+        <lines>1-213</lines>
+        <reason>REFERENCE - Recently implemented service (Story 2.2) showing similar pattern. Pure computation layer with confidence level determination, sample size thresholds, and comprehensive test coverage. Follow similar structure for CombinationAnalysisService.</reason>
       </artifact>
       <artifact>
-        <path>src/lib/repositories/flareRepository.ts</path>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
         <kind>repository</kind>
-        <symbol>flareRepository.getActiveFlaresWithTrend</symbol>
-        <lines>205-246</lines>
-        <reason>Get active flares with trend indicators - needed for timeline flare events display</reason>
+        <symbol>foodEventRepository</symbol>
+        <lines>1-150</lines>
+        <reason>REFERENCE - Repository pattern for FoodEvent data access. Shows compound index usage [userId+timestamp], JSON parsing for arrays (foodIds, portionMap), and batch operations. Use similar pattern for querying meals by mealId.</reason>
       </artifact>
       <artifact>
         <path>src/lib/db/schema.ts</path>
-        <kind>type-definition</kind>
-        <symbol>MedicationEventRecord</symbol>
-        <lines>1-20</lines>
-        <reason>Core type for medication events - defines timestamp, userId, medicationId fields used in timeline aggregation</reason>
+        <kind>schema</kind>
+        <symbol>FoodEventRecord</symbol>
+        <lines>150-200</lines>
+        <reason>EXTEND - Database schema definitions. Need to understand FoodEvent structure (mealId, foodIds[], timestamp) to build combination detection logic. Arrays stored as JSON strings per Dexie convention.</reason>
       </artifact>
       <artifact>
-        <path>src/lib/db/schema.ts</path>
-        <kind>type-definition</kind>
-        <symbol>TriggerEventRecord</symbol>
-        <lines>1-20</lines>
-        <reason>Core type for trigger events - parallel structure to medication events for timeline</reason>
-      </artifact>
-      <artifact>
-        <path>src/components/calendar/TimelineView.tsx</path>
+        <path>src/components/triggers/TriggerCorrelationDashboard.tsx</path>
         <kind>component</kind>
-        <symbol>TimelineView</symbol>
-        <lines>1-50</lines>
-        <reason>EXISTING timeline component - reference for design patterns, may need refactoring or replacement for new event stream timeline</reason>
+        <symbol>TriggerCorrelationDashboard</symbol>
+        <lines>1-100</lines>
+        <reason>EXTEND - Main dashboard component for trigger analysis. Need to integrate FoodCombinationCard section here. Shows pattern for loading correlations, displaying insights, and handling loading states.</reason>
       </artifact>
     </code>
+
     <dependencies>
-      <ecosystem name="node">
-        <package name="react" version="^19.0.0">Core React library for component creation</package>
-        <package name="react-dom" version="^19.0.0">React DOM rendering</package>
-        <package name="next" version="^15.0.0">Next.js framework for routing and SSR</package>
-        <package name="typescript" version="^5.0.0">TypeScript for type safety</package>
-        <package name="lucide-react" version="latest">Icon library for UI icons (emoji alternatives, arrows)</package>
-        <package name="tailwindcss" version="^4.0.0">CSS framework for styling</package>
-        <package name="dexie" version="^4.0.0">IndexedDB wrapper for data persistence</package>
-        <package name="date-fns" version="latest">Date formatting and manipulation (optional, can use Intl.DateTimeFormat)</package>
-      </ecosystem>
+      <package name="dexie" version="^4.2.0" usage="IndexedDB database wrapper - all data access" />
+      <package name="react" version="19.1.0" usage="Component framework" />
+      <package name="chart.js" version="^4.5.0" usage="Visualization (if combination charts needed)" />
+      <package name="lucide-react" version="^0.544.0" usage="Icons for synergy indicators" />
+      <package name="@testing-library/react" version="^16.3.0" usage="Component testing" />
+      <package name="jest" version="^30.2.0" usage="Test framework" />
     </dependencies>
+
+    <constraints>
+      <constraint type="architecture">
+        <description>Local-First Architecture</description>
+        <details>All data stored in IndexedDB via Dexie.js, no backend. Tech spec references Prisma/Postgres but project uses Dexie. Adapt all data models to Dexie schema (src/lib/db/schema.ts).</details>
+      </constraint>
+      <constraint type="architecture">
+        <description>Pure Computation Layers</description>
+        <details>Service layer must be pure and testable. Separate computation (CombinationAnalysisService) from orchestration (CorrelationOrchestrationService) and data access (repositories). Follow CorrelationService pattern.</details>
+      </constraint>
+      <constraint type="data">
+        <description>JSON Array Storage</description>
+        <details>Arrays stored as JSON strings in Dexie (foodIds, foodNames). Must JSON.parse() on read, JSON.stringify() on write. Per AGENTS.md: "Arrays stored as JSON strings in database (must parse on read)".</details>
+      </constraint>
+      <constraint type="data">
+        <description>Compound Index Performance</description>
+        <details>Always query using compound indexes [userId+field] to avoid full scans. Per AGENTS.md: "Compound indexes critical for performance - always query using [userId+field] patterns." For combination queries, index on [userId+mealId] or [userId+timestamp].</details>
+      </constraint>
+      <constraint type="statistics">
+        <description>Chi-Square Test Requirements</description>
+        <details>Use Chi-square test for statistical significance (p &lt; 0.05 per ADR-008). Reuse chiSquare() function from CorrelationService. Requires minimum sample size (3 instances per AC4). Follow existing implementation pattern.</details>
+      </constraint>
+      <constraint type="statistics">
+        <description>Synergy Threshold</description>
+        <details>Synergy defined as combination correlation exceeding max individual correlation by 15% (0.15 delta). Per Dev Notes: "synergistic = combinationCorrelation > maxIndividual + 0.15". Clear threshold for flagging synergistic effects.</details>
+      </constraint>
+      <constraint type="testing">
+        <description>80% Code Coverage</description>
+        <details>Minimum coverage: 80% branches, functions, lines, statements. Per AGENTS.md: "Coverage: 80% minimum across branches, functions, lines, statements." Use Jest + React Testing Library. Test all edge cases (empty meals, single foods, insufficient samples).</details>
+      </constraint>
+      <constraint type="accessibility">
+        <description>WCAG 2.1 AA Compliance</description>
+        <details>FoodCombinationCard must meet WCAG 2.1 Level AA. Use semantic HTML, ARIA labels, keyboard navigation, color contrast. Test with screen readers. Follow existing component accessibility patterns.</details>
+      </constraint>
+    </constraints>
+
+    <interfaces>
+      <interface>
+        <name>CombinationAnalysisService</name>
+        <purpose>Pure computation service for detecting synergistic food combinations</purpose>
+        <signature>
+          <![CDATA[
+export interface FoodCombination {
+  foodIds: string[];
+  foodNames: string[];
+  symptomId: string;
+  symptomName: string;
+  combinationCorrelation: number; // 0-1 percentage as decimal
+  individualMax: number; // Max individual correlation from pair
+  synergistic: boolean; // combinationCorrelation > individualMax + 0.15
+  pValue: number;
+  confidence: 'high' | 'medium' | 'low';
+  sampleSize: number;
+  computedAt: number;
+}
+
+export interface MealEvent {
+  mealId: string;
+  foodIds: string[];
+  timestamp: number;
+}
+
+export interface IndividualCorrelation {
+  foodId: string;
+  symptomId: string;
+  correlation: number;
+}
+
+export function detectCombinations(
+  mealEvents: MealEvent[],
+  symptomInstances: SymptomInstanceLike[],
+  individualCorrelations: IndividualCorrelation[],
+  range: TimeRange,
+  minSampleSize?: number // default 3 per AC4
+): FoodCombination[]
+          ]]>
+        </signature>
+      </interface>
+      <interface>
+        <name>FoodCombinationCard</name>
+        <purpose>React component displaying synergistic food combination with visual indicators</purpose>
+        <props>
+          <![CDATA[
+interface FoodCombinationCardProps {
+  combination: FoodCombination;
+  onExpand?: () => void;
+  className?: string;
+}
+
+// Component renders:
+// - Food pair names with + separator
+// - Synergy badge (">15% stronger together")
+// - Correlation comparison bar chart
+// - Confidence level indicator
+// - Sample size and p-value details
+// - Accessible tooltips for all metrics
+          ]]>
+        </props>
+      </interface>
+    </interfaces>
+
+    <existing-patterns>
+      <pattern name="Pure Service Layer">
+        <description>Computation logic separated from data access. Services are pure functions, testable without DB mocking.</description>
+        <example>CorrelationService.computePairWithData() accepts in-memory data arrays, returns WindowScore[]. No DB calls inside pure service.</example>
+        <application>CombinationAnalysisService.detectCombinations() should accept meal events array and symptom instances array as parameters. No repository calls inside detection logic.</application>
+      </pattern>
+      <pattern name="Orchestration Service">
+        <description>Orchestration layer hydrates data from repositories and delegates to pure services.</description>
+        <example>CorrelationOrchestrationService hydrates food events and symptom instances via repositories, then calls computePairWithData().</example>
+        <application>Extend CorrelationOrchestrationService.computeCorrelation() to invoke CombinationAnalysisService after individual correlations computed. Pass meal-grouped events and individual results.</application>
+      </pattern>
+      <pattern name="Chi-Square Statistical Test">
+        <description>2x2 contingency table for categorical correlation (food present vs symptom present).</description>
+        <example>chiSquare(a, b, c, d) in CorrelationService computes chi-square statistic from contingency table. Returns score, higher = stronger association.</example>
+        <application>Reuse chiSquare() function for combination analysis. Table: [combination+symptom, combination+noSymptom, noCombination+symptom, noCombination+noSymptom].</application>
+      </pattern>
+      <pattern name="Confidence Level Determination">
+        <description>Classify statistical confidence based on sample size, r-squared/p-value, and correlation strength.</description>
+        <example>DoseResponseService determines confidence: high (n≥10, r²≥0.7), medium (n≥5, r²≥0.5), low (otherwise).</example>
+        <application>CombinationAnalysisService should classify confidence: high (n≥10, p&lt;0.01), medium (n≥5, p&lt;0.05), low (n&lt;5 or p≥0.05). Reject if n&lt;3 per AC4.</application>
+      </pattern>
+      <pattern name="JSON Array Parsing">
+        <description>Dexie stores arrays as JSON strings. Must parse on read, stringify on write.</description>
+        <example>foodEventRepository parses foodIds: const foodIds = JSON.parse(event.foodIds) as string[];</example>
+        <application>When reading FoodEventRecords for combination analysis, parse foodIds and foodNames arrays. When writing FoodCombination results, stringify foodIds[] and foodNames[].</application>
+      </pattern>
+      <pattern name="Compound Index Queries">
+        <description>Use compound indexes [userId+field] for efficient range queries.</description>
+        <example>foodEventRepository.findByDateRange() uses [userId, timestamp] compound index, filters by userId first.</example>
+        <application>Query meal events by [userId+mealId] or [userId+timestamp]. Ensure Dexie schema has appropriate compound indexes for combination queries.</application>
+      </pattern>
+    </existing-patterns>
   </artifacts>
-
-  <constraints>
-    <constraint type="architecture">
-      Create new timeline component at src/components/timeline/TimelineView.tsx.
-      NOTE: An older timeline component exists at src/components/calendar/TimelineView.tsx - this is for a different use case (horizontal zoom/pan timeline).
-      The new TimelineView is a vertical chronological feed for the event stream model.
-      Use functional React components with hooks (useState, useEffect).
-      Components must be client-side ("use client" directive for Next.js 15).
-    </constraint>
-    <constraint type="data-aggregation">
-      Query all event types in parallel for performance:
-      - medicationEventRepository.findByDateRange(userId, startTimestamp, endTimestamp)
-      - triggerEventRepository.findByDateRange(userId, startTimestamp, endTimestamp)
-      - flareRepository.getActiveFlaresWithTrend(userId) - for flare creation/update events
-      - Future: symptomInstances (not in this story scope)
-      Merge results into unified TimelineEvent[] array sorted by timestamp DESC.
-    </constraint>
-    <constraint type="timeline-event-interface">
-      Define TimelineEvent interface with fields: {id, type, timestamp, summary, details?, eventRef}.
-      Event types: 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved'
-      Summary format examples per spec (lines 30-38 of story):
-      - Medication: "💊 Humira (taken)" or "💊 Metformin (skipped)"
-      - Symptom: "😣 Headache" (with optional severity)
-      - Trigger: "⚠️ Ate dairy (medium intensity)"
-      - Flare: "🔥 Right armpit flare started, severity 7/10"
-    </constraint>
-    <constraint type="date-grouping">
-      Group events by day with headers using relative dates:
-      - Same day as today: "Today"
-      - Yesterday: "Yesterday"
-      - Within week: Day name ("Monday", "Tuesday")
-      - Older: Short date ("Oct 12", "Sep 5")
-      Use Intl.DateTimeFormat or date-fns for formatting.
-    </constraint>
-    <constraint type="pagination">
-      Initially load today's events only (AC: 6).
-      "Load previous day" button at bottom loads one additional day.
-      Track currentDate state (starts at today, decrements by 1 day on load more).
-      Prevent loading duplicate days.
-    </constraint>
-    <constraint type="progressive-disclosure">
-      EventDetailModal component is defined in Story 2.6 (not yet implemented).
-      For this story, prepare onClick handler but use placeholder/TODO comment if modal doesn't exist.
-      "Add details →" link should be shown for events with minimal data (no notes/details).
-    </constraint>
-    <constraint type="ui-patterns">
-      Use Tailwind CSS utility classes for styling.
-      Responsive width: w-full md:w-2/3 (full mobile, 2/3 desktop).
-      Loading states: Skeleton UI during initial load, spinner for "Load more".
-      Empty state: Friendly message with guidance to use quick-log buttons.
-      Time format: HH:MM am/pm using Intl.DateTimeFormat or date-fns.
-    </constraint>
-    <constraint type="accessibility">
-      WCAG 2.1 AA compliance required.
-      All timeline items must be keyboard accessible (Tab, Enter).
-      ARIA labels for event types and actions.
-      Screen reader announcements for loading states.
-      Minimum 4.5:1 text contrast ratio.
-    </constraint>
-    <constraint type="performance">
-      Use React.memo for timeline item components to prevent unnecessary re-renders.
-      Consider virtualization (react-window) if timeline exceeds 100 events (AC: Performance).
-      Optimize queries with compound indexes [userId+timestamp].
-      Debounce "Load more" button to prevent rapid clicks.
-    </constraint>
-  </constraints>
-
-  <interfaces>
-    <interface>
-      <name>TimelineEvent</name>
-      <kind>type-interface</kind>
-      <signature>interface TimelineEvent { id: string; type: 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved'; timestamp: number; summary: string; details?: any; eventRef: any; }</signature>
-      <path>src/components/timeline/TimelineView.tsx (to be created)</path>
-      <usage>Unified event type for timeline display - aggregates all event types into single sortable array</usage>
-    </interface>
-    <interface>
-      <name>medicationEventRepository.findByDateRange</name>
-      <kind>repository-method</kind>
-      <signature>async findByDateRange(userId: string, startTimestamp: number, endTimestamp: number): Promise&lt;MedicationEventRecord[]&gt;</signature>
-      <path>src/lib/repositories/medicationEventRepository.ts:104-114</path>
-      <usage>Query medication events for timeline by date range using optimized compound index</usage>
-    </interface>
-    <interface>
-      <name>triggerEventRepository.findByDateRange</name>
-      <kind>repository-method</kind>
-      <signature>async findByDateRange(userId: string, startTimestamp: number, endTimestamp: number): Promise&lt;TriggerEventRecord[]&gt;</signature>
-      <path>src/lib/repositories/triggerEventRepository.ts</path>
-      <usage>Query trigger events for timeline - parallel to medication pattern</usage>
-    </interface>
-    <interface>
-      <name>flareRepository.getActiveFlaresWithTrend</name>
-      <kind>repository-method</kind>
-      <signature>async getActiveFlaresWithTrend(userId: string): Promise&lt;Array&lt;ActiveFlare &amp; { trend: 'worsening' | 'stable' | 'improving' }&gt;&gt;</signature>
-      <path>src/lib/repositories/flareRepository.ts:205-246</path>
-      <usage>Get active flares with severity history for timeline flare events (creation, updates, resolution)</usage>
-    </interface>
-    <interface>
-      <name>MedicationEventRecord</name>
-      <kind>type-interface</kind>
-      <signature>interface MedicationEventRecord { id: string; userId: string; medicationId: string; timestamp: number; taken: boolean; dosage?: string; notes?: string; timingWarning?: 'early' | 'late' | null; createdAt: number; updatedAt: number; }</signature>
-      <path>src/lib/db/schema.ts</path>
-      <usage>Type definition for medication events - used in timeline aggregation</usage>
-    </interface>
-    <interface>
-      <name>TriggerEventRecord</name>
-      <kind>type-interface</kind>
-      <signature>interface TriggerEventRecord { id: string; userId: string; triggerId: string; timestamp: number; intensity: 'low' | 'medium' | 'high'; notes?: string; createdAt: number; updatedAt: number; }</signature>
-      <path>src/lib/db/schema.ts</path>
-      <usage>Type definition for trigger events - parallel to medication for timeline</usage>
-    </interface>
-  </interfaces>
 
   <tests>
     <standards>
-      Testing framework: Jest 30.2.0 with React Testing Library.
-      Coverage target: 80%+ for all new components.
-      Test files co-located: __tests__/ComponentName.test.tsx
-      Test user behavior, not implementation details.
-      Mock repository methods using Jest mocks.
-      Use data-testid for complex selectors when needed.
+      <standard>Jest 30.2.0 with ts-jest for TypeScript support</standard>
+      <standard>React Testing Library 16.3.0 for component testing</standard>
+      <standard>80% minimum coverage (branches, functions, lines, statements)</standard>
+      <standard>Tests in __tests__ subdirectories alongside source files</standard>
+      <standard>Mock Dexie operations for repository tests</standard>
+      <standard>Use accessible queries (getByRole, getByLabelText) for component tests</standard>
+      <standard>Test edge cases: empty data, insufficient samples, null values</standard>
     </standards>
-    <locations>
-      <location>src/components/timeline/__tests__/TimelineView.test.tsx</location>
-      <location>src/lib/repositories/__tests__/medicationEventRepository.test.ts (existing)</location>
-      <location>src/lib/repositories/__tests__/triggerEventRepository.test.ts (existing)</location>
-    </locations>
+
     <ideas>
-      <testIdea criterion="1">Test: Events displayed in reverse chronological order. Mock multiple events with different timestamps, verify newest first.</testIdea>
-      <testIdea criterion="2">Test: Timeline item formatting. Mock each event type (medication, trigger, flare), verify correct emoji, time, summary text displayed.</testIdea>
-      <testIdea criterion="3">Test: Day grouping headers. Mock events across multiple days, verify "Today", "Yesterday", date headers displayed correctly.</testIdea>
-      <testIdea criterion="4">Test: Event tap opens modal. Simulate click on timeline item, verify onEventTap handler called with correct eventId (placeholder until EventDetailModal exists).</testIdea>
-      <testIdea criterion="5">Test: "Add details →" link shown for minimal events. Mock events with/without notes, verify link only shown for events without details.</testIdea>
-      <testIdea criterion="6">Test: "Load previous day" pagination. Mock repository to return events, simulate "Load more" click, verify additional day queried and displayed.</testIdea>
-      <testIdea criterion="7">Test: Loading states. Mock delayed repository response, verify skeleton UI shown initially, spinner shown during "Load more".</testIdea>
-      <testIdea criterion="8">Test: Empty state. Mock repository to return empty array, verify empty state message displayed.</testIdea>
-      <testIdea criterion="9">Test: Responsive width classes. Verify component has w-full and md:w-2/3 classes applied.</testIdea>
-      <testIdea criterion="aggregation">Test: Event aggregation from multiple repositories. Mock all repositories (medication, trigger, flare), verify events merged and sorted by timestamp.</testIdea>
-      <testIdea criterion="error">Test: Repository error handling. Mock repository to throw error, verify error message displayed to user.</testIdea>
+      <test-idea ac="1">
+        <description>Unit: Meal grouping by mealId correctly identifies food combinations</description>
+        <approach>Given 3 meal events with mealIds (M1, M1, M2), each with 2 foods. Verify function returns 2 unique combinations for M1, 1 for M2. Test single-food meals are excluded (no combination with self).</approach>
+      </test-idea>
+      <test-idea ac="1">
+        <description>Unit: Food pair enumeration generates unique combinations without duplicates</description>
+        <approach>Given meal with foods [A, B, C], verify function returns pairs [(A,B), (A,C), (B,C)] without duplicates like (B,A). Test ordering consistency.</approach>
+      </test-idea>
+      <test-idea ac="2">
+        <description>Unit: Combination correlation calculation uses Chi-square correctly</description>
+        <approach>Mock meal events with known food combinations. Mock symptom instances at known times. Verify Chi-square score computed for combination vs baseline. Compare against hand-calculated expected value.</approach>
+      </test-idea>
+      <test-idea ac="2">
+        <description>Unit: Individual max correlation correctly identified from pair</description>
+        <approach>Given individualCorrelations [(A→symptom: 0.4), (B→symptom: 0.6)], verify maxIndividual = 0.6 for combination (A+B). Test with missing individual correlations (fallback to 0).</approach>
+      </test-idea>
+      <test-idea ac="3">
+        <description>Unit: Synergy detection flags combinations exceeding 15% threshold</description>
+        <approach>Test cases: combinationCorr=0.75, maxIndividual=0.55 → synergistic=true (0.75 > 0.70). Test boundary: 0.70 vs 0.55 → true, 0.69 vs 0.55 → false. Test negative cases.</approach>
+      </test-idea>
+      <test-idea ac="4">
+        <description>Unit: Sample size filter rejects combinations with &lt;3 instances</description>
+        <approach>Test combinations with sampleSize [0, 1, 2, 3, 10]. Verify n&lt;3 returns empty array or undefined. Verify n≥3 proceeds to analysis. Test minSampleSize parameter override.</approach>
+      </test-idea>
+      <test-idea ac="5">
+        <description>Component: FoodCombinationCard renders synergy indicator correctly</description>
+        <approach>Render with synergistic=true combination. Verify synergy badge visible with text ">15% stronger together" or similar. Test color coding (green/yellow). Verify accessible ARIA labels.</approach>
+      </test-idea>
+      <test-idea ac="5">
+        <description>Component: FoodCombinationCard displays correlation comparison</description>
+        <approach>Render with combinationCorr=0.65, individualMax=0.42. Verify both values displayed. Test comparison bar chart or visual indicator. Verify accessible text "65% vs 42% individually".</approach>
+      </test-idea>
+      <test-idea ac="5">
+        <description>Component: FoodCombinationCard confidence badge rendering</description>
+        <approach>Test rendering with confidence=high, medium, low. Verify correct badge color and text. Test accessible tooltips explaining confidence levels. Verify ARIA attributes for screen readers.</approach>
+      </test-idea>
+      <test-idea ac="6">
+        <description>Unit: Chi-square p-value calculation and significance filtering</description>
+        <approach>Given Chi-square score, compute p-value (or mock). Test filtering: p&lt;0.05 → included, p≥0.05 → excluded per ADR-008. Test edge case p=0.05 (boundary).</approach>
+      </test-idea>
+      <test-idea ac="1,2,6">
+        <description>Integration: End-to-end combination detection with mocked repositories</description>
+        <approach>Mock foodEventRepository to return meal events with shared mealIds. Mock symptomInstanceRepository to return symptom instances. Mock individual correlations. Call orchestration service, verify FoodCombination results include all expected fields, correct synergy flags, and proper confidence levels.</approach>
+      </test-idea>
+      <test-idea ac="all">
+        <description>Integration: Combination analysis in CorrelationOrchestrationService</description>
+        <approach>Mock repositories with realistic meal data (10 meals, 5 food pairs, 20 symptom instances). Call computeCorrelation(), verify both individual correlations and combinations returned. Test caching of combination results alongside individual results.</approach>
+      </test-idea>
+      <test-idea ac="all">
+        <description>Edge case: Empty meal data returns empty combinations</description>
+        <approach>Test with no meal events. Verify detectCombinations() returns empty array without errors. Test with meals containing single foods (no pairs) - verify no combinations generated.</approach>
+      </test-idea>
+      <test-idea ac="all">
+        <description>Edge case: Insufficient sample size for all pairs</description>
+        <approach>Given 5 different food pairs, each with only 2 instances. Verify all pairs filtered out (n&lt;3). Test mixed scenario: 2 pairs with n≥3, 3 pairs with n&lt;3, verify only valid pairs analyzed.</approach>
+      </test-idea>
+      <test-idea ac="2,3">
+        <description>Edge case: No individual correlations available for comparison</description>
+        <approach>Test combination analysis when individualCorrelations array is empty. Verify maxIndividual defaults to 0. Test synergy detection still works (combinationCorr > 0.15 → synergistic).</approach>
+      </test-idea>
     </ideas>
   </tests>
+
+  <dev-notes>
+    <note category="architecture">
+      <title>Dexie vs Prisma Discrepancy</title>
+      <content>Tech spec references Prisma/Postgres models but project actually uses IndexedDB via Dexie.js. All data models must be adapted to Dexie schema in src/lib/db/schema.ts. Use existing FoodEventRecord pattern with JSON stringified arrays. No Prisma migrations - use Dexie version upgrades in db/client.ts if schema changes needed.</content>
+    </note>
+    <note category="statistics">
+      <title>Chi-Square Implementation</title>
+      <content>Reuse existing chiSquare() function from CorrelationService. Builds 2x2 contingency table: [combination+symptom, combination+noSymptom, noCombination+symptom, noCombination+noSymptom]. Returns Chi-square score, higher = stronger association. Pair with p-value calculation for significance filtering (p &lt; 0.05 per ADR-008).</content>
+    </note>
+    <note category="statistics">
+      <title>Synergy Threshold Calculation</title>
+      <content>Synergy defined as combination correlation exceeding max individual correlation by 15% absolute (0.15 delta). Formula: synergistic = combinationCorrelation > maxIndividual + 0.15. Example: if dairy=0.42 and gluten=0.38, then maxIndividual=0.42. Combination must be >0.57 (0.42+0.15) to flag as synergistic. Clear, interpretable threshold for users.</content>
+    </note>
+    <note category="data">
+      <title>Meal Grouping Strategy</title>
+      <content>FoodEventRecords with shared mealId represent foods consumed together. Query foodEventRepository by userId and timestamp range, then group by mealId in memory. For each meal group, enumerate unique food pairs using combinations logic (avoid duplicates, no self-pairs). Filter single-food meals (no combinations possible).</content>
+    </note>
+    <note category="data">
+      <title>Sample Size Filtering</title>
+      <content>Per AC4, minimum 3 instances required for combination analysis. Count number of meal events containing specific food pair. If count &lt; 3, skip analysis for that pair (insufficient statistical power). This prevents false positives from small samples. Apply filter before calling Chi-square to avoid wasted computation.</content>
+    </note>
+    <note category="integration">
+      <title>Orchestration Integration</title>
+      <content>Extend CorrelationOrchestrationService.computeCorrelation() to invoke CombinationAnalysisService after individual correlations computed. Pass meal-grouped food events, symptom instances, and individual correlation results. Append combination results to return payload. Cache combinations alongside individual correlations in analysisResults table (extend schema if needed).</content>
+    </note>
+    <note category="ui">
+      <title>Dashboard Integration</title>
+      <content>Add FoodCombinationCard section to TriggerCorrelationDashboard below individual correlations. Sort combinations by synergy strength (combinationCorr - individualMax) descending. Add toggle to show/hide combinations section. Filter by confidence level and allergen tags (if applicable). Maintain consistent visual language with existing correlation cards.</content>
+    </note>
+    <note category="testing">
+      <title>Test Coverage Strategy</title>
+      <content>Target 15+ unit tests for CombinationAnalysisService (pair enumeration, Chi-square, thresholds, edge cases). Target 8+ component tests for FoodCombinationCard (rendering, accessibility, synergy badges, confidence levels). Target 6+ integration tests for orchestration (end-to-end with mocked repositories, caching, error handling). Aim for 85%+ coverage to exceed 80% minimum.</content>
+    </note>
+  </dev-notes>
+
+  <validation>
+    <checklist>
+      <item>✓ All acceptance criteria (6) covered in tasks</item>
+      <item>✓ All tasks (7) mapped to acceptance criteria</item>
+      <item>✓ Technical specification excerpts included</item>
+      <item>✓ Existing code patterns documented for reuse</item>
+      <item>✓ Database schema constraints (Dexie, JSON arrays, compound indexes) noted</item>
+      <item>✓ Statistical methods (Chi-square, p-value, synergy threshold) specified</item>
+      <item>✓ Testing standards (80% coverage, Jest, RTL) documented</item>
+      <item>✓ Test ideas (15) mapped to acceptance criteria</item>
+      <item>✓ Dependencies (Dexie, React, Jest) listed with versions</item>
+      <item>✓ Accessibility requirements (WCAG 2.1 AA) included</item>
+      <item>✓ Dev notes (8) cover architecture, statistics, data, integration, UI, testing</item>
+      <item>✓ Interfaces defined for CombinationAnalysisService and FoodCombinationCard</item>
+      <item>✓ Dexie vs Prisma discrepancy highlighted with resolution guidance</item>
+      <item>✓ All file paths use project-relative format</item>
+      <item>✓ Reusable artifacts (CorrelationService, DoseResponseService) identified</item>
+    </checklist>
+  </validation>
 </story-context>

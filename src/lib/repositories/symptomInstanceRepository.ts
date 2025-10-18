@@ -77,6 +77,23 @@ export class SymptomInstanceRepository {
   }
 
   /**
+   * Find symptom instances by date range (epoch milliseconds)
+   * Used for correlation analysis
+   */
+  async findByDateRange(
+    userId: string,
+    startMs: number,
+    endMs: number
+  ): Promise<SymptomInstanceRecord[]> {
+    const records = await db.symptomInstances
+      .where("[userId+timestamp]")
+      .between([userId, new Date(startMs)], [userId, new Date(endMs)], true, true)
+      .toArray();
+    
+    return records.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  /**
    * Create a new symptom instance
    */
   async create(symptomData: SymptomDraft): Promise<string> {
@@ -227,6 +244,31 @@ export class SymptomInstanceRepository {
     const names = new Set<string>();
     symptoms.forEach(s => names.add(s.name));
     return Array.from(names).sort();
+  }
+
+  /**
+   * Get recent notes for a symptom (for smart suggestions)
+   */
+  async getRecentNotes(
+    userId: string,
+    symptomName: string,
+    limit: number = 10
+  ): Promise<string[]> {
+    const records = await db.symptomInstances
+      .where("userId")
+      .equals(userId)
+      .reverse()
+      .limit(limit * 3) // Get more to filter by name
+      .toArray();
+
+    // Filter by symptom name and extract notes
+    const notes = records
+      .filter(r => r.name === symptomName && r.notes && r.notes.trim().length > 0)
+      .map(r => r.notes!)
+      .slice(0, limit);
+
+    // Return unique notes
+    return Array.from(new Set(notes));
   }
 }
 

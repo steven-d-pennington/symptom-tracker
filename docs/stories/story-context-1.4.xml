@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Story Context for Story 1.4: Meal Composition Logging -->
+<!-- Generated: 2025-10-16 -->
+<!-- Story File: docs/stories/story-1.4.md -->
+<story-context>
+  <story>
+    <id>1.4</id>
+    <title>Meal Composition Logging</title>
+    <status>Ready</status>
+    <epic>1</epic>
+    
+    <user-story>
+      <as-a>user</as-a>
+      <i-want>to log complete meals with multiple food items together</i-want>
+      <so-that>I can track meal composition for combination effect analysis</so-that>
+    </user-story>
+    
+    <acceptance-criteria>
+      <criterion id="1">Users can select multiple food items within a single meal log entry</criterion>
+      <criterion id="2">The food log modal displays selected foods as a grouped meal composition with individual remove actions</criterion>
+      <criterion id="3">Users can specify meal type (breakfast, lunch, dinner, snack) for each meal log</criterion>
+      <criterion id="4">Users can set portion size (small, medium, large) for each food item in the meal</criterion>
+      <criterion id="5">Users can add optional notes to the entire meal (e.g., "ate at restaurant" or "homemade")</criterion>
+      <criterion id="6">The system persists all selected foods under a single mealId with compound indexing for efficient queries</criterion>
+      <criterion id="7">Timeline displays meal events as grouped entries showing all foods consumed together with expandable details</criterion>
+    </acceptance-criteria>
+    
+    <tasks>
+      <task id="1" acs="1,2">
+        <title>Enhance FoodLogModal to support multi-food selection</title>
+        <subtasks>
+          <subtask>Add MealComposer component in src/components/food/MealComposer.tsx with multi-select UI</subtask>
+          <subtask>Display selected foods as chips/cards with individual remove buttons</subtask>
+          <subtask>Track selected foods state array in modal with add/remove handlers</subtask>
+          <subtask>Show count indicator (e.g., "3 foods selected") in modal header</subtask>
+          <subtask>Prevent duplicate food selections with validation messaging</subtask>
+          <subtask>Add unit tests for multi-select behavior (15+ tests)</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="2" acs="3">
+        <title>Add meal type selector UI</title>
+        <subtasks>
+          <subtask>Create meal type dropdown/segmented control with options: breakfast, lunch, dinner, snack</subtask>
+          <subtask>Position meal type selector prominently in modal (above food selection)</subtask>
+          <subtask>Set default meal type based on current time (breakfast: 5am-10am, lunch: 11am-2pm, dinner: 5pm-9pm, snack: other)</subtask>
+          <subtask>Store selected meal type in modal state for persistence</subtask>
+          <subtask>Add visual icons for each meal type (using Lucide icons)</subtask>
+          <subtask>Add unit tests verifying default selection logic and user override</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="3" acs="4">
+        <title>Implement per-food portion size controls</title>
+        <subtasks>
+          <subtask>Add portion size selector (small/medium/large) for each selected food in MealComposer</subtask>
+          <subtask>Use segmented button group or dropdown for portion selection</subtask>
+          <subtask>Default to "medium" portion when food is added to meal</subtask>
+          <subtask>Store portion sizes in portionMap: Record&lt;foodId, PortionSize&gt; structure</subtask>
+          <subtask>Validate that all selected foods have portion sizes before save</subtask>
+          <subtask>Add unit tests for portion size state management and validation</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="4" acs="5">
+        <title>Add meal notes field</title>
+        <subtasks>
+          <subtask>Add optional notes textarea at bottom of FoodLogModal</subtask>
+          <subtask>Provide placeholder text: "Optional: Add context about this meal (location, preparation, etc.)"</subtask>
+          <subtask>Limit notes to 500 characters with character counter</subtask>
+          <subtask>Store notes in modal state for inclusion in meal event payload</subtask>
+          <subtask>Add unit tests verifying notes field behavior and character limit</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="5" acs="6">
+        <title>Extend foodEventRepository for meal composition persistence</title>
+        <subtasks>
+          <subtask>Update create() method to accept foodIds[] array instead of single foodId</subtask>
+          <subtask>Generate unique mealId (uuid) for grouping foods in same meal</subtask>
+          <subtask>Serialize portionMap as JSON string per Dexie convention (parse on read)</subtask>
+          <subtask>Ensure compound index [userId+mealId] supports efficient meal queries</subtask>
+          <subtask>Store mealType enum value for filtering/grouping</subtask>
+          <subtask>Add repository unit tests for multi-food meal creation (10+ tests)</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="6" acs="1,2,3,4,5">
+        <title>Update FoodLogModal save handler for meal composition</title>
+        <subtasks>
+          <subtask>Validate that at least one food is selected before save</subtask>
+          <subtask>Construct FoodEventDraft payload with all selected foodIds, portionMap, mealType, and notes</subtask>
+          <subtask>Call foodEventRepository.create() with complete meal payload</subtask>
+          <subtask>Generate mealId using uuid() before persistence</subtask>
+          <subtask>Show success toast: "Meal logged with 3 foods" (dynamic count)</subtask>
+          <subtask>Clear modal state and close after successful save</subtask>
+          <subtask>Add integration tests mocking repository calls</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="7" acs="7">
+        <title>Extend timeline to render meal composition entries</title>
+        <subtasks>
+          <subtask>Update TimelineView to hydrate meal events with food details</subtask>
+          <subtask>Render meal events with grouped food display (e.g., "Breakfast: Oatmeal, Milk, Coffee")</subtask>
+          <subtask>Add expandable details showing portion sizes, notes, and individual allergen tags</subtask>
+          <subtask>Display meal type icon and timestamp consistently with other timeline events</subtask>
+          <subtask>Support edit/delete actions on meal events (re-open FoodLogModal pre-filled)</subtask>
+          <subtask>Add timeline rendering tests for meal composition display</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="8" acs="6,7">
+        <title>Add meal editing capability</title>
+        <subtasks>
+          <subtask>Enable editing existing meal events from timeline</subtask>
+          <subtask>Pre-fill FoodLogModal with existing meal data (selected foods, portions, mealType, notes)</subtask>
+          <subtask>Use foodEventRepository.update() to persist changes with updated updatedAt timestamp</subtask>
+          <subtask>Maintain original mealId to preserve event identity</subtask>
+          <subtask>Show "Meal updated" success toast after save</subtask>
+          <subtask>Add tests for edit flow including pre-filling and update persistence</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+  
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR015</section>
+        <snippet>Users can log complete meals containing multiple food items, capturing meal composition for combination effect analysis (e.g., dairy + gluten together).</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR004</section>
+        <snippet>Users can add details to food logs including quantity/portion size (strongly encouraged with visual guides), meal type (breakfast/lunch/dinner/snack), meal composition (multiple foods eaten together), and notes.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/tech-spec-epic-E1.md</path>
+        <title>Technical Specification: Food Logging &amp; Management</title>
+        <section>Data Models and Contracts</section>
+        <snippet>FoodEventRecord schema: mealId (uuid) links grouped foods, foodIds (JSON-stringified string[]), portionMap (JSON-stringified Record&lt;foodId, PortionSize&gt;), mealType enum (breakfast/lunch/dinner/snack), notes optional string, timestamps with ms precision.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/tech-spec-epic-E1.md</path>
+        <title>Technical Specification: Food Logging &amp; Management</title>
+        <section>Services and Modules</section>
+        <snippet>MealComposer component handles multi-select food builder with quantity capture and portion metadata. FoodLogModal extended with meal type selector and notes field. Timeline adapter hydrates meal events by joining foodRepository for display.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/tech-spec-epic-E1.md</path>
+        <title>Technical Specification: Food Logging &amp; Management</title>
+        <section>Workflows and Sequencing - Quick Log Flow</section>
+        <snippet>User selects foods, optionally toggles portion sizes, attaches notes. Validation ensures at least one food. foodEventRepository.create writes to Dexie with mealId grouping. Timeline hears Dexie change event and rehydrates UI without page reload.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>§11.1 - Food Event Timeline Integration</section>
+        <snippet>Timeline adapter queries meals via foodEventRepository.findByDateRange(), hydrates food details by joining foodRepository.getByIds(), parses JSON arrays for rendering, groups by mealId when displaying combined events.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/ux-specification.md</path>
+        <title>UX Specification</title>
+        <section>§3 - Meal Logging UX Flow</section>
+        <snippet>Progressive disclosure: quick-log defaults to favorites, then search, then meal composition details (portions, notes). Meal type selector with smart time-based defaults. Visual feedback for multi-select with count indicator.</snippet>
+      </doc>
+      
+      <doc>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guidelines</title>
+        <section>Database Architecture</section>
+        <snippet>Arrays stored as JSON strings in database (must parse on read). Compound indexes critical for performance - always query using [userId+field] patterns. JSON Stringification: Arrays stored as JSON strings in database, must parse on read.</snippet>
+      </doc>
+      
+      <doc>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guidelines</title>
+        <section>Repository Pattern</section>
+        <snippet>All data access through repositories in src/lib/repositories/. Repositories handle CRUD operations and business logic. Use userRepository.getOrCreateCurrentUser() for single-user app pattern. Always include userId in queries.</snippet>
+      </doc>
+      
+      <doc>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guidelines</title>
+        <section>Component Architecture</section>
+        <snippet>Functional components only (function syntax, not arrow functions). Custom hooks for stateful logic. Feature organization: components grouped by feature in src/components/&lt;feature&gt;/. Test files in __tests__ subdirectories.</snippet>
+      </doc>
+      
+      <doc>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guidelines</title>
+        <section>Testing Requirements</section>
+        <snippet>Coverage: 80% minimum across branches, functions, lines, statements. Component testing with React Testing Library using accessible queries. Repository testing with mock Dexie operations. Integration tests for multi-component workflows.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Story 1.1: Quick-log Food Button on Dashboard</title>
+        <section>Completion Notes</section>
+        <snippet>FoodLogModal scaffolded with auto-focused search, performance instrumentation (&lt;500ms target), WCAG 2.1 AA compliance. FoodContext provider for modal state management. Ready for extension with meal composition features.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/stories/story-1.2.md</path>
+        <title>Story 1.2: Pre-populated Food Database with Allergen Tags</title>
+        <section>Completion Notes</section>
+        <snippet>foodRepository and foodEventRepository implemented with CRUD operations. AllergenBadge components for tag rendering. useFoods/useFoodEvents context hooks. Performance instrumentation. All components ready for meal composition reuse.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/stories/story-1.3.md</path>
+        <title>Story 1.3: Custom Food Creation &amp; Management</title>
+        <section>Completion Notes</section>
+        <snippet>AddFoodModal, EditFoodModal, CustomFoodBadge components. FoodContext extended with custom food methods. Validation, confirmation dialogs, accessibility (WCAG 2.1 AA). 76/76 tests passing. Modal patterns established for reuse.</snippet>
+      </doc>
+    </docs>
+    
+    <code>
+      <file>
+        <path>src/components/food/FoodLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodLogModal</symbol>
+        <lines>1-651</lines>
+        <reason>Primary component to extend with meal composition features. Current state: single-food selection, search, favorites, edit/delete for custom foods. Extend with MealComposer, meal type selector, portion controls, notes field, and multi-food save logic.</reason>
+      </file>
+      
+      <file>
+        <path>src/components/food/FoodLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodLogModal - state management</symbol>
+        <lines>24-45</lines>
+        <reason>Current state includes selectedFood (single), mealType, portionSize, notes. Extend to support selectedFoods array and portionMap object for multi-food selection. Add validation for minimum 1 food selected.</reason>
+      </file>
+      
+      <file>
+        <path>src/components/food/FoodLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodLogModal - save handler</symbol>
+        <lines>180-250</lines>
+        <reason>Current save handler creates single-food event. Update to construct meal payload with foodIds array, portionMap, mealId (uuid), mealType, and notes. Call foodEventRepository.create() with complete meal data.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>FoodEventRepository</symbol>
+        <lines>1-177</lines>
+        <reason>Repository for food event CRUD operations. Already validates mealType enum and timestamps. Extend create() to handle foodIds array and portionMap JSON serialization. Add mealId generation and compound index queries.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>create</symbol>
+        <lines>8-42</lines>
+        <reason>Current create() validates timestamp, foodIds array (already supports multiple!), and mealType. Needs extension: generate mealId using uuid(), serialize portionMap to JSON string, validate minimum 1 food in array.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>update</symbol>
+        <lines>44-70</lines>
+        <reason>Update method for editing meal events. Already validates foodIds array and mealType. Use for meal editing flow when user re-opens FoodLogModal from timeline with pre-filled data.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>findByDateRange</symbol>
+        <lines>80-95</lines>
+        <reason>Query method for timeline date ranges. Returns FoodEventRecord[] sorted by timestamp descending. Timeline will use this to load meal events, then hydrate food details via foodRepository.getByIds().</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>FoodRepository</symbol>
+        <lines>1-207</lines>
+        <reason>Repository for food CRUD operations. Timeline will use getByIds() method to hydrate food details for meal events. Search() method used in FoodLogModal for food selection.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FoodEventRecord</symbol>
+        <lines>244-258</lines>
+        <reason>FoodEventRecord interface defines meal structure: mealId (string), foodIds (string - JSON array), timestamp (number ms), mealType (enum), portionMap (string - JSON object), notes (optional), photoIds, timestamps.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>MealType</symbol>
+        <lines>242</lines>
+        <reason>MealType enum: 'breakfast' | 'lunch' | 'dinner' | 'snack'. Used in meal type selector and validation.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>PortionSize</symbol>
+        <lines>260</lines>
+        <reason>PortionSize type: 'small' | 'medium' | 'large'. Used in portionMap Record&lt;foodId, PortionSize&gt; structure for per-food portion tracking.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase - foodEvents table</symbol>
+        <lines>85-90</lines>
+        <reason>Dexie foodEvents table with compound indexes: [userId+timestamp], [userId+mealType], [userId+mealId]. The [userId+mealId] index supports efficient meal grouping queries for timeline rendering.</reason>
+      </file>
+      
+      <file>
+        <path>src/contexts/FoodContext.tsx</path>
+        <kind>context</kind>
+        <symbol>FoodProvider</symbol>
+        <lines>1-162</lines>
+        <reason>Food context managing modal state and food/event data. isFoodLogModalOpen, openFoodLog, closeFoodLog methods control modal. May need extension for meal editing flow (openFoodLogForEdit with pre-filled data).</reason>
+      </file>
+      
+      <file>
+        <path>src/components/food/AllergenBadge.tsx</path>
+        <kind>component</kind>
+        <symbol>AllergenBadge</symbol>
+        <lines>1-69</lines>
+        <reason>Existing badge component for allergen tags with color coding. Use as pattern for meal type icons/badges in timeline. Reuse in meal detail view to show allergens for each food in meal.</reason>
+      </file>
+      
+      <file>
+        <path>src/components/food/CustomFoodBadge.tsx</path>
+        <kind>component</kind>
+        <symbol>CustomFoodBadge</symbol>
+        <lines>1-25</lines>
+        <reason>Simple badge component pattern from Story 1.3. Use as template for portion size indicators (S/M/L badges) in MealComposer and timeline detail view.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/utils/idGenerator.ts</path>
+        <kind>utility</kind>
+        <symbol>generateId</symbol>
+        <lines>1-10</lines>
+        <reason>Uses uuid() from dependencies to generate unique IDs. Use for mealId generation when creating new meal events to link grouped foods.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/utils/a11y.ts</path>
+        <kind>utility</kind>
+        <symbol>handleModalKeyboard</symbol>
+        <lines>1-50</lines>
+        <reason>Accessibility utilities for modal focus management and keyboard navigation. Already used in FoodLogModal. Ensure MealComposer multi-select UI supports keyboard navigation for accessibility.</reason>
+      </file>
+      
+      <file>
+        <path>src/components/food/__tests__/FoodLogModal.test.tsx</path>
+        <kind>test</kind>
+        <symbol>FoodLogModal tests</symbol>
+        <lines>1-400</lines>
+        <reason>Comprehensive test suite for FoodLogModal showing mock patterns for foodRepository and foodEventRepository, user interaction testing, validation testing, accessibility testing. Extend with meal composition tests.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/__tests__/foodEventRepository.test.ts</path>
+        <kind>test</kind>
+        <symbol>foodEventRepository tests</symbol>
+        <lines>1-200</lines>
+        <reason>Repository tests with mock Dexie patterns, validation testing for mealType enum and foodIds array. Extend with mealId generation tests, portionMap JSON serialization tests, and meal query tests.</reason>
+      </file>
+    </code>
+    
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1"/>
+        <package name="next" version="14.2.24"/>
+        <package name="dexie" version="^4.0.1-alpha.19"/>
+        <package name="dexie-react-hooks" version="^1.1.7"/>
+        <package name="lucide-react" version="^0.344.0"/>
+        <package name="uuid" version="^11.0.3"/>
+        <package name="@testing-library/react" version="^14.2.1"/>
+        <package name="@testing-library/jest-dom" version="^6.4.2"/>
+        <package name="jest" version="^29.7.0"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+  
+  <interfaces>
+    <interface>
+      <name>FoodEventRepository.create</name>
+      <kind>repository-method</kind>
+      <signature>async create(eventData: Omit&lt;FoodEventRecord, "id" | "createdAt" | "updatedAt"&gt;): Promise&lt;string&gt;</signature>
+      <path>src/lib/repositories/foodEventRepository.ts</path>
+      <notes>Already validates timestamp, foodIds array length, and mealType enum. Extend to generate mealId, serialize portionMap. Returns event ID.</notes>
+    </interface>
+    
+    <interface>
+      <name>FoodEventRepository.update</name>
+      <kind>repository-method</kind>
+      <signature>async update(id: string, updates: Partial&lt;FoodEventRecord&gt;): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/foodEventRepository.ts</path>
+      <notes>Updates existing meal event with validation. Use for meal editing flow. Maintains original mealId. Updates updatedAt timestamp automatically.</notes>
+    </interface>
+    
+    <interface>
+      <name>FoodEventRepository.findByDateRange</name>
+      <kind>repository-method</kind>
+      <signature>async findByDateRange(userId: string, startMs: number, endMs: number): Promise&lt;FoodEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/foodEventRepository.ts</path>
+      <notes>Timeline uses this to query meal events. Returns sorted by timestamp descending. Must parse foodIds and portionMap JSON strings for rendering.</notes>
+    </interface>
+    
+    <interface>
+      <name>FoodRepository.getByIds</name>
+      <kind>repository-method</kind>
+      <signature>async getByIds(ids: string[]): Promise&lt;FoodRecord[]&gt;</signature>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <notes>Timeline hydrates meal events with food details using this method. Batch query for efficiency. Returns food records for display in grouped meal view.</notes>
+    </interface>
+    
+    <interface>
+      <name>FoodContext.openFoodLog</name>
+      <kind>context-method</kind>
+      <signature>openFoodLog(): void</signature>
+      <path>src/contexts/FoodContext.tsx</path>
+      <notes>Opens FoodLogModal in create mode. Consider adding openFoodLogForEdit(eventId) method for meal editing flow from timeline.</notes>
+    </interface>
+    
+    <interface>
+      <name>useFoods hook</name>
+      <kind>react-hook</kind>
+      <signature>useFoods(): { foods: FoodRecord[], loading: boolean, error: string | null, refresh: () =&gt; Promise&lt;void&gt; }</signature>
+      <path>src/contexts/FoodContext.tsx</path>
+      <notes>Loads and caches foods with Dexie subscriptions. Use in MealComposer for food selection. Refresh after custom food creation.</notes>
+    </interface>
+    
+    <interface>
+      <name>generateId utility</name>
+      <kind>utility-function</kind>
+      <signature>generateId(): string</signature>
+      <path>src/lib/utils/idGenerator.ts</path>
+      <notes>Uses uuid() to generate unique IDs. Use for mealId generation when creating new meal events.</notes>
+    </interface>
+  </interfaces>
+  
+  <constraints>
+    <constraint>
+      <category>data-model</category>
+      <rule>Arrays must be JSON-stringified before storing in Dexie: foodIds and portionMap must use JSON.stringify() on write and JSON.parse() on read per AGENTS.md convention.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>data-model</category>
+      <rule>portionMap structure must be Record&lt;foodId: string, portionSize: 'small' | 'medium' | 'large'&gt; with all selected foods included before save.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>data-model</category>
+      <rule>mealId must be unique uuid generated once per meal using generateId() utility. Same mealId links all foods in a meal for grouping queries.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>validation</category>
+      <rule>Minimum 1 food must be selected before saving meal. Validate foodIds array length &gt; 0 in save handler and repository.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>validation</category>
+      <rule>MealType enum must be one of: 'breakfast', 'lunch', 'dinner', 'snack'. Repository already validates this. UI selector enforces valid values.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>validation</category>
+      <rule>Notes field character limit: 500 characters max. Show character counter in UI. Validate before save.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>performance</category>
+      <rule>Meal composition persistence must complete in &lt;500ms (matches Story 1.1 quick-log target). Test with 10+ food selections.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>performance</category>
+      <rule>Timeline meal hydration should use memoization to avoid re-fetching food records. Batch getByIds() calls for efficiency.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>indexing</category>
+      <rule>Query meals using compound indexes: [userId+mealId] for grouping, [userId+timestamp] for timeline chronological ordering. Never scan full table.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>offline-first</category>
+      <rule>All meal composition operations must persist to Dexie/IndexedDB immediately without network dependency. Follow existing repository patterns.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>component-architecture</category>
+      <rule>Use functional components with function syntax (not arrow functions). Extract stateful logic to custom hooks. Follow FoodLogModal patterns.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>accessibility</category>
+      <rule>Multi-select food list must support keyboard navigation (arrow keys, Enter to add, Delete to remove). WCAG 2.1 AA compliance required.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>accessibility</category>
+      <rule>Portion size selectors must have clear ARIA labels and sufficient color contrast. Use segmented buttons or radio groups for keyboard access.</rule>
+    </constraint>
+    
+    <constraint>
+      <category>testing</category>
+      <rule>80% minimum test coverage required across branches, functions, lines, statements per AGENTS.md. MealComposer: 15+ tests, repository extensions: 10+ tests, timeline: 5+ tests.</rule>
+    </constraint>
+  </constraints>
+  
+  <tests>
+    <standards>
+      Testing framework: Jest with React Testing Library. Test environment: jsdom with custom IndexedDB mocks. Component tests use accessible queries (getByRole, getByLabelText). Repository tests mock Dexie operations. Integration tests verify multi-component workflows. Performance tests validate &lt;500ms persistence target. Accessibility tests ensure WCAG 2.1 AA compliance with keyboard navigation and screen reader support.
+    </standards>
+    
+    <locations>
+      <location>src/components/food/__tests__/MealComposer.test.tsx</location>
+      <location>src/components/food/__tests__/FoodLogModal.test.tsx</location>
+      <location>src/lib/repositories/__tests__/foodEventRepository.test.ts</location>
+      <location>src/components/timeline/__tests__/TimelineView.test.tsx</location>
+    </locations>
+    
+    <ideas>
+      <test ac="1">MealComposer renders with empty selected foods list initially</test>
+      <test ac="1">User can select multiple foods and they appear in MealComposer</test>
+      <test ac="1">Duplicate food selection shows validation error</test>
+      <test ac="1">Selected foods state updates correctly when adding/removing</test>
+      <test ac="2">Each selected food displays with remove button</test>
+      <test ac="2">Remove button removes food from selected list</test>
+      <test ac="2">Selection count indicator updates dynamically (e.g., "3 foods selected")</test>
+      <test ac="2">Empty state shows when all foods removed from selection</test>
+      <test ac="3">Meal type selector defaults based on current time (breakfast: 5am-10am, lunch: 11am-2pm, dinner: 5pm-9pm, snack: other)</test>
+      <test ac="3">User can override default meal type selection</test>
+      <test ac="3">Meal type selector has accessible label and keyboard navigation</test>
+      <test ac="3">Each meal type displays appropriate icon (Lucide icons)</test>
+      <test ac="4">Portion size defaults to "medium" when food added</test>
+      <test ac="4">User can change portion size for individual foods (small/medium/large)</test>
+      <test ac="4">portionMap state updates correctly with food portions</test>
+      <test ac="4">Portion selectors have accessible labels and keyboard support</test>
+      <test ac="5">Notes field accepts text input up to 500 characters</test>
+      <test ac="5">Character counter displays remaining characters</test>
+      <test ac="5">Notes field prevents input beyond 500 character limit</test>
+      <test ac="5">Notes field has placeholder text and accessible label</test>
+      <test ac="6">foodEventRepository.create validates minimum 1 food in array</test>
+      <test ac="6">mealId generated as unique uuid for each meal</test>
+      <test ac="6">portionMap serialized as JSON string before Dexie storage</test>
+      <test ac="6">foodIds array serialized as JSON string before storage</test>
+      <test ac="6">Compound index [userId+mealId] supports meal grouping queries</test>
+      <test ac="6">Repository validates mealType enum (breakfast/lunch/dinner/snack)</test>
+      <test ac="6">Timestamps (createdAt, updatedAt) set automatically on create</test>
+      <test ac="1,2,3,4,5">Save handler validates at least 1 food selected before save</test>
+      <test ac="1,2,3,4,5">Save constructs complete meal payload with foodIds, portionMap, mealType, notes, mealId</test>
+      <test ac="1,2,3,4,5">Success toast shows dynamic food count: "Meal logged with 3 foods"</test>
+      <test ac="1,2,3,4,5">Modal clears state and closes after successful save</test>
+      <test ac="1,2,3,4,5">Meal persistence completes in &lt;500ms (performance test)</test>
+      <test ac="7">Timeline renders meal events with grouped food display (e.g., "Breakfast: Oatmeal, Milk, Coffee")</test>
+      <test ac="7">Timeline meal entry shows meal type icon and timestamp</test>
+      <test ac="7">Expandable details show portion sizes for each food</test>
+      <test ac="7">Expandable details show meal notes if present</test>
+      <test ac="7">Expandable details show allergen tags from grouped foods</test>
+      <test ac="7">Edit button on timeline meal re-opens FoodLogModal with pre-filled data</test>
+      <test ac="7">Delete button on timeline meal removes event after confirmation</test>
+      <test ac="6,7">Meal edit flow pre-fills selected foods, portions, mealType, notes</test>
+      <test ac="6,7">Meal update preserves original mealId</test>
+      <test ac="6,7">Update sets new updatedAt timestamp</test>
+      <test ac="6,7">Success toast shows "Meal updated" after edit save</test>
+    </ideas>
+  </tests>
+  
+  <architecture-notes>
+    <note category="component-structure">
+      MealComposer should be a child component of FoodLogModal, positioned after food search/selection UI. It displays selected foods as chips/cards with portion selectors and remove buttons. State managed in FoodLogModal with props passed to MealComposer for rendering and callbacks for updates.
+    </note>
+    
+    <note category="data-flow">
+      User selects food → Added to selectedFoods array in FoodLogModal state → MealComposer renders food chip with default "medium" portion → User adjusts portion → portionMap updates in FoodLogModal state → Save validates ≥1 food → Constructs payload → Calls foodEventRepository.create() → Returns mealId → Shows success toast → Closes modal.
+    </note>
+    
+    <note category="timeline-integration">
+      Timeline queries meals via foodEventRepository.findByDateRange() → For each meal event, parse foodIds JSON array → Batch query foodRepository.getByIds(foodIds) to hydrate food details → Render grouped display with meal type icon, food names with portions, timestamp → Expandable view shows notes, allergen tags, edit/delete actions.
+    </note>
+    
+    <note category="meal-editing">
+      Timeline edit button captures meal event ID → Opens FoodLogModal in edit mode with pre-filled state: selectedFoods from foodIds, portionMap from portionMap JSON, mealType, notes → User modifies → Save calls foodEventRepository.update(id, changes) → Preserves original mealId → Updates updatedAt timestamp → Shows "Meal updated" toast.
+    </note>
+    
+    <note category="json-serialization">
+      Critical pattern from AGENTS.md: Arrays and objects must be JSON-stringified before Dexie storage. foodIds: JSON.stringify(selectedFoodIds) on save, JSON.parse(event.foodIds) on read. portionMap: JSON.stringify(portionMapObject) on save, JSON.parse(event.portionMap) on read. Always validate parsed data structure.
+    </note>
+    
+    <note category="meal-type-defaults">
+      Smart defaults based on time of day: getDefaultMealType() utility function. const hour = new Date().getHours(); if (hour &gt;= 5 &amp;&amp; hour &lt; 10) return 'breakfast'; if (hour &gt;= 11 &amp;&amp; hour &lt; 14) return 'lunch'; if (hour &gt;= 17 &amp;&amp; hour &lt; 21) return 'dinner'; return 'snack'. Use on modal open, allow user override.
+    </note>
+    
+    <note category="portion-size-ui">
+      Use segmented button group (3 buttons: S/M/L) for portion selection per food. Visual design: active button highlighted, clear focus indicators, keyboard navigation (Tab to move, Enter/Space to select). Consider using Lucide icons: CircleSmall, Circle, CircleLarge or text labels with size indicators.
+    </note>
+    
+    <note category="performance-optimization">
+      Timeline meal hydration: Use React useMemo to cache food details lookups. Batch getByIds() calls instead of individual queries. Consider lazy loading meal details (collapsed by default, expand on click to hydrate). Measure timeline render time with performance marks.
+    </note>
+    
+    <note category="accessibility-requirements">
+      MealComposer multi-select: Use role="listbox" with aria-multiselectable="true". Selected foods as role="option" with aria-selected. Remove buttons have aria-label="Remove [food name]". Portion selectors as radio groups with aria-labelledby. Notes textarea with aria-describedby for character count. Keyboard: Arrow keys navigate, Enter adds, Delete removes.
+    </note>
+  </architecture-notes>
+</story-context>

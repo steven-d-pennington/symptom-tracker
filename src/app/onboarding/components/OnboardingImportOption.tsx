@@ -112,9 +112,13 @@ export function OnboardingImportOption() {
           medications: 0,
           triggers: 0,
           dailyEntries: 0,
+          photos: 0,
         },
         errors: [error instanceof Error ? error.message : "Unknown error"],
-        skipped: 0,
+        skipped: {
+          items: 0,
+          photos: 0,
+        },
       });
     } finally {
       setIsImporting(false);

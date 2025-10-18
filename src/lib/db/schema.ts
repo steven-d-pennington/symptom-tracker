@@ -45,6 +45,8 @@ export interface UserPreferences {
   symptomCategories?: SymptomCategoryRecord[];
   entryTemplates?: EntryTemplateRecord[];
   activeTemplateId?: string;
+  // Food-specific preferences (extensible JSON payload; backward compatible)
+  foodFavorites?: string[]; // array of foodIds favorited by the user
 }
 
 export interface UserRecord {
@@ -302,4 +304,57 @@ export interface FlareRecord {
   photoIds: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Food Logging Models (Epic E1)
+
+export interface FoodRecord {
+  id: string;
+  userId: string;
+  name: string;
+  category: string; // JSON-stringified category metadata
+  allergenTags: string; // JSON-stringified string[] per local-first convention
+  preparationMethod?: string;
+  isDefault: boolean; // true for seeded foods, false for custom
+  isActive: boolean; // soft-delete flag
+  createdAt: number; // epoch ms
+  updatedAt: number; // epoch ms
+}
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export type PortionSize = 'small' | 'medium' | 'large';
+
+export interface FoodEventRecord {
+  id: string;
+  userId: string;
+  mealId: string; // uuid groups foods logged together
+  foodIds: string; // JSON-stringified string[]
+  timestamp: number; // epoch ms
+  mealType: MealType;
+  portionMap: string; // JSON-stringified Record<foodId, PortionSize>
+  notes?: string;
+  photoIds?: string; // JSON-stringified string[]
+  favoritesSnapshot?: string; // JSON-stringified foodIds favorited at log time
+  createdAt: number;
+  updatedAt: number;
+}
+
+// Food Combination Analysis (Epic E2 - Story 2.3, 2.4)
+export interface FoodCombinationRecord {
+  id: string;
+  userId: string;
+  foodIds: string; // JSON-stringified string[] (sorted for consistency)
+  foodNames: string; // JSON-stringified string[]
+  symptomId: string;
+  symptomName: string;
+  combinationCorrelation: number; // 0-1 percentage as decimal
+  individualMax: number; // Max individual correlation from pair
+  synergistic: boolean; // combinationCorrelation > individualMax + 0.15
+  pValue: number;
+  confidence: 'high' | 'medium' | 'low'; // Story 2.4: Multi-factor confidence level
+  consistency: number; // Story 2.4: 0-1 decimal (% of food occurrences followed by symptom)
+  sampleSize: number;
+  lastAnalyzedAt: number; // epoch ms
+  createdAt: number;
+  updatedAt: number;
 }

@@ -1,390 +1,689 @@
-<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+<story-context id="story-2.4-correlation-confidence-calculations" v="1.0">
   <metadata>
     <epicId>2</epicId>
     <storyId>2.4</storyId>
-    <title>Flare Creation and Update Modals</title>
+    <title>Correlation Confidence Calculations</title>
     <status>Ready</status>
-    <generatedAt>2025-10-14</generatedAt>
+    <generatedAt>2025-10-17</generatedAt>
     <generator>BMAD Story Context Workflow</generator>
-    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\story-2.4.md</sourceStoryPath>
+    <sourceStoryPath>docs/stories/story-2.4.md</sourceStoryPath>
   </metadata>
 
   <story>
-    <asA>user experiencing a flare</asA>
-    <iWant>to quickly log new flares and update existing ones</iWant>
-    <soThat>I can track flare progression over hours/days</soThat>
+    <asA>user</asA>
+    <iWant>to see confidence levels on all correlations</iWant>
+    <soThat>I can trust the insights and avoid false-positive triggers</soThat>
     <tasks>
-      <task id="1" complete="false">
-        <description>Create FlareCreationModal (AC-Creation: 1-9)</description>
+      <task id="1" acs="2,3,4,5">
+        <title>Implement ConfidenceCalculationService core logic</title>
         <subtasks>
-          <subtask>Set up component file `src/components/flares/FlareCreationModal.tsx`</subtask>
-          <subtask>Integrate BodyMapViewer in compact mode for location selection</subtask>
-          <subtask>Add severity slider (1-10) with labels ("Minimal" to "Excruciating")</subtask>
-          <subtask>Add optional notes field</subtask>
-          <subtask>Implement [Save] and [Add Details] buttons</subtask>
-          <subtask>Form validation (location + severity required)</subtask>
-          <subtask>Call `flareRepository.create()` on save</subtask>
-          <subtask>Handle modal open/close state</subtask>
+          <subtask>Create src/lib/services/correlation/ConfidenceCalculationService.ts with confidence determination</subtask>
+          <subtask>Implement determineConfidence(sampleSize, consistency, pValue) method returning "high" | "medium" | "low"</subtask>
+          <subtask>Define confidence thresholds as named constants (HIGH_SAMPLE=5, MEDIUM_SAMPLE=3, HIGH_CONSISTENCY=0.70, MEDIUM_CONSISTENCY=0.50, P_VALUE_THRESHOLD=0.05)</subtask>
+          <subtask>Add comprehensive unit tests covering all confidence level combinations and edge cases (15+ tests)</subtask>
         </subtasks>
       </task>
-      <task id="2" complete="false">
-        <description>Create FlareUpdateModal (AC-Update: 1-10)</description>
+      <task id="2" acs="2,3,4">
+        <title>Extend CorrelationService to compute consistency metric</title>
         <subtasks>
-          <subtask>Set up component file `src/components/flares/FlareUpdateModal.tsx`</subtask>
-          <subtask>Display flare context (location, day count: "Right Armpit - Day 3")</subtask>
-          <subtask>Show previous severity: "Severity was: 7/10"</subtask>
-          <subtask>Add severity slider for new severity</subtask>
-          <subtask>Add status buttons (optional, with auto-detection): [Getting Worse] [Same] [Improving]</subtask>
-          <subtask>Add quick intervention buttons: [Ice] [Meds] [Rest] [Other]</subtask>
-          <subtask>Add optional notes field</subtask>
-          <subtask>Call `flareRepository.updateSeverity()` on save</subtask>
-          <subtask>Call `flareRepository.addIntervention()` if intervention selected</subtask>
+          <subtask>Add computeConsistency(foodEvents, symptomEvents, timeWindow) method to CorrelationService</subtask>
+          <subtask>Calculate consistency as: (number of food occurrences followed by symptom) / (total food occurrences)</subtask>
+          <subtask>Return consistency as decimal 0-1 (e.g., 0.75 for 75% consistency)</subtask>
+          <subtask>Add unit tests validating consistency calculation with synthetic datasets (8+ tests)</subtask>
         </subtasks>
       </task>
-      <task id="3" complete="false">
-        <description>Implement responsive design (AC-Creation: 9)</description>
+      <task id="3" acs="1,2,6">
+        <title>Integrate confidence calculation into CorrelationOrchestrationService</title>
         <subtasks>
-          <subtask>Full-screen modal on mobile (&lt;768px)</subtask>
-          <subtask>Centered dialog on desktop</subtask>
-          <subtask>Touch-optimized controls (larger tap targets)</subtask>
+          <subtask>Modify computeWithCombinations to call ConfidenceCalculationService for each correlation result</subtask>
+          <subtask>Pass sampleSize, consistency, pValue to determineConfidence method</subtask>
+          <subtask>Add confidence field to CorrelationResult interface ("high" | "medium" | "low")</subtask>
+          <subtask>Filter out correlations with p >= 0.05 (statistical insignificance) before returning results</subtask>
+          <subtask>Add integration tests verifying confidence assignment across multiple correlations (5+ tests)</subtask>
         </subtasks>
       </task>
-      <task id="4" complete="false">
-        <description>Auto-detect status based on severity change (AC-Update: 4)</description>
+      <task id="4" acs="1">
+        <title>Update FoodCorrelation data model with confidence field</title>
         <subtasks>
-          <subtask>If severity delta ≥+2: suggest "worsening"</subtask>
-          <subtask>If severity delta ≤-2: suggest "improving"</subtask>
-          <subtask>Otherwise: suggest "stable"</subtask>
+          <subtask>Add confidence field to FoodCombinationRecord interface in src/lib/db/schema.ts ("high" | "medium" | "low")</subtask>
+          <subtask>Add consistency field to FoodCombinationRecord interface (number 0-1)</subtask>
+          <subtask>Create Dexie version 13 migration adding confidence and consistency columns to foodCombinations table</subtask>
+          <subtask>Add compound index [userId+confidence] for efficient filtering</subtask>
+          <subtask>Test migration with sample data</subtask>
+        </subtasks>
+      </task>
+      <task id="5" acs="1">
+        <title>Create ConfidenceBadge UI component</title>
+        <subtasks>
+          <subtask>Create src/components/correlation/ConfidenceBadge.tsx component</subtask>
+          <subtask>Display "High Confidence", "Medium Confidence", "Low Confidence" with color coding (High: green, Medium: yellow, Low: orange)</subtask>
+          <subtask>Add tooltip showing detailed breakdown: "Sample size: X, Consistency: Y%, p-value: Z"</subtask>
+          <subtask>Add accessibility: aria-label with full confidence explanation</subtask>
+          <subtask>Create 12+ component tests covering rendering, colors, tooltips, accessibility</subtask>
+        </subtasks>
+      </task>
+      <task id="6" acs="1">
+        <title>Integrate ConfidenceBadge into FoodCombinationCard</title>
+        <subtasks>
+          <subtask>Import and render ConfidenceBadge in FoodCombinationCard component</subtask>
+          <subtask>Position badge next to correlation percentage display</subtask>
+          <subtask>Pass confidence prop from FoodCombination data</subtask>
+          <subtask>Update FoodCombinationCard tests to verify badge rendering (3+ tests)</subtask>
+        </subtasks>
+      </task>
+      <task id="7" acs="6">
+        <title>Add "Insufficient Data" handling in UI components</title>
+        <subtasks>
+          <subtask>Create InsufficientDataBadge component with gray styling and info icon</subtask>
+          <subtask>Update FoodCombinationsSection to display "Insufficient Data" for correlations with p >= 0.05 or sample < 3</subtask>
+          <subtask>Add empty state message: "No statistically significant correlations found" when all correlations filtered</subtask>
+          <subtask>Add component tests for insufficient data scenarios (5+ tests)</subtask>
+        </subtasks>
+      </task>
+      <task id="8" acs="1">
+        <title>Update API routes to include confidence in responses</title>
+        <subtasks>
+          <subtask>Modify /api/correlation/enhanced route to include confidence field in CorrelationResult</subtask>
+          <subtask>Update API response interface in route tests</subtask>
+          <subtask>Add API tests verifying confidence field presence and correct values (3+ tests)</subtask>
+        </subtasks>
+      </task>
+      <task id="9" acs="1,2,3,4,5,6">
+        <title>Validation and comprehensive testing</title>
+        <subtasks>
+          <subtask>Create end-to-end integration tests with realistic datasets</subtask>
+          <subtask>Test confidence level transitions (low→medium→high as sample size grows)</subtask>
+          <subtask>Test statistical significance filtering (p-value threshold enforcement)</subtask>
+          <subtask>Test consistency calculation edge cases (0%, 100%, partial occurrences)</subtask>
+          <subtask>Validate UI rendering for all confidence levels</subtask>
+          <subtask>Accessibility validation: screen readers announce confidence levels correctly</subtask>
+          <subtask>Total target: 50+ tests across all modules</subtask>
         </subtasks>
       </task>
     </tasks>
   </story>
 
   <acceptanceCriteria>
-    <group name="FlareCreationModal">
-      <criterion id="1">Step 1: Compact body map for location selection (reuse existing BodyMapViewer in compact mode)</criterion>
-      <criterion id="2">Step 2: Severity slider 1-10 with clear labels (1="Minimal", 10="Excruciating")</criterion>
-      <criterion id="3">Step 3: Optional notes field with placeholder "Any details? (optional)"</criterion>
-      <criterion id="4">Two save buttons: [Save] (quick 10-15 sec flow) and [Add Details] (opens EventDetailModal after save)</criterion>
-      <criterion id="5">Timestamp auto-captured on save</criterion>
-      <criterion id="6">Creates FlareRecord with initial severity in severityHistory</criterion>
-      <criterion id="7">Modal closes after save, returns to home with flare in Active Flares section</criterion>
-      <criterion id="8">Form validation: body location required, severity required, notes optional</criterion>
-      <criterion id="9">Mobile responsive: full-screen modal on mobile, centered dialog on desktop</criterion>
-    </group>
-    <group name="FlareUpdateModal">
-      <criterion id="10">Shows flare context: "Right Armpit - Day 3"</criterion>
-      <criterion id="11">Shows previous severity: "Severity was: 7/10"</criterion>
-      <criterion id="12">Severity slider for new severity</criterion>
-      <criterion id="13">Status buttons: [Getting Worse] [Same] [Improving] (optional, auto-detected if not selected)</criterion>
-      <criterion id="14">Quick intervention buttons: [Ice] [Meds] [Rest] [Other] (optional)</criterion>
-      <criterion id="15">Optional notes field</criterion>
-      <criterion id="16">Calls `flareRepository.updateSeverity()` with new data</criterion>
-      <criterion id="17">If intervention selected, calls `flareRepository.addIntervention()`</criterion>
-      <criterion id="18">Timeline shows update event after save</criterion>
-      <criterion id="19">Completed in 5-10 seconds for typical update</criterion>
-    </group>
+    <criterion id="1">Every correlation displays confidence level: High / Medium / Low</criterion>
+    <criterion id="2">Confidence calculation uses three factors: sample size, consistency, statistical significance (p &lt; 0.05)</criterion>
+    <criterion id="3">High confidence requires: 5+ occurrences, 70%+ consistency, p &lt; 0.05</criterion>
+    <criterion id="4">Medium confidence requires: 3-4 occurrences, 50-69% consistency, p &lt; 0.05</criterion>
+    <criterion id="5">Low confidence: fewer occurrences or weaker consistency (but still meets minimum threshold)</criterion>
+    <criterion id="6">Correlations below statistical significance (p &gt;= 0.05) marked as "Insufficient Data" or hidden from display</criterion>
   </acceptanceCriteria>
 
   <artifacts>
     <docs>
       <doc>
-        <path>docs/event-stream-redesign-spec.md</path>
-        <title>Event Stream Redesign Technical Specification</title>
-        <section>Component Architecture - FlareCreationModal & FlareUpdateModal</section>
-        <snippet>
-          FlareCreationModal specification (lines 260-281):
-          - Location: src/components/flares/FlareCreationModal.tsx
-          - Purpose: Quick flare logging with body map + severity
-          - Props: isOpen, onClose, onSave
-          - Steps: 1) Compact body map, 2) Severity slider (1-10), 3) Optional notes
-          - Buttons: [Save] or [Add Details]
-          - Target time: 10-15 seconds
-
-          FlareUpdateModal specification (lines 283-307):
-          - Location: src/components/flares/FlareUpdateModal.tsx
-          - Purpose: Quick severity update for active flares
-          - Props: flare, isOpen, onClose, onSave
-          - Shows previous severity, slider for new severity, status buttons, intervention buttons
-          - Target time: 5-10 seconds
-        </snippet>
+        <path>docs/epic-stories.md</path>
+        <title>Epic Breakdown - Story 2.4</title>
+        <section>Epic 2: Food-Symptom Correlation Analysis - Story 2.4</section>
+        <snippet>Confidence based on: sample size, consistency, statistical significance (p &lt; 0.05). High confidence requires: 5+ occurrences, 70%+ consistency, p &lt; 0.05. Medium confidence requires: 3-4 occurrences, 50-69% consistency. Low confidence: fewer occurrences or weaker consistency. Correlations below statistical significance not displayed (or marked "Insufficient Data").</snippet>
       </doc>
       <doc>
-        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
-        <title>Event Stream Redesign Epics</title>
-        <section>Story 2.4: Flare Creation and Update Modals</section>
-        <snippet>
-          Story defines requirements for two modal components:
-          - FlareCreationModal: Quick flare logging (body location + severity + optional notes)
-          - FlareUpdateModal: Quick flare updates (severity + status + interventions)
-          - Both modals optimized for speed (10-15 sec creation, 5-10 sec updates)
-          - Auto-capture timestamps, track severity history
-          - Progressive disclosure: quick save vs add details
-        </snippet>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>Data Models and Contracts - FoodCorrelation</section>
+        <snippet>FoodCorrelation model includes confidence field (String: "high" | "medium" | "low"), pValue field (Float), sampleSize (Int), consistency (Float 0-100%). Confidence based on statistical significance thresholds per ADR-008.</snippet>
       </doc>
       <doc>
-        <path>docs/DEVELOPMENT/component-library.md</path>
-        <title>Component Library Reference</title>
-        <section>Body Mapping Components</section>
-        <snippet>
-          Existing body mapping system:
-          - BodyMapViewer: Interactive body map with zoom/pan controls, region selection
-          - BodyRegionSelector: Clickable body regions with severity coloring
-          - ZoomPanControls: Zoom in/out/reset controls
-          - Usage: BodyMapViewer can be used in compact mode for quick region selection
-          - Props: view, onRegionSelect, multiSelect, readOnly
-          - Component location: src/components/body-mapping/
-        </snippet>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-008: Statistical Correlation Methods (Chi-Square + Pearson)</section>
+        <snippet>NFR003 requires statistical significance (p &lt; 0.05) for correlation results. Chi-square test used for categorical food-symptom correlation. P-value calculation mandatory. Minimum sample size 3-5 occurrences enforced. Low significance flagged as "insufficient data".</snippet>
       </doc>
       <doc>
-        <path>docs/PRODUCT/ux-specification.md</path>
-        <title>UX/UI Specification</title>
-        <section>Modal Components & Forms</section>
-        <snippet>
-          Modal design patterns:
-          - Full-screen on mobile (&lt;768px), centered dialog on desktop
-          - Backdrop overlay with click-to-close
-          - [X] close button in top-right
-          - Form validation with inline error messages
-          - Touch-optimized controls (44x44px minimum tap targets)
-          - Slider controls: Clear min/max labels, visual feedback
-          - Button hierarchy: Primary action (Save) vs secondary (Cancel)
-        </snippet>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR003: Statistical Rigor</section>
+        <snippet>All correlations must meet statistical significance threshold (p &lt; 0.05). Results below threshold marked as "Insufficient Data". Confidence scoring required to help users trust insights and avoid false-positive triggers.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-context-2.3.xml</path>
+        <title>Story 2.3 Context - Confidence Pattern</title>
+        <section>Existing Patterns - Confidence Level Determination</section>
+        <snippet>Classify statistical confidence based on sample size, r-squared/p-value, and correlation strength. Pattern established in CombinationAnalysisService.determineConfidence(): High confidence requires n>=10 AND p&lt;0.01, Medium requires n>=5 AND p&lt;0.05, Low otherwise.</snippet>
       </doc>
     </docs>
+
     <code>
-      <artifact>
-        <path>src/lib/repositories/flareRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>flareRepository.create</symbol>
-        <lines>6-16</lines>
-        <reason>Creates new flare record - called by FlareCreationModal on save. Returns created flare with generated ID.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/flareRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>flareRepository.updateSeverity</symbol>
-        <lines>105-150</lines>
-        <reason>Updates flare severity with auto-detection of status (worsening/improving/stable) based on ±2 threshold. Tracks severity history. Called by FlareUpdateModal.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/repositories/flareRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>flareRepository.addIntervention</symbol>
-        <lines>155-181</lines>
-        <reason>Adds intervention (ice/medication/rest/other) to flare. Called by FlareUpdateModal when user selects quick intervention button.</reason>
-      </artifact>
-      <artifact>
-        <path>src/lib/types/flare.ts</path>
-        <kind>type-definition</kind>
-        <symbol>ActiveFlare</symbol>
-        <lines>1-16</lines>
-        <reason>Core flare data structure with severity, status, bodyRegions, interventions, severityHistory fields.</reason>
-      </artifact>
-      <artifact>
-        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+      <file>
+        <path>src/lib/services/food/CombinationAnalysisService.ts</path>
+        <kind>service</kind>
+        <symbol>determineConfidence</symbol>
+        <lines>105-113</lines>
+        <reason>EXISTING confidence determination pattern - uses sample size and p-value (Story 2.3). Can be REUSED as reference for Story 2.4 confidence logic with consistency metric added.</reason>
+      </file>
+      <file>
+        <path>src/lib/services/food/CombinationAnalysisService.ts</path>
+        <kind>service</kind>
+        <symbol>chiSquare</symbol>
+        <lines>53-71</lines>
+        <reason>Chi-square test implementation for 2x2 contingency table. Reused from CorrelationService pattern. Calculates statistical correlation between food and symptom occurrence.</reason>
+      </file>
+      <file>
+        <path>src/lib/services/food/CombinationAnalysisService.ts</path>
+        <kind>service</kind>
+        <symbol>chiSquareToPValue</symbol>
+        <lines>87-96</lines>
+        <reason>Converts chi-square score to p-value approximation. Returns significance levels: 0.001, 0.01, 0.05, 0.10, 0.20, 0.30. Critical for AC6 (p &lt; 0.05 threshold).</reason>
+      </file>
+      <file>
+        <path>src/lib/services/food/DoseResponseService.ts</path>
+        <kind>service</kind>
+        <symbol>determineConfidence</symbol>
+        <lines>130-156</lines>
+        <reason>Alternative confidence determination pattern using r-squared and sample size (Story 2.2). Different logic than Story 2.3: High if r²>=0.7 AND n>=10, Low if r²&lt;0.4, Medium otherwise. Shows flexibility in confidence scoring.</reason>
+      </file>
+      <file>
+        <path>src/lib/services/correlation/CorrelationOrchestrationService.ts</path>
+        <kind>service</kind>
+        <symbol>computeWithCombinations</symbol>
+        <lines>73-154</lines>
+        <reason>Orchestration service that hydrates data from repositories and delegates to pure services. Task 3 requires modifying this method to call ConfidenceCalculationService and add confidence field to results.</reason>
+      </file>
+      <file>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FoodCombinationRecord</symbol>
+        <lines>1-20</lines>
+        <reason>Current data model from Story 2.3. Task 4 requires adding confidence ("high"|"medium"|"low") and consistency (number 0-1) fields to this interface.</reason>
+      </file>
+      <file>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>Dexie version 12</symbol>
+        <lines>1-50</lines>
+        <reason>Current Dexie migration at version 12 (Story 2.3). Task 4 requires creating version 13 migration to add confidence and consistency columns with [userId+confidence] index.</reason>
+      </file>
+      <file>
+        <path>src/components/food/FoodCombinationCard.tsx</path>
         <kind>component</kind>
-        <symbol>BodyMapViewer</symbol>
-        <lines>1-162</lines>
-        <reason>Interactive body map component with zoom/pan controls. Use in compact mode for region selection in FlareCreationModal. Props: view, selectedRegion, onRegionSelect, multiSelect, readOnly.</reason>
-      </artifact>
-      <artifact>
-        <path>src/components/flare/FlareCard.tsx</path>
+        <symbol>FoodCombinationCard</symbol>
+        <lines>1-172</lines>
+        <reason>Existing component from Story 2.3. Task 6 requires integrating ConfidenceBadge component here. Currently displays correlation percentage, synergy badge, sample size, p-value.</reason>
+      </file>
+      <file>
+        <path>src/components/triggers/FoodCombinationsSection.tsx</path>
         <kind>component</kind>
-        <symbol>FlareCard</symbol>
-        <lines>1-109</lines>
-        <reason>Reference for flare display patterns - shows how to display flare context (location, duration, severity) for FlareUpdateModal header.</reason>
-      </artifact>
+        <symbol>FoodCombinationsSection</symbol>
+        <lines>1-177</lines>
+        <reason>Dashboard component from Story 2.3. Task 7 requires adding "Insufficient Data" handling for correlations with p >= 0.05 or sample &lt; 3.</reason>
+      </file>
+      <file>
+        <path>src/app/api/correlation/enhanced/route.ts</path>
+        <kind>api</kind>
+        <symbol>POST /api/correlation/enhanced</symbol>
+        <lines>1-79</lines>
+        <reason>API endpoint from Story 2.3. Task 8 requires modifying response to include confidence field in CorrelationResult interface.</reason>
+      </file>
     </code>
+
     <dependencies>
-      <ecosystem name="node">
-        <package name="react" version="^19.0.0">Core React library for component creation</package>
-        <package name="react-dom" version="^19.0.0">React DOM rendering</package>
-        <package name="next" version="^15.0.0">Next.js framework for routing and SSR</package>
-        <package name="typescript" version="^5.0.0">TypeScript for type safety</package>
-        <package name="lucide-react" version="latest">Icon library for UI icons (close, check, etc)</package>
-        <package name="tailwindcss" version="^4.0.0">CSS framework for styling</package>
-        <package name="dexie" version="^4.0.0">IndexedDB wrapper for data persistence</package>
-      </ecosystem>
+      <npm>
+        <package name="dexie" version="^4.2.0">IndexedDB wrapper for local-first data storage</package>
+        <package name="react" version="^19.1.0">UI framework</package>
+        <package name="typescript" version="^5.0.0">Type safety</package>
+        <package name="@testing-library/react" version="^16.3.0">Component testing</package>
+        <package name="jest" version="^30.2.0">Unit testing framework</package>
+      </npm>
     </dependencies>
   </artifacts>
 
   <constraints>
-    <constraint type="architecture">
-      Create two separate modal components in src/components/flares/:
-      - FlareCreationModal.tsx (for creating new flares)
-      - FlareUpdateModal.tsx (for updating existing flares)
-      Use functional React components with hooks (useState, useEffect).
-      Components must be client-side ("use client" directive for Next.js 15).
-    </constraint>
-    <constraint type="body-map-integration">
-      Reuse existing BodyMapViewer component for location selection.
-      Use compact mode: Disable zoom/pan controls, show simple view picker (front/back/left/right).
-      Props: view, selectedRegion, onRegionSelect, readOnly=false.
-      Body map should allow single region selection (multiSelect=false).
-    </constraint>
-    <constraint type="severity-slider">
-      Use HTML5 range input: &lt;input type="range" min="1" max="10" step="1" /&gt;
-      Display current value prominently: "Severity: 7/10"
-      Label endpoints: 1="Minimal", 10="Excruciating"
-      Visual feedback: Color gradient or severity markers.
-      Accessible: ARIA labels, keyboard navigation (arrow keys work natively).
-    </constraint>
-    <constraint type="auto-detection">
-      FlareUpdateModal: Auto-detect status from severity delta (AC: Update-4)
-      - If newSeverity - previousSeverity ≥ +2: suggest "worsening"
-      - If newSeverity - previousSeverity ≤ -2: suggest "improving"
-      - Otherwise: suggest "stable"
-      User can override suggested status by clicking status buttons.
-      If user doesn't select status, use auto-detected value.
-    </constraint>
-    <constraint type="progressive-disclosure">
-      FlareCreationModal has two save options:
-      - [Save] button: Quick save, close modal immediately (10-15 sec flow)
-      - [Add Details] button: Save flare, then open EventDetailModal (Story 2.6)
-      EventDetailModal not yet implemented - use placeholder/TODO for [Add Details] button.
-    </constraint>
-    <constraint type="form-validation">
-      FlareCreationModal validation:
-      - Body location: REQUIRED (show error if not selected)
-      - Severity: REQUIRED (default to 5 if not changed)
-      - Notes: OPTIONAL
-      Show validation errors inline, prevent save until required fields filled.
-    </constraint>
-    <constraint type="modal-behavior">
-      Both modals:
-      - Open prop controls visibility
-      - onClose prop for close action (X button, backdrop click, Escape key)
-      - onSave prop with flare data
-      - Close automatically after successful save
-      - Show loading state during save operation
-      - Handle save errors gracefully with error messages
-    </constraint>
-    <constraint type="responsive-design">
-      Mobile (&lt;768px): Full-screen modal, use full viewport height/width
-      Desktop (≥768px): Centered dialog, max-width 600px, rounded corners, shadow
-      Touch optimization: Button min size 44x44px, slider thumb larger on touch devices.
-      Keyboard support: Tab navigation, Enter to submit, Escape to close.
-    </constraint>
-    <constraint type="ui-patterns">
-      Use Tailwind CSS utility classes for styling.
-      Modal backdrop: bg-black/50 overlay.
-      Modal content: bg-white p-6 rounded-lg shadow-xl.
-      Button styles: primary (bg-primary text-white), secondary (border).
-      Severity slider: Track with gradient, prominent thumb control.
-      Status buttons: Toggle style (selected = filled, unselected = outline).
-      Intervention buttons: Icon + label, toggle on/off.
-    </constraint>
-    <constraint type="accessibility">
-      WCAG 2.1 AA compliance required.
-      Modal traps focus (Tab cycles within modal).
-      ARIA labels for all controls (role="dialog", aria-labelledby, aria-describedby).
-      Screen reader announcements for validation errors and save success.
-      Keyboard shortcuts: Escape closes modal, Enter submits form.
-      Minimum 4.5:1 text contrast ratio.
-    </constraint>
-    <constraint type="performance">
-      Both modals should render instantly (&lt;100ms).
-      Save operations should complete in &lt;200ms.
-      Use optimistic UI updates where possible.
-      Debounce slider changes to prevent excessive re-renders.
-    </constraint>
+    <constraint>Pure Service Layer: ConfidenceCalculationService must be a pure computation service with no database dependencies. Accept parameters (sampleSize, consistency, pValue), return confidence level. No repository calls inside service.</constraint>
+    <constraint>Multi-Factor Confidence Logic: Confidence assignment uses LOWEST factor tier among three factors: (1) Sample Size (High >=5, Medium 3-4, Low &lt;3), (2) Consistency (High >=70%, Medium 50-69%, Low &lt;50%), (3) Statistical Significance (p &lt; 0.05 required for any confidence level, p >= 0.05 = "Insufficient Data").</constraint>
+    <constraint>Consistency Metric: Calculated as (number of food occurrences followed by symptom within time window) / (total food occurrences). Return as decimal 0-1 (e.g., 0.75 for 75% consistency).</constraint>
+    <constraint>Statistical Significance Threshold: Reuse existing p-value calculation from Story 2.1 chi-square test. Filter out correlations with p >= 0.05 per NFR003 and ADR-008.</constraint>
+    <constraint>Dexie Conventions: JSON-stringified arrays for compound fields, compound indexes [userId+field] for query performance, version migrations increment sequentially (v12 -> v13).</constraint>
+    <constraint>Test Coverage: Minimum 50+ tests across all modules. Target 80%+ coverage per AGENTS.md standards. Include edge cases: 0% consistency, 100% consistency, boundary sample sizes (exactly 3, exactly 5), p-value thresholds (0.04, 0.05, 0.06).</constraint>
+    <constraint>Accessibility: Confidence badges must have aria-label with full explanation (e.g., "High confidence: 5 occurrences, 75% consistency, statistically significant"). Tooltips keyboard accessible (Tab focus, Escape dismiss). Color coding supplemented with text labels (not color-only per WCAG 2.1 AA).</constraint>
+    <constraint>Component Reusability: ConfidenceBadge component must be reusable across FoodCombinationCard (Story 2.3), future correlation detail views, and dashboard summary cards. Accept confidence prop ("high"|"medium"|"low") and optional metadata (sampleSize, consistency, pValue).</constraint>
   </constraints>
 
   <interfaces>
     <interface>
-      <name>FlareCreationModalProps</name>
-      <kind>component-props</kind>
-      <signature>interface FlareCreationModalProps { isOpen: boolean; onClose: () =&gt; void; onSave: (data: NewFlareData) =&gt; Promise&lt;void&gt;; }</signature>
-      <path>src/components/flares/FlareCreationModal.tsx (to be created)</path>
-      <usage>Props for FlareCreationModal component</usage>
+      <name>ConfidenceCalculationService.determineConfidence</name>
+      <kind>function</kind>
+      <signature><![CDATA[
+export function determineConfidence(
+  sampleSize: number,
+  consistency: number, // 0-1 decimal
+  pValue: number
+): "high" | "medium" | "low" {
+  // Implementation: Check all three factors, return LOWEST tier
+  // High: sampleSize >= 5 AND consistency >= 0.70 AND pValue < 0.05
+  // Medium: sampleSize >= 3 AND consistency >= 0.50 AND pValue < 0.05
+  // Low: sampleSize >= MIN_THRESHOLD AND consistency < 0.50 AND pValue < 0.05
+  // Note: If pValue >= 0.05, caller should mark as "Insufficient Data" (not returned here)
+}
+      ]]></signature>
+      <path>src/lib/services/correlation/ConfidenceCalculationService.ts</path>
     </interface>
+
     <interface>
-      <name>NewFlareData</name>
-      <kind>type-interface</kind>
-      <signature>interface NewFlareData { bodyRegionId: string; severity: number; notes?: string; }</signature>
-      <path>src/components/flares/FlareCreationModal.tsx (to be created)</path>
-      <usage>Data structure for creating new flare</usage>
+      <name>CorrelationService.computeConsistency</name>
+      <kind>function</kind>
+      <signature><![CDATA[
+export function computeConsistency(
+  foodEvents: FoodEventLike[],
+  symptomEvents: SymptomInstanceLike[],
+  timeWindow: TimeRange // e.g., { startMs: 0, endMs: 4 * 60 * 60 * 1000 } for 4-hour window
+): number {
+  // Implementation: For each food event, check if symptom occurred within timeWindow
+  // Return (count of food events followed by symptom) / (total food events)
+  // Example: 10 food events, 7 followed by symptom within 4 hours -> return 0.70
+}
+      ]]></signature>
+      <path>src/lib/services/correlation/CorrelationService.ts</path>
     </interface>
+
     <interface>
-      <name>FlareUpdateModalProps</name>
-      <kind>component-props</kind>
-      <signature>interface FlareUpdateModalProps { flare: ActiveFlare; isOpen: boolean; onClose: () =&gt; void; onSave: (update: FlareUpdate) =&gt; Promise&lt;void&gt;; }</signature>
-      <path>src/components/flares/FlareUpdateModal.tsx (to be created)</path>
-      <usage>Props for FlareUpdateModal component</usage>
+      <name>FoodCombinationRecord (Extended)</name>
+      <kind>interface</kind>
+      <signature><![CDATA[
+export interface FoodCombinationRecord {
+  id: string;
+  userId: string;
+  foodIds: string; // JSON-stringified string[]
+  foodNames: string; // JSON-stringified string[]
+  symptomId: string;
+  symptomName: string;
+  combinationCorrelation: number;
+  individualMax: number;
+  synergistic: boolean;
+  pValue: number;
+  confidence: "high" | "medium" | "low"; // NEW - Task 4
+  consistency: number; // NEW - Task 4 (0-1 decimal)
+  sampleSize: number;
+  lastAnalyzedAt: number;
+  createdAt: number;
+  updatedAt: number;
+}
+      ]]></signature>
+      <path>src/lib/db/schema.ts</path>
     </interface>
+
     <interface>
-      <name>FlareUpdate</name>
-      <kind>type-interface</kind>
-      <signature>interface FlareUpdate { severity: number; status: 'active' | 'improving' | 'worsening'; intervention?: 'ice' | 'medication' | 'rest' | 'other'; notes?: string; }</signature>
-      <path>src/components/flares/FlareUpdateModal.tsx (to be created)</path>
-      <usage>Data structure for updating flare severity and interventions</usage>
+      <name>ConfidenceBadge Component</name>
+      <kind>component</kind>
+      <signature><![CDATA[
+export interface ConfidenceBadgeProps {
+  confidence: "high" | "medium" | "low";
+  sampleSize?: number; // Optional for tooltip details
+  consistency?: number; // Optional for tooltip (0-1 decimal, display as percentage)
+  pValue?: number; // Optional for tooltip
+}
+
+export function ConfidenceBadge(props: ConfidenceBadgeProps): JSX.Element {
+  // Renders badge with color coding:
+  // - High: bg-green-100 text-green-800
+  // - Medium: bg-yellow-100 text-yellow-800
+  // - Low: bg-orange-100 text-orange-800
+  // Tooltip shows: "Sample size: X, Consistency: Y%, p-value: Z"
+  // aria-label: "High confidence: 5 occurrences, 75% consistency, statistically significant"
+}
+      ]]></signature>
+      <path>src/components/correlation/ConfidenceBadge.tsx</path>
     </interface>
+
     <interface>
-      <name>flareRepository.create</name>
-      <kind>repository-method</kind>
-      <signature>async create(flare: Omit&lt;ActiveFlare, "id" | "createdAt" | "updatedAt"&gt;): Promise&lt;ActiveFlare&gt;</signature>
-      <path>src/lib/repositories/flareRepository.ts:6-16</path>
-      <usage>Creates new flare record with generated ID and timestamps</usage>
+      <name>InsufficientDataBadge Component</name>
+      <kind>component</kind>
+      <signature><![CDATA[
+export interface InsufficientDataBadgeProps {
+  reason?: "low-sample" | "not-significant" | "low-consistency";
+  sampleSize?: number;
+  pValue?: number;
+}
+
+export function InsufficientDataBadge(props: InsufficientDataBadgeProps): JSX.Element {
+  // Renders gray badge: bg-gray-100 text-gray-600
+  // Text: "Insufficient Data" with info icon
+  // Tooltip explains reason (e.g., "Sample size too small (n=2, minimum 3 required)")
+  // aria-label: "Insufficient data: sample size too small"
+}
+      ]]></signature>
+      <path>src/components/correlation/InsufficientDataBadge.tsx</path>
     </interface>
+
     <interface>
-      <name>flareRepository.updateSeverity</name>
-      <kind>repository-method</kind>
-      <signature>async updateSeverity(id: string, newSeverity: number, status?: 'active' | 'improving' | 'worsening'): Promise&lt;void&gt;</signature>
-      <path>src/lib/repositories/flareRepository.ts:105-150</path>
-      <usage>Updates flare severity with auto-detection of status and severity history tracking</usage>
-    </interface>
-    <interface>
-      <name>flareRepository.addIntervention</name>
-      <kind>repository-method</kind>
-      <signature>async addIntervention(id: string, type: 'ice' | 'medication' | 'rest' | 'other', notes?: string): Promise&lt;void&gt;</signature>
-      <path>src/lib/repositories/flareRepository.ts:155-181</path>
-      <usage>Adds intervention to flare with timestamp</usage>
-    </interface>
-    <interface>
-      <name>BodyMapViewer</name>
-      <kind>react-component</kind>
-      <signature>interface BodyMapViewerProps { view: "front" | "back" | "left" | "right"; selectedRegion?: string; onRegionSelect: (regionId: string) =&gt; void; readOnly?: boolean; multiSelect?: boolean; }</signature>
-      <path>src/components/body-mapping/BodyMapViewer.tsx:8-18</path>
-      <usage>Interactive body map for region selection - use in compact mode for FlareCreationModal</usage>
+      <name>EnhancedCorrelationResult (Extended)</name>
+      <kind>interface</kind>
+      <signature><![CDATA[
+export interface EnhancedCorrelationResult {
+  correlations: CorrelationResult[]; // Individual food correlations
+  combinations: FoodCombination[]; // Combination effects with NEW confidence field
+  metadata: {
+    computedAt: number;
+    userId: string;
+    symptomId: string;
+    dateRange: TimeRange;
+  };
+}
+      ]]></signature>
+      <path>src/lib/services/correlation/CorrelationOrchestrationService.ts</path>
     </interface>
   </interfaces>
 
   <tests>
     <standards>
-      Testing framework: Jest 30.2.0 with React Testing Library.
-      Coverage target: 80%+ for all new components.
-      Test files co-located: __tests__/ComponentName.test.tsx
-      Test user behavior, not implementation details.
-      Mock repository methods using Jest mocks.
-      Use data-testid for complex selectors when needed.
-      Modal testing: Use @testing-library/user-event for interactions.
+      <![CDATA[
+Project uses Jest 30.2.0 with React Testing Library 16.3.0 for component tests and ts-jest for TypeScript support.
+
+**Test File Locations:**
+- Service tests: src/lib/services/**/__tests__/*.test.ts
+- Component tests: src/components/**/__tests__/*.test.tsx
+- Integration tests: src/lib/services/**/__tests__/*.integration.test.ts
+
+**Coverage Requirements (AGENTS.md):**
+- Minimum 80% coverage across branches, functions, lines, statements
+- All edge cases must be tested explicitly
+- Accessibility tests required for all UI components (ARIA labels, keyboard navigation, screen readers)
+
+**Testing Patterns:**
+- Pure service tests use in-memory synthetic data (no DB mocking required)
+- Component tests use @testing-library/react with accessible queries (getByRole, getByLabelText)
+- Integration tests mock Dexie/IndexedDB (jest.setup.js provides mocks)
+- Snapshot tests for component visual structure
+
+**Test Structure:**
+- describe blocks group related tests by feature
+- test/it blocks use clear descriptions: "should calculate high confidence when all factors meet high criteria"
+- expect assertions verify behavior, not implementation details
+- Edge cases tested explicitly: boundary values, empty inputs, invalid data
+
+**Confidence Testing Strategy (Story 2.4 specific):**
+- Test all 27 combinations of three factors (3 sample levels × 3 consistency levels × 3 p-value levels)
+- Test boundary values: exactly 3 samples, exactly 5 samples, consistency exactly 0.50, exactly 0.70, p-value exactly 0.05
+- Test "Insufficient Data" scenarios: p >= 0.05, sample < minimum threshold
+- Test consistency calculation edge cases: 0% (no symptoms after food), 100% (all symptoms after food), partial (7/10 = 70%)
+- Test confidence level transitions: low->medium->high as sample size grows with same consistency/p-value
+      ]]>
     </standards>
+
     <locations>
-      <location>src/components/flares/__tests__/FlareCreationModal.test.tsx</location>
-      <location>src/components/flares/__tests__/FlareUpdateModal.test.tsx</location>
-      <location>src/lib/repositories/__tests__/flareRepository.enhanced.test.ts (existing - may need updates)</location>
+      <location>src/lib/services/correlation/__tests__/ConfidenceCalculationService.test.ts</location>
+      <location>src/lib/services/correlation/__tests__/CorrelationService.test.ts (extend with consistency tests)</location>
+      <location>src/lib/services/correlation/__tests__/CorrelationOrchestrationService.test.ts (extend with confidence integration)</location>
+      <location>src/components/correlation/__tests__/ConfidenceBadge.test.tsx</location>
+      <location>src/components/correlation/__tests__/InsufficientDataBadge.test.tsx</location>
+      <location>src/components/food/__tests__/FoodCombinationCard.test.tsx (extend with badge integration)</location>
+      <location>src/components/triggers/__tests__/FoodCombinationsSection.test.tsx (extend with insufficient data)</location>
+      <location>src/app/api/correlation/enhanced/__tests__/route.test.ts (extend with confidence field)</location>
     </locations>
+
     <ideas>
-      <testIdea criterion="Creation-1">Test: BodyMapViewer integration. Render FlareCreationModal, verify BodyMapViewer displayed, simulate region selection, verify selected region state updated.</testIdea>
-      <testIdea criterion="Creation-2">Test: Severity slider. Render modal, verify slider range 1-10, change slider value, verify display updates to "Severity: X/10".</testIdea>
-      <testIdea criterion="Creation-3">Test: Optional notes field. Verify notes field present with correct placeholder, type text, verify value captured.</testIdea>
-      <testIdea criterion="Creation-4">Test: Save buttons. Verify both [Save] and [Add Details] buttons present, click [Save], verify onSave called with correct data.</testIdea>
-      <testIdea criterion="Creation-5">Test: Timestamp auto-capture. Mock Date.now(), click save, verify timestamp in saved data matches mocked value.</testIdea>
-      <testIdea criterion="Creation-6">Test: Severity history initialization. Call flareRepository.create, verify returned flare has severityHistory array with initial entry.</testIdea>
-      <testIdea criterion="Creation-7">Test: Modal close after save. Click save, wait for promise resolution, verify onClose called and modal hidden.</testIdea>
-      <testIdea criterion="Creation-8">Test: Form validation. Try to save without selecting location, verify error message shown, verify save blocked.</testIdea>
-      <testIdea criterion="Creation-9">Test: Responsive design. Render at mobile viewport, verify full-screen class. Render at desktop viewport, verify centered dialog class.</testIdea>
-      <testIdea criterion="Update-10">Test: Flare context display. Pass flare prop, verify header shows "Location - Day X" format.</testIdea>
-      <testIdea criterion="Update-11">Test: Previous severity display. Pass flare with severity 7, verify "Severity was: 7/10" displayed.</testIdea>
-      <testIdea criterion="Update-12">Test: Severity slider. Change slider, verify new severity captured.</testIdea>
-      <testIdea criterion="Update-13">Test: Status auto-detection. Set previous severity 7, slide to 9, verify "worsening" suggested. Override by clicking [Same], verify status updated.</testIdea>
-      <testIdea criterion="Update-14">Test: Intervention buttons. Click [Ice] button, verify selected state, click save, verify addIntervention called with 'ice'.</testIdea>
-      <testIdea criterion="Update-15">Test: Optional notes. Add notes, verify captured in update data.</testIdea>
-      <testIdea criterion="Update-16">Test: updateSeverity called. Click save, verify flareRepository.updateSeverity called with correct flareId, severity, status.</testIdea>
-      <testIdea criterion="Update-17">Test: addIntervention called conditionally. Save with intervention, verify called. Save without intervention, verify not called.</testIdea>
-      <testIdea criterion="loading">Test: Loading state. Mock slow save, verify loading spinner shown, verify save button disabled during save.</testIdea>
-      <testIdea criterion="error">Test: Error handling. Mock repository to throw error, click save, verify error message displayed to user.</testIdea>
+      <idea ac="2,3" task="1">
+        <description>Test determineConfidence with all three factors at high thresholds (sampleSize=5, consistency=0.70, pValue=0.02) returns "high"</description>
+      </idea>
+      <idea ac="2,4" task="1">
+        <description>Test determineConfidence with medium sample (sampleSize=4, consistency=0.75, pValue=0.03) returns "medium" (sample size limits to medium)</description>
+      </idea>
+      <idea ac="2,5" task="1">
+        <description>Test determineConfidence with low consistency (sampleSize=5, consistency=0.45, pValue=0.04) returns "low" (consistency limits to low)</description>
+      </idea>
+      <idea ac="6" task="1">
+        <description>Test determineConfidence with p >= 0.05 - caller should handle as "Insufficient Data" (service does not return this, but test boundary p=0.049 vs p=0.051)</description>
+      </idea>
+      <idea ac="2" task="1">
+        <description>Test boundary values: sampleSize exactly 3 (medium threshold), exactly 5 (high threshold), consistency exactly 0.50, exactly 0.70, pValue exactly 0.05</description>
+      </idea>
+      <idea ac="2,3,4,5" task="1">
+        <description>Test all 27 combinations of three factors (sample: &lt;3, 3-4, >=5) × (consistency: &lt;50%, 50-69%, >=70%) × (pValue: &lt;0.05, =0.05, >0.05)</description>
+      </idea>
+      <idea ac="2" task="2">
+        <description>Test computeConsistency with 10 food events, 7 followed by symptom within 4-hour window, returns 0.70 (70% consistency)</description>
+      </idea>
+      <idea ac="2" task="2">
+        <description>Test computeConsistency edge case: 0% consistency (food occurs 5 times, symptom never follows within window)</description>
+      </idea>
+      <idea ac="2" task="2">
+        <description>Test computeConsistency edge case: 100% consistency (food occurs 5 times, symptom always follows within window)</description>
+      </idea>
+      <idea ac="2" task="2">
+        <description>Test computeConsistency with partial occurrences: food occurs 8 times, symptom follows 5 times, returns 0.625 (62.5% consistency)</description>
+      </idea>
+      <idea ac="2" task="2">
+        <description>Test computeConsistency with empty food events array, returns 0 or throws error (decide on behavior)</description>
+      </idea>
+      <idea ac="2" task="2">
+        <description>Test computeConsistency with different time windows: 1-hour, 4-hour, 24-hour windows affect consistency calculation</description>
+      </idea>
+      <idea ac="2" task="2">
+        <description>Test computeConsistency with overlapping symptoms: multiple symptoms within window for single food event (count as 1 match)</description>
+      </idea>
+      <idea ac="2" task="2">
+        <description>Test computeConsistency with delayed symptoms: symptom at 3.9 hours vs 4.1 hours from food event (4-hour window boundary)</description>
+      </idea>
+      <idea ac="1,2,6" task="3">
+        <description>Test orchestration service calls ConfidenceCalculationService for each correlation result and populates confidence field</description>
+      </idea>
+      <idea ac="6" task="3">
+        <description>Test orchestration service filters out correlations with p >= 0.05 before returning results (statistical insignificance filter)</description>
+      </idea>
+      <idea ac="1" task="3">
+        <description>Test orchestration service adds confidence field to CorrelationResult interface with correct "high"|"medium"|"low" values</description>
+      </idea>
+      <idea ac="2" task="3">
+        <description>Test orchestration integration with realistic dataset: 10 correlations with varying sample sizes, consistencies, p-values, verify correct confidence assignment</description>
+      </idea>
+      <idea ac="2" task="3">
+        <description>Test confidence level transitions: same food-symptom pair with growing sample size transitions low->medium->high confidence over time</description>
+      </idea>
+      <idea ac="1" task="4">
+        <description>Test Dexie migration from v12 to v13 adds confidence and consistency columns to foodCombinations table</description>
+      </idea>
+      <idea ac="1" task="4">
+        <description>Test compound index [userId+confidence] created and functional for efficient filtering queries</description>
+      </idea>
+      <idea ac="1" task="4">
+        <description>Test migration with existing data: v12 records migrated to v13 with default confidence="low" and consistency=0 values</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge renders with high confidence: green badge (bg-green-100 text-green-800), text "High Confidence"</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge renders with medium confidence: yellow badge, text "Medium Confidence"</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge renders with low confidence: orange badge, text "Low Confidence"</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge tooltip shows detailed breakdown: "Sample size: 5, Consistency: 75%, p-value: 0.02"</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge aria-label: "High confidence: 5 occurrences, 75% consistency, statistically significant"</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge keyboard accessibility: tooltip appears on Tab focus, dismissed on Escape key</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge with optional props missing: renders badge without tooltip when sampleSize/consistency/pValue not provided</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge screen reader announces confidence level correctly (use toHaveAccessibleName matcher)</description>
+      </idea>
+      <idea ac="1" task="5">
+        <description>Test ConfidenceBadge color-only coding supplemented with text labels (WCAG 2.1 AA compliance)</description>
+      </idea>
+      <idea ac="1" task="6">
+        <description>Test FoodCombinationCard renders ConfidenceBadge next to correlation percentage display</description>
+      </idea>
+      <idea ac="1" task="6">
+        <description>Test FoodCombinationCard passes correct confidence prop ("high"|"medium"|"low") from FoodCombination data</description>
+      </idea>
+      <idea ac="1" task="6">
+        <description>Test FoodCombinationCard with confidence="high" displays green badge, medium displays yellow, low displays orange</description>
+      </idea>
+      <idea ac="6" task="7">
+        <description>Test InsufficientDataBadge renders with gray styling (bg-gray-100 text-gray-600) and info icon</description>
+      </idea>
+      <idea ac="6" task="7">
+        <description>Test InsufficientDataBadge tooltip explains reason: "Sample size too small (n=2, minimum 3 required)"</description>
+      </idea>
+      <idea ac="6" task="7">
+        <description>Test InsufficientDataBadge aria-label: "Insufficient data: sample size too small"</description>
+      </idea>
+      <idea ac="6" task="7">
+        <description>Test FoodCombinationsSection displays InsufficientDataBadge for correlations with p >= 0.05</description>
+      </idea>
+      <idea ac="6" task="7">
+        <description>Test FoodCombinationsSection empty state message: "No statistically significant correlations found" when all correlations filtered</description>
+      </idea>
+      <idea ac="1" task="8">
+        <description>Test /api/correlation/enhanced POST response includes confidence field in CorrelationResult</description>
+      </idea>
+      <idea ac="1" task="8">
+        <description>Test /api/correlation/enhanced GET response includes confidence field with correct values ("high"|"medium"|"low")</description>
+      </idea>
+      <idea ac="1" task="8">
+        <description>Test API route filters out correlations with p >= 0.05 before returning (no "Insufficient Data" items in response)</description>
+      </idea>
+      <idea ac="1,2,3,4,5,6" task="9">
+        <description>End-to-end test: Create 10 food events, 7 followed by symptom within 4-hour window, verify confidence="high" (sampleSize=10, consistency=0.70, pValue &lt; 0.05)</description>
+      </idea>
+      <idea ac="2" task="9">
+        <description>End-to-end test: Same food-symptom pair transitions from low confidence (n=3, consistency=0.50) to high confidence (n=10, consistency=0.75) as more data logged</description>
+      </idea>
+      <idea ac="6" task="9">
+        <description>End-to-end test: Correlation with p=0.10 marked as "Insufficient Data" and hidden from dashboard display</description>
+      </idea>
+      <idea ac="2" task="9">
+        <description>Edge case test: Consistency exactly 50% (5/10 food events followed by symptom) returns medium confidence</description>
+      </idea>
+      <idea ac="2" task="9">
+        <description>Edge case test: Consistency exactly 70% (7/10 food events followed by symptom) returns high confidence (if sample>=5 and p&lt;0.05)</description>
+      </idea>
+      <idea ac="1" task="9">
+        <description>Accessibility validation: Screen reader announces "High confidence: 5 occurrences, 75% consistency, statistically significant" for badge</description>
+      </idea>
+      <idea ac="1" task="9">
+        <description>Accessibility validation: Keyboard navigation cycles through confidence badges with Tab, tooltips appear on focus</description>
+      </idea>
     </ideas>
   </tests>
+
+  <devNotes>
+    <note id="1" title="Confidence Calculation Multi-Factor Logic">
+      Confidence level determined by THREE factors working together. Uses LOWEST tier among the three:
+      1. Sample Size: High >=5, Medium 3-4, Low &lt;3
+      2. Consistency: High >=70%, Medium 50-69%, Low &lt;50%
+      3. Statistical Significance: p &lt; 0.05 required for ANY confidence level
+
+      Example: Sample=6, Consistency=80%, p=0.02 -> HIGH (all three factors meet high criteria)
+      Example: Sample=4, Consistency=75%, p=0.03 -> MEDIUM (sample size limits to medium despite high consistency)
+      Example: Sample=5, Consistency=45%, p=0.04 -> LOW (consistency limits to low despite high sample size)
+      Example: Sample=10, Consistency=85%, p=0.10 -> INSUFFICIENT DATA (p-value fails threshold)
+    </note>
+
+    <note id="2" title="Consistency Metric Calculation">
+      Calculated as percentage of food occurrences followed by symptom within correlation time window.
+      Formula: (number of food events followed by symptom) / (total food events)
+
+      Example: User logs "Dairy" 10 times; symptom appears after 7 occurrences within 4-hour window -> Consistency = 7/10 = 70%
+      Edge case: If food occurs only once, consistency = 0% or 100% (binary outcome, typically excluded via sample size filter)
+      Time window: Use same window as correlation calculation (varies per Story 2.1 windows: 15min, 1h, 4h, 24h, etc.)
+    </note>
+
+    <note id="3" title="Reuse Existing Confidence Pattern from Story 2.3">
+      Story 2.3 (CombinationAnalysisService) already implements determineConfidence(sampleSize, pValue) pattern.
+      Current logic: High if n>=10 AND p&lt;0.01, Medium if n>=5 AND p&lt;0.05, Low otherwise.
+
+      For Story 2.4, EXTEND this pattern by adding consistency parameter:
+      - Copy determineConfidence function to ConfidenceCalculationService
+      - Add consistency parameter to function signature
+      - Modify logic to check all three factors instead of just two
+      - Use same p-value thresholds (0.01 for high, 0.05 for medium/low)
+    </note>
+
+    <note id="4" title="Statistical Significance Filtering">
+      Per NFR003 and ADR-008, correlations with p >= 0.05 are statistically insignificant.
+      Task 3 requires filtering these out BEFORE returning results from orchestration service.
+
+      Implementation: In CorrelationOrchestrationService.computeWithCombinations():
+      ```typescript
+      const significantCorrelations = combinations.filter(combo => combo.pValue < 0.05);
+      // Only calculate confidence for significant correlations
+      const withConfidence = significantCorrelations.map(combo => ({
+        ...combo,
+        confidence: determineConfidence(combo.sampleSize, consistency, combo.pValue)
+      }));
+      ```
+
+      UI handling: FoodCombinationsSection should display "Insufficient Data" badge or empty state when all correlations filtered.
+    </note>
+
+    <note id="5" title="Dexie Version 13 Migration Strategy">
+      Current: Version 12 (Story 2.3 added foodCombinations table)
+      Target: Version 13 (add confidence and consistency fields)
+
+      Migration code in src/lib/db/client.ts:
+      ```typescript
+      this.version(13).stores({
+        // Copy all tables from version 12
+        users: "id, email, createdAt",
+        // ... (all existing tables)
+        foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt"
+        // Added [userId+confidence] compound index for efficient filtering
+      }).upgrade(tx => {
+        // Optional: Set default values for existing records
+        return tx.table('foodCombinations').toCollection().modify(record => {
+          record.confidence = "low"; // Default confidence
+          record.consistency = 0; // Default consistency (will be recalculated)
+        });
+      });
+      ```
+
+      Note: Existing FoodCombinationRecord entries will need default values or recalculation after migration.
+    </note>
+
+    <note id="6" title="ConfidenceBadge Component Reusability">
+      Component must be reusable across multiple contexts:
+      1. FoodCombinationCard (Story 2.3) - Task 6
+      2. Future correlation detail views
+      3. Dashboard summary cards
+
+      Design for flexibility:
+      - Accept confidence prop (required): "high" | "medium" | "low"
+      - Accept optional metadata props: sampleSize, consistency, pValue
+      - Render tooltip only when metadata provided
+      - Use native HTML (span/div) instead of shadcn/ui components (consistency with Story 2.3 approach)
+      - Ensure WCAG 2.1 AA compliance: aria-label, keyboard navigation, color + text labels
+    </note>
+
+    <note id="7" title="Testing Strategy - 50+ Tests Target">
+      Distribution across modules:
+      - ConfidenceCalculationService: 15+ tests (all factor combinations, boundaries, edge cases)
+      - CorrelationService (consistency): 8+ tests (calculation accuracy, edge cases, time windows)
+      - CorrelationOrchestrationService: 5+ tests (integration, filtering, confidence assignment)
+      - ConfidenceBadge: 12+ tests (rendering, colors, tooltips, accessibility)
+      - InsufficientDataBadge: 5+ tests (rendering, tooltips, accessibility)
+      - FoodCombinationCard (extended): 3+ tests (badge integration)
+      - FoodCombinationsSection (extended): 3+ tests (insufficient data handling)
+      - API route (extended): 3+ tests (confidence field, filtering)
+      - End-to-end integration: 2+ tests (realistic workflows)
+
+      Total: 56+ tests planned (exceeds 50+ requirement)
+    </note>
+
+    <note id="8" title="Accessibility Requirements Checklist">
+      Per AGENTS.md and WCAG 2.1 AA standards:
+      1. Confidence badges have aria-label with full explanation
+         Example: "High confidence: 5 occurrences, 75% consistency, statistically significant"
+      2. Tooltips keyboard accessible:
+         - Tab key to focus badge -> tooltip appears
+         - Escape key to dismiss tooltip
+      3. Color coding supplemented with text labels (not color-only):
+         - High: Green badge + "High Confidence" text
+         - Medium: Yellow badge + "Medium Confidence" text
+         - Low: Orange badge + "Low Confidence" text
+      4. Screen reader testing:
+         - Use toHaveAccessibleName matcher in tests
+         - Verify confidence level announced correctly
+      5. Keyboard navigation:
+         - All interactive elements (badges, tooltips) reachable via Tab
+         - Logical tab order (correlation percentage -> confidence badge -> other metrics)
+    </note>
+  </devNotes>
 </story-context>

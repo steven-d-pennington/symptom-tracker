@@ -2,18 +2,7 @@
 
 import { TrendWidget } from './TrendWidget';
 import { DashboardProvider } from './DashboardContext';
-import { TrendAnalysisService } from '../../lib/services/TrendAnalysisService';
-import { dailyEntryRepository } from '../../lib/repositories/dailyEntryRepository';
-import { symptomRepository } from '../../lib/repositories/symptomRepository';
-import { medicationRepository } from '../../lib/repositories/medicationRepository';
-import { analysisRepository } from '../../lib/repositories/analysisRepository';
-
-const trendAnalysisService = new TrendAnalysisService(
-    dailyEntryRepository,
-    symptomRepository,
-    medicationRepository,
-    analysisRepository
-);
+import { trendAnalysisService } from '../../lib/services/TrendAnalysisService';
 
 export const AnalyticsDashboard = () => {
     return (

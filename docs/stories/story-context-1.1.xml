@@ -1,0 +1,69 @@
+<story-context id="symptom-tracker/story-1.1" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Quick-log Food Button on Dashboard</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-16</generatedAt>
+    <generator>BMAD Story Context Workflow (manual execution)</generator>
+    <sourceStoryPath>docs/stories/story-1.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>quickly log food from the dashboard with a single tap</iWant>
+    <soThat>I can capture food intake in real time without disrupting my day</soThat>
+    <tasks>- Extend dashboard quick-log controls to include a "Food" action (AC 1)
+  - Update `src/components/quick-log/QuickLogButtons.tsx` with a Food button, icon, and accessible text mirroring existing quick-log semantics.
+  - Wire the new button to the Food logging handler exposed via FoodContext, preparing to open the FoodLogModal.
+  - Add unit coverage asserting the Food button renders with the correct aria-label and invokes the provided callback.
+- Implement the initial FoodLogModal shell triggered by the button (AC 2–3)
+  - Scaffold `src/components/food/FoodLogModal.tsx` following the shared modal wrapper, with focused search input, favorites grid, and save/cancel controls.
+  - Ensure responsive behavior for desktop vs. mobile quick-log entry, matching UX spacing and focus guidance.
+  - Add component tests validating the modal opens on trigger, traps focus, and closes via escape/cancel actions.
+- Instrument performance to meet the 500 ms quick-log requirement (AC 4)
+  - Record performance marks on button click and modal ready states, surfacing telemetry through the analytics utility.
+  - Document measurement approach and thresholds in Dev Notes for future regression monitoring.</tasks>
+  </story>
+
+  <acceptanceCriteria>1. A "Food" quick-log button appears alongside the existing symptom, medication, and trigger buttons on the dashboard, using the same interaction pattern and accessible labeling.
+2. Tapping the new button opens the Food Log modal, reusing the established quick-log modal layout and styling conventions.
+3. The modal launches focused on food capture (search input ready, favorites visible) and matches existing UI patterns defined for quick logging.
+4. Logging from the button to modal acknowledgement completes within 500 ms on median devices, with instrumentation in place to verify the performance target.</acceptanceCriteria>
+
+  <artifacts>
+    <docs>- path: docs/PRD.md; title: Product Requirements Document; section: Requirements › Functional & Non-Functional; snippet: "FR001: Users can quickly log food items with a single tap from a quick-log interface similar to existing symptom/medication/trigger logging." "NFR001 - Performance: Food logging interface must respond within 500ms for quick-log actions, maintaining parity with existing symptom/medication/trigger logging performance."
+- path: docs/epic-stories.md; title: Epic Breakdown; section: Epic 1 › Story 1.1; snippet: "Quick-log button appears on dashboard alongside symptom/medication/trigger buttons; tapping the button opens the food logging modal that follows existing UI patterns and responds within 500ms." 
+- path: docs/tech-spec-epic-E1.md; title: Technical Specification: Food Logging & Management; section: Services and Modules; snippet: "QuickLogButtons enhancement (`src/components/quick-log/QuickLogButtons.tsx`) adds a 'Food' button with accessible iconography and instrumentation parity with existing quick-log actions." 
+- path: docs/tech-spec-epic-E1.md; title: Technical Specification: Food Logging & Management; section: Non-Functional Requirements; snippet: "Quick-log modal must open and persist a meal within 500ms on median devices; Dexie write + UI acknowledgement tracked via performance marks." 
+- path: docs/solution-architecture.md; title: Solution Architecture Document; section: 11.2 Page Structure; snippet: "`/dashboard` includes QuickLogButtons (+ food button) and a FoodLogModal overlay so the new action reuses the established quick-log surface." 
+- path: docs/solution-architecture.md; title: Solution Architecture Document; section: 14 Proposed Source Tree; snippet: "`src/components/food/FoodLogModal.tsx` sits alongside new food module components, while quick-log enhancements remain in `src/components/quick-log/` to preserve module boundaries." 
+- path: docs/ux-specification.md; title: UX/UI Specification; section: User Flows › Rapid Food Logging; snippet: "Tap 'Food' quick-log → modal opens with search focused, favorites visible, and optional portion/notes/photo controls before saving in under 15 seconds with immediate confirmation." 
+- path: TESTING_GUIDE.md; title: Testing Guide; section: Overview › Testing Philosophy; snippet: "Testing stack uses Jest 30.2.0 with React Testing Library 16.3.0 and enforces 80% coverage across branches, functions, lines, and statements."</docs>
+    <code>- path: src/components/quick-log/QuickLogButtons.tsx; kind: component; symbol: QuickLogButtons; lines: 1-86; reason: Extend existing quick-log grid with the Food button, wiring handlers and accessibility attributes to match current semantics.
+- path: src/components/quick-log/__tests__/QuickLogButtons.test.tsx; kind: test; symbol: QuickLogButtons.test; lines: 1-224; reason: Update unit tests to cover the new Food button rendering, accessibility, and callback invocation paths.
+- path: src/components/triggers/TriggerLogModal.tsx; kind: component; symbol: TriggerLogModal; lines: 1-200; reason: Reference modal structure, loading states, and progressive disclosure patterns when scaffolding FoodLogModal.
+- path: src/lib/utils/a11y.ts; kind: utility; symbol: handleModalKeyboard; lines: 1-120; reason: Reuse focus trapping and escape handling utilities to keep the FoodLogModal accessible.
+- path: src/lib/utils/cn.ts; kind: utility; symbol: cn; lines: 1-3; reason: Maintain consistent Tailwind class composition for the new quick-log button styling.</code>
+    <dependencies>- ecosystem: npm; packages: [next@15.5.4, react@19.1.0, react-dom@19.1.0, dexie@4.2.0, lucide-react@0.544.0, @radix-ui/react-tooltip@1.2.8, uuid@13.0.0, tailwindcss@4.x]</dependencies>
+  </artifacts>
+
+  <constraints>- Keep the quick-log interaction under 500 ms by relying on Dexie-backed local updates and performance marks before acknowledging success (docs/tech-spec-epic-E1.md §Non-Functional Requirements; story AC4).
+- Reuse existing quick-log modal patterns, Tailwind spacing, and accessible focus handling so visual and behavioral conventions stay consistent (docs/solution-architecture.md §11.2; docs/ux-specification.md Flow: Rapid Food Logging).
+- Maintain offline-first behavior—opening the FoodLogModal must not wait on network calls, and handlers should integrate with FoodContext for optimistic logging (docs/tech-spec-epic-E1.md §System Architecture Alignment).
+- Meet WCAG 2.1 AA by ensuring 44px tap targets, aria-labels on icon buttons, and focus rings that match existing quick-log controls (docs/ux-specification.md §7.2 Accessibility Requirements).
+- Follow codebase conventions of functional React components, strict TypeScript typing, and existing module structure for new food components (docs/solution-architecture.md §14 Proposed Source Tree).</constraints>
+  <interfaces>- QuickLogButtonsProps: add `onLogFood` handler alongside existing flare/medication/symptom/trigger callbacks and honor disabled/loading states (src/components/quick-log/QuickLogButtons.tsx).
+- FoodContext: planned provider should expose `openFoodLog()` (or similar) so dashboard surfaces can invoke the modal without re-implementing state (docs/tech-spec-epic-E1.md §Services and Modules).
+- Modal accessibility utilities: `handleModalKeyboard` and `focusFirstElement` must be wired into FoodLogModal to trap focus and support Escape close, matching other quick-log modals (src/lib/utils/a11y.ts).</interfaces>
+  <tests>
+    <standards>Use Jest with React Testing Library under the existing jsdom environment, maintaining ≥80% coverage and accessibility assertions per TESTING_GUIDE.md and solution-architecture §15.</standards>
+    <locations>- src/components/quick-log/__tests__/QuickLogButtons.test.tsx — extend coverage for the Food button rendering and handler wiring.
+- src/components/food/__tests__/FoodLogModal.test.tsx — add new component tests for modal focus management, favorites visibility, and closing behavior.
+- E2E backlog: Playwright spec covering dashboard quick-log → timeline update once infrastructure supports it (docs/solution-architecture.md §15.3).</locations>
+    <ideas>- AC1: Assert the dashboard renders a Food quick-log button with correct aria-label, emoji/icon, and disabled/loading behavior mirrored from peers.
+- AC2–AC3: Simulate clicking the Food button and verify FoodLogModal opens, focuses the search input, lists favorites, and supports Escape/cancel to close.
+- AC3: Keyboard-navigation test to ensure focus trap and tab order follow accessibility expectations inside the modal.
+- AC4: Unit or integration test capturing `performance.mark` invocations (or mocked telemetry call) to confirm timing instrumentation fires when the modal becomes ready.</ideas>
+  </tests>
+</story-context>

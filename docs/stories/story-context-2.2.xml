@@ -1,279 +1,304 @@
-<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+<story-context id="story-2.2-context" v="1.0">
   <metadata>
     <epicId>2</epicId>
     <storyId>2.2</storyId>
-    <title>Active Flare Cards Component</title>
-    <status>Ready</status>
-    <generatedAt>2025-10-14</generatedAt>
+    <title>Dose-response Analysis</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-17</generatedAt>
     <generator>BMAD Story Context Workflow</generator>
-    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\story-2.2.md</sourceStoryPath>
+    <sourceStoryPath>docs/stories/story-2.2.md</sourceStoryPath>
   </metadata>
 
   <story>
-    <asA>user managing active flares</asA>
-    <iWant>to see all active flares prominently displayed with quick actions</iWant>
-    <soThat>I can easily update severity and resolve flares as they heal</soThat>
+    <asA>user</asA>
+    <iWant>to see if symptom severity correlates with food quantity consumed</iWant>
+    <soThat>I can determine if portion size matters for my triggers</soThat>
     <tasks>
-      <task id="1" complete="false">
-        <description>Create ActiveFlareCards component (AC: 1,2,4)</description>
-        <subtasks>
-          <subtask>Set up component file `src/components/flares/ActiveFlareCards.tsx`</subtask>
-          <subtask>Query active flares using `flareRepository.getActiveFlaresWithTrend()`</subtask>
-          <subtask>Render flare cards with body location, duration, severity, trend arrow</subtask>
-          <subtask>Implement empty state component</subtask>
-        </subtasks>
-      </task>
-      <task id="2" complete="false">
-        <description>Calculate and display flare metrics (AC: 2,5,6)</description>
-        <subtasks>
-          <subtask>Calculate duration: `Math.floor((Date.now() - flare.startDate) / (1000 * 60 * 60 * 24)) + 1` days</subtask>
-          <subtask>Display trend arrows: ↑ worsening (red), → stable (yellow), ↓ improving (green)</subtask>
-          <subtask>Format severity as "X/10"</subtask>
-        </subtasks>
-      </task>
-      <task id="3" complete="false">
-        <description>Implement quick actions (AC: 3,7,8)</description>
-        <subtasks>
-          <subtask>Add [Update] button that opens FlareUpdateModal</subtask>
-          <subtask>Add [Resolve] button with confirmation dialog</subtask>
-          <subtask>Pass flare data to modals when opened</subtask>
-          <subtask>Implement resolve handler that calls `flareRepository.resolve()`</subtask>
-        </subtasks>
-      </task>
-      <task id="4" complete="false">
-        <description>Add sorting functionality (AC: 9)</description>
-        <subtasks>
-          <subtask>Implement sort by severity (highest first)</subtask>
-          <subtask>Implement sort by recency (newest first)</subtask>
-          <subtask>Add sort toggle UI</subtask>
-        </subtasks>
-      </task>
+      - Task 1: Implement DoseResponseService core logic (AC 1, 2, 3)
+      - Task 2: Integrate with CorrelationOrchestrationService (AC 1, 4)
+      - Task 3: Add dose-response visualization component (AC 4)
+      - Task 4: Update API routes to return dose-response data (AC 4)
+      - Task 5: Validation and testing (AC 1, 2, 3, 4)
     </tasks>
   </story>
 
   <acceptanceCriteria>
-    <criterion id="1">Displays 0-5 active flare cards at top of home screen</criterion>
-    <criterion id="2">Each card shows: body location, duration (days since onset), current severity (X/10), trend arrow (↑↓→)</criterion>
-    <criterion id="3">Quick action buttons on each card: [Update] [Resolve]</criterion>
-    <criterion id="4">Empty state when no active flares: "No active flares right now" with encouraging message</criterion>
-    <criterion id="5">Trend arrows calculated from severityHistory: ↑ worsening (red), → stable (yellow), ↓ improving (green)</criterion>
-    <criterion id="6">Duration shows "Day 1", "Day 3", etc. based on startDate to now</criterion>
-    <criterion id="7">Tap [Update] opens FlareUpdateModal pre-filled with current flare data</criterion>
-    <criterion id="8">Tap [Resolve] shows confirmation dialog, then resolves flare (removes from active display)</criterion>
-    <criterion id="9">Cards sortable by severity (highest first) or recency (newest first)</criterion>
+    <criterion id="1">System analyzes relationship between portion size and symptom severity</criterion>
+    <criterion id="2">Results show if larger portions correlate with more severe symptoms</criterion>
+    <criterion id="3">Only analyzed when sufficient quantity data logged (minimum 5 events)</criterion>
+    <criterion id="4">Dose-response findings displayed with correlation insights</criterion>
   </acceptanceCriteria>
 
   <artifacts>
     <docs>
       <doc>
-        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
-        <title>Event Stream Redesign Epics</title>
-        <section>Story 2.2: Active Flare Cards Component</section>
-        <snippet>
-          Story defines comprehensive requirements for ActiveFlareCards component including:
-          - Display 0-5 active flare cards with body location, duration, severity, trend arrows
-          - Quick actions: [Update] [Resolve] buttons
-          - Empty state handling
-          - Trend calculation from severityHistory (↑↓→ indicators)
-          - Sorting by severity or recency
-          Technical approach: Use flareRepository.getActiveFlaresWithTrend() from Story 1.4
-        </snippet>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>Detailed Design - Services and Modules</section>
+        <snippet>DoseResponseService module responsible for performing regression across portion size vs symptom severity to establish dose-response relationships. Input: normalized portion/severity arrays; Output: DoseResponseSummary. Uses simple linear regression (least squares) for portion vs severity relationship.</snippet>
       </doc>
       <doc>
-        <path>docs/event-stream-redesign-spec.md</path>
-        <title>Event Stream Redesign Technical Specification</title>
-        <section>Component Architecture - ActiveFlareCards</section>
-        <snippet>
-          Component specification for ActiveFlareCards:
-          - Location: src/components/flares/ActiveFlareCards.tsx
-          - Purpose: Display all active flares with quick update/resolve actions
-          - Features: Grid of flare cards, empty state, flare stats summary, filtering by status, sorting
-          - Each card shows: symptom name, severity, status badge, body regions, interventions, photos, update button
-          - Query pattern: flareRepository.getActiveFlaresWithTrend()
-        </snippet>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>Acceptance Criteria</section>
+        <snippet>AC5: Dose-response module visualizes severity vs portion size using line charts, including confidence messaging when r-squared &lt; 0.4 (FR009, FR019).</snippet>
       </doc>
       <doc>
-        <path>docs/DEVELOPMENT/component-library.md</path>
-        <title>Component Library Reference</title>
-        <section>Flare Components - ActiveFlareDashboard &amp; FlareCard</section>
-        <snippet>
-          Existing components:
-          - ActiveFlareDashboard: Dashboard showing all active flares, grid of FlareCard components, filter/sort
-          - FlareCard: Individual flare display card with symptom name, severity (1-10), status badge, body regions, interventions, photos, quick action buttons
-          - Design patterns: Card-based layout, color-coded status badges, visual severity indicators
-          Component location: src/components/flare/
-        </snippet>
+        <path>docs/epic-stories.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 2.2: Dose-Response Analysis</section>
+        <snippet>Portion size encoding: Small=1, Medium=2, Large=3. Use regression analysis for dose-response relationship. Display confidence based on sample size. Minimum 5 events with portion data required.</snippet>
       </doc>
       <doc>
-        <path>docs/PRODUCT/ux-specification.md</path>
-        <title>UX/UI Specification</title>
-        <section>Component Library - Dashboard &amp; Card Components</section>
-        <snippet>
-          Design system for cards and dashboards:
-          - Dashboard grid: Responsive (12-col desktop, 8-col tablet, 1-col mobile)
-          - Card variants: small (1x1), medium (2x1), large (2x2), full-width
-          - Status colors: active (yellow), improving (green), worsening (red), resolved (blue)
-          - Typography: Inter font, semibold headers, normal body text
-          - Spacing: gap-4 (16px) between cards, gap-6 (24px) between sections
-          - Accessibility: ARIA labels, keyboard navigation, color contrast WCAG AA
-        </snippet>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR009</section>
+        <snippet>System evaluates dose-response relationships based on quantity consumed, analyzing if symptom severity correlates with food portion size.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR003</section>
+        <snippet>Correlation Accuracy - Time-based correlation analysis must achieve statistical significance threshold (p &lt; 0.05) before displaying correlations to users, with clear confidence indicators.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>Database Schema - FoodCorrelation Model</section>
+        <snippet>FoodCorrelation.doseResponse JSON field stores dose-response summary data including regression metrics and confidence levels per portion size.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-008: Statistical Correlation Methods</section>
+        <snippet>Chi-Square Test (Categorical) + Pearson Correlation (Quantitative) chosen for food-symptom correlation and dose-response analysis. Industry-standard methods with p-value calculation. Requires minimum sample size (3-5 occurrences).</snippet>
+      </doc>
+      <doc>
+        <path>AGENTS.md</path>
+        <title>Project-Specific Patterns</title>
+        <section>Performance Considerations</section>
+        <snippet>Analytics Caching: Expensive computations cached in analysisResults table (24h TTL). Database Queries: Always use indexed fields first, then filter in memory.</snippet>
       </doc>
     </docs>
+
     <code>
       <artifact>
-        <path>src/lib/repositories/flareRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>flareRepository.getActiveFlaresWithTrend</symbol>
-        <lines>205-246</lines>
-        <reason>Primary data source for ActiveFlareCards - returns active flares with trend indicators (worsening/stable/improving) calculated from 24h severity changes</reason>
+        <path>src/lib/utils/statistics/linearRegression.ts</path>
+        <kind>utility</kind>
+        <symbol>computeLinearRegression</symbol>
+        <lines>1-220</lines>
+        <reason>REUSABLE - Existing linear regression implementation using least squares method. Returns slope, intercept, and r-squared. Includes validation and outlier removal. Perfect for dose-response analysis.</reason>
       </artifact>
       <artifact>
-        <path>src/lib/repositories/flareRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>flareRepository.resolve</symbol>
-        <lines>186-199</lines>
-        <reason>Called by [Resolve] button to mark flare as resolved with optional resolution notes</reason>
+        <path>src/lib/services/correlation/CorrelationOrchestrationService.ts</path>
+        <kind>service</kind>
+        <symbol>CorrelationOrchestrationService</symbol>
+        <lines>1-132</lines>
+        <reason>EXTEND - Orchestrates correlation computation by hydrating data from repositories. Need to add DoseResponseService invocation when portion data is available.</reason>
       </artifact>
       <artifact>
-        <path>src/lib/repositories/flareRepository.ts</path>
-        <kind>repository</kind>
-        <symbol>flareRepository.updateSeverity</symbol>
-        <lines>105-150</lines>
-        <reason>Used for severity updates with automatic status detection and severity history tracking</reason>
+        <path>src/lib/services/correlation/CorrelationService.ts</path>
+        <kind>service</kind>
+        <symbol>CorrelationService</symbol>
+        <lines>1-187</lines>
+        <reason>REFERENCE - Pure correlation computation layer. Shows pattern for statistical analysis services. DoseResponseService should follow similar design (pure, testable).</reason>
       </artifact>
       <artifact>
-        <path>src/lib/types/flare.ts</path>
-        <kind>type-definition</kind>
-        <symbol>ActiveFlare</symbol>
-        <lines>1-16</lines>
-        <reason>Core data structure for flare objects with severity, status, bodyRegions, interventions, severityHistory</reason>
-      </artifact>
-      <artifact>
-        <path>src/components/flare/FlareCard.tsx</path>
+        <path>src/components/analytics/TrendChart.tsx</path>
         <kind>component</kind>
-        <symbol>FlareCard</symbol>
-        <lines>1-109</lines>
-        <reason>Existing FlareCard component showing pattern for displaying individual flare with status buttons, severity visualization, body regions. Reuse design patterns and styling.</reason>
+        <symbol>TrendChart</symbol>
+        <lines>1-205</lines>
+        <reason>REUSABLE - Existing Chart.js Line chart component with regression visualization. Shows pattern for chart configuration, accessibility, and annotations. Can guide DoseResponseChart implementation.</reason>
       </artifact>
       <artifact>
-        <path>src/components/flare/ActiveFlareDashboard.tsx</path>
+        <path>src/components/analytics/TrendInterpretation.tsx</path>
         <kind>component</kind>
-        <symbol>ActiveFlareDashboard</symbol>
-        <lines>1-50</lines>
-        <reason>Reference for dashboard layout pattern, grid structure, and how to integrate multiple flare cards</reason>
+        <symbol>TrendInterpretation</symbol>
+        <lines>1-100</lines>
+        <reason>REUSABLE - Shows pattern for confidence messaging (very-high, high, moderate, low) with color coding and accessible status indicators. Use for r-squared confidence display.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>foodEventRepository</symbol>
+        <lines>N/A</lines>
+        <reason>DEPENDENCY - Provides food event data with portion sizes (portionMap field). Need to parse JSON to extract portion data for dose-response analysis.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>symptomInstanceRepository</symbol>
+        <lines>N/A</lines>
+        <reason>DEPENDENCY - Provides symptom instance data with severity ratings (1-10 scale). Essential for correlation with portion sizes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FoodEventRecord</symbol>
+        <lines>N/A</lines>
+        <reason>REFERENCE - FoodEventRecord.portionMap field (JSON string) stores portion sizes per food. Parse as JSON object mapping foodId → portionSize string.</reason>
       </artifact>
     </code>
+
     <dependencies>
-      <ecosystem name="node">
-        <package name="react" version="^19.0.0">Core React library for component creation</package>
-        <package name="react-dom" version="^19.0.0">React DOM rendering</package>
-        <package name="next" version="^15.0.0">Next.js framework for routing and SSR</package>
-        <package name="typescript" version="^5.0.0">TypeScript for type safety</package>
-        <package name="lucide-react" version="latest">Icon library for UI icons (arrows, map, etc)</package>
-        <package name="tailwindcss" version="^4.0.0">CSS framework for styling</package>
-        <package name="dexie" version="^4.0.0">IndexedDB wrapper for data persistence</package>
-      </ecosystem>
+      <node>
+        <package name="chart.js" version="^4.4.0" usage="Line charts for dose-response visualization" />
+        <package name="react-chartjs-2" version="^5.2.0" usage="React wrapper for Chart.js" />
+        <package name="chartjs-plugin-annotation" version="^3.0.1" usage="Regression line overlay on charts" />
+      </node>
     </dependencies>
   </artifacts>
 
   <constraints>
-    <constraint type="architecture">
-      Follow established component patterns from existing FlareCard and ActiveFlareDashboard components.
-      Use functional React components with hooks (useState, useEffect).
-      Components must be client-side ("use client" directive for Next.js 15).
-    </constraint>
-    <constraint type="data-layer">
-      All data access must go through flareRepository - no direct database calls.
-      Use getActiveFlaresWithTrend() method which returns flares with pre-calculated trend indicators.
-      Handle loading and error states gracefully.
-    </constraint>
-    <constraint type="ui-patterns">
-      Maintain visual consistency with existing FlareCard component design.
-      Use Tailwind CSS utility classes for styling (no custom CSS files).
-      Status colors: active=yellow, improving=green, worsening=red, resolved=blue.
-      Trend arrows: ↑ (U+2191), → (U+2192), ↓ (U+2193) with matching colors.
-    </constraint>
-    <constraint type="accessibility">
-      WCAG 2.1 AA compliance required.
-      All interactive elements must have ARIA labels.
-      Keyboard navigation support (Tab, Enter, Escape).
-      Color-blind safe design (don't rely on color alone).
-      Minimum 4.5:1 text contrast ratio.
-    </constraint>
-    <constraint type="mobile-responsive">
-      Mobile-first design approach.
-      Breakpoints: sm(640px), md(768px), lg(1024px).
-      Touch targets minimum 44x44px.
-      Cards stack vertically on mobile, grid layout on desktop.
-    </constraint>
-    <constraint type="performance">
-      Component should handle 5+ active flares without performance degradation.
-      Use React.memo for card components to prevent unnecessary re-renders.
-      Debounce sort/filter operations if needed.
-    </constraint>
-    <constraint type="modals">
-      FlareUpdateModal component is referenced but will be created in Story 2.4.
-      For this story, prepare modal trigger but use placeholder/TODO if modal doesn't exist yet.
-      Confirmation dialog for resolve action can use native confirm() as temporary solution.
-    </constraint>
+    <constraint>Portion size encoding: Small=1, Medium=2, Large=3 (standardized across app)</constraint>
+    <constraint>Minimum sample size: 5 events with portion data required before dose-response analysis</constraint>
+    <constraint>Statistical threshold: r-squared &lt; 0.4 triggers "Low confidence" message</constraint>
+    <constraint>Confidence messaging: "Insufficient data" when n &lt; 5, "Low confidence" when r² &lt; 0.4</constraint>
+    <constraint>Use simple linear regression (least squares method) - reuse existing linearRegression.ts utility</constraint>
+    <constraint>Store results in FoodCorrelation.doseResponse JSON field (Prisma model)</constraint>
+    <constraint>Charts must meet WCAG 2.1 Level AA accessibility standards (aria labels, keyboard nav)</constraint>
+    <constraint>Computation should be cacheable (expensive operation, 24h TTL per AGENTS.md)</constraint>
+    <constraint>DoseResponseService should be pure/testable (no direct DB access - follow CorrelationService pattern)</constraint>
   </constraints>
 
   <interfaces>
     <interface>
-      <name>flareRepository.getActiveFlaresWithTrend</name>
-      <kind>repository-method</kind>
-      <signature>async getActiveFlaresWithTrend(userId: string): Promise&lt;Array&lt;ActiveFlare &amp; { trend: 'worsening' | 'stable' | 'improving' }&gt;&gt;</signature>
-      <path>src/lib/repositories/flareRepository.ts:205-246</path>
-      <usage>Primary data source - fetches active flares with trend indicators pre-calculated from severity history</usage>
+      <name>DoseResponseService.computeDoseResponse</name>
+      <kind>service method</kind>
+      <signature>computeDoseResponse(portionSizes: number[], severityScores: number[]): DoseResponseResult</signature>
+      <path>src/lib/services/food/DoseResponseService.ts</path>
+      <description>Core dose-response analysis method. Takes arrays of portion sizes (1-3) and symptom severity scores (1-10), returns regression metrics (slope, intercept, r-squared) and confidence level.</description>
     </interface>
     <interface>
-      <name>flareRepository.resolve</name>
-      <kind>repository-method</kind>
-      <signature>async resolve(id: string, resolutionNotes?: string): Promise&lt;void&gt;</signature>
-      <path>src/lib/repositories/flareRepository.ts:186-199</path>
-      <usage>Called when user clicks [Resolve] button to mark flare as resolved</usage>
+      <name>DoseResponseResult</name>
+      <kind>interface</kind>
+      <signature>{ slope: number; intercept: number; rSquared: number; confidence: 'high' | 'medium' | 'low' | 'insufficient'; sampleSize: number; portionSeverityPairs: Array&lt;{portion: number, severity: number}&gt; }</signature>
+      <path>src/lib/services/food/DoseResponseService.ts</path>
+      <description>Result object from dose-response analysis containing regression metrics and raw data for visualization.</description>
     </interface>
     <interface>
-      <name>ActiveFlare</name>
-      <kind>type-interface</kind>
-      <signature>interface ActiveFlare { id: string; userId: string; symptomId: string; symptomName: string; startDate: Date; endDate?: Date; severity: number; bodyRegions: string[]; status: "active" | "improving" | "worsening" | "resolved"; interventions: FlareIntervention[]; notes: string; photoIds: string[]; createdAt: Date; updatedAt: Date; }</signature>
-      <path>src/lib/types/flare.ts:1-16</path>
-      <usage>Core data structure for flare objects - component props and state typing</usage>
+      <name>DoseResponseChart</name>
+      <kind>React component</kind>
+      <signature>&lt;DoseResponseChart data={DoseResponseResult} foodName={string} symptomName={string} /&gt;</signature>
+      <path>src/components/food/DoseResponseChart.tsx</path>
+      <description>Chart.js Line chart component displaying portion size (x-axis) vs symptom severity (y-axis) with regression line overlay. Shows r-squared value and confidence messaging.</description>
     </interface>
     <interface>
-      <name>FlareCard</name>
-      <kind>react-component</kind>
-      <signature>interface FlareCardProps { flare: ActiveFlare; onUpdate: () =&gt; void; }</signature>
-      <path>src/components/flare/FlareCard.tsx:8-11</path>
-      <usage>Existing card component - reference for design patterns, styling, and card structure</usage>
+      <name>CorrelationResult.doseResponse</name>
+      <kind>property</kind>
+      <signature>doseResponse?: DoseResponseResult</signature>
+      <path>src/lib/services/correlation/CorrelationOrchestrationService.ts</path>
+      <description>Optional dose-response field added to CorrelationResult when portion data is available and minimum sample size met.</description>
     </interface>
   </interfaces>
 
   <tests>
     <standards>
-      Testing framework: Jest 30.2.0 with React Testing Library.
-      Coverage target: 80%+ for all new components.
-      Test files co-located with components: __tests__/ComponentName.test.tsx
-      Test user behavior, not implementation details.
-      Mock repository methods using Jest mocks.
-      Use data-testid for complex selectors when needed.
+      Jest testing framework with React Testing Library for components. Unit tests for services/utilities using synthetic datasets with known outcomes. Integration tests verify data flow from repositories through services to API. Accessibility tests using jest-axe for chart components (WCAG 2.1 AA compliance). Snapshot tests for chart rendering consistency. 80% coverage minimum across branches, functions, lines, statements (per AGENTS.md).
     </standards>
+    
     <locations>
-      <location>src/components/flares/__tests__/ActiveFlareCards.test.tsx</location>
-      <location>src/lib/repositories/__tests__/flareRepository.enhanced.test.ts (existing, may need updates)</location>
+      - src/lib/services/food/__tests__/DoseResponseService.test.ts
+      - src/components/food/__tests__/DoseResponseChart.test.tsx
+      - src/lib/services/correlation/__tests__/CorrelationOrchestrationService.test.ts (extend existing)
     </locations>
+    
     <ideas>
-      <testIdea criterion="1">Test: Renders 0-5 flare cards correctly. Mock getActiveFlaresWithTrend to return 0, 1, 3, and 5 flares. Verify correct number of cards rendered.</testIdea>
-      <testIdea criterion="2">Test: Each card displays all required information (body location, duration, severity, trend arrow). Verify text content and data-testid attributes.</testIdea>
-      <testIdea criterion="3">Test: Quick action buttons exist and are clickable. Simulate clicks on [Update] and [Resolve] buttons, verify handlers called.</testIdea>
-      <testIdea criterion="4">Test: Empty state shown when no active flares. Mock repository to return empty array, verify empty state message displayed.</testIdea>
-      <testIdea criterion="5">Test: Trend arrows render with correct colors. Mock flares with different trends (worsening/stable/improving), verify arrow symbols and colors.</testIdea>
-      <testIdea criterion="6">Test: Duration calculation is correct. Mock flares with various startDate values, verify "Day X" format displayed.</testIdea>
-      <testIdea criterion="7">Test: [Update] button opens modal (once implemented). Verify modal open handler called with correct flare data.</testIdea>
-      <testIdea criterion="8">Test: [Resolve] button shows confirmation and calls resolve(). Mock window.confirm, simulate resolve click, verify repository.resolve() called.</testIdea>
-      <testIdea criterion="9">Test: Sorting functionality works correctly. Test sort by severity (descending) and sort by recency. Verify card order changes.</testIdea>
-      <testIdea criterion="loading">Test: Loading state displays skeleton or spinner. Mock repository promise delay, verify loading indicator shown.</testIdea>
-      <testIdea criterion="error">Test: Error state displays error message. Mock repository to throw error, verify error message displayed.</testIdea>
+      <test ac="1" desc="DoseResponseService computes correct regression for known linear relationship">
+        Given: portion sizes [1, 2, 3] and severities [2, 4, 6] (perfect linear: y=2x)
+        When: computeDoseResponse called
+        Then: slope=2, intercept=0, r-squared≈1.0, confidence='high'
+      </test>
+      
+      <test ac="1,2" desc="DoseResponseService detects positive correlation (larger portions → worse symptoms)">
+        Given: portions [1, 1, 2, 2, 3, 3] and severities [2, 3, 5, 4, 8, 7]
+        When: computeDoseResponse called
+        Then: slope &gt; 0, r-squared &gt; 0.7, confidence='high'
+      </test>
+      
+      <test ac="1,2" desc="DoseResponseService detects negative correlation (larger portions → better symptoms)">
+        Given: portions [1, 2, 3] and severities [8, 5, 2]
+        When: computeDoseResponse called
+        Then: slope &lt; 0 (negative correlation detected)
+      </test>
+      
+      <test ac="1,2" desc="DoseResponseService detects no correlation (flat line)">
+        Given: portions [1, 2, 3, 1, 2, 3] and severities [5, 5, 5, 5, 5, 5]
+        When: computeDoseResponse called
+        Then: slope≈0, r-squared≈0, indicates no dose-response relationship
+      </test>
+      
+      <test ac="3" desc="DoseResponseService rejects analysis when sample size &lt; 5">
+        Given: portions [1, 2, 3] and severities [2, 4, 6] (only 3 events)
+        When: computeDoseResponse called
+        Then: returns confidence='insufficient', message="Minimum 5 events required"
+      </test>
+      
+      <test ac="3" desc="DoseResponseService accepts analysis when sample size ≥ 5">
+        Given: 5 portion-severity pairs
+        When: computeDoseResponse called
+        Then: performs regression and returns valid result
+      </test>
+      
+      <test ac="1" desc="DoseResponseService handles outliers gracefully">
+        Given: portions [1, 2, 3, 1, 2] and severities [2, 4, 6, 1, 50] (outlier: 50)
+        When: computeDoseResponse called
+        Then: r-squared reduced but analysis completes without error
+      </test>
+      
+      <test ac="2" desc="CorrelationOrchestrationService invokes DoseResponseService when portion data available">
+        Given: food events with portionMap data and symptom instances with severity
+        When: computeCorrelation called
+        Then: result includes doseResponse field with regression metrics
+      </test>
+      
+      <test ac="2" desc="CorrelationOrchestrationService skips dose-response when no portion data">
+        Given: food events without portionMap data
+        When: computeCorrelation called
+        Then: result.doseResponse is undefined (graceful skip)
+      </test>
+      
+      <test ac="4" desc="DoseResponseChart renders line chart with regression line">
+        Given: DoseResponseResult with slope=2, intercept=1, r-squared=0.85
+        When: component renders
+        Then: Chart.js Line chart displayed with scatter points and regression line overlay
+      </test>
+      
+      <test ac="4" desc="DoseResponseChart displays r-squared value prominently">
+        Given: DoseResponseResult with r-squared=0.72
+        When: component renders
+        Then: r-squared value displayed as "R² = 0.72" with appropriate confidence label
+      </test>
+      
+      <test ac="4" desc="DoseResponseChart shows low confidence message when r-squared &lt; 0.4">
+        Given: DoseResponseResult with r-squared=0.35
+        When: component renders
+        Then: "Low confidence" badge/message displayed, chart still rendered but with warning
+      </test>
+      
+      <test ac="4" desc="DoseResponseChart shows insufficient data message when n &lt; 5">
+        Given: DoseResponseResult with confidence='insufficient'
+        When: component renders
+        Then: "Insufficient data (minimum 5 events required)" message displayed, no chart
+      </test>
+      
+      <test ac="4" desc="DoseResponseChart meets accessibility standards">
+        Given: DoseResponseChart component
+        When: jest-axe runs
+        Then: no accessibility violations (WCAG 2.1 AA), aria labels present, keyboard navigable
+      </test>
+      
+      <test ac="4" desc="API route returns doseResponse field in correlation result">
+        Given: GET /api/correlation/food/[foodId] with dose-response data
+        When: request made
+        Then: response includes doseResponse: { slope, intercept, rSquared, confidence, sampleSize }
+      </test>
+      
+      <test ac="1,2,3,4" desc="End-to-end: dose-response analysis from food events to UI">
+        Given: 6 food events with portions [1, 2, 3, 1, 2, 3] and 6 symptoms with severities [2, 4, 7, 3, 5, 8]
+        When: correlation job runs and UI fetches results
+        Then: DoseResponseChart displays positive correlation with regression line, r-squared &gt; 0.7, confidence='high'
+      </test>
     </ideas>
   </tests>
 </story-context>

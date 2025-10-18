@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
+import annotationPlugin, { AnnotationOptions } from 'chartjs-plugin-annotation';
 
 ChartJS.register(
   CategoryScale,
@@ -30,13 +30,19 @@ interface TrendChartProps {
   changePoints?: number[];
   datasetLabel?: string;
   trendlineLabel?: string;
-  metricType?: 'symptom' | 'energy' | 'sleep' | 'stress' | 'health';
+  metricType?: 'symptom' | 'symptom-frequency' | 'flare' | 'adherence' | 'energy' | 'sleep' | 'stress' | 'health';
 }
 
 const getDefaultLabels = (metricType?: string) => {
   switch (metricType) {
     case 'symptom':
       return { dataset: 'Symptom Severity', trendline: 'Trend' };
+    case 'symptom-frequency':
+      return { dataset: 'Symptom Count', trendline: 'Frequency Trend' };
+    case 'flare':
+      return { dataset: 'Flare Severity', trendline: 'Flare Trend' };
+    case 'adherence':
+      return { dataset: 'Adherence (%)', trendline: 'Adherence Trend' };
     case 'energy':
       return { dataset: 'Energy Level', trendline: 'Energy Trend' };
     case 'sleep':
@@ -88,7 +94,7 @@ export const TrendChart = ({
   };
 
   // Create change point annotations
-  const annotations = changePoints?.reduce((acc, timestamp, index) => {
+  const annotations = (changePoints ?? []).reduce<Record<string, AnnotationOptions>>((acc, timestamp, index) => {
     const dateStr = new Date(timestamp).toLocaleDateString();
     const dataIndex = data.findIndex(p => new Date(p.x).toLocaleDateString() === dateStr);
     
@@ -114,7 +120,20 @@ export const TrendChart = ({
       };
     }
     return acc;
-  }, {} as any) || {};
+  }, {});
+
+  const yScale: Record<string, unknown> = {
+    beginAtZero: true,
+    title: {
+      display: true,
+      text: finalDatasetLabel,
+    },
+  };
+
+  if (metricType === 'adherence') {
+    yScale.suggestedMax = 100;
+    yScale.max = 100;
+  }
 
   const options = {
     responsive: true,
@@ -164,13 +183,7 @@ export const TrendChart = ({
       },
     },
     scales: {
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: finalDatasetLabel,
-        },
-      },
+      y: yScale,
       x: {
         title: {
           display: true,
