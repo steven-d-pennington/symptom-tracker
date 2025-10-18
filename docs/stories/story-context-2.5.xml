@@ -1,0 +1,92 @@
+<story-context id="story-2.5-trigger-analysis-dashboard-integration" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.5</storyId>
+    <title>Trigger Analysis Dashboard Integration</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow (manually assembled)</generator>
+    <sourceStoryPath>docs/stories/story-2.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to see food-related triggers in the existing Trigger Analysis dashboard</iWant>
+    <soThat>I have a unified view of all my triggers (environmental, food, etc.)</soThat>
+    <acceptanceCriteria>
+      <ac id="AC1">Food triggers appear in Trigger Analysis dashboard alongside existing triggers</ac>
+      <ac id="AC2">Food triggers visually distinguished with a food icon</ac>
+      <ac id="AC3">Dashboard shows top food triggers ranked by correlation strength</ac>
+      <ac id="AC4">Clicking a food trigger opens a detailed correlation report</ac>
+      <ac id="AC5">Dashboard supports filtering by trigger type (food vs. environmental)</ac>
+    </acceptanceCriteria>
+  </story>
+
+  <relevantCode>
+    <component path="src/components/triggers/TriggerCorrelationDashboard.tsx" reason="Primary dashboard surface for trigger correlations."/>
+    <component path="src/components/triggers/CorrelationMatrix.tsx" reason="Visualization of correlations grid; extend to include food type and icon."/>
+    <component path="src/components/triggers/TriggerInsights.tsx" reason="Insights list; may include food-trigger insights."/>
+    <component path="src/components/navigation/Sidebar.tsx" reason="Contains "/triggers" route entry."/>
+    <component path="src/components/navigation/NavLayout.tsx" reason="Page title mapping for "/triggers"."/>
+    <route path="src/app/page.tsx" reason="Landing shows quick link to Trigger Analysis."/>
+    <repository path="src/lib/repositories/triggerEventRepository.ts" reason="Environmental trigger events (existing)."/>
+    <repository path="src/lib/repositories/triggerRepository.ts" reason="Trigger definitions and names."/>
+    <repository path="src/lib/repositories/foodEventRepository.ts" reason="Food events source data (for food triggers)."/>
+    <service path="src/lib/services/correlation/CorrelationOrchestrationService.ts" reason="Provides correlation + confidence; reuse for food-related insights."/>
+    <service path="src/lib/services/food/CombinationAnalysisService.ts" reason="Combination effects; may feed food-trigger ranking."/>
+    <types path="src/lib/types/trigger-correlation.ts" reason="Dashboard correlation types; extend with type: 'food' | 'environment'."/>
+  </relevantCode>
+
+  <design>
+    <model>
+      <note>Unify visualization model with a `type` discriminator.</note>
+      <fields>
+        <field name="type">food | environmental</field>
+        <field name="name">Display label (food name or trigger name)</field>
+        <field name="symptomName">Associated symptom</field>
+        <field name="correlationScore">0..1 numeric for ranking</field>
+        <field name="confidence">high|medium|low (reuse ConfidenceCalculationService)</field>
+        <field name="icon">If type==food, show a food icon</field>
+      </fields>
+    </model>
+    <ui>
+      <note>Introduce a filter control: tabs or segmented toggle (All | Food | Environmental).</note>
+      <note>Ensure accessible labels and keyboard navigation (WCAG 2.1 AA).</note>
+    </ui>
+  </design>
+
+  <dataFlow>
+    <step>Fetch trigger events (environmental) via triggerEventRepository.</step>
+    <step>Fetch food correlations via correlationOrchestrationService (computeWithCombinations for pairs; or a specific summary for food triggers).</step>
+    <step>Transform both sets to a unified dashboard item model with type=food/environmental.</step>
+    <step>Rank by correlationScore; decorate with confidence and icons.</step>
+    <step>Render in CorrelationMatrix and insights; apply filter.</step>
+    <drilldown>On click of a food item, route to food correlation detail (Story 2.7).</drilldown>
+  </dataFlow>
+
+  <testing>
+    <standards>Use React Testing Library for component tests; mock repositories/services; jsdom environment.</standards>
+    <locations>src/components/triggers/__tests__</locations>
+    <ideas>
+      <idea ac="AC1">Renders both food and environmental items together.</idea>
+      <idea ac="AC2">Food items display a food icon and correct aria-label.</idea>
+      <idea ac="AC3">Items are sorted descending by correlationScore across types.</idea>
+      <idea ac="AC4">Clicking a food row calls handler with identifiers for detail route.</idea>
+      <idea ac="AC5">Filter toggles show only selected type; All shows both.</idea>
+    </ideas>
+  </testing>
+
+  <references>
+    <doc path="docs/epic-stories.md" section="Story 2.5"/>
+    <doc path="docs/ARCHITECTURE/general-architecture.md" section="Trigger Analysis navigation"/>
+    <doc path="docs/PRODUCT/epics.md" section="Trigger analysis patterns (if present)"/>
+  </references>
+
+  <devNotes>
+    <note>Prefer reusing correlation services; avoid duplicate computation in dashboard.</note>
+    <note>TypeScript strict mode: extend types without any usage of any.</note>
+    <note>Accessible filters: role="tablist" or role="radiogroup" with aria-checked.</note>
+    <note>Performance: compute rankings in memory after fetching; memoize where appropriate.</note>
+  </devNotes>
+</story-context>
+

@@ -1,3 +1,5 @@
+export type TriggerSourceType = "food" | "environment";
+
 export interface TriggerCorrelation {
   triggerId: string;
   triggerName: string;
@@ -8,6 +10,7 @@ export interface TriggerCorrelation {
   avgSeverityIncrease: number;
   confidence: "low" | "medium" | "high";
   timeLag?: string; // Most common time delay (e.g., "2-4h")
+  type?: TriggerSourceType; // Story 2.5: Distinguish food vs environmental triggers
 }
 
 export interface TriggerPattern {

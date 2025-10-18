@@ -61,8 +61,9 @@ export function calculateTemporalCorrelation(
       const bucket = TIME_BUCKETS.find((b) => timeDiff >= b.min && timeDiff < b.max);
       if (!bucket) return;
 
-      // Create correlation key
-      const key = `${trigger.triggerId}-${symptom.name}`;
+      // Create correlation key using a safe separator to avoid hyphen/name collisions
+      const SEP = "__SEP__";
+      const key = `${trigger.triggerId}${SEP}${symptom.name}`;
 
       if (!correlationMap.has(key)) {
         correlationMap.set(key, {
@@ -86,7 +87,7 @@ export function calculateTemporalCorrelation(
   const correlations: TriggerCorrelation[] = [];
 
   correlationMap.forEach((data, key) => {
-    const [triggerId, symptomName] = key.split("-");
+    const [triggerId, symptomName] = key.split("__SEP__");
 
     // Find most common time-lag bucket
     const maxBucket = data.timeLagData.reduce((max, current) =>

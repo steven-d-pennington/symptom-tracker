@@ -1,5 +1,11 @@
 export { exportService, ExportService } from "./exportService";
-export type { ExportOptions, ExportData, ExportProgress } from "./exportService";
+export type {
+  ExportOptions,
+  ExportData,
+  ExportProgress,
+  FoodJournalRow,
+  CorrelationSummary,
+} from "./exportService";
 
 export { importService, ImportService } from "./importService";
 export type { ImportOptions, ImportResult, ImportProgress } from "./importService";

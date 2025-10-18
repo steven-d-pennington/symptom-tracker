@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-16
-- **Last Updated:** 2025-10-18 (Story 2.4 marked complete)
+- **Last Updated:** 2025-10-18 (Story 2.8 marked ready)
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,10 +12,10 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation
-- **Current Workflow:** dev-story (Story 2.4) - Complete
-- **Overall Progress:** 100.0%
-- **Next Action:** Draft Story 2.5 via create-story, then run story-ready.
-- **Command to Run:** `*create-story` for Story 2.5, then `*story-ready`
+- **Current Workflow:** dev-story (Story 2.8) - Complete (Ready for Review)
+ - **Overall Progress:** 100.0%
+- **Next Action:** Review and approve Story 2.8 via story-approved
+- **Command to Run:** `*story-approved`
 - **Agent to Load:** DEV (bmad/bmm/agents/dev.md)
 
 ---
@@ -52,26 +52,28 @@
 
 | Epic | Story | ID | Title | File |
 | ---- | ----- | --- | ----- | ---- |
-| 1 | 5 | 1.5 | Food Photo Attachments | docs/stories/story-1.5.md |
-| 2 | 1 | 2.1 | Time-window Correlation Engine | docs/stories/story-2.1.md |
 | 2 | 2 | 2.2 | Dose-response Analysis | docs/stories/story-2.2.md |
 | 2 | 3 | 2.3 | Combination Effects Detection | docs/stories/story-2.3.md |
-| 2 | 5 | 2.5 | Trigger Analysis Dashboard Integration | docs/stories/story-2.5.md |
-| 2 | 6 | 2.6 | Allergen Tag Filtering & Investigation | docs/stories/story-2.6.md |
-| 2 | 7 | 2.7 | Food-specific Correlation Reports | docs/stories/story-2.7.md |
-| 2 | 8 | 2.8 | Food Journal & Correlation Export | docs/stories/story-2.8.md |
 
-**Total in backlog:** 7 stories
+
+**Total in backlog:** 2 stories
 
 #### TODO (Needs Drafting)
 
-- **Story ID:** 2.5
-- **Story Title:** Trigger Analysis Dashboard Integration
-- **Story File:** `docs/stories/story-2.5.md`
-- **Status:** Not created (needs drafting)
-- **Action:** SM should run `create-story` workflow after Story 2.4 is approved
+- **Story ID:** 2.1
+- **Story Title:** Time-window Correlation Engine
+- **Story File:** `docs/stories/story-2.1.md`
+- **Status:** Not created
+- **Action:** SM should run `create-story` workflow to draft this story
 
 #### IN PROGRESS (Approved for Development)
+
+- **Story ID:** 2.8
+- **Story Title:** Export Correlation Insights and Food Journal
+- **Story File:** `docs/stories/story-2.8.md`
+- **Story Status:** Ready for Review
+- **Context File:** docs/stories/story-context-2.8.xml
+- **Action:** SM should run `story-approved` after review
 
 - **Story ID:** 2.4
 - **Story Title:** Correlation Confidence Calculations
@@ -93,12 +95,25 @@
 - **Context File:** docs/stories/story-context-2.3.xml
 - **Action:** DEV runs `dev-story` to implement
 
+
+
+
+
+- **2025-10-18:** Story 2.8 (Export Correlation Insights and Food Journal) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 2.1 moved from BACKLOG → TODO.
+- **2025-10-18:** Completed story-context for Story 2.8 (Export Correlation Insights and Food Journal). Context file: docs/stories/story-context-2.8.xml. Next: DEV agent runs dev-story to implement.
+- **2025-10-18:** Completed create-story for Story 2.8 (Export Correlation Insights and Food Journal). Story file: docs/stories/story-2.8.md. Status: Draft (needs review via story-ready). Next: Review and approve story.
 #### READY FOR REVIEW
 
 - **Story ID:** 2.1
 - **Story Title:** Time-window Correlation Engine
-- **Story File:** `docs/stories/story-2.1.md`
+- **Story File:** docs/stories/story-2.1.md`r
 - **Completion Date:** 2025-10-17
+- **Action:** SM should review implementation and move to DONE if approved
+
+- **Story ID:** 2.8
+- **Story Title:** Export Correlation Insights and Food Journal
+- **Story File:** docs/stories/story-2.8.md
+- **Completion Date:** 2025-10-18
 - **Action:** SM should review implementation and move to DONE if approved
 
 #### DONE (Completed Stories)
@@ -112,24 +127,26 @@
 | 1.6 | Food Events in Timeline | docs/stories/story-1.6.md | 2025-10-17 |
 | 1.7 | Food History Search & Favorites | docs/stories/story-1.7.md | 2025-10-17 |
 | 2.1 | Time-window Correlation Engine | docs/stories/story-2.1.md | 2025-10-17 |
-| 2.2 | Dose-response Analysis | docs/stories/story-2.2.md | 2025-10-17 |
-| 2.4 | Correlation Confidence Calculations | docs/stories/story-2.4.md | 2025-10-18 |
+| 2.5 | Trigger Analysis Dashboard Integration | docs/stories/story-2.5.md | 2025-10-18 |
+| 2.6 | Allergen Tag Filtering & Investigation | docs/stories/story-2.6.md | 2025-10-18 |
 
-**Total completed:** 9 stories
+| 2.7 | Food-Specific Correlation Reports | docs/stories/story-2.7.md | 2025-10-18 |
+
+**Total completed:** 11 stories
 
 #### Epic/Story Summary
 
-- Stories in backlog: 7
-- Stories awaiting drafting (TODO): 1 (Story 2.5)
+- Stories in backlog: 6
+- Stories awaiting drafting (TODO): 0
 - Stories ready for development (IN PROGRESS): 1 (Story 2.3 - Approved)
 - Stories ready for review: 1 (Story 2.1)
 - Stories completed: 9
 
 ### Next Action Required
 
-**What to do next:** Draft Story 2.5 (Trigger Analysis Dashboard Integration) via create-story; implement Story 2.3 (Combination Effects Detection) via dev-story when ready.
+**What to do next:** Implement Story 2.3 (Combination Effects Detection) via dev-story.
 
-**Command to Run:**  `*create-story`
+**Command to Run:**  `*dev-story`
 
 **Agent to Load:** DEV (bmad/bmm/agents/dev.md)
 
@@ -146,6 +163,25 @@
 
 ## Decision Log
 
+- **2025-10-18:** Completed create-story for Story 2.6 (Allergen Tag Filtering & Investigation). Story file: docs/stories/story-2.6.md created. Status: Draft (needs review via story-ready). Highlights: Timeline filter chips for allergen tags with accessible controls, persistence across navigation, filtered count display, and allergen-category correlation summaries. Next: SM runs `*story-ready` to approve the draft.
+
+- **2025-10-18:** Completed create-story for Story 2.7 (Food-Specific Correlation Reports). Story file: docs/stories/story-2.7.md created. Context: docs/stories/story-context-2.7.xml. Status: Draft (needs review via story-ready). Next: Review and approve story.
+
+- **2025-10-18:** Story 2.7 (Food-Specific Correlation Reports) marked ready for development by SM agent. Moved from Draft → Ready in story file and reflected in status (IN PROGRESS). Next: Run `*story-context` to generate implementation context, then `*dev-story`.
+
+- **2025-10-18:** Completed story-context for Story 2.7 (Food-Specific Correlation Reports). Context file: docs/stories/story-context-2.7.xml. Generated implementation context with ACs, tasks, relevant docs, intended code artifacts (detail view, delay chart, cache/repository references), constraints, dependencies, and test ideas. Next: DEV agent runs `*dev-story` to implement.
+
+- **2025-10-18:** Completed dev-story for Story 2.7 (Food-Specific Correlation Reports). Implemented FoodCorrelationDetailView, FoodCorrelationDelayChart, and Next.js route `/foods/[foodId]/correlation`. Added component tests and wired navigation from TriggerCorrelationDashboard. Story status set to Ready for Review. Next: Run `*story-approved` to mark complete.
+
+- **2025-10-18:** Story 2.7 (Food-Specific Correlation Reports) approved and marked Done via story-approved workflow. Moved from IN PROGRESS → DONE. Next: Implement Story 2.3 via dev-story.
+
+- **2025-10-18:** Story 2.6 (Allergen Tag Filtering & Investigation) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 1.5 moved from BACKLOG → TODO. Current recommendation: run `*story-context` for 2.6, then `*dev-story`.
+
+- **2025-10-18:** Completed story-context for Story 2.6 (Allergen Tag Filtering & Investigation). Context file: docs/stories/story-context-2.6.xml. Extracted ACs and tasks; identified relevant docs (epic-stories, tech-spec-epic-E2, solution-architecture, PRD), code artifacts (TimelineView, AllergenBadge, allergens constants, foodRepository patterns), constraints (Dexie JSON arrays, compound indexes, accessibility), and test ideas mapped to ACs. Next: DEV agent runs `dev-story` to implement.
+
+- **2025-10-18:** Completed dev-story for Story 2.6 (Allergen Tag Filtering & Investigation). Implemented persistent allergen filter (URL + localStorage), timeline filtering with count, Trigger Analysis refinement with simple category summary, and tests (component + integration). Story status set to Ready for Review. Next: Run `*story-approved` to mark complete.
+
+- **2025-10-18:** Story 2.5 (Medication, Symptom, and Trigger Log Modals) completed via dev-story. Dashboard Quick Log buttons now open modals; smart notes and auto-save implemented. Story moved to DONE.
 - **2025-10-17:** Story 2.4 dev-story implementation in progress (Tasks 1-2 complete, 22%). Task 1 delivered ConfidenceCalculationService with multi-factor confidence logic (LOWEST tier among sample size/consistency/p-value) using thresholds HIGH_SAMPLE=5, MEDIUM_SAMPLE=3, HIGH_CONSISTENCY=0.70, MEDIUM_CONSISTENCY=0.50, P_VALUE_THRESHOLD=0.05. Implemented determineConfidence() method with input validation and helper functions for tier determination. Added 37 comprehensive unit tests covering all factor combinations (high/medium/low for each factor), boundary values (exactly 3, exactly 5, exactly 0.50, exactly 0.70, exactly 0.05), edge cases (0% consistency, 100% consistency, very small sample, p=0/p=1), and input validation (negative values, out-of-range values). All 37 tests passing (100% pass rate). Task 2 extended CorrelationService with computeConsistency() method implementing formula: (food events followed by symptom within window) / (total food events). Added 10 comprehensive unit tests covering 70% consistency, 0% consistency (no symptoms follow food), 100% consistency (all symptoms follow food), 62.5% partial consistency, empty array edge cases, different time windows (1h, 4h, 24h), boundary conditions (3.9h vs 4.1h at 4h window), and overlapping symptoms. All 11 CorrelationService tests passing (1 existing + 10 new). Total: 48 tests passing (37 confidence + 11 correlation). Next: Task 3 (orchestration integration) requires modifying computeWithCombinations to call computeConsistency and determineConfidence, filtering correlations with p >= 0.05, and writing 5+ integration tests.
 - **2025-10-17:** Completed story-context for Story 2.4 (Correlation Confidence Calculations). Context file: docs/stories/story-context-2.4.xml. Generated comprehensive implementation context including: existing confidence determination patterns from Story 2.3 (CombinationAnalysisService.determineConfidence) and Story 2.2 (DoseResponseService.determineConfidence), chi-square/p-value calculation patterns, consistency metric calculation strategy (food occurrences → symptom correlation rate), Dexie v13 migration plan (add confidence/consistency fields with [userId+confidence] index), ConfidenceBadge/InsufficientDataBadge component interfaces, FoodCombinationCard/FoodCombinationsSection integration points, multi-factor confidence logic (LOWEST tier among sample size/consistency/p-value), statistical significance filtering (p < 0.05 threshold), 56+ test ideas mapped to acceptance criteria, accessibility requirements (ARIA labels, keyboard navigation, WCAG 2.1 AA), and 8 detailed development notes covering implementation strategy. Next: DEV runs `dev-story` to implement.
 - **2025-10-17:** Story 2.4 (Correlation Confidence Calculations) marked ready for development by SM agent. Status updated: Draft → Ready. Story remains IN PROGRESS awaiting context generation. Next: SM runs `story-context` to generate implementation context, then DEV runs `dev-story` to implement.
@@ -200,3 +236,25 @@
 ---
 
 _To refresh status at any time, run `workflow-status`._
+
+
+
+
+
+
+
+
+
+
+
+
+
+- **2025-10-18:** Story 2.5 corrected to Trigger Analysis Dashboard Integration per docs/epic-stories.md; modal-focused story removed. Draft created and added to TODO.
+
+
+
+
+
+
+
+

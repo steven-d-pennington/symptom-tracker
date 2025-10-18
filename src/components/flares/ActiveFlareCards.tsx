@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { flareRepository } from "@/lib/repositories/flareRepository";
 import { ActiveFlare } from "@/lib/types/flare";
-import { ArrowUp, ArrowRight, ArrowDown, AlertCircle } from "lucide-react";
+import { ArrowUp, ArrowRight, ArrowDown, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { FlareUpdateModal, FlareUpdate } from "./FlareUpdateModal";
 
@@ -13,12 +13,16 @@ type SortOption = "severity" | "recency";
 interface ActiveFlareCardsProps {
   userId: string;
   onUpdateFlare?: (flareId: string) => void;
+  externalFlares?: FlareWithTrend[];
+  filterByRegion?: string | null;
   repository?: Pick<typeof flareRepository, "getActiveFlaresWithTrend" | "resolve" | "updateSeverity" | "addIntervention" | "update">;
 }
 
 export function ActiveFlareCards({
   userId,
   onUpdateFlare,
+  externalFlares,
+  filterByRegion,
   repository = flareRepository,
 }: ActiveFlareCardsProps) {
   const [flares, setFlares] = useState<FlareWithTrend[]>([]);
@@ -27,6 +31,7 @@ export function ActiveFlareCards({
   const [error, setError] = useState<string | null>(null);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedFlare, setSelectedFlare] = useState<ActiveFlare | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const loadFlares = async () => {
     try {
@@ -43,8 +48,13 @@ export function ActiveFlareCards({
   };
 
   useEffect(() => {
-    loadFlares();
-  }, [userId]);
+    if (externalFlares) {
+      setFlares(externalFlares);
+      setLoading(false);
+    } else {
+      loadFlares();
+    }
+  }, [userId, externalFlares]);
 
   const handleResolve = async (flareId: string, flareName: string) => {
     const confirmed = window.confirm(
@@ -106,7 +116,12 @@ export function ActiveFlareCards({
     }
   };
 
-  const sortedFlares = [...flares].sort((a, b) => {
+  // Apply region filter if provided
+  const filteredFlares = filterByRegion
+    ? flares.filter(f => f.bodyRegions.includes(filterByRegion))
+    : flares;
+
+  const sortedFlares = [...filteredFlares].sort((a, b) => {
     if (sortBy === "severity") {
       return b.severity - a.severity; // Highest first
     } else {
@@ -171,6 +186,22 @@ export function ActiveFlareCards({
     );
   }
 
+  if (filteredFlares.length === 0 && flares.length > 0) {
+    return (
+      <section className="space-y-3" aria-label="Active flares">
+        <h2 className="text-lg font-semibold text-foreground">Active Flares</h2>
+        <div className="rounded-lg border border-border bg-card p-8 text-center">
+          <p className="text-lg font-medium text-foreground mb-2">
+            No flares in selected region
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Try selecting a different body region or clear the filter.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   if (flares.length === 0) {
     return (
       <section className="space-y-3" aria-label="Active flares">
@@ -189,42 +220,58 @@ export function ActiveFlareCards({
 
   return (
     <section className="space-y-3" aria-label="Active flares">
-      {/* Header with sort toggle */}
+      {/* Header with collapse toggle and sort buttons */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">
-          Active Flares <span className="text-muted-foreground">({flares.length})</span>
-        </h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setSortBy("severity")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-              sortBy === "severity"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border text-foreground hover:bg-muted"
-            )}
-            aria-pressed={sortBy === "severity"}
-          >
-            By Severity
-          </button>
-          <button
-            onClick={() => setSortBy("recency")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-              sortBy === "recency"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border text-foreground hover:bg-muted"
-            )}
-            aria-pressed={sortBy === "recency"}
-          >
-            By Recency
-          </button>
-        </div>
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          aria-expanded={!isCollapsed}
+          aria-label={isCollapsed ? "Expand active flares" : "Collapse active flares"}
+        >
+          <h2 className="text-lg font-semibold text-foreground">
+            Active Flares <span className="text-muted-foreground">({filteredFlares.length}{filterByRegion ? ` of ${flares.length}` : ''})</span>
+          </h2>
+          {isCollapsed ? (
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          ) : (
+            <ChevronUp className="w-5 h-5 text-muted-foreground" />
+          )}
+        </button>
+        {!isCollapsed && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSortBy("severity")}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                sortBy === "severity"
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-foreground hover:bg-muted"
+              )}
+              aria-pressed={sortBy === "severity"}
+            >
+              By Severity
+            </button>
+            <button
+              onClick={() => setSortBy("recency")}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                sortBy === "recency"
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-foreground hover:bg-muted"
+              )}
+              aria-pressed={sortBy === "recency"}
+            >
+              By Recency
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Flare cards */}
-      <div className="space-y-3">
-        {sortedFlares.slice(0, 5).map((flare) => {
+      {/* Flare cards - conditionally rendered based on collapse state */}
+      {!isCollapsed && (
+        <>
+          <div className="space-y-3">
+            {sortedFlares.slice(0, 5).map((flare) => {
           const duration = calculateDuration(flare.startDate);
           const bodyLocation = flare.bodyRegions.length > 0
             ? flare.bodyRegions.join(", ")
@@ -291,13 +338,15 @@ export function ActiveFlareCards({
               </div>
             </div>
           );
-        })}
-      </div>
+            })}
+          </div>
 
-      {flares.length > 5 && (
-        <p className="text-xs text-muted-foreground text-center">
-          Showing 5 of {flares.length} active flares
-        </p>
+          {filteredFlares.length > 5 && (
+            <p className="text-xs text-muted-foreground text-center">
+              Showing 5 of {filteredFlares.length} active flares
+            </p>
+          )}
+        </>
       )}
 
       {/* Flare Update Modal */}

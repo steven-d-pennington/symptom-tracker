@@ -12,6 +12,8 @@ import { triggerRepository } from '@/lib/repositories/triggerRepository';
 import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
 import { foodRepository } from '@/lib/repositories/foodRepository';
 import EventDetailModal from './EventDetailModal';
+import { useAllergenFilter } from '@/lib/hooks/useAllergenFilter';
+import AllergenFilter from '@/components/filters/AllergenFilter';
 
 // Timeline event types
 export type TimelineEventType = 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved' | 'food';
@@ -24,6 +26,7 @@ export interface TimelineEvent {
   details?: any;
   eventRef: any;
   hasDetails?: boolean;
+  allergens?: string[]; // for food events: aggregated allergen tags
 }
 
 interface TimelineViewProps {
@@ -254,7 +257,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           summary,
           details: details || undefined,
           eventRef: event,
-          hasDetails: !!details
+          hasDetails: !!details,
+          allergens: allergenList
         });
       });
 
@@ -322,6 +326,30 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     // Sort groups by date descending
     return Object.values(groups).sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [events]);
+
+  // Allergen filter state (persisted across nav via URL/localStorage)
+  const { selected: selectedAllergen, setSelected: setSelectedAllergen } = useAllergenFilter();
+
+  // Apply allergen filter (when selected) to events list
+  const filteredGroupedEvents = useMemo(() => {
+    if (!selectedAllergen) return groupedEvents;
+    const filtered: DayGroup[] = [];
+    for (const group of groupedEvents) {
+      const foodOnly = group.events.filter(ev => ev.type === 'food' && (ev.allergens || []).includes(selectedAllergen));
+      if (foodOnly.length > 0) {
+        filtered.push({ ...group, events: foodOnly });
+      }
+    }
+    return filtered;
+  }, [groupedEvents, selectedAllergen]);
+
+  // Count matching events (for label)
+  const matchingCount = useMemo(() => {
+    if (!selectedAllergen) return undefined;
+    let count = 0;
+    filteredGroupedEvents.forEach(g => count += g.events.length);
+    return count;
+  }, [filteredGroupedEvents, selectedAllergen]);
 
   // Load previous day
   const loadPreviousDay = async () => {
@@ -425,14 +453,22 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
   return (
     <div className="w-full md:w-2/3 space-y-6">
-      {groupedEvents.length === 0 ? (
+      {/* Allergen Filter */}
+      <div className="flex items-center justify-between">
+        <AllergenFilter
+          selected={selectedAllergen}
+          onChange={setSelectedAllergen}
+          showCount={typeof matchingCount === 'number' ? matchingCount : undefined}
+        />
+      </div>
+      {(selectedAllergen ? filteredGroupedEvents : groupedEvents).length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            No events today yet. Use quick-log buttons above to get started!
+            {selectedAllergen ? 'No matching food events for the selected allergen.' : 'No events today yet. Use quick-log buttons above to get started!'}
           </p>
         </div>
       ) : (
-        groupedEvents.map((group) => (
+        (selectedAllergen ? filteredGroupedEvents : groupedEvents).map((group) => (
           <div key={group.dateLabel} className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
               {group.dateLabel}

@@ -27,6 +27,8 @@ export function ExportDialog() {
     dailyEntries: true,
     userData: true,
     photos: false, // NEW - opt-in
+    foodJournal: true, // NEW - food events export
+    correlations: true, // NEW - correlation summary export
   });
   const [decryptPhotos, setDecryptPhotos] = useState(false); // NEW
   const [photoStats, setPhotoStats] = useState<{
@@ -81,6 +83,9 @@ export function ExportDialog() {
         includeUserData: includeOptions.userData,
         includePhotos: includeOptions.photos, // NEW
         decryptPhotos: decryptPhotos, // NEW
+        includeFoodJournal: includeOptions.foodJournal,
+        includeCorrelations: includeOptions.correlations,
+        onlySignificant: true,
         onProgress: (progress: ExportProgress) => {
           setExportProgress(progress);
         },
