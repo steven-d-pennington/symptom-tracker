@@ -40,10 +40,12 @@ export const OnboardingRedirectGate = () => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname?.startsWith("/onboarding")) {
+    // Allow access to landing page and onboarding without redirect
+    if (pathname === "/" || pathname?.startsWith("/onboarding")) {
       return;
     }
 
+    // Only redirect to onboarding if trying to access protected routes
     if (!hasCompletedOnboarding()) {
       router.replace("/onboarding");
     }
