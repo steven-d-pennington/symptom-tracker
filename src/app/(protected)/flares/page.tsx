@@ -306,7 +306,7 @@ export default function FlaresPage() {
                 </div>
               )}
 
-              <div className="h-[600px] bg-gray-50 rounded-lg mb-4">
+              <div className="h-[600px] bg-gray-50 rounded-lg mb-4 overflow-visible">
                 <BodyMapViewer
                   view={currentView}
                   selectedRegion={selectedRegion || undefined}

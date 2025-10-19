@@ -69,6 +69,7 @@ export function FrontBody({
       viewBox="0 0 400 800"
       className="w-full h-full"
       xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid meet"
     >
       <defs>
         <style>{`
@@ -280,18 +281,52 @@ export function FrontBody({
         onMouseLeave={() => onRegionHover?.(null)}
       />
 
-      {/* Groin */}
-      <path
-        id="groin"
-        d="M 175 385 Q 200 395 225 385"
-        fill="none"
-        stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}
-        strokeWidth="30"
-        strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}
-        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}`}
-        onClick={() => onRegionClick?.("groin")}
-        onMouseEnter={() => onRegionHover?.("groin")}
+      {/* Left Groin */}
+      <ellipse
+        id="left-groin"
+        cx="175"
+        cy="410"
+        rx="22"
+        ry="18"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "left-groin")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "left-groin")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "left-groin")!)}
+        onClick={() => onRegionClick?.("left-groin")}
+        onMouseEnter={() => onRegionHover?.("left-groin")}
         onMouseLeave={() => onRegionHover?.(null)}
+        aria-label="Left Groin"
+      />
+
+      {/* Center Groin */}
+      <ellipse
+        id="center-groin"
+        cx="200"
+        cy="415"
+        rx="18"
+        ry="15"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "center-groin")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "center-groin")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "center-groin")!)}
+        onClick={() => onRegionClick?.("center-groin")}
+        onMouseEnter={() => onRegionHover?.("center-groin")}
+        onMouseLeave={() => onRegionHover?.(null)}
+        aria-label="Center Groin"
+      />
+
+      {/* Right Groin */}
+      <ellipse
+        id="right-groin"
+        cx="225"
+        cy="410"
+        rx="22"
+        ry="18"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "right-groin")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "right-groin")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "right-groin")!)}
+        onClick={() => onRegionClick?.("right-groin")}
+        onMouseEnter={() => onRegionHover?.("right-groin")}
+        onMouseLeave={() => onRegionHover?.(null)}
+        aria-label="Right Groin"
       />
 
       {/* Left Upper Arm */}
@@ -451,8 +486,8 @@ export function FrontBody({
       {/* Left Hip */}
       <ellipse
         id="hip-left"
-        cx="175"
-        cy="400"
+        cx="145"
+        cy="385"
         rx="30"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hip-left")!)}`}
@@ -466,8 +501,8 @@ export function FrontBody({
       {/* Right Hip */}
       <ellipse
         id="hip-right"
-        cx="225"
-        cy="400"
+        cx="255"
+        cy="385"
         rx="30"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hip-right")!)}`}

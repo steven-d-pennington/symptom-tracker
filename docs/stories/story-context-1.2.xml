@@ -1,0 +1,325 @@
+<story-context id="story-1.2-zoom-controls" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.2</storyId>
+    <title>Implement Zoom Controls for Body Map</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user marking flare locations</asA>
+    <iWant>to zoom into any body region</iWant>
+    <soThat>I can see an enlarged view for precise location marking</soThat>
+    <tasks>
+      <task id="1" status="pending">Install and configure react-zoom-pan-pinch library</task>
+      <task id="2" status="pending">Create BodyMapZoom wrapper component</task>
+      <task id="3" status="pending">Implement zoom control UI buttons</task>
+      <task id="4" status="pending">Implement zoom state persistence</task>
+      <task id="5" status="pending">Integrate zoom with existing body map component</task>
+      <task id="6" status="pending">Testing and performance validation</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1.1">Zoom controls (zoom in/out buttons) are accessible on body map interface</criterion>
+    <criterion id="AC1.2">Pinch-to-zoom gesture works on mobile/touch devices</criterion>
+    <criterion id="AC1.3">Scroll-wheel zoom works on desktop browsers</criterion>
+    <criterion id="AC1.4">Zoom level ranges from 1x (full body view) to 3x minimum</criterion>
+    <criterion id="AC1.5">Zoom focuses on cursor/touch position (not center of screen)</criterion>
+    <criterion id="AC1.6">Zoom level persists when switching between body views (front/back/side)</criterion>
+    <criterion id="AC1.7">Reset button returns to 1x zoom</criterion>
+    <criterion id="AC1.8">All zoom interactions respond within 100ms (NFR001)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" section="Functional Requirements">
+        <title>Product Requirements Document</title>
+        <snippet>FR002: System shall provide zoom functionality for all body map regions, allowing users to view enlarged region details for precise flare location marking. NFR001: Body map zoom interactions shall respond within 100ms to maintain smooth user experience.</snippet>
+      </doc>
+      <doc path="docs/solution-architecture.md" section="ADR-001">
+        <title>Architecture Decision: react-zoom-pan-pinch</title>
+        <snippet>Use react-zoom-pan-pinch library for declarative React zoom/pan API. Avoids imperative D3.js approach, built-in mobile gesture support, small bundle size (15KB), works seamlessly with SVG elements.</snippet>
+      </doc>
+      <doc path="docs/solution-architecture.md" section="Component Architecture">
+        <title>Body Map Component Architecture</title>
+        <snippet>BodyMapZoom wrapper component using TransformWrapper/TransformComponent from react-zoom-pan-pinch. No global state needed - zoom state managed in local component state (ADR-002).</snippet>
+      </doc>
+      <doc path="docs/epics.md" section="Epic 1, Story 1.2">
+        <title>Epic Breakdown - Story 1.2</title>
+        <snippet>Story builds on groin regions from 1.1. Enables precision tracking foundation required for Stories 1.3 (Pan Controls) and 1.4 (Coordinate Marking). No prerequisites - can be implemented immediately after Story 1.1.</snippet>
+      </doc>
+      <doc path="docs/stories/story-1.1.md" section="Completion Notes">
+        <title>Story 1.1 - Completed Implementation</title>
+        <snippet>Replaced single groin region with 3 separate regions (left-groin, center-groin, right-groin), added 3 ellipse SVG elements to FrontBody component. All tests passing (42/42). Groin regions must be zoomable in this story.</snippet>
+      </doc>
+    </docs>
+    
+    <code>
+      <artifact path="src/components/body-mapping/BodyMapViewer.tsx" kind="component" symbol="BodyMapViewer">
+        <reason>Main body map viewer component - this is where zoom wrapper should be integrated</reason>
+        <details>Current implementation has basic zoom state (useState(1)) but no actual zoom functionality. This component needs to be wrapped with BodyMapZoom or have zoom integrated here.</details>
+      </artifact>
+      <artifact path="src/components/body-mapping/bodies/FrontBody.tsx" kind="component" symbol="FrontBody">
+        <reason>Front body SVG component with groin regions from Story 1.1 - must work correctly when zoomed</reason>
+        <details>Contains SVG elements including new groin regions (left-groin, center-groin, right-groin as ellipses). Has onClick, onMouseEnter, onMouseLeave handlers that must work within zoom transform.</details>
+      </artifact>
+      <artifact path="src/components/body-mapping/bodies/BackBody.tsx" kind="component" symbol="BackBody">
+        <reason>Back body SVG component - also needs zoom support</reason>
+        <details>Similar structure to FrontBody. Must be wrapped with same zoom component for consistency.</details>
+      </artifact>
+      <artifact path="src/components/body-mapping/BodyRegionSelector.tsx" kind="component" symbol="BodyRegionSelector">
+        <reason>Renders body views (front/back) - may need modification to support zoom wrapper</reason>
+        <details>Renders FrontBody and BackBody based on view prop. Zoom wrapper could be applied here or in parent component.</details>
+      </artifact>
+      <artifact path="src/components/body-mapping/BodyViewSwitcher.tsx" kind="component" symbol="BodyViewSwitcher">
+        <reason>View switching UI - zoom state should persist when switching views (AC1.6)</reason>
+        <details>Provides buttons to switch between front/back/left/right views. Zoom state persistence needed when user switches views.</details>
+      </artifact>
+      <artifact path="src/components/daily-entry/EntrySections/BodyMapSection.tsx" kind="component" symbol="BodyMapSection">
+        <reason>Page-level component using BodyMapViewer - shows integration pattern</reason>
+        <details>Uses useBodyMap hook and BodyMapViewer. Shows how body map is used in context with view switching and region selection.</details>
+      </artifact>
+      <artifact path="src/app/(protected)/body-map/page.tsx" kind="page" symbol="BodyMapPage">
+        <reason>Body map page route - likely location for zoom integration</reason>
+        <note>File path inferred from routing structure - verify actual location during implementation</note>
+      </artifact>
+      <artifact path="src/lib/types/body-mapping.ts" kind="types" symbol="BodyViewType">
+        <reason>Type definitions for body mapping - may need extension for zoom state</reason>
+        <details>Defines BodyViewType, BodyRegion, BodyMapLocation, severity colors. May need ZoomState type addition.</details>
+      </artifact>
+      <artifact path="src/components/body-mapping/hooks/useBodyMap.ts" kind="hook" symbol="useBodyMap">
+        <reason>Custom hook for body map state - shows existing state management pattern</reason>
+        <details>Manages body map state including region selection and symptoms. Pattern to follow for zoom state management if needed.</details>
+      </artifact>
+    </code>
+    
+    <dependencies>
+      <node>
+        <package name="react-zoom-pan-pinch" version="3.6.1" status="ALREADY INSTALLED">
+          <note>Main zoom/pan library - NO INSTALLATION NEEDED, already in package.json</note>
+          <usage>Will use TransformWrapper, TransformComponent from this library</usage>
+        </package>
+        <package name="react" version="19.1.0">React framework</package>
+        <package name="next" version="15.5.4">Next.js App Router framework</package>
+        <package name="typescript" version="5.x">TypeScript for type safety</package>
+        <package name="lucide-react" version="0.544.0">
+          <note>Icons library - will use ZoomIn, ZoomOut, Home icons for zoom controls</note>
+        </package>
+        <package name="tailwindcss" version="4.x">Utility-first CSS framework for styling zoom controls</package>
+      </node>
+      <testing>
+        <package name="jest" version="30.2.0">Testing framework</package>
+        <package name="@testing-library/react" version="16.3.0">React component testing</package>
+        <package name="@testing-library/jest-dom" version="6.9.1">Jest DOM matchers</package>
+        <package name="@testing-library/user-event" version="14.6.1">User interaction simulation</package>
+        <package name="jest-environment-jsdom" version="30.2.0">Browser environment for tests</package>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="C1" source="docs/solution-architecture.md#ADR-001">
+      MUST use react-zoom-pan-pinch library - already decided and dependency installed
+    </constraint>
+    <constraint id="C2" source="docs/solution-architecture.md#ADR-002">
+      NO global state management - use React Query + local component state only
+    </constraint>
+    <constraint id="C3" source="docs/PRD.md#NFR001">
+      CRITICAL: All zoom interactions must respond within 100ms (button clicks, pinch, scroll-wheel)
+    </constraint>
+    <constraint id="C4" source="docs/PRD.md#NFR001">
+      Touch targets must be minimum 44x44px for mobile accessibility
+    </constraint>
+    <constraint id="C5" source="docs/stories/story-1.2.md#Dev Notes">
+      Must maintain compatibility with existing body region selection flow from Story 1.1
+    </constraint>
+    <constraint id="C6" source="docs/stories/story-1.2.md#Dev Notes">
+      Zoom must not break hover/active states on body regions (especially new groin regions)
+    </constraint>
+    <constraint id="C7" source="docs/stories/story-1.2.md#Dev Notes">
+      Cannot interfere with region click handlers - regions must remain selectable when zoomed
+    </constraint>
+    <constraint id="C8" source="docs/solution-architecture.md">
+      Component location: src/components/body-map/BodyMapZoom.tsx (new directory: body-map)
+    </constraint>
+    <constraint id="C9" source="docs/solution-architecture.md">
+      Hook location (if needed): src/hooks/useBodyMapZoom.ts
+    </constraint>
+    <constraint id="C10" source="docs/stories/story-1.2.md">
+      Zoom range: minScale=1 (full view), maxScale=3 minimum
+    </constraint>
+    <constraint id="C11" source="docs/stories/story-1.2.md">
+      Zoom must focus on cursor/touch position using centerZoomedOut property
+    </constraint>
+    <constraint id="C12" source="docs/stories/story-1.2.md#AC1.6">
+      Zoom state must persist when switching between front/back/side views
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="TransformWrapper" kind="React Component" source="react-zoom-pan-pinch">
+      <signature>
+        Props: {
+          initialScale?: number;
+          minScale?: number;
+          maxScale?: number;
+          centerZoomedOut?: boolean;
+          wheel?: { smoothStep?: number };
+          pinch?: { step?: number };
+          doubleClick?: { disabled?: boolean; mode?: 'zoomIn' | 'zoomOut' };
+          children: (utils: TransformContext) => ReactNode;
+        }
+      </signature>
+      <usage>Wrap body map SVG with this component to enable zoom/pan</usage>
+    </interface>
+    <interface name="TransformComponent" kind="React Component" source="react-zoom-pan-pinch">
+      <signature>
+        Props: {
+          children: ReactNode;
+          wrapperClass?: string;
+          contentClass?: string;
+        }
+      </signature>
+      <usage>Wrap the actual content (SVG) that should be transformed</usage>
+    </interface>
+    <interface name="TransformContext" kind="TypeScript Interface" source="react-zoom-pan-pinch">
+      <signature>
+        {
+          zoomIn: (step?: number) => void;
+          zoomOut: (step?: number) => void;
+          resetTransform: () => void;
+          setTransform: (x: number, y: number, scale: number) => void;
+          state: {
+            scale: number;
+            positionX: number;
+            positionY: number;
+          };
+        }
+      </signature>
+      <usage>Provided by TransformWrapper children render prop - use for zoom controls</usage>
+    </interface>
+    <interface name="BodyMapViewerProps" kind="TypeScript Interface" path="src/components/body-mapping/BodyMapViewer.tsx">
+      <signature>
+        {
+          view: 'front' | 'back' | 'left' | 'right';
+          symptoms?: BodyMapLocation[];
+          selectedRegion?: string;
+          onRegionSelect: (regionId: string) => void;
+          onSymptomAdd?: (location: Partial&lt;BodyMapLocation&gt;) => void;
+          onSymptomClick?: (locationId: string) => void;
+          flares?: ActiveFlare[];
+          flareSeverityByRegion?: Record&lt;string, number&gt;;
+        }
+      </signature>
+      <usage>Existing BodyMapViewer props - zoom wrapper must preserve all functionality</usage>
+    </interface>
+    <interface name="BodyMapZoomProps (NEW)" kind="TypeScript Interface" path="src/components/body-map/BodyMapZoom.tsx">
+      <signature>
+        {
+          children: React.ReactNode;
+          viewType: 'front' | 'back' | 'left' | 'right';
+          onZoomChange?: (scale: number) => void;
+        }
+      </signature>
+      <usage>Props for new BodyMapZoom wrapper component to be created</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses Jest 30.2.0 with React Testing Library 16.3.0 for component testing. Test files follow pattern: __tests__/ComponentName.test.tsx for component tests, or src/__tests__/integration/ for integration tests. All tests must use fake-indexeddb for Dexie mocking. Target 80% coverage for service/util layers. Follow existing test patterns from Story 1.1 (see src/components/body-mapping/bodies/__tests__/FrontBody.test.tsx for reference - 42 passing tests).
+    </standards>
+    <locations>
+      <location>src/components/body-map/__tests__/BodyMapZoom.test.tsx</location>
+      <location>src/hooks/__tests__/useBodyMapZoom.test.ts (if hook is created)</location>
+      <location>src/__tests__/integration/body-map-zoom.test.tsx</location>
+    </locations>
+    <ideas>
+      <idea criterion="AC1.1" priority="high">
+        Test zoom controls render: Verify zoom in (+), zoom out (-), and reset (home) buttons are present in component. Check buttons have correct aria-labels and are keyboard accessible.
+      </idea>
+      <idea criterion="AC1.2" priority="high">
+        Test pinch-to-zoom on mobile: Simulate pinch gesture using testing-library/user-event. Verify scale state changes correctly. Test that pinch step=5 configuration works as expected.
+      </idea>
+      <idea criterion="AC1.3" priority="high">
+        Test scroll-wheel zoom: Simulate wheel event on desktop. Verify scale increases/decreases. Check smoothStep configuration (0.005) provides smooth transitions.
+      </idea>
+      <idea criterion="AC1.4" priority="high">
+        Test zoom range bounds: Verify zoom cannot go below 1x (minScale). Verify zoom can reach at least 3x (maxScale). Test that zoom in button disables at maxScale, zoom out disables at minScale.
+      </idea>
+      <idea criterion="AC1.5" priority="medium">
+        Test cursor-focused zoom: Mock cursor position and verify zoom centers on that position. Test centerZoomedOut configuration. Verify zoom doesn't always center on screen center.
+      </idea>
+      <idea criterion="AC1.6" priority="high">
+        Test zoom state persistence: Set zoom to 2x on front view. Switch to back view. Switch back to front. Verify zoom is still 2x. Test with useBodyMapZoom hook if implemented.
+      </idea>
+      <idea criterion="AC1.7" priority="medium">
+        Test reset functionality: Zoom to 2.5x, pan to offset position. Click reset button. Verify scale returns to 1x and position resets to (0,0).
+      </idea>
+      <idea criterion="AC1.8" priority="critical">
+        Test performance (NFR001): Use performance.now() to measure zoom button click latency. Measure pinch gesture latency. Measure scroll-wheel latency. All must be &lt;100ms. Add performance monitoring wrapper.
+      </idea>
+      <idea criterion="Integration" priority="high">
+        Test with groin regions from Story 1.1: Zoom to 3x. Click left-groin region. Verify onRegionSelect callback fires with 'left-groin'. Test all 3 groin regions remain selectable when zoomed.
+      </idea>
+      <idea criterion="Integration" priority="medium">
+        Test hover states survive zoom: Zoom to 2x. Hover over a region. Verify hover state applies (opacity change). Test that CSS hover:opacity-80 still works within TransformComponent.
+      </idea>
+      <idea criterion="Accessibility" priority="medium">
+        Test keyboard navigation: Tab to zoom controls. Verify focus indicators visible. Press Enter on zoom in button. Verify zoom increases. Test +/- keyboard shortcuts if implemented.
+      </idea>
+      <idea criterion="Edge Cases" priority="low">
+        Test rapid zoom changes: Click zoom in button 10 times rapidly. Verify state updates correctly without race conditions. Test doesn't exceed maxScale.
+      </idea>
+    </ideas>
+  </tests>
+
+  <implementation_notes>
+    <note priority="critical">
+      react-zoom-pan-pinch@3.6.1 is ALREADY INSTALLED in package.json - NO npm install needed! Can proceed directly to implementation.
+    </note>
+    <note priority="high">
+      Create new directory: src/components/body-map/ (note: different from existing body-mapping/ directory per architecture spec)
+    </note>
+    <note priority="high">
+      Story 1.1 completed implementation: Groin regions are working (left-groin, center-groin, right-groin as ellipse elements). These must remain functional when zoomed.
+    </note>
+    <note priority="high">
+      Integration point: BodyMapViewer.tsx currently has placeholder zoom state (useState(1)). Replace or wrap this component with BodyMapZoom functionality.
+    </note>
+    <note priority="medium">
+      Lucide icons already installed: Import { ZoomIn, ZoomOut, Home } from 'lucide-react' for button icons
+    </note>
+    <note priority="medium">
+      Tailwind CSS classes available: Use existing utility classes for button styling (p-2, bg-white, rounded-lg, shadow-md, hover:bg-gray-50, disabled:opacity-50)
+    </note>
+    <note priority="medium">
+      View persistence (AC1.6): Can be implemented with simple React state in parent component or with useBodyMapZoom hook. No global state needed per ADR-002.
+    </note>
+    <note priority="low">
+      Future stories building on this: Story 1.3 (Pan Controls) will extend this zoom component. Story 1.4 (Coordinate Marking) will use zoom for precision. Story 1.5 (Flare Markers) needs to scale with zoom.
+    </note>
+    <note priority="low">
+      Performance optimization: Use React.memo on BodyMapZoom if re-renders become issue. Debounce zoom state persistence if using hook. Monitor bundle size impact of react-zoom-pan-pinch (should be ~15KB).
+    </note>
+  </implementation_notes>
+
+  <risks>
+    <risk id="R1" severity="medium" mitigation="Test on multiple devices">
+      Performance on Mobile: Pinch-to-zoom may have latency on older devices. Optimize TransformWrapper config with appropriate smoothStep/step values. Test on range of devices.
+    </risk>
+    <risk id="R2" severity="medium" mitigation="Normalize coordinates in Story 1.4">
+      SVG Coordinate Transforms: Zoom may affect coordinate calculations for future stories (Story 1.4 Coordinate Marking). Document transform state for future use.
+    </risk>
+    <risk id="R3" severity="low" mitigation="Test thoroughly, check GitHub issues">
+      Library Compatibility: react-zoom-pan-pinch may have issues with React 19. Already installed suggests compatibility, but verify through testing.
+    </risk>
+    <risk id="R4" severity="low" mitigation="Add keyboard shortcuts +/-/0, tooltips">
+      Accessibility: Keyboard users may struggle with zoom without clear instructions. Implement keyboard shortcuts and provide help tooltip.
+    </risk>
+  </risks>
+</story-context>

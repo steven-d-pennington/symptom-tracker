@@ -14,9 +14,13 @@ export const FRONT_BODY_REGIONS: BodyRegion[] = [
   { id: "chest-right", name: "Right Chest", category: "torso", side: "right", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["pain", "rash"] },
   { id: "abdomen-upper", name: "Upper Abdomen", category: "torso", side: "center", svgPath: "", selectable: true, zIndex: 8 },
   { id: "abdomen-lower", name: "Lower Abdomen", category: "torso", side: "center", svgPath: "", selectable: true, zIndex: 8 },
-  { id: "groin", name: "Groin", category: "torso", side: "center", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "pain"] },
 
-  // HS-Specific Regions
+  // HS-Specific Regions - Groin
+  { id: "left-groin", name: "Left Groin", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "abscess", "pain"] },
+  { id: "center-groin", name: "Center Groin", category: "other", side: "center", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "abscess", "pain"] },
+  { id: "right-groin", name: "Right Groin", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "abscess", "pain"] },
+
+  // HS-Specific Regions - Armpits
   { id: "armpit-left", name: "Left Armpit", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["abscess", "lesion", "pain"] },
   { id: "armpit-right", name: "Right Armpit", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["abscess", "lesion", "pain"] },
   { id: "under-breast-left", name: "Under Left Breast", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "pain"] },

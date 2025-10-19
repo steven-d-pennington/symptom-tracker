@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useEffect, useRef } from "react";
 import { BodyRegionSelector } from "./BodyRegionSelector";
-import { ZoomPanControls } from "./ZoomPanControls";
+import { BodyMapZoom } from "@/components/body-map/BodyMapZoom";
 import { BodyMapLocation } from "@/lib/types/body-mapping";
 
 interface BodyMapViewerProps {
@@ -28,12 +28,6 @@ export function BodyMapViewer({
   multiSelect = false,
   flareSeverityByRegion = {},
 }: BodyMapViewerProps) {
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [startPan, setStartPan] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
   // Calculate severity by region for visualization
   // Merge symptom severity and flare severity (flares take priority with red coloring)
   const symptomSeverityByRegion = symptoms.reduce(
@@ -49,114 +43,46 @@ export function BodyMapViewer({
   // Combine both severity sources - flares will be shown with special styling
   const combinedSeverityByRegion = { ...symptomSeverityByRegion, ...flareSeverityByRegion };
 
-  const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 0.25, 3));
-  };
+  const instructionsRef = useRef<HTMLDivElement | null>(null);
 
-  const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev - 0.25, 0.5));
-  };
-
-  const handleResetView = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  };
-
-  const handleWheel = useCallback((e: WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom((prev) => Math.max(0.5, Math.min(3, prev + delta)));
-  }, []);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
-      // Middle mouse or Shift+Left click
-      e.preventDefault();
-      setIsPanning(true);
-      setStartPan({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  useEffect(() => {
+    if (!instructionsRef.current) {
+      return;
     }
-  };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning) {
-      setPan({
-        x: e.clientX - startPan.x,
-        y: e.clientY - startPan.y,
-      });
-    }
-  };
+    const selector = '[data-body-map-instructions="true"]';
+    const current = instructionsRef.current;
 
-  const handleMouseUp = () => {
-    setIsPanning(false);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      // Pinch zoom gesture detected
-      e.preventDefault();
-    }
-  };
-
-  React.useEffect(() => {
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener("wheel", handleWheel, { passive: false });
-      return () => container.removeEventListener("wheel", handleWheel);
-    }
-  }, [handleWheel]);
+    document.querySelectorAll<HTMLDivElement>(selector).forEach((element) => {
+      if (element !== current) {
+        element.remove();
+      }
+    });
+  }, [view]);
 
   return (
-    <div className="relative w-full h-full bg-gray-50 rounded-lg overflow-hidden">
-      {/* Zoom/Pan Controls */}
-      <ZoomPanControls
-        zoom={zoom}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onReset={handleResetView}
-      />
-
-      {/* Body Map Container */}
-      <div
-        ref={containerRef}
-        className="w-full h-full overflow-hidden cursor-move"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-      >
-        <div
-          style={{
-            transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
-            transformOrigin: "center center",
-            transition: isPanning ? "none" : "transform 0.2s ease-out",
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          <BodyRegionSelector
-            view={view}
-            selectedRegions={selectedRegion ? [selectedRegion] : []}
-            onRegionSelect={onRegionSelect}
-            multiSelect={multiSelect}
-            severityByRegion={combinedSeverityByRegion}
-            flareRegions={Object.keys(flareSeverityByRegion)}
-          />
-        </div>
-      </div>
+    <div className="relative w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+      <BodyMapZoom viewType={view}>
+        <BodyRegionSelector
+          view={view}
+          selectedRegions={selectedRegion ? [selectedRegion] : []}
+          onRegionSelect={onRegionSelect}
+          multiSelect={multiSelect}
+          severityByRegion={combinedSeverityByRegion}
+          flareRegions={Object.keys(flareSeverityByRegion)}
+        />
+      </BodyMapZoom>
 
       {/* Instructions */}
-      {!readOnly && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm">
-          <div className="flex items-center gap-4">
-            <span>Click region to select</span>
-            <span className="text-gray-400">|</span>
-            <span>Scroll to zoom</span>
-            <span className="text-gray-400">|</span>
-            <span>Shift+Drag to pan</span>
-          </div>
+      <div
+        ref={instructionsRef}
+        data-body-map-instructions="true"
+        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm"
+      >
+        <div className="flex items-center gap-4">
+          <span>Touch or click regions to select</span>
         </div>
-      )}
+      </div>
     </div>
   );
 }

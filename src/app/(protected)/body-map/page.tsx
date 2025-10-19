@@ -112,7 +112,7 @@ export default function BodyMapPage() {
                 onViewChange={changeView}
               />
             </div>
-            <div className="h-[600px] bg-gray-50 rounded-lg">
+            <div className="h-[600px] bg-gray-50 rounded-lg overflow-visible">
               <BodyMapViewer
                 view={currentView}
                 symptoms={symptoms}

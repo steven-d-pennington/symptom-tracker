@@ -69,6 +69,7 @@ export function BackBody({
       viewBox="0 0 400 800"
       className="w-full h-full"
       xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid meet"
     >
       <defs>
         <style>{`
