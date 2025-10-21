@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-approved (Story 1.4) - Complete ✅
-- **Overall Progress:** 60% (Stories 1.1-1.5 complete; Story 1.6 drafted; 5 of 23 stories done, 21 points)
-- **Next Action:** Run story-ready for Story 1.6, then implement
-- **Command to Run:** `*story-ready` for Story 1.6
-- **Agent to Load:** SM (bmad/bmm/agents/sm.md) for story approval
-- **Note:** Story 1.4 COMPLETE! Coordinate precision working perfectly. Epic 1 is 5/6 stories done - Story 1.6 (Accessibility) is the final story
+- **Current Workflow:** story-context (Story 1.6) - Complete ✅
+- **Overall Progress:** 62% (Stories 1.1-1.5 complete; Story 1.6 context ready; 5 of 23 stories done, 21 points)
+- **Next Action:** Implement Story 1.6 via dev-story to deliver accessibility enhancements
+- **Command to Run:** `*dev-story` for Story 1.6
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) for implementation
+- **Note:** Story 1.6 context generated; DEV run will complete Enhanced Body Map accessibility
 
 ---
 
@@ -102,10 +102,10 @@
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
-- **Story Status:** Draft (awaiting context generation and story-ready approval)
-- **Context File:** Not yet generated
-- **Action:** Story 1.4 now complete - ready to run story-ready and generate context for Story 1.6
-- **Priority:** MEDIUM - Completes Epic 1 with full accessibility support
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-1.6.xml`
+- **Action:** Run dev-story workflow to implement using the new context file
+- **Priority:** HIGH - Final story of Epic 1 (completes Enhanced Body Map with full accessibility support)
 
 #### DONE (Completed Stories)
 
@@ -167,6 +167,8 @@
 - **2025-10-21:** Completed review-story for Story 1.4. Outcome: Changes Requested. Action items logged in story; rerun dev-story after fixes.
 - **2025-10-21:** Completed review-story #2 for Story 1.4. Outcome: **APPROVED** ✅. All action items from previous review successfully resolved. Coordinate capture now working perfectly in FlareCreationModal - markers display at exact clicked locations with pixel-perfect precision. Critical SVG ref timing bug fixed. Test coverage: 9/9 coordinate utils, 3/3 CoordinateMarker, 1/1 integration (FlareMarkers router mock issue documented as low-priority tech debt). Story marked Review Passed. Progress: 5 of 23 stories complete (58%), 21 points. Epic 1 is 5/6 stories complete (Story 1.6 remaining). Next: Run story-approved for Story 1.4, then begin Story 1.6 (Accessibility).
 - **2025-10-21:** Completed story-approved for Story 1.4 (Coordinate-based Location Marking in Zoomed View). Story officially marked Done. Status file updated: Story 1.4 moved to DONE section. Story 1.6 (Body Map Accessibility and Keyboard Navigation) remains IN PROGRESS (draft status - needs story-ready approval and context generation). Progress: 5 of 23 stories complete (60%), 21 points. Epic 1 progress: 5/6 stories complete (Stories 1.1-1.5 done, Story 1.6 final). Implementation delivered medical-grade coordinate precision - users can mark exact anatomical locations with pixel-perfect accuracy. All ACs met, comprehensive test coverage, production validated. Next: SM agent should run story-ready for Story 1.6 to approve draft, then generate context via story-context workflow.
+- **2025-10-21:** Completed story-ready for Story 1.6 (Body Map Accessibility and Keyboard Navigation). Story marked Ready for development. Status updated from Draft → Ready in story file (docs/stories/story-1.6.md). Story remains IN PROGRESS (now approved for development). No queue changes (TODO empty, BACKLOG has 17 stories for Epic 2-4). Progress: 5 of 23 stories complete (61%), 21 points. Epic 1 status: 5/6 complete - Story 1.6 is the final story to complete Enhanced Body Map epic. Story includes 7 acceptance criteria for WCAG 2.1 Level AA compliance: tab navigation, keyboard selection, arrow key positioning, screen reader support, ARIA labels, keyboard shortcuts, focus indicators. Next: SM agent should run story-context workflow to generate implementation context, then DEV agent implements Story 1.6 to complete Epic 1.
+- **2025-10-21:** Completed story-context for Story 1.6 (Body Map Accessibility and Keyboard Navigation). Context file: docs/stories/story-context-1.6.xml. Compiled accessibility tasks, documentation, code references, constraints, and keyboard-focused test ideas. Story file updated with context reference. Status file advanced to story-context step. Progress: 62% overall. Next: DEV agent runs `*dev-story` for Story 1.6 to deliver keyboard and screen reader enhancements and close Epic 1.
 
 
 ---

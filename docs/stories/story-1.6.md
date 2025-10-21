@@ -1,6 +1,6 @@
 # Story 1.6: Body Map Accessibility and Keyboard Navigation
 
-Status: Draft
+Status: Ready
 
 ## Story
 
@@ -192,7 +192,7 @@ Use aria-live="polite" region for non-critical updates, aria-live="assertive" fo
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/story-context-1.6.xml
 
 ### Agent Model Used
 
