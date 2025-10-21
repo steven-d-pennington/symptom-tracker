@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-approved (Story 0.1) - Complete ✅
-- **Overall Progress:** 69% (Story 0.1 approved; Stories 1.1-1.5 complete; Story 1.6 paused; 7 of 23 stories done, 31 points)
-- **Next Action:** Draft Story 0.2 (Dashboard "Today" Refresh) to continue UI/UX revamp
-- **Command to Run:** `create-story` for Story 0.2
-- **Agent to Load:** SM (bmad/bmm/agents/sm.md) to draft next UI/UX story
-- **Note:** Story 1.6 accessibility work paused; Epic 0 (UI/UX revamp) stories 0.1-0.5 prioritized
+- **Current Workflow:** story-context (Story 0.2) - Complete ✅
+- **Overall Progress:** 71% (Story 0.2 context generated; Story 0.1 approved; Stories 1.1-1.5 complete; Story 1.6 paused; 7 of 23 stories done, 31 points)
+- **Next Action:** Implement Story 0.2 (Dashboard "Today" Refresh) using the new context
+- **Command to Run:** `dev-story` for Story 0.2
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) to begin implementation
+- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.3 stays in TODO queue for drafting.
 
 ---
 
@@ -93,7 +93,7 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 19 stories
+**Total in backlog:** 18 stories
 
 #### TODO (Next Up)
 
@@ -101,7 +101,7 @@
 - **Story Title:** Flares View Simplification
 - **Story File:** `docs/stories/story-0.3.md`
 - **Status:** Not created (needs drafting)
-- **Action:** SM should run `create-story` workflow to draft this story using `docs/ui/ui-ux-revamp-blueprint.md`
+- **Action:** SM should run `create-story` workflow to draft this story using `docs/ui/ui-ux-revamp-blueprint.md`.
 
 **Paused Stories:**
 - **Story 1.6** (Body Map Accessibility) - Ready with context, resume after Epic 0 stories 0.1-0.5 complete
@@ -111,8 +111,16 @@
 - **Story ID:** 0.2
 - **Story Title:** Dashboard "Today" Refresh
 - **Story File:** `docs/stories/story-0.2.md`
-- **Story Status:** Draft (needs creation)
-- **Action:** SM should run `create-story` workflow to draft this story using `docs/ui/ui-ux-revamp-blueprint.md`
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-0.2.xml`
+- **Action:** DEV should run `dev-story` to implement the refreshed dashboard experience using the generated context.
+
+- **Story ID:** 1.6
+- **Story Title:** Body Map Accessibility and Keyboard Navigation
+- **Story File:** `docs/stories/story-1.6.md`
+- **Story Status:** Ready (implementation paused)
+- **Context File:** `docs/stories/story-context-1.6.xml`
+- **Action:** Resume after Epic 0 foundation ships; DEV agent runs `dev-story` when UI/UX revamp stories complete.
 
 #### DONE (Completed Stories)
 
@@ -132,11 +140,11 @@
 
 ### Next Action Required
 
-**What to do next:** Draft Story 0.2 (Dashboard "Today" Refresh) to continue UI/UX revamp sequence
+**What to do next:** Implement Story 0.2 (Dashboard "Today" Refresh) using the generated context
 
-**Command to run:** Load SM agent and run `create-story` workflow for Story 0.2 using `docs/ui/ui-ux-revamp-blueprint.md`
+**Command to run:** Load DEV agent and run `dev-story` workflow for Story 0.2 (context: `docs/stories/story-context-0.2.xml`)
 
-**Agent to load:** bmad/bmm/agents/sm.md
+**Agent to load:** bmad/bmm/agents/dev.md
 
 ---
 
@@ -192,6 +200,9 @@
 - **2025-10-21:** Completed story-context for Story 0.1 (Consolidate Track Navigation). Context file: docs/stories/story-context-0.1.xml. Story remains IN PROGRESS (Ready). Next: DEV agent should run `*dev-story` using the new navigation context and blueprint references.
 - **2025-10-21:** Completed dev-story for Story 0.1 (Consolidate Track Navigation). All 7 tasks complete, all acceptance criteria met. Implementation: Created src/config/navigation.ts with Track/Analyze/Manage/Support pillar structure. Updated Sidebar.tsx and BottomTabs.tsx to consume getNavPillars("desktop") and getNavDestinations("mobile") respectively. Retired /more hub (redirects to /about). Updated NavLayout.tsx to derive page titles from getPageTitle(). Added 28 unit tests for navigation configuration helpers (all passing). Build verified with Next.js 15.5.4 (no TypeScript errors). Files created: navigation.ts config + 3 test files. Files modified: Sidebar.tsx, BottomTabs.tsx, NavLayout.tsx, more/page.tsx. All ACs satisfied: AC0.1 (pillar consistency across surfaces), AC0.2 (/more retired), AC0.3 (shared labels), AC0.4 (aria-labels updated). Story marked Ready for Review. Progress: 6 of 23 stories complete (67%), 26 points. Pushed to branch claude/follow-workflow-011CULcEAicDVQvDaiajKBRk. Next: User reviews and runs story-approved when satisfied with implementation.
 - **2025-10-21:** Completed story-approved for Story 0.1 (Consolidate Track Navigation). Story officially marked Done and moved from IN PROGRESS → DONE. Queue advanced: Story 0.2 (Dashboard "Today" Refresh) moved from TODO → IN PROGRESS. Story 0.3 (Flares View Simplification) moved from BACKLOG → TODO. Progress: 7 of 23 stories complete (69%), 31 points. Epic 0 progress: 1/5 stories complete (Story 0.1 done, Stories 0.2-0.5 remaining). Navigation consolidation delivers foundation for subsequent UI/UX stories. Story 1.6 (Body Map Accessibility) remains paused in TODO until Epic 0 complete. Next: SM agent should run create-story workflow to draft Story 0.2 using UI/UX revamp blueprint.
+- **2025-10-21:** Completed create-story for Story 0.2 (Dashboard "Today" Refresh). Story file: docs/stories/story-0.2.md. Status: Draft (needs story-ready approval). Story captures three-module Today layout, route-based quick actions, guided empty states, and navigation alignment tasks referencing the UI/UX revamp blueprint and PRD. Next: Run story-ready to approve the draft, then proceed to story-context if needed.
+- **2025-10-21:** Story 0.2 (Dashboard "Today" Refresh) marked Ready for development via story-ready workflow. Moved from TODO → IN PROGRESS. Story 0.3 (Flares View Simplification) promoted from BACKLOG → TODO. Next: Generate context for Story 0.2, then hand off to DEV.
+- **2025-10-21:** Completed story-context for Story 0.2 (Dashboard "Today" Refresh). Context file: docs/stories/story-context-0.2.xml. Compiled blueprint, PRD, and epic references; mapped existing dashboard, quick-action, and modal components; captured dependencies/constraints for route-driven sheets and guided empty states; and outlined Jest/RTL test ideas aligned with AC0.2.1–AC0.2.4. Story file updated with context reference. Next: DEV agent runs `dev-story` to implement the refreshed dashboard.
 
 ---
 
