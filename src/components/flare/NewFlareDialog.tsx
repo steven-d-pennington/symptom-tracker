@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { flareRepository } from "@/lib/repositories/flareRepository";
 import { BodyRegionSelector } from "@/components/body-mapping/BodyRegionSelector";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyViewType } from "@/lib/types/body-mapping";
 import { X } from "lucide-react";
-import { NormalizedCoordinates } from "@/lib/utils/coordinates";
+import {
+  denormalizeCoordinates,
+  getRegionBounds,
+  normalizeCoordinates,
+  NormalizedCoordinates,
+  RegionBounds,
+} from "@/lib/utils/coordinates";
+import { CoordinateMarker } from "@/components/body-map/CoordinateMarker";
 
 interface NewFlareDialogProps {
   userId: string;
@@ -33,6 +40,10 @@ export function NewFlareDialog({
   const [coordinatesByRegion, setCoordinatesByRegion] = useState<Record<string, NormalizedCoordinates>>(
     initialCoordinates
   );
+  const [regionMarkers, setRegionMarkers] = useState<
+    Record<string, { normalized: NormalizedCoordinates; bounds: RegionBounds }>
+  >({});
+  const svgRef = useRef<SVGSVGElement | null>(null);
 
   const handleRegionToggle = (regionId: string) => {
     setFormData((prev) => ({
@@ -42,6 +53,98 @@ export function NewFlareDialog({
         : [...prev.bodyRegions, regionId],
     }));
   };
+
+  const handleCoordinateCapture = useCallback(
+    (event: React.MouseEvent<SVGSVGElement>) => {
+      const target = event.target as SVGElement | null;
+      if (!target) {
+        return;
+      }
+
+      const isBodyRegionElement = target.classList?.contains("body-region");
+      const regionIdFromTarget = target?.id;
+      if (!regionIdFromTarget && !isBodyRegionElement) {
+        return;
+      }
+
+      // Get the region ID from the clicked element
+      const regionId = regionIdFromTarget;
+      if (!regionId) {
+        return;
+      }
+
+      // Only capture coordinates for selected regions
+      if (!formData.bodyRegions.includes(regionId)) {
+        return;
+      }
+
+      const svgElement = event.currentTarget;
+      svgRef.current = svgElement;
+
+      const point = svgElement.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+
+      const ctm = svgElement.getScreenCTM();
+      if (!ctm) {
+        return;
+      }
+
+      const svgPoint = point.matrixTransform(ctm.inverse());
+      const bounds = getRegionBounds(svgElement, regionId);
+      if (!bounds) {
+        return;
+      }
+
+      const normalized = normalizeCoordinates(
+        { x: svgPoint.x, y: svgPoint.y },
+        bounds
+      );
+
+      setRegionMarkers((previous) => ({
+        ...previous,
+        [regionId]: {
+          normalized,
+          bounds,
+        },
+      }));
+
+      setCoordinatesByRegion((previous) => ({
+        ...previous,
+        [regionId]: normalized,
+      }));
+    },
+    [formData.bodyRegions]
+  );
+
+  // Render coordinate markers for all selected regions with captured coordinates
+  const coordinateMarkerNodes = useMemo(() => {
+    return (
+      <>
+        {formData.bodyRegions.map((regionId) => {
+          const marker = regionMarkers[regionId];
+          if (!marker) {
+            return null;
+          }
+
+          const { normalized, bounds } = marker;
+          const svgPoint = denormalizeCoordinates(normalized, bounds);
+
+          return (
+            <CoordinateMarker
+              key={regionId}
+              x={svgPoint.x}
+              y={svgPoint.y}
+              zoomLevel={1} // No zoom in the dialog
+              visible={true}
+              regionId={regionId}
+              normalized={normalized}
+            />
+          );
+        })}
+      </>
+    );
+  }, [formData.bodyRegions, regionMarkers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,10 +315,13 @@ export function NewFlareDialog({
                     selectedRegions={formData.bodyRegions}
                     onRegionSelect={handleRegionToggle}
                     multiSelect={true}
+                    onCoordinateCapture={handleCoordinateCapture}
+                    coordinateCursorActive={formData.bodyRegions.length > 0}
+                    coordinateMarker={coordinateMarkerNodes}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Click multiple regions to mark all affected areas. You can switch between front and back views.
+                  Click regions to select them, then click within a selected region to mark the precise location.
                 </p>
               </div>
             </div>

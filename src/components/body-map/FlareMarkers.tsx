@@ -26,17 +26,16 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
   const markerGroupRef = useRef<SVGGElement | null>(null);
   const [svgElement, setSvgElement] = useState<SVGSVGElement | null>(null);
 
+  // Check for SVG element after every render
+  useEffect(() => {
+    if (markerGroupRef.current?.ownerSVGElement && !svgElement) {
+      setSvgElement(markerGroupRef.current.ownerSVGElement);
+    }
+  }); // No deps array - runs after every render until SVG is found
+
   // Get regions for current view
   const viewRegions = useMemo(() => {
     return getRegionsForView(viewType);
-  }, [viewType]);
-
-  useEffect(() => {
-    if (markerGroupRef.current?.ownerSVGElement) {
-      setSvgElement(markerGroupRef.current.ownerSVGElement);
-    } else {
-      setSvgElement(null);
-    }
   }, [viewType]);
 
   // Filter flares for current view based on body regions
@@ -142,12 +141,13 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
     router.push(`/flares/${flareId}`);
   };
 
-  if (isLoading || markerPositions.length === 0) {
-    return null;
-  }
-
   // Marker size scales inversely with zoom to maintain consistent screen size
   const markerRadius = 8 / Math.sqrt(zoomLevel);
+
+  // Always render the <g> element to establish the ref, even if we don't have markers yet
+  if (isLoading || markerPositions.length === 0) {
+    return <g data-testid="flare-markers" ref={markerGroupRef} />;
+  }
 
   return (
     <g data-testid="flare-markers" ref={markerGroupRef}>

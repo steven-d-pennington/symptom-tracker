@@ -1,35 +1,41 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { FlareMarkers } from '../FlareMarkers';
-import { AppRouterContext } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockRefresh = jest.fn();
+const mockBack = jest.fn();
+const mockForward = jest.fn();
+const mockPrefetch = jest.fn();
+
+// Mock next/navigation - must be before component import
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(() => ({
+    push: mockPush,
+    replace: mockReplace,
+    refresh: mockRefresh,
+    back: mockBack,
+    forward: mockForward,
+    prefetch: mockPrefetch,
+  })),
+  usePathname: jest.fn(() => '/'),
+  useSearchParams: jest.fn(() => new URLSearchParams()),
+}));
 
 // Mock dependencies
 jest.mock('@/lib/hooks/useFlares', () => ({
   __esModule: true,
   useFlares: jest.fn(),
 }));
+
+// Import component AFTER mocks
+import { FlareMarkers } from '../FlareMarkers';
+
 const { useFlares: mockedUseFlares } = jest.requireMock('@/lib/hooks/useFlares') as {
   useFlares: jest.Mock;
 };
 
-const routerContext = {
-  push: mockPush,
-  replace: jest.fn(),
-  refresh: jest.fn(),
-  forward: jest.fn(),
-  back: jest.fn(),
-  prefetch: jest.fn(),
-  pathname: '/',
-  query: {},
-  asPath: '/',
-};
-
-const renderWithRouter = (ui: React.ReactElement) =>
-  render(<AppRouterContext.Provider value={routerContext}>{ui}</AppRouterContext.Provider>);
-
-describe.skip('FlareMarkers', () => {
+describe('FlareMarkers', () => {
   const defaultProps = {
     viewType: 'front' as const,
     zoomLevel: 1,
@@ -39,11 +45,11 @@ describe.skip('FlareMarkers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPush.mockReset();
-    routerContext.replace.mockReset();
-    routerContext.refresh.mockReset();
-    routerContext.forward.mockReset();
-    routerContext.back.mockReset();
-    routerContext.prefetch.mockReset();
+    mockReplace.mockReset();
+    mockRefresh.mockReset();
+    mockForward.mockReset();
+    mockBack.mockReset();
+    mockPrefetch.mockReset();
   });
 
   describe('AC1.1: Active flares display as colored markers', () => {
@@ -104,7 +110,7 @@ describe.skip('FlareMarkers', () => {
         error: null,
       });
 
-      renderWithRouter(<FlareMarkers {...defaultProps} />);
+      render(<FlareMarkers {...defaultProps} />);
 
       const markers = screen.getAllByRole('button');
       expect(markers).toHaveLength(3);
@@ -186,7 +192,7 @@ describe.skip('FlareMarkers', () => {
         error: null,
       });
 
-      const { container } = renderWithRouter(<FlareMarkers {...defaultProps} />);
+      const { container } = render(<FlareMarkers {...defaultProps} />);
 
       const activeMarker = container.querySelector('[data-testid="flare-marker-flare-active"]');
       const improvingMarker = container.querySelector('[data-testid="flare-marker-flare-improving"]');
@@ -306,7 +312,7 @@ describe.skip('FlareMarkers', () => {
         error: null,
       });
 
-      renderWithRouter(<FlareMarkers {...defaultProps} />);
+      render(<FlareMarkers {...defaultProps} />);
 
       const marker = screen.getByRole('button', { name: /Test Flare flare - active/i });
       fireEvent.click(marker);
@@ -375,27 +381,19 @@ describe.skip('FlareMarkers', () => {
       });
 
       // Test at zoom level 1
-      const { container: container1, rerender } = renderWithRouter(<FlareMarkers {...defaultProps} zoomLevel={1} />);
+      const { container: container1, rerender } = render(<FlareMarkers {...defaultProps} zoomLevel={1} />);
       const marker1 = container1.querySelector('circle');
       const radius1 = parseFloat(marker1?.getAttribute('r') || '0');
       expect(radius1).toBeCloseTo(8, 1); // 8 / sqrt(1) = 8
 
       // Test at zoom level 2
-      rerender(
-        <AppRouterContext.Provider value={routerContext}>
-          <FlareMarkers {...defaultProps} zoomLevel={2} />
-        </AppRouterContext.Provider>
-      );
+      rerender(<FlareMarkers {...defaultProps} zoomLevel={2} />);
       const marker2 = container1.querySelector('circle');
       const radius2 = parseFloat(marker2?.getAttribute('r') || '0');
       expect(radius2).toBeCloseTo(5.66, 1); // 8 / sqrt(2) ≈ 5.66
 
       // Test at zoom level 3
-      rerender(
-        <AppRouterContext.Provider value={routerContext}>
-          <FlareMarkers {...defaultProps} zoomLevel={3} />
-        </AppRouterContext.Provider>
-      );
+      rerender(<FlareMarkers {...defaultProps} zoomLevel={3} />);
       const marker3 = container1.querySelector('circle');
       const radius3 = parseFloat(marker3?.getAttribute('r') || '0');
       expect(radius3).toBeCloseTo(4.62, 1); // 8 / sqrt(3) ≈ 4.62
@@ -411,7 +409,7 @@ describe.skip('FlareMarkers', () => {
         error: null,
       });
 
-      const { container } = renderWithRouter(<FlareMarkers {...defaultProps} />);
+      const { container } = render(<FlareMarkers {...defaultProps} />);
       expect(container.querySelector('g')).not.toBeInTheDocument();
     });
 
@@ -423,7 +421,7 @@ describe.skip('FlareMarkers', () => {
         error: null,
       });
 
-      const { container } = renderWithRouter(<FlareMarkers {...defaultProps} />);
+      const { container } = render(<FlareMarkers {...defaultProps} />);
       expect(container.querySelector('g')).not.toBeInTheDocument();
     });
   });

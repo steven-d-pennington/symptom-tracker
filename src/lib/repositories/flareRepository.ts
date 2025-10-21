@@ -20,6 +20,10 @@ export const flareRepository = {
   },
 
   async getByUserId(userId: string): Promise<ActiveFlare[]> {
+    if (!userId || typeof userId !== 'string') {
+      console.error('Invalid userId provided to getByUserId:', userId);
+      return [];
+    }
     return await db.table("flares").where("userId").equals(userId).toArray();
   },
 

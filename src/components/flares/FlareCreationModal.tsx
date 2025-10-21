@@ -4,11 +4,13 @@ import React, { useState, useEffect } from "react";
 import { X, Save, FileText } from "lucide-react";
 import { BodyMapViewer } from "../body-mapping/BodyMapViewer";
 import { flareRepository } from "@/lib/repositories/flareRepository";
+import { NormalizedCoordinates } from "@/lib/utils/coordinates";
 
 export interface NewFlareData {
   bodyRegionId: string;
   severity: number;
   notes?: string;
+  coordinates?: { regionId: string; x: number; y: number };
 }
 
 interface FlareCreationModalProps {
@@ -30,6 +32,7 @@ export function FlareCreationModal({
   const [notes, setNotes] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [validationError, setValidationError] = useState<string>("");
+  const [markedCoordinate, setMarkedCoordinate] = useState<NormalizedCoordinates | null>(null);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -38,6 +41,7 @@ export function FlareCreationModal({
       setSeverity(5);
       setNotes("");
       setValidationError("");
+      setMarkedCoordinate(null);
     }
   }, [isOpen]);
 
@@ -70,6 +74,12 @@ export function FlareCreationModal({
     return true;
   };
 
+  const handleCoordinateMark = (regionId: string, coordinates: NormalizedCoordinates) => {
+    if (regionId === selectedRegion) {
+      setMarkedCoordinate(coordinates);
+    }
+  };
+
   const handleSave = async (addDetails: boolean = false) => {
     if (!validateForm()) return;
 
@@ -79,6 +89,13 @@ export function FlareCreationModal({
         bodyRegionId: selectedRegion,
         severity,
         notes: notes.trim() || undefined,
+        coordinates: markedCoordinate
+          ? {
+              regionId: selectedRegion,
+              x: markedCoordinate.x,
+              y: markedCoordinate.y,
+            }
+          : undefined,
       };
 
       await onSave(flareData);
@@ -171,16 +188,23 @@ export function FlareCreationModal({
               <div className="h-96 border-2 border-gray-200 rounded-lg overflow-hidden">
                 <BodyMapViewer
                   view={view}
+                  userId={userId}
                   selectedRegion={selectedRegion}
                   onRegionSelect={setSelectedRegion}
                   multiSelect={false}
                   readOnly={false}
+                  onCoordinateMark={handleCoordinateMark}
                 />
               </div>
 
               {selectedRegion && (
                 <p className="mt-2 text-sm text-green-600 font-medium">
                   ✓ Selected: {selectedRegion}
+                  {markedCoordinate && (
+                    <span className="ml-2 text-xs text-gray-600">
+                      (Precise location marked: x={markedCoordinate.x.toFixed(2)}, y={markedCoordinate.y.toFixed(2)})
+                    </span>
+                  )}
                 </p>
               )}
             </div>

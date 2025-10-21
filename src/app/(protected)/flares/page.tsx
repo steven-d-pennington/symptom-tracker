@@ -67,6 +67,7 @@ export default function FlaresPage() {
     bodyRegionId: string;
     severity: number;
     notes?: string;
+    coordinates?: { regionId: string; x: number; y: number };
   }) => {
     if (!userId) return;
 
@@ -81,6 +82,7 @@ export default function FlaresPage() {
       interventions: [],
       notes: flareData.notes || "",
       photoIds: [],
+      coordinates: flareData.coordinates ? [flareData.coordinates] : undefined,
     });
 
     await loadFlares();
