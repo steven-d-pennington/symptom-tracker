@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { ActiveFlareCards } from "@/components/flares/ActiveFlareCards";
 import { QuickLogButtons } from "@/components/quick-log/QuickLogButtons";
@@ -11,6 +11,10 @@ import { SymptomLogModal } from "@/components/symptoms/SymptomLogModal";
 import { TriggerLogModal } from "@/components/triggers/TriggerLogModal";
 import { FoodLogModal } from "@/components/food/FoodLogModal";
 import TimelineView from "@/components/timeline/TimelineView";
+import { TodayHighlightsCard } from "@/components/dashboard/TodayHighlightsCard";
+import { TodayQuickActionsCard } from "@/components/dashboard/TodayQuickActionsCard";
+import { TodayTimelineCard } from "@/components/dashboard/TodayTimelineCard";
+import { HighlightsEmptyState } from "@/components/dashboard/TodayEmptyStates";
 import { FoodProvider, useFoodContext } from "@/contexts/FoodContext";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { flareRepository } from "@/lib/repositories/flareRepository";
@@ -19,16 +23,16 @@ import { cn } from "@/lib/utils/cn";
 function DashboardContent() {
   const { userId } = useCurrentUser();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { openFoodLog } = useFoodContext();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPullToRefresh, setIsPullToRefresh] = useState(false);
-  const [isFlareCreationModalOpen, setIsFlareCreationModalOpen] = useState(false);
-  const [isMedicationModalOpen, setIsMedicationModalOpen] = useState(false);
-  const [isSymptomModalOpen, setIsSymptomModalOpen] = useState(false);
-  const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
   const touchStartY = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Route-based modal state derived from search params
+  const quickAction = searchParams?.get("quickAction");
 
   // Scroll to timeline item if eventId is in URL params
   useEffect(() => {
@@ -103,12 +107,36 @@ function DashboardContent() {
     };
   }, [isPullToRefresh, isRefreshing, handleRefresh]);
 
-  // Quick log handlers
-  const handleLogFlare = () => {
-    setIsFlareCreationModalOpen(true);
-  };
+  // Quick log handlers - route-based navigation
+  const handleLogFlare = useCallback(() => {
+    router.push("/dashboard?quickAction=flare");
+  }, [router]);
 
-  const handleFlareCreate = async (flareData: {
+  const handleLogMedication = useCallback(() => {
+    router.push("/dashboard?quickAction=medication");
+  }, [router]);
+
+  const handleLogSymptom = useCallback(() => {
+    router.push("/dashboard?quickAction=symptom");
+  }, [router]);
+
+  const handleLogTrigger = useCallback(() => {
+    router.push("/dashboard?quickAction=trigger");
+  }, [router]);
+
+  const handleLogFood = useCallback(() => {
+    // Food log uses FoodProvider context (already handles its own modal state)
+    performance.mark("food-log-button-click");
+    openFoodLog();
+  }, [openFoodLog]);
+
+  // Close modal by navigating back to dashboard
+  const handleCloseQuickAction = useCallback(() => {
+    router.push("/dashboard");
+  }, [router]);
+
+  // Handle flare creation
+  const handleFlareCreate = useCallback(async (flareData: {
     bodyRegionId: string;
     severity: number;
     notes?: string;
@@ -128,51 +156,16 @@ function DashboardContent() {
       photoIds: [],
     });
 
-    // Refresh the dashboard to show the new flare
+    // Refresh the dashboard and close modal
     setRefreshKey(prev => prev + 1);
-    setIsFlareCreationModalOpen(false);
-  };
+    router.push("/dashboard");
+  }, [userId, router]);
 
-  const handleLogMedication = () => {
-    setIsMedicationModalOpen(true);
-  };
-
-  const handleMedicationLogged = () => {
-    // Refresh the dashboard to show the new medication event
+  // Handle logged events
+  const handleEventLogged = useCallback(() => {
     setRefreshKey(prev => prev + 1);
-    setIsMedicationModalOpen(false);
-  };
-
-  const handleLogSymptom = () => {
-    setIsSymptomModalOpen(true);
-  };
-
-  const handleSymptomLogged = () => {
-    // Refresh the dashboard to show the new symptom instance
-    setRefreshKey(prev => prev + 1);
-    setIsSymptomModalOpen(false);
-  };
-
-  const handleLogTrigger = () => {
-    setIsTriggerModalOpen(true);
-  };
-
-  const handleTriggerLogged = () => {
-    // Refresh the dashboard to show the new trigger event
-    setRefreshKey(prev => prev + 1);
-    setIsTriggerModalOpen(false);
-  };
-
-  const handleLogFood = () => {
-    // Record performance mark for button click (AC4)
-    performance.mark("food-log-button-click");
-    openFoodLog();
-  };
-
-  const handleFoodLogged = () => {
-    // Refresh the dashboard to show the new food event
-    setRefreshKey(prev => prev + 1);
-  };
+    router.push("/dashboard");
+  }, [router]);
 
   if (!userId) {
     return (
@@ -196,13 +189,13 @@ function DashboardContent() {
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Header with refresh button (desktop) */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
             <p className="mt-2 text-muted-foreground">
-              Your daily health overview
+              Your health overview for today
             </p>
           </div>
           {/* Desktop refresh button */}
@@ -221,17 +214,16 @@ function DashboardContent() {
           </button>
         </div>
 
-        {/* Active Flares Section */}
-        <section className="space-y-4">
+        {/* Today's Highlights Module */}
+        <TodayHighlightsCard>
           <ActiveFlareCards
             key={`flares-${refreshKey}`}
             userId={userId}
           />
-        </section>
+        </TodayHighlightsCard>
 
-        {/* Quick Log Buttons */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Quick Log</h2>
+        {/* Quick Actions Module */}
+        <TodayQuickActionsCard>
           <QuickLogButtons
             onLogFlare={handleLogFlare}
             onLogMedication={handleLogMedication}
@@ -239,56 +231,52 @@ function DashboardContent() {
             onLogTrigger={handleLogTrigger}
             onLogFood={handleLogFood}
           />
-        </section>
+        </TodayQuickActionsCard>
 
-        {/* Timeline View */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Today&apos;s Timeline</h2>
+        {/* Today's Timeline Module */}
+        <TodayTimelineCard>
           <TimelineView key={`timeline-${refreshKey}`} />
-        </section>
+        </TodayTimelineCard>
       </div>
 
-      {/* Flare Creation Modal */}
-      {userId && (
+      {/* Route-based Quick Action Modals */}
+      {userId && quickAction === "flare" && (
         <FlareCreationModal
-          isOpen={isFlareCreationModalOpen}
-          onClose={() => setIsFlareCreationModalOpen(false)}
+          isOpen={true}
+          onClose={handleCloseQuickAction}
           onSave={handleFlareCreate}
           userId={userId}
         />
       )}
 
-      {/* Medication Log Modal */}
-      {userId && (
+      {userId && quickAction === "medication" && (
         <MedicationLogModal
-          isOpen={isMedicationModalOpen}
-          onClose={() => setIsMedicationModalOpen(false)}
-          onLogged={handleMedicationLogged}
+          isOpen={true}
+          onClose={handleCloseQuickAction}
+          onLogged={handleEventLogged}
           userId={userId}
         />
       )}
 
-      {/* Symptom Log Modal */}
-      {userId && (
+      {userId && quickAction === "symptom" && (
         <SymptomLogModal
-          isOpen={isSymptomModalOpen}
-          onClose={() => setIsSymptomModalOpen(false)}
-          onLogged={handleSymptomLogged}
+          isOpen={true}
+          onClose={handleCloseQuickAction}
+          onLogged={handleEventLogged}
           userId={userId}
         />
       )}
 
-      {/* Trigger Log Modal */}
-      {userId && (
+      {userId && quickAction === "trigger" && (
         <TriggerLogModal
-          isOpen={isTriggerModalOpen}
-          onClose={() => setIsTriggerModalOpen(false)}
-          onLogged={handleTriggerLogged}
+          isOpen={true}
+          onClose={handleCloseQuickAction}
+          onLogged={handleEventLogged}
           userId={userId}
         />
       )}
 
-      {/* Food Log Modal */}
+      {/* Food Log Modal - managed by FoodProvider */}
       {userId && <FoodLogModal userId={userId} />}
     </div>
   );
