@@ -10,9 +10,9 @@ import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
 import { photoRepository } from '@/lib/repositories/photoRepository';
 import { PhotoCapture } from '@/components/photos/PhotoCapture';
 import { PhotoEncryption } from '@/lib/utils/photoEncryption';
-import { userRepository } from '@/lib/repositories/userRepository';
 import { MarkdownPreview } from '@/components/common/MarkdownPreview';
 import { announceToScreenReader, handleModalKeyboard, getSliderAriaAttributes, focusFirstElement } from '@/lib/utils/a11y';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 
 interface EventDetailModalProps {
   event: TimelineEvent | null;
@@ -29,6 +29,8 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
   onSave,
   onDelete
 }) => {
+  const { userId } = useCurrentUser();
+
   // Form state
   const [dosageOverride, setDosageOverride] = useState('');
   const [severity, setSeverity] = useState(5);
@@ -110,7 +112,10 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
   // Handle photo capture
   const handlePhotoCapture = async (file: File, preview: string) => {
     try {
-      const user = await userRepository.getOrCreateCurrentUser();
+      if (!userId) {
+        setError('User not found. Please refresh the page.');
+        return;
+      }
 
       // Generate encryption key
       const key = await PhotoEncryption.generateKey();
@@ -129,9 +134,9 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
       // Get image dimensions (for UI display)
       const img = await createImageBitmap(compressedBlob);
-      
+
       const photoData = {
-        userId: user.id,
+        userId,
         fileName: file.name,
         originalFileName: file.name,
         mimeType: file.type,

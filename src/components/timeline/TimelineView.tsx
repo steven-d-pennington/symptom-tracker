@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import { userRepository } from '@/lib/repositories/userRepository';
 import { medicationEventRepository } from '@/lib/repositories/medicationEventRepository';
 import { triggerEventRepository } from '@/lib/repositories/triggerEventRepository';
 import { flareRepository } from '@/lib/repositories/flareRepository';
@@ -14,6 +13,7 @@ import { foodRepository } from '@/lib/repositories/foodRepository';
 import EventDetailModal from './EventDetailModal';
 import { useAllergenFilter } from '@/lib/hooks/useAllergenFilter';
 import AllergenFilter from '@/components/filters/AllergenFilter';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 
 // Timeline event types
 export type TimelineEventType = 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved' | 'food';
@@ -44,6 +44,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   onEventTap,
   onAddDetails
 }) => {
+  const { userId } = useCurrentUser();
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -56,8 +57,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
     try {
-      const user = await userRepository.getOrCreateCurrentUser();
-      const userId = user.id;
+      if (!userId) {
+        return;
+      }
 
       // Calculate date range for the day
       const startOfDay = new Date(date);
@@ -279,6 +281,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   // Initial load
   useEffect(() => {
     const loadInitialEvents = async () => {
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
       await loadEvents(currentDate);
@@ -286,7 +292,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     };
 
     loadInitialEvents();
-  }, [currentDate]);
+  }, [currentDate, userId]);
 
   // Group events by day
   const groupedEvents = useMemo((): DayGroup[] => {

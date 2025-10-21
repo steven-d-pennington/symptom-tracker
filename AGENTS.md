@@ -5,11 +5,16 @@ This file provides guidance to agents when working with code in this repository.
 ## Build/Test Commands
 
 - **Development**: `npm run dev` - Starts Next.js dev server on port 3001 with Turbopack
+- **Clean Dev**: `npm run dev:clean` - Clears build cache and starts dev server
 - **Build**: `npm run build` - Creates production build
 - **Test**: `npm test` - Runs Jest tests (uses experimental VM modules)
 - **Test Watch**: `npm run test:watch` - Runs tests in watch mode
 - **Test Coverage**: `npm run test:coverage` - Runs tests with coverage report (80% threshold enforced)
 - **Lint**: `npm run lint` - Runs ESLint (currently ignores build errors)
+
+## Common Issues & Troubleshooting
+
+**HMR Cache Errors**: If you see "Module factory is not available" errors, do a browser hard reload (Ctrl+Shift+R) or run `npm run dev:clean`. See `docs/TROUBLESHOOTING.md` for details.
 
 ## Project-Specific Patterns
 
