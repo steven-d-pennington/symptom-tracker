@@ -19,6 +19,7 @@ export interface BodyRegion {
   commonSymptoms?: string[]; // Common symptoms for this area
   selectable: boolean;
   zIndex: number;
+  center?: { x: number; y: number }; // Center coordinates for marker placement
 }
 
 /**

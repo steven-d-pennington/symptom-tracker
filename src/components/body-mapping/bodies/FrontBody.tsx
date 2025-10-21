@@ -11,6 +11,10 @@ interface FrontBodyProps {
   onRegionHover?: (regionId: string | null) => void;
   severityByRegion?: Record<string, number>;
   flareRegions?: string[];
+  onCoordinateCapture?: (event: React.MouseEvent<SVGSVGElement>) => void;
+  coordinateCursorActive?: boolean;
+  coordinateMarker?: React.ReactNode;
+  flareOverlay?: React.ReactNode;
 }
 
 export function FrontBody({
@@ -20,6 +24,10 @@ export function FrontBody({
   onRegionHover,
   severityByRegion = {},
   flareRegions = [],
+  onCoordinateCapture,
+  coordinateCursorActive = false,
+  coordinateMarker,
+  flareOverlay,
 }: FrontBodyProps) {
   const getSeverityColor = (severity: number): string => {
     if (severity <= 2) return "#10b981"; // green
@@ -67,9 +75,10 @@ export function FrontBody({
   return (
     <svg
       viewBox="0 0 400 800"
-      className="w-full h-full"
+      className={`w-full h-full ${coordinateCursorActive ? "coordinate-mode" : ""}`}
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
+      onClickCapture={onCoordinateCapture}
     >
       <defs>
         <style>{`
@@ -78,6 +87,9 @@ export function FrontBody({
             stroke-width: 2;
             cursor: pointer;
             transition: all 0.2s ease;
+          }
+          .coordinate-mode .body-region {
+            cursor: crosshair !important;
           }
           .body-region:hover {
             opacity: 0.8 !important;
@@ -696,6 +708,9 @@ export function FrontBody({
         onMouseEnter={() => onRegionHover?.("foot-right")}
         onMouseLeave={() => onRegionHover?.(null)}
       />
+
+      {flareOverlay}
+      {coordinateMarker}
     </svg>
   );
 }

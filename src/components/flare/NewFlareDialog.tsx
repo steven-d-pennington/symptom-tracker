@@ -6,15 +6,23 @@ import { BodyRegionSelector } from "@/components/body-mapping/BodyRegionSelector
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyViewType } from "@/lib/types/body-mapping";
 import { X } from "lucide-react";
+import { NormalizedCoordinates } from "@/lib/utils/coordinates";
 
 interface NewFlareDialogProps {
   userId: string;
   onClose: () => void;
   onCreated: () => void;
   initialRegion?: string;
+  initialCoordinates?: Record<string, NormalizedCoordinates>;
 }
 
-export function NewFlareDialog({ userId, onClose, onCreated, initialRegion }: NewFlareDialogProps) {
+export function NewFlareDialog({
+  userId,
+  onClose,
+  onCreated,
+  initialRegion,
+  initialCoordinates = {},
+}: NewFlareDialogProps) {
   const [formData, setFormData] = useState({
     symptomName: "",
     severity: 5,
@@ -22,6 +30,9 @@ export function NewFlareDialog({ userId, onClose, onCreated, initialRegion }: Ne
     notes: "",
   });
   const [currentView, setCurrentView] = useState<BodyViewType>("front");
+  const [coordinatesByRegion, setCoordinatesByRegion] = useState<Record<string, NormalizedCoordinates>>(
+    initialCoordinates
+  );
 
   const handleRegionToggle = (regionId: string) => {
     setFormData((prev) => ({
@@ -35,6 +46,20 @@ export function NewFlareDialog({ userId, onClose, onCreated, initialRegion }: Ne
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const coordinatesPayload = formData.bodyRegions
+      .map((regionId) => {
+        const coordinates = coordinatesByRegion[regionId];
+        if (!coordinates) {
+          return null;
+        }
+        return {
+          regionId,
+          x: coordinates.x,
+          y: coordinates.y,
+        };
+      })
+      .filter(Boolean) as Array<{ regionId: string; x: number; y: number }>;
+
     try {
       await flareRepository.create({
         userId,
@@ -47,6 +72,7 @@ export function NewFlareDialog({ userId, onClose, onCreated, initialRegion }: Ne
         interventions: [],
         notes: formData.notes,
         photoIds: [],
+        coordinates: coordinatesPayload.length > 0 ? coordinatesPayload : undefined,
       });
 
       onCreated();
@@ -127,6 +153,35 @@ export function NewFlareDialog({ userId, onClose, onCreated, initialRegion }: Ne
                     )}
                   </div>
                 </div>
+
+                {formData.bodyRegions.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-foreground">Precise Coordinates</p>
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      {formData.bodyRegions.map((region) => {
+                        const coordinates = coordinatesByRegion[region];
+                        return (
+                          <li
+                            key={region}
+                            className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1"
+                          >
+                            <span className="truncate pr-2">{region.replace(/-/g, " ")}</span>
+                            {coordinates ? (
+                              <span>
+                                x: {coordinates.x.toFixed(2)}, y: {coordinates.y.toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="italic text-muted-foreground/80">Not captured</span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <p className="text-[11px] text-muted-foreground">
+                      Normalized 0–1 scale relative to the selected region&apos;s bounds.
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">Notes</label>

@@ -26,7 +26,7 @@ describe('Body Map Zoom Integration Tests', () => {
     // Verify zoom controls are present
     const zoomInButton = screen.getByLabelText('Zoom in');
     const zoomOutButton = screen.getByLabelText('Zoom out');
-    const resetButton = screen.getByLabelText('Reset zoom');
+    const resetButton = screen.getByLabelText('Reset zoom and pan');
 
     expect(zoomInButton).toBeInTheDocument();
     expect(zoomOutButton).toBeInTheDocument();

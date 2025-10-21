@@ -20,7 +20,6 @@ function getPageTitle(pathname: string): string {
     "/dashboard": "Dashboard",
     "/analytics": "Analytics",
     "/photos": "Photo Gallery",
-    "/body-map": "Body Map",
     "/flares": "Active Flares",
     "/triggers": "Trigger Analysis",
     "/more": "More",

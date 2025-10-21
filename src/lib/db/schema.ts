@@ -304,6 +304,11 @@ export interface FlareRecord {
   photoIds: string[];
   createdAt: Date;
   updatedAt: Date;
+  coordinates?: {
+    regionId: string;
+    x: number;
+    y: number;
+  }[];
 }
 
 // Food Logging Models (Epic E1)

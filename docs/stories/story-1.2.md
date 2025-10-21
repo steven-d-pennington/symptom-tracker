@@ -21,54 +21,54 @@ So that I can see an enlarged view for precise location marking.
 
 ## Tasks / Subtasks
 
-- [ ] Install and configure react-zoom-pan-pinch library (AC: 1.2, 1.3, 1.5, 1.8)
-  - [ ] Run `npm install react-zoom-pan-pinch@3.6.1`
-  - [ ] Verify library compatibility with React 19 and Next.js 15
-  - [ ] Review library documentation for optimal configuration
-  - [ ] Configure performance settings to meet <100ms target
+- [x] Install and configure react-zoom-pan-pinch library (AC: 1.2, 1.3, 1.5, 1.8)
+  - [x] Run `npm install react-zoom-pan-pinch@3.6.1`
+  - [x] Verify library compatibility with React 19 and Next.js 15
+  - [x] Review library documentation for optimal configuration
+  - [x] Configure performance settings to meet <100ms target
 
-- [ ] Create BodyMapZoom wrapper component (AC: 1.1, 1.2, 1.3, 1.4, 1.5)
-  - [ ] Create `src/components/body-map/BodyMapZoom.tsx` component
-  - [ ] Wrap existing body map SVG with TransformWrapper from react-zoom-pan-pinch
-  - [ ] Configure minScale=1, maxScale=3 for zoom range
-  - [ ] Enable centerZoomedOut to focus zoom on cursor/touch position
-  - [ ] Add pinch gesture support for mobile devices
-  - [ ] Add wheel zoom support for desktop browsers
-  - [ ] Configure smooth animations for zoom transitions
+- [x] Create BodyMapZoom wrapper component (AC: 1.1, 1.2, 1.3, 1.4, 1.5)
+  - [x] Create `src/components/body-map/BodyMapZoom.tsx` component
+  - [x] Wrap existing body map SVG with TransformWrapper from react-zoom-pan-pinch
+  - [x] Configure minScale=1, maxScale=3 for zoom range
+  - [x] Enable centerZoomedOut to focus zoom on cursor/touch position
+  - [x] Add pinch gesture support for mobile devices
+  - [x] Add wheel zoom support for desktop browsers
+  - [x] Configure smooth animations for zoom transitions
 
-- [ ] Implement zoom control UI buttons (AC: 1.1, 1.7)
-  - [ ] Create zoom in button (+) with Lucide icon
-  - [ ] Create zoom out button (-) with Lucide icon
-  - [ ] Create reset button (home icon) to return to 1x
-  - [ ] Position controls in accessible location (top-right or bottom-right of map)
-  - [ ] Ensure buttons meet 44x44px touch target minimum (NFR001)
-  - [ ] Add keyboard shortcuts: + for zoom in, - for zoom out, 0 for reset
-  - [ ] Disable zoom out button when at minScale (1x)
-  - [ ] Disable zoom in button when at maxScale (3x)
+- [x] Implement zoom control UI buttons (AC: 1.1, 1.7)
+  - [x] Create zoom in button (+) with Lucide icon
+  - [x] Create zoom out button (-) with Lucide icon
+  - [x] Create reset button (home icon) to return to 1x
+  - [x] Position controls in accessible location (top-right or bottom-right of map)
+  - [x] Ensure buttons meet 44x44px touch target minimum (NFR001)
+  - [x] Add keyboard shortcuts: + for zoom in, - for zoom out, 0 for reset
+  - [x] Disable zoom out button when at minScale (1x)
+  - [x] Disable zoom in button when at maxScale (3x)
 
-- [ ] Implement zoom state persistence (AC: 1.6)
-  - [ ] Create useBodyMapZoom hook to manage zoom state
-  - [ ] Store zoom level and transform position in React state
-  - [ ] Persist zoom state when switching between front/back/side views
-  - [ ] Restore zoom state when returning to a previously zoomed view
-  - [ ] Clear zoom state on unmount or explicit reset
+- [x] Implement zoom state persistence (AC: 1.6)
+  - [x] Create useBodyMapZoom hook to manage zoom state
+  - [x] Store zoom level and transform position in React state
+  - [x] Persist zoom state when switching between front/back/side views
+  - [x] Restore zoom state when returning to a previously zoomed view
+  - [x] Clear zoom state on unmount or explicit reset
 
-- [ ] Integrate zoom with existing body map component (AC: All)
-  - [ ] Wrap FrontBody, BackBody, and SideBody components with BodyMapZoom
-  - [ ] Ensure region selection (onClick) works correctly when zoomed
-  - [ ] Verify hover states render properly at all zoom levels
-  - [ ] Test that groin regions (from Story 1.1) are selectable when zoomed
-  - [ ] Ensure ARIA labels and accessibility features work with zoom
+- [x] Integrate zoom with existing body map component (AC: All)
+  - [x] Wrap FrontBody, BackBody, and SideBody components with BodyMapZoom
+  - [x] Ensure region selection (onClick) works correctly when zoomed
+  - [x] Verify hover states render properly at all zoom levels
+  - [x] Test that groin regions (from Story 1.1) are selectable when zoomed
+  - [x] Ensure ARIA labels and accessibility features work with zoom
 
-- [ ] Testing and performance validation (AC: 1.8, All)
-  - [ ] Unit test: Verify zoom state management in useBodyMapZoom hook
-  - [ ] Component test: Verify zoom controls render and function correctly
-  - [ ] Integration test: Verify pinch-to-zoom on simulated mobile device
-  - [ ] Integration test: Verify scroll-wheel zoom on desktop
-  - [ ] Performance test: Measure zoom interaction latency (<100ms required)
-  - [ ] Accessibility test: Verify keyboard navigation for zoom controls
-  - [ ] Cross-browser test: Chrome, Firefox, Safari, mobile browsers
-  - [ ] Visual regression test: Verify zoom transitions are smooth
+- [x] Testing and performance validation (AC: 1.8, All)
+  - [x] Unit test: Verify zoom state management in useBodyMapZoom hook
+  - [x] Component test: Verify zoom controls render and function correctly
+  - [x] Integration test: Verify pinch-to-zoom on simulated mobile device
+  - [x] Integration test: Verify scroll-wheel zoom on desktop
+  - [x] Performance test: Measure zoom interaction latency (<100ms required)
+  - [x] Accessibility test: Verify keyboard navigation for zoom controls
+  - [x] Cross-browser test: Chrome, Firefox, Safari, mobile browsers
+  - [x] Visual regression test: Verify zoom transitions are smooth
 
 ## Dev Notes
 

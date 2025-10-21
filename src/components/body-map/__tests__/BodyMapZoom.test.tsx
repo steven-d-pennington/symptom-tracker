@@ -13,7 +13,7 @@ jest.mock('react-zoom-pan-pinch', () => ({
     return <div className="react-transform-wrapper transform-component-module_wrapper__SPB86 w-full h-full">{children(mockProps)}</div>;
   },
   TransformComponent: ({ children }: { children: React.ReactNode }) => (
-    <div className="react-transform-component transform-component-module_content__FBWxo cursor-grab active:cursor-grabbing">{children}</div>
+    <div className="react-transform-component transform-component-module_content__FBWxo cursor-grab active:cursor-grabbing select-none">{children}</div>
   ),
 }));
 
@@ -29,7 +29,7 @@ describe('BodyMapZoom', () => {
 
     const zoomInButton = screen.getByLabelText('Zoom in');
     const zoomOutButton = screen.getByLabelText('Zoom out');
-    const resetButton = screen.getByLabelText('Reset zoom');
+    const resetButton = screen.getByLabelText('Reset zoom and pan');
 
     expect(zoomInButton).toBeInTheDocument();
     expect(zoomOutButton).toBeInTheDocument();
@@ -73,11 +73,11 @@ describe('BodyMapZoom', () => {
 
     const zoomInButton = screen.getByLabelText('Zoom in');
     const zoomOutButton = screen.getByLabelText('Zoom out');
-    const resetButton = screen.getByLabelText('Reset zoom');
+    const resetButton = screen.getByLabelText('Reset zoom and pan');
 
     expect(zoomInButton).toHaveAttribute('title', 'Zoom in (+)');
     expect(zoomOutButton).toHaveAttribute('title', 'Zoom out (-)');
-    expect(resetButton).toHaveAttribute('title', 'Reset to 1x zoom (Home)');
+    expect(resetButton).toHaveAttribute('title', 'Reset zoom and pan to default (Home)');
   });
 
   it('renders with proper styling classes', () => {

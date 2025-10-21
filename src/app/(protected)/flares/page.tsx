@@ -309,6 +309,7 @@ export default function FlaresPage() {
               <div className="h-[600px] bg-gray-50 rounded-lg mb-4 overflow-visible">
                 <BodyMapViewer
                   view={currentView}
+                  userId={userId}
                   selectedRegion={selectedRegion || undefined}
                   onRegionSelect={handleRegionSelect}
                   flareSeverityByRegion={flareSeverityByRegion}

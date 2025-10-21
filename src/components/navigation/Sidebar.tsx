@@ -5,7 +5,6 @@ import {
   FileText,
   LayoutDashboard,
   Calendar,
-  Map,
   Camera,
   Flame,
   BarChart3,
@@ -44,7 +43,6 @@ const navSections: NavSection[] = [
   {
     title: "Health Tracking",
     items: [
-      { icon: Map, label: "Body Map", href: "/body-map" },
       { icon: Camera, label: "Photo Gallery", href: "/photos" },
       { icon: Flame, label: "Active Flares", href: "/flares" },
       { icon: BarChart3, label: "Trigger Analysis", href: "/triggers" },

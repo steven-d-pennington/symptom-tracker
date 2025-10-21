@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-10-18
+- **Last Updated:** 2025-10-21
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,11 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 1.2) - Complete
-- **Overall Progress:** 37% (Story 1.1 complete, Story 1.2 ready with context, 1 of 23 stories done)
-- **Next Action:** Implement Story 1.2
-- **Command to Run:** `@dev` then `*develop`
-- **Agent to Load:** Developer (bmad/bmm/agents/dev.md)
+- **Current Workflow:** review-story (Story 1.4) - Complete
+- **Overall Progress:** 56% (Stories 1.1, 1.2, 1.3, 1.5 complete, Stories 1.4 and 1.6 drafted, 4 of 23 stories done)
+- **Next Action:** Address Story 1.4 review feedback, then rerun dev-story
+- **Command to Run:** `@dev` then `*dev-story` (after fixing review items)
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) for story implementation
+- **Note:** Story 1.4 is ready for development - critical gap-fill for coordinate precision. Story 1.6 drafted ahead but will be implemented after 1.4 is complete
 
 ---
 
@@ -72,10 +73,6 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
-| 1 | 3 | 1.3 | Implement Pan Controls for Zoomed Body Map | story-1.3.md |
-| 1 | 4 | 1.4 | Coordinate-based Location Marking in Zoomed View | story-1.4.md |
-| 1 | 5 | 1.5 | Display Flare Markers on Body Map | story-1.5.md |
-| 1 | 6 | 1.6 | Body Map Accessibility and Keyboard Navigation | story-1.6.md |
 | 2 | 1 | 2.1 | Flare Data Model and IndexedDB Schema | story-2.1.md |
 | 2 | 2 | 2.2 | Create New Flare from Body Map | story-2.2.md |
 | 2 | 3 | 2.3 | Active Flares Dashboard | story-2.3.md |
@@ -94,33 +91,39 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 21 stories
+**Total in backlog:** 17 stories
 
-#### TODO (Needs Drafting)
+#### TODO (Awaiting Story 1.4 Completion)
 
-- **Story ID:** 1.3
-- **Story Title:** Implement Pan Controls for Zoomed Body Map
-- **Story File:** `story-1.3.md`
-- **Status:** Not created
-- **Action:** SM should run `*create-story` workflow to draft this story (after 1.2 is complete)
+- **Story ID:** 1.6
+- **Story Title:** Body Map Accessibility and Keyboard Navigation
+- **Story File:** `docs/stories/story-1.6.md`
+- **Story Status:** Draft created (2025-10-20)
+- **Context File:** Not yet generated
+- **Action:** Will be prioritized after Story 1.4 is complete and approved
+- **Note:** Draft created ahead of schedule; implementation deferred until Story 1.4 coordinate precision is in place
 
 #### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 1.2
-- **Story Title:** Implement Zoom Controls for Body Map
-- **Story File:** `docs/stories/story-1.2.md`
-- **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-1.2.xml`
-- **Action:** DEV should run `*develop` workflow to implement this story
+- **Story ID:** 1.4
+- **Story Title:** Coordinate-based Location Marking in Zoomed View
+- **Story File:** `docs/stories/story-1.4.md`
+- **Story Status:** InProgress (review changes requested)
+- **Context File:** `docs/stories/story-context-1.4.xml` ✅ Generated (2025-10-20)
+- **Action:** Resolve Senior Developer Review action items, then rerun `*dev-story`
+- **Priority:** HIGH - Critical gap-fill for Epic 1 coordinate precision tracking
 
 #### DONE (Completed Stories)
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 1.5 | docs/stories/story-1.5.md | 2025-10-20 | 5 |
 | 1.1 | docs/stories/story-1.1.md | 2025-10-18 | 3 |
+| 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
+| 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 1 story
-**Total points completed:** 3 points
+**Total completed:** 4 stories
+**Total points completed:** 16 points
 
 ---
 
@@ -150,6 +153,24 @@
 - **2025-10-18:** Completed create-story for Story 1.2 (Implement Zoom Controls for Body Map). Story file: docs/stories/story-1.2.md. Status: Draft (needs review via story-ready). Story includes 8 acceptance criteria covering zoom controls UI, pinch-to-zoom, scroll-wheel zoom, zoom range (1x-3x), cursor-focused zoom, state persistence, reset functionality, and <100ms performance target. Detailed task breakdown with 6 major tasks and 37 subtasks. Comprehensive dev notes include: ADR-001 decision to use react-zoom-pan-pinch library, complete code examples for BodyMapZoom component and useBodyMapZoom hook, file modification guidance, testing strategy, performance targets, and risk mitigation. Story builds on groin regions from 1.1 and enables pan controls (1.3) and coordinate marking (1.4). Next: Review and approve story via story-ready workflow.
 - **2025-10-18:** Completed story-ready for Story 1.2 (Implement Zoom Controls for Body Map). Story marked Ready for development. Moved from READY FOR REVIEW → IN PROGRESS. Story 1.2 is now ready for context generation via story-context workflow, then implementation via dev-story workflow. Next: Generate context or proceed directly to implementation.
 - **2025-10-18:** Completed story-context for Story 1.2 (Implement Zoom Controls for Body Map). Context file: docs/stories/story-context-1.2.xml. Generated comprehensive implementation context including: 98 code references found (BodyMapViewer, FrontBody/BackBody components, existing body map infrastructure), react-zoom-pan-pinch@3.6.1 ALREADY INSTALLED (no npm install needed), 9 code artifacts identified (BodyMapViewer integration point, groin regions from Story 1.1), 12 constraints including NFR001 (<100ms performance), 6 interface definitions from library and existing code, 12 test ideas mapped to acceptance criteria. Key findings: Library already installed, new directory needed (src/components/body-map/), must preserve groin region functionality from Story 1.1. Next: DEV agent should run dev-story to implement.
+- **2025-10-20:** Completed dev-story for Story 1.2 (Implement Zoom Controls for Body Map). All tasks complete, all tests passing (43/43 tests: 5 BodyMapZoom unit tests + 6 integration tests + 32 FrontBody groin tests). Story status: Ready for Review. Implementation verified: BodyMapZoom wrapper created using react-zoom-pan-pinch, zoom controls accessible (zoom in/out/reset buttons), pinch-to-zoom enabled for mobile, scroll-wheel zoom for desktop, zoom range 1x-3x configured, cursor-focused zoom working, zoom state persistence across views implemented, groin regions from Story 1.1 selectable when zoomed, performance meets NFR001 (<100ms target), ARIA labels and accessibility included. Files created: BodyMapZoom.tsx component, 2 test files. Files modified: BodyMapViewer.tsx integration. Next: User reviews and runs story-approved when satisfied with implementation.
+- **2025-10-20:** Completed story-approved for Story 1.2 (Implement Zoom Controls for Body Map). Story officially approved and marked Done. Queue advanced: Story 1.3 (Implement Pan Controls for Zoomed Body Map) moved from TODO → IN PROGRESS. Story 1.4 (Coordinate-based Location Marking) moved from BACKLOG → TODO. Progress: 2 of 23 stories complete (43%). Total points: 8 points completed. Next: SM agent should draft Story 1.3 using create-story workflow.
+- **2025-10-20:** Completed create-story for Story 1.3 (Implement Pan Controls for Zoomed Body Map). Story file: docs/stories/story-1.3.md. Status: Draft (needs review via story-ready). Story includes 6 acceptance criteria covering pan controls (click-drag desktop, touch-drag mobile), boundary constraints, cursor feedback, momentum/inertia, position reset, and <100ms performance target. Detailed task breakdown with 6 major tasks covering pan configuration, cursor feedback, momentum tuning, reset behavior, integration testing, and performance validation. Comprehensive dev notes include: configuration changes for react-zoom-pan-pinch (enable panning, limitToBounds, velocityAnimation), cursor CSS classes, no new files needed (pure enhancement of BodyMapZoom from Story 1.2), testing strategy. Story builds on completed Stories 1.1 (Groin Regions) and 1.2 (Zoom Controls) and enables Stories 1.4 (Coordinate Marking) and 1.5 (Flare Markers). Next: Review and approve story via story-ready workflow.
+- **2025-10-20:** Completed story-ready for Story 1.3 (Implement Pan Controls for Zoomed Body Map). Story marked Ready for development. Status updated from Draft → Ready. Story 1.3 remains IN PROGRESS, ready for context generation or direct implementation. Story 1.5 (Display Flare Markers on Body Map) moved from BACKLOG → TODO. Progress: 46%. Next: Generate context via story-context workflow (recommended) or skip directly to dev-story implementation.
+- **2025-10-20:** Completed dev-story for Story 1.3 (Implement Pan Controls for Zoomed Body Map). All 6 acceptance criteria met. Implementation: Added pan configuration to BodyMapZoom component (limitToBounds=true, velocityAnimation with 200ms easeOutQuad, select-none class). Tests: 43/43 passing (5 BodyMapZoom unit + 6 integration + 32 groin region compatibility). Files modified: BodyMapZoom.tsx + 2 test files. No new files created. Performance meets NFR001 (<100ms). All compatibility verified (zoom controls from 1.2, groin regions from 1.1, region selection, accessibility). Story marked Done.
+- **2025-10-20:** Completed story-approved for Story 1.3 (Implement Pan Controls for Zoomed Body Map). Story officially approved and marked Done. Queue advanced: Story 1.5 (Display Flare Markers on Body Map) moved from TODO → IN PROGRESS. Story 1.6 (Body Map Accessibility and Keyboard Navigation) moved from BACKLOG → TODO. Progress: 3 of 23 stories complete (48%). Total points: 11 points completed. Next: SM agent should draft Story 1.5 using create-story workflow.
+- **2025-10-20:** Completed create-story for Story 1.5 (Display Flare Markers on Body Map). Story file: docs/stories/story-1.5.md. Status: Draft (needs review via story-ready). Story includes 7 acceptance criteria covering marker display at region centers, status-based color coding (red/yellow/orange/gray), overlap handling, touch-friendly 44x44px targets, click navigation, real-time reactivity, and zoom-aware sizing. Detailed task breakdown with 7 major tasks and 40+ subtasks. Comprehensive dev notes include: complete FlareMarkers component code example, useFlares hook specification, utility functions, overlap algorithm (radial offset), integration with BodyMapZoom from Stories 1.2/1.3, file modification list (3 new files, 2 modified files, 3 test files), performance targets (<100ms for 20+ flares). Story builds on completed Stories 1.1 (Groin Regions), 1.2 (Zoom Controls), 1.3 (Pan Controls). Enables Epic 2 flare lifecycle features with visual feedback. Next: Review and approve story via story-ready workflow.
+- **2025-10-20:** Completed story-ready for Story 1.5 (Display Flare Markers on Body Map). Story marked Ready for development. Status updated from Draft → Ready. Story file updated: docs/stories/story-1.5.md. Moved from Ready for Review → IN PROGRESS (Approved for Development). Next story 1.6 (Body Map Accessibility and Keyboard Navigation) moved to TODO. Progress: 51%. Story 1.5 is now ready for context generation via story-context workflow (recommended) or direct implementation via dev-story workflow.
+- **2025-10-20:** Completed story-context for Story 1.5 (Display Flare Markers on Body Map). Context file: docs/stories/story-context-1.5.xml. Generated comprehensive implementation context including: 8 documentation artifacts (PRD, Architecture, Epics, prerequisite stories 1.1-1.3), 7 code artifacts (FlareRecord schema, flareRepository, bodyRegions data, BodyMapZoom component, integration points), 12 constraints (region-level positioning, TransformComponent integration, inverse zoom scaling, NFR001 performance, groin region support), 5 interfaces (FlareRecord, BodyRegion, flareRepository API, TransformComponent, useRouter), 13 dependency packages (React 19.1.0, Next.js 15.5.4, react-zoom-pan-pinch 3.6.1, Dexie 4.2.0, Jest 30.2.0), testing standards (Jest + React Testing Library), 3 test file locations, 13 test ideas mapped to acceptance criteria. Key findings: Story 1.4 NOT implemented (use region centers not coordinates), FlareMarkers must render inside TransformComponent for zoom/pan alignment, marker size scales inversely with zoom (radius = 8/sqrt(zoom)), radial offset algorithm for multiple flares in same region (20px radius), status-based colors (active=red-500, improving=yellow-400, worsening=orange-500, resolved=gray-400). Context provides complete implementation guidance for DEV agent. Next: DEV agent should run dev-story workflow to implement Story 1.5.
+- **2025-10-20:** Completed review-story for Story 1.5 (Display Flare Markers on Body Map). Review outcome: **APPROVED** - Production ready. All 7 acceptance criteria satisfied (100% coverage). Implementation demonstrates excellent quality: FlareMarkers component properly integrated into BodyMapZoom, comprehensive test coverage (30+ tests), performance optimized with useMemo, full accessibility (ARIA labels, keyboard nav), real-time updates via polling hook, inverse zoom scaling maintains touch-friendly markers. Files created: FlareMarkers.tsx, useFlares.ts, flareMarkers.ts utilities, 2 test suites. Files modified: bodyRegions.ts (added center coordinates to 93 regions), BodyMapZoom.tsx, BodyMapViewer.tsx, 2 page files. Security review: No vulnerabilities found. Architecture alignment: Perfect (ADR-001 compliance). Minor recommendations for future: Consider React Query migration, add error boundary, implement marker clustering for 50+ flares (all LOW priority). Story approved for production deployment. Next: User should run story-approved workflow to mark Story 1.5 complete and advance to Story 1.6.
+- **2025-10-20:** Completed story-approved for Story 1.5 (Display Flare Markers on Body Map). Story officially marked Done and moved from IN PROGRESS → DONE. Implementation complete with all acceptance criteria met, comprehensive test coverage (30+ tests), production-grade quality. Queue advanced: Story 1.6 (Body Map Accessibility and Keyboard Navigation) moved from TODO → IN PROGRESS. Progress: 4 of 23 stories complete (56%). Total points: 16 points completed. Epic 1 progress: 4/6 stories done (Stories 1.1, 1.2, 1.3, 1.5 complete; Story 1.4 skipped; Story 1.6 next). Next: SM agent should draft Story 1.6 using create-story workflow.
+- **2025-10-20:** Completed correct-course workflow for Story 1.4 gap. Issue identified: Story 1.4 (Coordinate-based Location Marking in Zoomed View) was skipped during Epic 1 implementation, creating an architectural gap. Story 1.5 (Display Flare Markers) was implemented with region-center positioning workaround, assuming Story 1.4 would be added later. Impact analysis: Epic 1's core value proposition ("coordinate-level precision") cannot be delivered without Story 1.4. Multiple flares in same region use artificial radial offset instead of true anatomical positions. Recommendation: APPROVED - Implement Story 1.4 immediately before Story 1.6. Change scope: MINOR (Direct Adjustment). Sprint Change Proposal created documenting issue, impact, and implementation plan. Workflow status updated: Story 1.4 moved to IN PROGRESS, Story 1.6 moved back to TODO. Rationale: Maintains Epic 1 sequential integrity, delivers core precision tracking value, minimal disruption (Story 1.5 already built anticipating coordinates). Effort estimate: 5 story points, 2-4 hour implementation. Next: SM agent should draft Story 1.4 via create-story workflow.
+- **2025-10-20:** Completed create-story for Story 1.4 (Coordinate-based Location Marking in Zoomed View). Story file: docs/stories/story-1.4.md. Status: Draft (needs review via story-ready). Story includes 7 acceptance criteria covering coordinate capture on click, 0-1 normalization, visual crosshair display, coordinate storage with region ID, adjustable marking, persistence across zoom/pan, and multi-flare precision. Detailed task breakdown with 6 major tasks and 35+ subtasks. Comprehensive dev notes include: CoordinateMarker component code example, coordinate normalization utilities (normalizeCoordinates, denormalizeCoordinates, getRegionBounds), schema extension for FlareRecord.coordinates field, FlareMarkers enhancement logic (use coordinates when available, fallback to region center), file modification list (2 new files, 4 modified files, 3 test files), performance targets (<100ms coordinate capture). Story fills critical gap from correct-course analysis - enables medical-grade coordinate precision for Epic 1. Builds on completed Stories 1.1 (Groin Regions), 1.2 (Zoom Controls), 1.3 (Pan Controls). Enhances Story 1.5 (Flare Markers) from region-center to coordinate-based positioning. Coordinates are optional field (backward compatible). Next: Review and approve story via story-ready workflow.
+- **2025-10-20:** Completed create-story for Story 1.6 (Body Map Accessibility and Keyboard Navigation). Story file: docs/stories/story-1.6.md. Status: Draft created ahead of schedule. Story includes 7 acceptance criteria covering tab navigation between regions, Enter/Space selection, arrow key coordinate positioning, screen reader announcements, comprehensive ARIA labels, keyboard shortcuts for zoom/pan, and high-contrast focus indicators. Detailed task breakdown with 6 major tasks covering keyboard navigation, arrow key positioning, ARIA labels/screen reader support, keyboard shortcuts, focus indicators, and integration testing. Comprehensive dev notes include: keyboard navigation state machine (NAVIGATE/PAN/POSITION modes), ARIA label patterns, focus management with react-zoom-pan-pinch, keyboard shortcut implementation, WCAG 2.1 Level AA compliance requirements, file modification list (6 files to modify, 3 new hooks/components, 3 test files). Story builds on ALL Epic 1 stories (1.1-1.5) to ensure complete accessibility. Note: Draft created ahead but implementation deferred until Story 1.4 coordinate precision is complete. Next: Generate story-context for Story 1.4 (priority), then proceed with Story 1.4 implementation before returning to Story 1.6.
+- **2025-10-20:** Completed story-context for Story 1.4 (Coordinate-based Location Marking in Zoomed View). Context file: docs/stories/story-context-1.4.xml. Generated comprehensive implementation context including: 10 documentation artifacts (PRD FR003/NFR001, Architecture ADR-001/Data Schema, Epic 1, prerequisite stories 1.1-1.3, Story 1.5 enhancement target), 8 code artifacts (BodyMapZoom component, FlareMarkers component, flare types, bodyRegions data with 93 region centers, coordinate utilities, flare hooks, BodyMapViewer and NewFlareDialog integration points), 12 constraints (normalized 0-1 coordinates, optional field backward compatibility, Story 1.5 additive enhancement, react-zoom-pan-pinch integration, NFR001 <100ms performance, touch target 44x44px, DOM getBoundingClientRect null checks), 10 interfaces (Coordinates, SVGCoordinates, normalizeCoordinates, denormalizeCoordinates, getRegionBounds, CoordinateMarkerProps, ActiveFlare extension, ReactZoomPanPinchRef, TransformComponent, BodyRegion), 14 dependency packages (React 19.1.0, Next.js 15.5.4, react-zoom-pan-pinch 3.6.1, Dexie 4.2.0, Jest 30.2.0, RTL 16.3.0), testing standards (Jest + RTL, fake-indexeddb), 3 test file locations, 17 test ideas mapped to acceptance criteria. Key findings: Coordinates normalized 0-1 scale relative to region bounds, optional field allows graceful backward compatibility, FlareMarkers enhancement uses coordinates when available with fallback to region center, must work within TransformComponent from BodyMapZoom, performance critical <100ms coordinate capture, touch targets 44x44px minimum. Context provides complete implementation guidance for DEV agent. Next: Review and approve story via story-ready workflow, then DEV agent implements Story 1.4.
+- **2025-10-20:** Completed story-ready for Story 1.4 (Coordinate-based Location Marking in Zoomed View). Story marked Ready for development. Status updated from Draft → Ready in story file (docs/stories/story-1.4.md). Story remains IN PROGRESS (Approved for Development) with context file already generated (docs/stories/story-context-1.4.xml). Story 1.6 remains in TODO (awaiting Story 1.4 completion). Next: DEV agent should run `*dev-story` workflow to implement Story 1.4 - critical gap-fill for coordinate precision tracking. Implementation will enhance Story 1.5 (FlareMarkers) to use precise coordinates when available, maintaining backward compatibility with region-center fallback.
+- **2025-10-21:** Completed review-story for Story 1.4. Outcome: Changes Requested. Action items logged in story; rerun dev-story after fixes.
+
 
 ---
 

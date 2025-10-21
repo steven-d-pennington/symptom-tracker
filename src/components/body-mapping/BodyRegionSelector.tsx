@@ -12,6 +12,10 @@ interface BodyRegionSelectorProps {
   multiSelect?: boolean;
   severityByRegion?: Record<string, number>;
   flareRegions?: string[];
+  onCoordinateCapture?: (event: React.MouseEvent<SVGSVGElement>) => void;
+  coordinateCursorActive?: boolean;
+  coordinateMarker?: React.ReactNode;
+  flareOverlay?: React.ReactNode;
 }
 
 export function BodyRegionSelector({
@@ -21,6 +25,10 @@ export function BodyRegionSelector({
   multiSelect = false,
   severityByRegion = {},
   flareRegions = [],
+  onCoordinateCapture,
+  coordinateCursorActive = false,
+  coordinateMarker,
+  flareOverlay,
 }: BodyRegionSelectorProps) {
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -47,7 +55,10 @@ export function BodyRegionSelector({
   };
 
   return (
-    <div className="relative w-full h-full" onMouseMove={handleMouseMove}>
+    <div
+      className={`relative w-full h-full ${coordinateCursorActive ? "cursor-crosshair" : ""}`}
+      onMouseMove={handleMouseMove}
+    >
       {/* Body SVG */}
       <div className="w-full h-full flex items-center justify-center">
         {view === "front" && (
@@ -58,6 +69,10 @@ export function BodyRegionSelector({
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
+            onCoordinateCapture={onCoordinateCapture}
+            coordinateCursorActive={coordinateCursorActive}
+            coordinateMarker={coordinateMarker}
+            flareOverlay={flareOverlay}
           />
         )}
         {view === "back" && (
@@ -68,6 +83,10 @@ export function BodyRegionSelector({
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
+            onCoordinateCapture={onCoordinateCapture}
+            coordinateCursorActive={coordinateCursorActive}
+            coordinateMarker={coordinateMarker}
+            flareOverlay={flareOverlay}
           />
         )}
         {(view === "left" || view === "right") && (
@@ -78,6 +97,10 @@ export function BodyRegionSelector({
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
+            onCoordinateCapture={onCoordinateCapture}
+            coordinateCursorActive={coordinateCursorActive}
+            coordinateMarker={coordinateMarker}
+            flareOverlay={flareOverlay}
           />
         )}
       </div>

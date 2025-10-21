@@ -1,23 +1,26 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   TransformWrapper,
   TransformComponent,
   ReactZoomPanPinchRef,
 } from 'react-zoom-pan-pinch';
 import { ZoomIn, ZoomOut, Home } from 'lucide-react';
+import { FlareMarkers } from './FlareMarkers';
 
 interface BodyMapZoomProps {
   children: React.ReactNode;
   viewType: 'front' | 'back' | 'left' | 'right';
+  userId: string;
   onZoomChange?: (scale: number) => void;
 }
 
 const CENTER_EASE = 'easeOutQuad';
 
-export function BodyMapZoom({ children, viewType, onZoomChange }: BodyMapZoomProps) {
+export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMapZoomProps) {
   const apiRef = useRef<ReactZoomPanPinchRef | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(1);
 
   const centerCurrentView = useCallback(
     (ref?: ReactZoomPanPinchRef, scaleOverride?: number) => {
@@ -42,6 +45,7 @@ export function BodyMapZoom({ children, viewType, onZoomChange }: BodyMapZoomPro
   const handleTransformed = useCallback(
     (ref: ReactZoomPanPinchRef, state: { scale: number; positionX: number; positionY: number }) => {
       apiRef.current = ref;
+      setCurrentZoom(state.scale);
       onZoomChange?.(state.scale);
     },
     [onZoomChange]
@@ -59,11 +63,17 @@ export function BodyMapZoom({ children, viewType, onZoomChange }: BodyMapZoomPro
         maxScale={3}
         centerOnInit
         centerZoomedOut
-        limitToBounds
+        limitToBounds={true}
         wheel={{ smoothStep: 0.005, disabled: false }}
         pinch={{ step: 5, disabled: false }}
         doubleClick={{ disabled: false, mode: 'zoomIn' }}
         panning={{ disabled: false }}
+        velocityAnimation={{
+          disabled: false,
+          sensitivity: 1,
+          animationTime: 200,
+          animationType: 'easeOutQuad',
+        }}
         onInit={handleInit}
         onTransformed={handleTransformed}
       >
@@ -86,14 +96,16 @@ export function BodyMapZoom({ children, viewType, onZoomChange }: BodyMapZoomPro
           return (
             <>
               <TransformComponent
-                wrapperClass="w-full h-full flex items-center justify-center"
-                contentClass="cursor-grab active:cursor-grabbing"
+                wrapperClass="!w-full !h-full !flex !items-center !justify-center"
+                contentClass="cursor-grab active:cursor-grabbing select-none"
+                wrapperStyle={{ width: '100%', height: '100%' }}
               >
                 <div
-                  className="flex items-center justify-center"
+                  className="flex items-center justify-center w-full h-full"
                   data-testid="transform-wrapper"
                 >
                   {children}
+                  <FlareMarkers viewType={viewType} zoomLevel={currentZoom} userId={userId} />
                 </div>
               </TransformComponent>
 
@@ -119,8 +131,8 @@ export function BodyMapZoom({ children, viewType, onZoomChange }: BodyMapZoomPro
                 <button
                   onClick={handleReset}
                   className="p-2 bg-white rounded-md hover:bg-gray-50 transition-all"
-                  aria-label="Reset zoom"
-                  title="Reset to 1x zoom (Home)"
+                  aria-label="Reset zoom and pan"
+                  title="Reset zoom and pan to default (Home)"
                 >
                   <Home size={20} className="text-gray-700" />
                 </button>

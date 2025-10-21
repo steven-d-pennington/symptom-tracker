@@ -13,6 +13,13 @@ export interface ActiveFlare {
   photoIds: string[];
   createdAt: Date;
   updatedAt: Date;
+  coordinates?: FlareCoordinate[];
+}
+
+export interface FlareCoordinate {
+  regionId: string;
+  x: number; // normalized 0-1 scale
+  y: number; // normalized 0-1 scale
 }
 
 export interface FlareIntervention {
