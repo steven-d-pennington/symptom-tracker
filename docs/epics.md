@@ -29,6 +29,100 @@ Each epic includes:
 
 ---
 
+## Epic 0: UI/UX Revamp & Navigation Harmonization _(NEW)_
+
+### Expanded Goal
+
+Deliver a cohesive, production-ready user experience by harmonizing navigation, simplifying high-traffic screens, and preparing the interface for upcoming accessibility upgrades. This epic leverages findings documented in `docs/ui/ui-ux-revamp-blueprint.md`.
+
+### Value Proposition
+
+- Reduces friction for new and returning users by presenting a single, predictable navigation model across devices.
+- Clarifies the “Track → Analyze → Manage → Support” journeys so daily logging and insights are accessible within three interactions.
+- Creates a consistent layout foundation that accelerates future accessibility and analytics work.
+
+### Story Breakdown
+
+**Story 0.1: Consolidate Track Navigation**
+
+As a user moving between desktop and mobile,
+I want the primary navigation to use the same labels and destinations everywhere,
+So that I always know where to go to log, review, or manage information.
+
+**Acceptance Criteria:**
+1. Sidebar (`Sidebar.tsx`), Bottom Tabs (`BottomTabs.tsx`), and any menu toggles expose the Track / Analyze / Manage / Support pillar structure described in the blueprint.
+2. `/more` hub is removed or redirected; all links it contained are reachable from the new pillars without duplicates.
+3. Navigation labels are consistent (“Log” vs. “Daily Reflection”, “Manage Data”, etc.) and match the central config.
+4. Keyboard and screen-reader navigation follows the new ordering with aria-labels updated appropriately.
+
+**Prerequisites:** Blueprint approved (`docs/ui/ui-ux-revamp-blueprint.md`).
+
+---
+
+**Story 0.2: Dashboard “Today” Refresh**
+
+As a user landing on the dashboard,
+I want a focused “Today” view with highlights and quick actions,
+So that I can log events or review context without scanning multiple panels.
+
+**Acceptance Criteria:**
+1. Dashboard layout presents three primary modules in order: Highlights (active flares + alerts), Quick Actions (buttons to log flare, symptom, medication, trigger, photo), and Today’s Timeline preview.
+2. Quick Actions open route-based sheets or full-screen dialogs on mobile instead of stacking modals.
+3. Empty states and helper text guide first-time users (no flares, no events, etc.).
+4. Page title, breadcrumbs, and navigation highlight align with the new pillars.
+
+**Prerequisites:** Story 0.1 (navigation consolidation) to ensure entry points align with final IA.
+
+---
+
+**Story 0.3: Flares View Simplification**
+
+As a user reviewing flare activity,
+I want an approachable flares view that grows with my needs,
+So that I am not overwhelmed the first time I open it but can still access map and stats when ready.
+
+**Acceptance Criteria:**
+1. Default state shows cards-only view with clear CTA to enable map/split view; persisted preference stored per user.
+2. Body map guidance uses progressive disclosure (inline tips, context-aware hints) and works with keyboard focus in preparation for Story 1.6.
+3. Statistics and filters are grouped in a collapsible summary panel that can be expanded on demand.
+4. All toggles, buttons, and tabs are reachable via keyboard with aria attributes updated.
+
+**Prerequisites:** Story 0.1 (navigation) and Story 0.2 (dashboard refresh) for consistent entry/return paths.
+
+---
+
+**Story 0.4: Navigation Title & Layout Harmonization**
+
+As a developer maintaining navigation,
+I want a single source of truth for route titles and layout behaviors,
+So that future pages automatically display the right heading and navigation state.
+
+**Acceptance Criteria:**
+1. Create/shared configuration defining route metadata (title, pillar, mobile/desktop visibility) consumed by `NavLayout`, `TopBar`, Sidebar, and Bottom Tabs.
+2. Top bar titles and breadcrumbs automatically update based on the shared config.
+3. Route configuration supports hiding nav for special pages (onboarding, landing) without duplicated logic.
+4. Unit tests cover key routes to prevent regressions (e.g., verifying “Log” renders the expected title on mobile and desktop).
+
+**Prerequisites:** Story 0.1 completion; run after navigation structure is in place.
+
+---
+
+**Story 0.5: UX Instrumentation & Validation**
+
+As a product owner validating the redesign,
+I want scripts and basic instrumentation to measure success criteria,
+So that I can confirm the revamp improved usability before resuming flare implementation.
+
+**Acceptance Criteria:**
+1. Document task walkthrough scripts (log flare by dashboard, open analytics, manage data) with target timings, stored alongside blueprint or tests directory.
+2. Capture navigation event instrumentation hooks (or log placeholders) for key interactions (Quick Action taps, navigation switches).
+3. Update documentation (README or blueprint) with instructions on running the walkthrough tests and interpreting results.
+4. Summarize findings and remaining risks in workflow status once run at least once.
+
+**Prerequisites:** Stories 0.1 – 0.4 implemented and merged, so validation reflects final experience.
+
+---
+
 ## Epic 1: Enhanced Body Map with Precision Location Tracking
 
 ### Expanded Goal

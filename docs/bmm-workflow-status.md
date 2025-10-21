@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 1.6) - Complete ✅
-- **Overall Progress:** 62% (Stories 1.1-1.5 complete; Story 1.6 context ready; 5 of 23 stories done, 21 points)
-- **Next Action:** Implement Story 1.6 via dev-story to deliver accessibility enhancements
-- **Command to Run:** `*dev-story` for Story 1.6
-- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) for implementation
-- **Note:** Story 1.6 context generated; DEV run will complete Enhanced Body Map accessibility
+- **Current Workflow:** story-context (Story 0.1) - Complete ✅
+- **Overall Progress:** 64% (Story 0.1 context ready; Stories 1.1-1.5 complete; Story 1.6 context ready; 5 of 23 stories done, 21 points)
+- **Next Action:** Implement Story 0.1 (Consolidate Track Navigation) using the generated context
+- **Command to Run:** `*dev-story` (Story 0.1) referencing `docs/ui/ui-ux-revamp-blueprint.md`
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) to implement navigation consolidation
+- **Note:** Story 1.6 accessibility work remains on hold until UI/UX revamp navigation foundation lands
 
 ---
 
@@ -73,6 +73,9 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
+| 0 | 3 | 0.3 | Flares View Simplification | story-0.3.md |
+| 0 | 4 | 0.4 | Navigation Title & Layout Harmonization | story-0.4.md |
+| 0 | 5 | 0.5 | UX Instrumentation & Validation | story-0.5.md |
 | 2 | 1 | 2.1 | Flare Data Model and IndexedDB Schema | story-2.1.md |
 | 2 | 2 | 2.2 | Create New Flare from Body Map | story-2.2.md |
 | 2 | 3 | 2.3 | Active Flares Dashboard | story-2.3.md |
@@ -91,21 +94,32 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 17 stories
+**Total in backlog:** 20 stories
 
 #### TODO (Next Up)
 
-*Empty - Next story from backlog (2.1) awaiting drafting*
+- **Story ID:** 0.2
+- **Story Title:** Dashboard "Today" Refresh
+- **Story File:** `docs/stories/story-0.2.md`
+- **Status:** Not created (needs drafting)
+- **Action:** SM should run `create-story` workflow to draft this story using `docs/ui/ui-ux-revamp-blueprint.md`
 
 #### IN PROGRESS (Approved for Development)
+
+- **Story ID:** 0.1
+- **Story Title:** Consolidate Track Navigation
+- **Story File:** `docs/stories/story-0.1.md`
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-0.1.xml`
+- **Action:** Run `dev-story` workflow to implement navigation consolidation using shared config
 
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
-- **Story Status:** Ready
+- **Story Status:** Ready (implementation paused)
 - **Context File:** `docs/stories/story-context-1.6.xml`
-- **Action:** Run dev-story workflow to implement using the new context file
-- **Priority:** HIGH - Final story of Epic 1 (completes Enhanced Body Map with full accessibility support)
+- **Action:** Resume after initial UI/UX revamp stories ship
+- **Priority:** HIGH - Final story of Epic 1 (accessibility) once UI/UX revamp foundation is complete
 
 #### DONE (Completed Stories)
 
@@ -119,6 +133,16 @@
 
 **Total completed:** 5 stories
 **Total points completed:** 21 points
+
+---
+
+### Next Action Required
+
+**What to do next:** Implement story 0.1 using the new navigation context
+
+**Command to run:** Run 'dev-story' workflow with docs/stories/story-0.1.md and docs/stories/story-context-0.1.xml
+
+**Agent to load:** bmad/bmm/agents/dev.md (for dev-story) — reference SM agent only if additional context updates are required
 
 ---
 
@@ -169,6 +193,9 @@
 - **2025-10-21:** Completed story-approved for Story 1.4 (Coordinate-based Location Marking in Zoomed View). Story officially marked Done. Status file updated: Story 1.4 moved to DONE section. Story 1.6 (Body Map Accessibility and Keyboard Navigation) remains IN PROGRESS (draft status - needs story-ready approval and context generation). Progress: 5 of 23 stories complete (60%), 21 points. Epic 1 progress: 5/6 stories complete (Stories 1.1-1.5 done, Story 1.6 final). Implementation delivered medical-grade coordinate precision - users can mark exact anatomical locations with pixel-perfect accuracy. All ACs met, comprehensive test coverage, production validated. Next: SM agent should run story-ready for Story 1.6 to approve draft, then generate context via story-context workflow.
 - **2025-10-21:** Completed story-ready for Story 1.6 (Body Map Accessibility and Keyboard Navigation). Story marked Ready for development. Status updated from Draft → Ready in story file (docs/stories/story-1.6.md). Story remains IN PROGRESS (now approved for development). No queue changes (TODO empty, BACKLOG has 17 stories for Epic 2-4). Progress: 5 of 23 stories complete (61%), 21 points. Epic 1 status: 5/6 complete - Story 1.6 is the final story to complete Enhanced Body Map epic. Story includes 7 acceptance criteria for WCAG 2.1 Level AA compliance: tab navigation, keyboard selection, arrow key positioning, screen reader support, ARIA labels, keyboard shortcuts, focus indicators. Next: SM agent should run story-context workflow to generate implementation context, then DEV agent implements Story 1.6 to complete Epic 1.
 - **2025-10-21:** Completed story-context for Story 1.6 (Body Map Accessibility and Keyboard Navigation). Context file: docs/stories/story-context-1.6.xml. Compiled accessibility tasks, documentation, code references, constraints, and keyboard-focused test ideas. Story file updated with context reference. Status file advanced to story-context step. Progress: 62% overall. Next: DEV agent runs `*dev-story` for Story 1.6 to deliver keyboard and screen reader enhancements and close Epic 1.
+- **2025-10-21:** Decision: Pause flare tracking overhaul to prioritize UI/UX revamp per `docs/ui/ui-ux-revamp-blueprint.md`. Shift workflow focus to drafting and implementing navigation/dashboard stories before resuming Story 1.6 accessibility work.
+- **2025-10-21:** Story 0.1 (Consolidate Track Navigation) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 0.2 moved from BACKLOG → TODO for drafting.
+- **2025-10-21:** Completed story-context for Story 0.1 (Consolidate Track Navigation). Context file: docs/stories/story-context-0.1.xml. Story remains IN PROGRESS (Ready). Next: DEV agent should run `*dev-story` using the new navigation context and blueprint references.
 
 
 ---

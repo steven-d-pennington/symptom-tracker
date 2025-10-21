@@ -1,0 +1,227 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>0</epicId>
+    <storyId>0.1</storyId>
+    <title>Consolidate Track Navigation</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-0.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user moving between desktop and mobile</asA>
+    <iWant>the primary navigation to use the same labels and destinations everywhere</iWant>
+    <soThat>I always know where to go to log, review, or manage information</soThat>
+    <tasks>
+- [ ] Task 1: Create shared navigation configuration (AC: #0.1, #0.3)
+  - [ ] 1.1: Define NavPillar structure including id, label, icon, hrefs, and accessibility metadata.
+  - [ ] 1.2: Store configuration in a new module (e.g., src/config/navigation.ts) exporting pillar data and helper selectors.
+  - [ ] 1.3: Include aria-label text and ordering information to be reused by web and mobile navigation.
+- [ ] Task 2: Update Sidebar to consume configuration (AC: #0.1, #0.3)
+  - [ ] 2.1: Replace hard-coded navSections with data derived from the shared navigation config.
+  - [ ] 2.2: Ensure desktop sidebar renders pillars in Track -> Analyze -> Manage -> Support order.
+  - [ ] 2.3: Update aria-labels to reflect pillar names and navigation purpose.
+- [ ] Task 3: Update Bottom Tabs to consume configuration (AC: #0.1, #0.3)
+  - [ ] 3.1: Replace hard-coded tabs array with entries sourced from shared config.
+  - [ ] 3.2: Render only mobile-valid destinations while preserving pillar order.
+  - [ ] 3.3: Align aria-labels and icon assignments with the shared configuration.
+- [ ] Task 4: Retire /more hub (AC: #0.2)
+  - [ ] 4.1: Remove or redirect src/app/(protected)/more/page.tsx.
+  - [ ] 4.2: Re-home documentation/help links under Support pillar destinations.
+  - [ ] 4.3: Add regression test ensuring /more no longer appears in rendered navigation.
+- [ ] Task 5: Harmonize NavLayout and titles (AC: #0.1, #0.3, #0.4)
+  - [ ] 5.1: Derive top bar titles from shared navigation config instead of hard-coded lookup.
+  - [ ] 5.2: Ensure NO_NAV_ROUTES logic handles support pages relocated from /more.
+  - [ ] 5.3: Update TopBar aria-labels to match pillar route labels.
+- [ ] Task 6: Accessibility verification (AC: #0.4)
+  - [ ] 6.1: Confirm keyboard tab order follows pillar ordering on desktop and mobile.
+  - [ ] 6.2: Validate screen reader announcements for each nav item using aria-label/aria-current.
+  - [ ] 6.3: Document focus order and aria label updates in QA notes.
+- [ ] Task 7: Testing and documentation updates (AC: All)
+  - [ ] 7.1: Add unit tests for navigation config helpers (e.g., ordering, lookups).
+  - [ ] 7.2: Update navigation component tests to assert consistent labels and absence of /more.
+  - [ ] 7.3: Document new navigation structure in developer notes or blueprint updates if needed.
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC0.1: Sidebar, bottom tabs, and any navigation toggles present the Track / Analyze / Manage / Support pillars with consistent destinations across desktop and mobile.
+AC0.2: The /more hub is removed or redirected; every link that existed there is reachable from the pillar navigation without duplication.
+AC0.3: Navigation labels originate from a shared configuration so route titles, sidebar items, and bottom tabs display the same text everywhere (e.g., "Log", "Manage Data").
+AC0.4: Keyboard and screen-reader navigation reflects the new ordering, with aria-labels updated for all navigation elements to match the shared configuration.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 0: Story 0.1</section>
+        <snippet>Story 0.1 mandates shared Track / Analyze / Manage / Support pillars, retiring /more and aligning labels across navigation surfaces. Prerequisite: UI/UX revamp blueprint approved.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ui/ui-ux-revamp-blueprint.md</path>
+        <title>UI/UX Revamp Blueprint</title>
+        <section>2.3 Audit Summary</section>
+        <snippet>Identifies inconsistent naming between desktop and mobile navigation and redundant /more hub, driving the need for unified labels and navigation consolidation.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ui/ui-ux-revamp-blueprint.md</path>
+        <title>UI/UX Revamp Blueprint</title>
+        <section>3.1-3.3 Information Architecture</section>
+        <snippet>Defines Track, Analyze, Manage, Support pillars and instructs that sidebar and bottom tabs share titles/order while sourcing top bar titles from a central map.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ui/ui-ux-revamp-blueprint.md</path>
+        <title>UI/UX Revamp Blueprint</title>
+        <section>4. Heuristic Findings</section>
+        <snippet>Calls out Sidebar.tsx and BottomTabs.tsx as sources of label mismatch and /more duplication; ensures remediation focuses on these components.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/navigation/Sidebar.tsx:32</path>
+        <kind>component</kind>
+        <symbol>Sidebar</symbol>
+        <lines>32-128</lines>
+        <reason>Hard-coded navSections define divergent labels ("Daily Reflection", "Manage") and grouping; must be replaced by shared pillar configuration.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/BottomTabs.tsx:15</path>
+        <kind>component</kind>
+        <symbol>BottomTabs</symbol>
+        <lines>15-99</lines>
+        <reason>Defines separate tabs array including "More" entry; needs to consume shared config and surface consistent labels/aria metadata.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/NavLayout.tsx:17</path>
+        <kind>component</kind>
+        <symbol>NavLayout</symbol>
+        <lines>17-71</lines>
+        <reason>getPageTitle uses hard-coded record and still references /more; needs to pull titles from shared config to keep layout headings in sync.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/TopBar.tsx:16</path>
+        <kind>component</kind>
+        <symbol>TopBar</symbol>
+        <lines>16-102</lines>
+        <reason>Accepts title prop from NavLayout; must support updated aria-labels and integration with shared navigation metadata for keyboard users.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/hooks/useActiveRoute.tsx:1</path>
+        <kind>hook</kind>
+        <symbol>useActiveRoute</symbol>
+        <lines>1-35</lines>
+        <reason>Determines active state for links/tabs; should be evaluated with new config-driven destinations and potential nested routes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/more/page.tsx:1</path>
+        <kind>page</kind>
+        <symbol>MorePage</symbol>
+        <lines>1-160</lines>
+        <reason>Legacy hub duplicating navigation targets; story must remove or redirect this page while preserving access to support links.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <runtime>
+        <package name="next" version="15.5.4" purpose="App Router layout and navigation components" />
+        <package name="react" version="19.1.0" purpose="Component and hook APIs for navigation surfaces" />
+        <package name="lucide-react" version="0.544.0" purpose="Icon set used across sidebar and bottom tabs" />
+      </runtime>
+      <development>
+        <package name="typescript" version="5.x" purpose="Strict typing for shared navigation configuration" />
+        <package name="jest" version="30.2.0" purpose="Unit and integration testing framework" />
+        <package name="@testing-library/react" version="16.3.0" purpose="Component testing utilities for navigation surfaces" />
+        <package name="@testing-library/jest-dom" version="6.9.1" purpose="Extended matchers for accessibility assertions" />
+      </development>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Navigation order must follow Track / Analyze / Manage / Support as defined in docs/ui/ui-ux-revamp-blueprint.md#L30-L60; both sidebar and bottom tabs consume the same ordering.</constraint>
+    <constraint>Eliminate the /more route while ensuring every previous destination remains accessible via pillar destinations and deep links.</constraint>
+    <constraint>Shared configuration must expose labels, icons, aria metadata, and surface visibility for TypeScript strict mode; avoid anonymous objects in components.</constraint>
+    <constraint>Top bar titles and aria-labels must derive from the same data source as navigation items to prevent regressions before Story 0.4 harmonizes layout metadata.</constraint>
+    <constraint>Keyboard focus order and aria-current usage must remain accessible on both desktop and mobile, aligning with upcoming Story 1.6 accessibility requirements.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>NavDestination</name>
+      <kind>Type Interface</kind>
+      <signature>
+export interface NavDestination {
+  href: string;
+  label: string;
+  ariaLabel?: string;
+  icon?: LucideIcon;
+  surface: "desktop" | "mobile" | "all";
+}
+      </signature>
+      <path>src/config/navigation.ts</path>
+    </interface>
+    <interface>
+      <name>NavPillar</name>
+      <kind>Type Interface</kind>
+      <signature>
+export interface NavPillar {
+  id: "track" | "analyze" | "manage" | "support";
+  label: string;
+  order: number;
+  destinations: NavDestination[];
+}
+      </signature>
+      <path>src/config/navigation.ts</path>
+    </interface>
+    <interface>
+      <name>NavLayoutProps</name>
+      <kind>Component Props</kind>
+      <signature>
+interface NavLayoutProps {
+  children: React.ReactNode;
+}
+      </signature>
+      <path>src/components/navigation/NavLayout.tsx</path>
+    </interface>
+    <interface>
+      <name>TopBarProps</name>
+      <kind>Component Props</kind>
+      <signature>
+interface TopBarProps {
+  title: string;
+  showBack?: boolean;
+  showMenu?: boolean;
+  onMenuClick?: () => void;
+  actions?: React.ReactNode;
+}
+      </signature>
+      <path>src/components/navigation/TopBar.tsx</path>
+    </interface>
+    <interface>
+      <name>useActiveRoute return value</name>
+      <kind>Hook Contract</kind>
+      <signature>
+function useActiveRoute(): {
+  pathname: string;
+  isActive(path: string): boolean;
+  isExactMatch(path: string): boolean;
+}
+      </signature>
+      <path>src/components/navigation/hooks/useActiveRoute.tsx</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Use Jest 30.2.0 with React Testing Library 16.3.0 and jest-dom matchers. Follow existing convention of colocating component tests in __tests__ directories. Run npm test with fake timers disabled for navigation suites to preserve keyboard/tab order checks. Ensure accessibility validations (aria-label, aria-current, role navigation) leverage testing-library queries.</standards>
+    <locations>
+      <location>src/components/navigation/__tests__/Sidebar.test.tsx</location>
+      <location>src/components/navigation/__tests__/BottomTabs.test.tsx</location>
+      <location>src/components/navigation/__tests__/navigation-config.test.ts</location>
+    </locations>
+    <ideas>
+      <idea ac="AC0.1">Render Sidebar and BottomTabs with shared config; assert Track / Analyze / Manage / Support labels appear in correct order on both surfaces.</idea>
+      <idea ac="AC0.2">Verify /more link is absent from rendered navigation and that redirect handler sends navigation to /about; add regression test for legacy path returning 301 or component redirect.</idea>
+      <idea ac="AC0.3">Unit test helper that derives titles from config to ensure NavLayout getPageTitle replacement returns consistent strings for each route.</idea>
+      <idea ac="AC0.4">Keyboard navigation test: simulate tabbing through sidebar items and confirm aria-current updates with shared config labels; include screen reader-friendly aria-label assertions.</idea>
+    </ideas>
+  </tests>
+</story-context>

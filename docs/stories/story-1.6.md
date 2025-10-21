@@ -209,3 +209,7 @@ Use aria-live="polite" region for non-critical updates, aria-live="assertive" fo
 ### File List
 
 <!-- List of files created/modified will be added here during implementation -->
+
+### Status Notes
+
+- 2025-10-21: Implementation paused while UI/UX revamp stories (see `docs/ui/ui-ux-revamp-blueprint.md`) take priority. Resume after navigation/dashboard updates land.
