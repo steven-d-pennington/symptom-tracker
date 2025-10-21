@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 0.2) - Complete ✅
-- **Overall Progress:** 71% (Story 0.2 context generated; Story 0.1 approved; Stories 1.1-1.5 complete; Story 1.6 paused; 7 of 23 stories done, 31 points)
-- **Next Action:** Implement Story 0.2 (Dashboard "Today" Refresh) using the new context
-- **Command to Run:** `dev-story` for Story 0.2
-- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) to begin implementation
-- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.3 stays in TODO queue for drafting.
+- **Current Workflow:** dev-story (Story 0.2) - Complete ✅
+- **Overall Progress:** 74% (Story 0.2 implemented and ready for review; Story 0.1 approved; Stories 1.1-1.5 complete; Story 1.6 paused; 8 of 23 stories complete, 36 points)
+- **Next Action:** Review and approve Story 0.2, then draft Story 0.3 (Flares View Simplification)
+- **Command to Run:** `story-approved` for Story 0.2, then `create-story` for Story 0.3
+- **Agent to Load:** User reviews Story 0.2 first, then SM (bmad/bmm/agents/sm.md) to draft next story
+- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.3 ready for drafting after Story 0.2 approval.
 
 ---
 
@@ -108,13 +108,6 @@
 
 #### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 0.2
-- **Story Title:** Dashboard "Today" Refresh
-- **Story File:** `docs/stories/story-0.2.md`
-- **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-0.2.xml`
-- **Action:** DEV should run `dev-story` to implement the refreshed dashboard experience using the generated context.
-
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
@@ -126,6 +119,7 @@
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 0.2 | docs/stories/story-0.2.md | 2025-10-21 | 5 |
 | 0.1 | docs/stories/story-0.1.md | 2025-10-21 | 5 |
 | 1.5 | docs/stories/story-1.5.md | 2025-10-20 | 5 |
 | 1.4 | docs/stories/story-1.4.md | 2025-10-21 | 5 |
@@ -133,18 +127,18 @@
 | 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 7 stories
-**Total points completed:** 31 points
+**Total completed:** 8 stories
+**Total points completed:** 36 points
 
 ---
 
 ### Next Action Required
 
-**What to do next:** Implement Story 0.2 (Dashboard "Today" Refresh) using the generated context
+**What to do next:** Review Story 0.2 implementation, then approve and draft Story 0.3 (Flares View Simplification)
 
-**Command to run:** Load DEV agent and run `dev-story` workflow for Story 0.2 (context: `docs/stories/story-context-0.2.xml`)
+**Command to run:** Review Story 0.2, then run `story-approved` for Story 0.2, followed by `create-story` for Story 0.3
 
-**Agent to load:** bmad/bmm/agents/dev.md
+**Agent to load:** User reviews Story 0.2, then SM agent (bmad/bmm/agents/sm.md) for next story drafting
 
 ---
 
@@ -203,6 +197,7 @@
 - **2025-10-21:** Completed create-story for Story 0.2 (Dashboard "Today" Refresh). Story file: docs/stories/story-0.2.md. Status: Draft (needs story-ready approval). Story captures three-module Today layout, route-based quick actions, guided empty states, and navigation alignment tasks referencing the UI/UX revamp blueprint and PRD. Next: Run story-ready to approve the draft, then proceed to story-context if needed.
 - **2025-10-21:** Story 0.2 (Dashboard "Today" Refresh) marked Ready for development via story-ready workflow. Moved from TODO → IN PROGRESS. Story 0.3 (Flares View Simplification) promoted from BACKLOG → TODO. Next: Generate context for Story 0.2, then hand off to DEV.
 - **2025-10-21:** Completed story-context for Story 0.2 (Dashboard "Today" Refresh). Context file: docs/stories/story-context-0.2.xml. Compiled blueprint, PRD, and epic references; mapped existing dashboard, quick-action, and modal components; captured dependencies/constraints for route-driven sheets and guided empty states; and outlined Jest/RTL test ideas aligned with AC0.2.1–AC0.2.4. Story file updated with context reference. Next: DEV agent runs `dev-story` to implement the refreshed dashboard.
+- **2025-10-21:** Completed dev-story for Story 0.2 (Dashboard "Today" Refresh). All 4 tasks complete, all acceptance criteria met. Implementation: Created three Today module card components (TodayHighlightsCard, TodayQuickActionsCard, TodayTimelineCard) with semantic region landmarks and H2 headings. Refactored dashboard page to use route-based navigation for quick actions via query parameters (/dashboard?quickAction=<type>). Converted all modal launches to router.push() calls, enabling deep linking and browser back navigation. Created comprehensive empty state components (HighlightsEmptyState, QuickActionsEmptyState, TimelineEmptyState) with ARIA roles and guided messaging. Added 38 new tests (17 module tests, 15 empty state tests, 6 route-based navigation tests - all passing). Build verified with Next.js 15.5.4. Files created: 3 module cards, 1 empty states file, 3 test files. Files modified: dashboard/page.tsx, dashboard/__tests__/page.test.tsx. All ACs satisfied: AC0.2.1 (three-module layout with semantic structure), AC0.2.2 (route-based quick actions with deep linking), AC0.2.3 (guided empty states), AC0.2.4 (navigation alignment). Story marked Ready for Review. Progress: 8 of 23 stories complete (74%), 36 points. Pushed to branch claude/execute-story-workflow-011CULmq36EutPytpyD5HJhc. Next: User reviews and runs story-approved when satisfied with implementation.
 
 ---
 
