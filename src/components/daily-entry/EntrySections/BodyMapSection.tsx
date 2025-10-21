@@ -142,6 +142,7 @@ export function BodyMapSection({
               </div>
               <div className="h-[600px] bg-gray-50 rounded-lg">
                 <BodyMapViewer
+                  userId={userId}
                   view={currentView}
                   symptoms={symptoms}
                   selectedRegion={selectedRegion || undefined}
