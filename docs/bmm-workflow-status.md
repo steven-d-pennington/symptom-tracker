@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** dev-story (Story 0.2) - Complete ✅
-- **Overall Progress:** 74% (Story 0.2 implemented and ready for review; Story 0.1 approved; Stories 1.1-1.5 complete; Story 1.6 paused; 8 of 23 stories complete, 36 points)
-- **Next Action:** Review and approve Story 0.2, then draft Story 0.3 (Flares View Simplification)
-- **Command to Run:** `story-approved` for Story 0.2, then `create-story` for Story 0.3
-- **Agent to Load:** User reviews Story 0.2 first, then SM (bmad/bmm/agents/sm.md) to draft next story
-- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.3 ready for drafting after Story 0.2 approval.
+- **Current Workflow:** story-ready (Story 0.3) - Complete ✅
+- **Overall Progress:** 78% (Story 0.3 approved for development with context ready; Story 0.4 queued; Story 1.6 paused; 8 of 23 stories complete, 36 points)
+- **Next Action:** Hand off Story 0.3 to DEV agent, then draft Story 0.4
+- **Command to Run:** `dev-story` for Story 0.3, then `create-story` for Story 0.4
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) for implementation, then SM (bmad/bmm/agents/sm.md) to draft the next story
+- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 now waiting in TODO after Story 0.3 drafting.
 
 ---
 
@@ -73,7 +73,6 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
-| 0 | 4 | 0.4 | Navigation Title & Layout Harmonization | story-0.4.md |
 | 0 | 5 | 0.5 | UX Instrumentation & Validation | story-0.5.md |
 | 2 | 1 | 2.1 | Flare Data Model and IndexedDB Schema | story-2.1.md |
 | 2 | 2 | 2.2 | Create New Flare from Body Map | story-2.2.md |
@@ -93,13 +92,13 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 18 stories
+**Total in backlog:** 17 stories
 
-#### TODO (Next Up)
+#### TODO (Needs Drafting)
 
-- **Story ID:** 0.3
-- **Story Title:** Flares View Simplification
-- **Story File:** `docs/stories/story-0.3.md`
+- **Story ID:** 0.4
+- **Story Title:** Navigation Title & Layout Harmonization
+- **Story File:** `docs/stories/story-0.4.md`
 - **Status:** Not created (needs drafting)
 - **Action:** SM should run `create-story` workflow to draft this story using `docs/ui/ui-ux-revamp-blueprint.md`.
 
@@ -107,6 +106,13 @@
 - **Story 1.6** (Body Map Accessibility) - Ready with context, resume after Epic 0 stories 0.1-0.5 complete
 
 #### IN PROGRESS (Approved for Development)
+
+- **Story ID:** 0.3
+- **Story Title:** Flares View Simplification
+- **Story File:** `docs/stories/story-0.3.md`
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-0.3.xml`
+- **Action:** DEV agent should run `dev-story` using the generated context to implement this story.
 
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
@@ -134,11 +140,11 @@
 
 ### Next Action Required
 
-**What to do next:** Review Story 0.2 implementation, then approve and draft Story 0.3 (Flares View Simplification)
+**What to do next:** Implement Story 0.3 using the prepared context, then draft Story 0.4
 
-**Command to run:** Review Story 0.2, then run `story-approved` for Story 0.2, followed by `create-story` for Story 0.3
+**Command to run:** `dev-story` for Story 0.3, followed by `create-story` for Story 0.4
 
-**Agent to load:** User reviews Story 0.2, then SM agent (bmad/bmm/agents/sm.md) for next story drafting
+**Agent to load:** DEV agent (bmad/bmm/agents/dev.md) for implementation, then SM agent (bmad/bmm/agents/sm.md) to draft the next story
 
 ---
 
@@ -198,6 +204,10 @@
 - **2025-10-21:** Story 0.2 (Dashboard "Today" Refresh) marked Ready for development via story-ready workflow. Moved from TODO → IN PROGRESS. Story 0.3 (Flares View Simplification) promoted from BACKLOG → TODO. Next: Generate context for Story 0.2, then hand off to DEV.
 - **2025-10-21:** Completed story-context for Story 0.2 (Dashboard "Today" Refresh). Context file: docs/stories/story-context-0.2.xml. Compiled blueprint, PRD, and epic references; mapped existing dashboard, quick-action, and modal components; captured dependencies/constraints for route-driven sheets and guided empty states; and outlined Jest/RTL test ideas aligned with AC0.2.1–AC0.2.4. Story file updated with context reference. Next: DEV agent runs `dev-story` to implement the refreshed dashboard.
 - **2025-10-21:** Completed dev-story for Story 0.2 (Dashboard "Today" Refresh). All 4 tasks complete, all acceptance criteria met. Implementation: Created three Today module card components (TodayHighlightsCard, TodayQuickActionsCard, TodayTimelineCard) with semantic region landmarks and H2 headings. Refactored dashboard page to use route-based navigation for quick actions via query parameters (/dashboard?quickAction=<type>). Converted all modal launches to router.push() calls, enabling deep linking and browser back navigation. Created comprehensive empty state components (HighlightsEmptyState, QuickActionsEmptyState, TimelineEmptyState) with ARIA roles and guided messaging. Added 38 new tests (17 module tests, 15 empty state tests, 6 route-based navigation tests - all passing). Build verified with Next.js 15.5.4. Files created: 3 module cards, 1 empty states file, 3 test files. Files modified: dashboard/page.tsx, dashboard/__tests__/page.test.tsx. All ACs satisfied: AC0.2.1 (three-module layout with semantic structure), AC0.2.2 (route-based quick actions with deep linking), AC0.2.3 (guided empty states), AC0.2.4 (navigation alignment). Story marked Ready for Review. Progress: 8 of 23 stories complete (74%), 36 points. Pushed to branch claude/execute-story-workflow-011CULmq36EutPytpyD5HJhc. Next: User reviews and runs story-approved when satisfied with implementation.
+- **2025-10-21:** Story 0.2 (Dashboard "Today" Refresh) approved and marked Done via story-approved workflow. Moved from IN PROGRESS → DONE. Story 0.3 moved from TODO → IN PROGRESS. Story 0.4 moved from BACKLOG → TODO. SM to draft Story 0.3 next.
+- **2025-10-21:** Completed create-story for Story 0.3 (Flares View Simplification). Story file: docs/stories/story-0.3.md. Status: Draft (needs story-ready approval). Story defines cards-first entry with persisted view preference, progressive body map guidance, collapsible summary panel, and accessibility requirements tied to Story 1.6 prep. Queue advanced: Story 0.3 now IN PROGRESS (draft ready for review); Story 0.4 (Navigation Title & Layout Harmonization) moved from BACKLOG → TODO. Next: SM agent runs `story-ready` for Story 0.3, then drafts Story 0.4.
+- **2025-10-21:** Completed story-context for Story 0.3 (Flares View Simplification). Context file: docs/stories/story-context-0.3.xml. Story status updated to ContextReadyDraft. Next: Run `story-ready` to approve, then hand off to DEV agent with the new context.
+- **2025-10-21:** Completed story-ready for Story 0.3 (Flares View Simplification). Story status set to Ready. Queue unchanged: Story 0.3 remains IN PROGRESS for DEV with context, Story 0.4 stays in TODO awaiting drafting.
 
 ---
 

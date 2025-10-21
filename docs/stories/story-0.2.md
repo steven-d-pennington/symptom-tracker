@@ -1,6 +1,6 @@
 # Story 0.2: Dashboard "Today" Refresh
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
@@ -82,6 +82,10 @@ claude-sonnet-4-5-20250929
 ### Debug Log References
 
 N/A
+
+### Completion Notes
+**Completed:** 2025-10-21
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing, deployed
 
 ### Completion Notes List
 
