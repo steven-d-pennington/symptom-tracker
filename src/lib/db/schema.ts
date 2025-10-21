@@ -47,6 +47,8 @@ export interface UserPreferences {
   activeTemplateId?: string;
   // Food-specific preferences (extensible JSON payload; backward compatible)
   foodFavorites?: string[]; // array of foodIds favorited by the user
+  // Flare view preferences (Story 0.3)
+  flareViewMode?: "cards" | "map" | "both";
 }
 
 export interface UserRecord {

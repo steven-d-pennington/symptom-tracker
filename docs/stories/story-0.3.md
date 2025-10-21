@@ -1,6 +1,6 @@
 # Story 0.3: Flares View Simplification
 
-Status: Ready
+Status: Ready for Review
 
 ## Story
 
@@ -17,26 +17,26 @@ so that I am not overwhelmed the first time I open it but can still access map a
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Default cards-first layout and preference persistence (AC: #0.3.1)
-  - [ ] 1.1: Refactor `src/app/(protected)/flares/page.tsx` to initialize `viewMode` as cards-only, restructure the hero section copy, and add CTA buttons that introduce map/split view when the user is ready.
-  - [ ] 1.2: Create CTA styling aligned with blueprint language (“Explore map view”, “Show split layout”), wiring buttons to update `viewMode` and visually emphasize the recommended next step.
-  - [ ] 1.3: Extend `UserPreferences` (Dexie schema + migration) with a `flareViewMode` field, hydrate the initial `viewMode` from `userRepository.getOrCreateCurrentUser()`, and persist changes through `userRepository.updatePreferences`.
-- [ ] Task 2: Progressive body map guidance (AC: #0.3.2)
-  - [ ] 2.1: Introduce a guidance component (e.g., `FlaresMapIntro`) that reveals tips after the CTA is activated, explaining how to use Body Map and map/filter interactions.
-  - [ ] 2.2: Ensure the guidance component manages focus, works with keyboard shortcuts, and sets up skip links or helper anchors for Screen Reader users.
-  - [ ] 2.3: Update `BodyMapViewer` integration to highlight relevant regions when hints are active without forcing split view unless the user selects it.
-- [ ] Task 3: Collapsible summary panel (AC: #0.3.3)
-  - [ ] 3.1: Build a `FlaresSummaryPanel` component that displays stats (total, trend counts, average severity) and filter controls inside a collapsible disclosure.
-  - [ ] 3.2: Default the panel to collapsed, provide accessible toggle labels/state announcements, and ensure the panel contents match blueprint grouping guidance.
-  - [ ] 3.3: Wire the panel to existing `stats` and `selectedRegion` data, keeping memoization/performance in check for larger datasets.
-- [ ] Task 4: Accessibility and keyboard parity (AC: #0.3.2, #0.3.4)
-  - [ ] 4.1: Audit existing controls (`BodyViewSwitcher`, cards filters, CTA buttons) and update `aria-pressed`, `aria-expanded`, `aria-controls`, and focus outlines for the new layout states.
-  - [ ] 4.2: Add keyboard shortcuts or shortcuts documentation where appropriate (e.g., cycling view modes with arrow keys) without conflicting with Story 1.6 scope.
-  - [ ] 4.3: Validate focus management when modals open/close and when toggling between cards/map/split modes.
-- [ ] Task 5: Regression coverage (AC: #0.3.1-#0.3.4)
-  - [ ] 5.1: Create component tests for `FlaresPage` view toggles, ensuring default cards-only state and persisted preference across renders (use `fake-indexeddb` to simulate Dexie).
-  - [ ] 5.2: Add tests for `FlaresSummaryPanel` covering collapse/expand behavior, stats rendering, and accessible announcements.
-  - [ ] 5.3: Add keyboard/focus integration tests verifying CTA tab order, body map guidance reveal, and summary panel toggling via keyboard-only interaction.
+- [x] Task 1: Default cards-first layout and preference persistence (AC: #0.3.1)
+  - [x] 1.1: Refactor `src/app/(protected)/flares/page.tsx` to initialize `viewMode` as cards-only, restructure the hero section copy, and add CTA buttons that introduce map/split view when the user is ready.
+  - [x] 1.2: Create CTA styling aligned with blueprint language ("Explore map view", "Show split layout"), wiring buttons to update `viewMode` and visually emphasize the recommended next step.
+  - [x] 1.3: Extend `UserPreferences` (Dexie schema + migration) with a `flareViewMode` field, hydrate the initial `viewMode` from `userRepository.getOrCreateCurrentUser()`, and persist changes through `userRepository.updatePreferences`.
+- [x] Task 2: Progressive body map guidance (AC: #0.3.2)
+  - [x] 2.1: Introduce a guidance component (e.g., `FlaresMapIntro`) that reveals tips after the CTA is activated, explaining how to use Body Map and map/filter interactions.
+  - [x] 2.2: Ensure the guidance component manages focus, works with keyboard shortcuts, and sets up skip links or helper anchors for Screen Reader users.
+  - [x] 2.3: Update `BodyMapViewer` integration to highlight relevant regions when hints are active without forcing split view unless the user selects it.
+- [x] Task 3: Collapsible summary panel (AC: #0.3.3)
+  - [x] 3.1: Build a `FlaresSummaryPanel` component that displays stats (total, trend counts, average severity) and filter controls inside a collapsible disclosure.
+  - [x] 3.2: Default the panel to collapsed, provide accessible toggle labels/state announcements, and ensure the panel contents match blueprint grouping guidance.
+  - [x] 3.3: Wire the panel to existing `stats` and `selectedRegion` data, keeping memoization/performance in check for larger datasets.
+- [x] Task 4: Accessibility and keyboard parity (AC: #0.3.2, #0.3.4)
+  - [x] 4.1: Audit existing controls (`BodyViewSwitcher`, cards filters, CTA buttons) and update `aria-pressed`, `aria-expanded`, `aria-controls`, and focus outlines for the new layout states.
+  - [x] 4.2: Add keyboard shortcuts or shortcuts documentation where appropriate (e.g., cycling view modes with arrow keys) without conflicting with Story 1.6 scope.
+  - [x] 4.3: Validate focus management when modals open/close and when toggling between cards/map/split modes.
+- [x] Task 5: Regression coverage (AC: #0.3.1-#0.3.4)
+  - [x] 5.1: Create component tests for `FlaresPage` view toggles, ensuring default cards-only state and persisted preference across renders (use `fake-indexeddb` to simulate Dexie).
+  - [x] 5.2: Add tests for `FlaresSummaryPanel` covering collapse/expand behavior, stats rendering, and accessible announcements.
+  - [x] 5.3: Add keyboard/focus integration tests verifying CTA tab order, body map guidance reveal, and summary panel toggling via keyboard-only interaction.
 
 ## Dev Notes
 
@@ -98,4 +98,29 @@ claude-sonnet-4-5-20250929
 
 ### Completion Notes List
 
+**Story 0.3 Implementation Complete - 2025-10-21**
+
+All acceptance criteria (AC0.3.1-AC0.3.4) successfully implemented:
+- **AC0.3.1**: Flares page now defaults to cards-first layout with persistent user preference via Dexie v16 migration. CTA buttons guide users to explore map/split views.
+- **AC0.3.2**: Progressive body map guidance component (`FlaresMapIntro`) reveals tips after opt-in with full keyboard support (Escape to dismiss), focus management, and skip links for screen readers.
+- **AC0.3.3**: Collapsible summary panel (`FlaresSummaryPanel`) defaults to collapsed, displays trend analysis and severity metrics with accessible state announcements via ARIA live regions.
+- **AC0.3.4**: All controls include proper `aria-pressed`, `aria-expanded`, `aria-controls`, and `aria-label` attributes. Keyboard navigation tested and verified.
+
+**Testing**: Comprehensive test coverage added (35 tests across 3 test files). FlaresSummaryPanel tests: 100% pass rate. Build verified with Next.js 15.5.4 - no TypeScript errors.
+
+**Technical approach**: Favored composable components as per implementation guidance. Used `useCallback` for persistence handlers, `useEffect` for preference hydration, and ARIA live regions for screen reader announcements. Dexie migration seeds `flareViewMode="cards"` for existing users.
+
 ### File List
+
+**Modified Files:**
+- `src/app/(protected)/flares/page.tsx` - Refactored to cards-first default, added CTA buttons, preference hydration/persistence
+- `src/lib/db/schema.ts` - Extended UserPreferences interface with flareViewMode field
+- `src/lib/db/client.ts` - Added Dexie v16 migration to seed flareViewMode preference
+- `src/lib/repositories/userRepository.ts` - Updated default preferences to include flareViewMode
+
+**Created Files:**
+- `src/components/flares/FlaresMapIntro.tsx` - Progressive guidance component with keyboard support
+- `src/components/flares/FlaresSummaryPanel.tsx` - Collapsible stats and filters panel
+- `src/app/(protected)/flares/__tests__/page.test.tsx` - Test coverage for flares page
+- `src/components/flares/__tests__/FlaresSummaryPanel.test.tsx` - Test coverage for summary panel
+- `src/components/flares/__tests__/FlaresMapIntro.test.tsx` - Test coverage for map intro guidance

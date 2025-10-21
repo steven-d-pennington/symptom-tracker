@@ -114,6 +114,7 @@ export class UserRepository {
         exportFormat: "json",
         symptomFilterPresets: [],
         foodFavorites: [],
+        flareViewMode: "cards", // Story 0.3: Default to cards-first layout
       },
     });
 

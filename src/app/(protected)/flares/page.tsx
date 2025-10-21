@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ActiveFlareCards } from "@/components/flares/ActiveFlareCards";
 import { BodyMapViewer } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
 import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
+import { FlaresMapIntro } from "@/components/flares/FlaresMapIntro"; // Story 0.3 Task 2
+import { FlaresSummaryPanel } from "@/components/flares/FlaresSummaryPanel"; // Story 0.3 Task 3
 import { flareRepository } from "@/lib/repositories/flareRepository";
+import { userRepository } from "@/lib/repositories/userRepository";
 import { ActiveFlare } from "@/lib/types/flare";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { cn } from "@/lib/utils/cn";
@@ -16,12 +19,13 @@ type ViewMode = "cards" | "map" | "both";
 
 export default function FlaresPage() {
   const { userId } = useCurrentUser();
-  const [viewMode, setViewMode] = useState<ViewMode>("both");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards"); // Story 0.3: Default to cards-first
   const [flares, setFlares] = useState<Array<ActiveFlare & { trend: "worsening" | "stable" | "improving" }>>([]);
   const [selectedFlareId, setSelectedFlareId] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<"front" | "back" | "left" | "right">("front");
   const [isFlareCreationModalOpen, setIsFlareCreationModalOpen] = useState(false);
+  const [showMapIntro, setShowMapIntro] = useState(false); // Story 0.3 Task 2: Progressive guidance
   const [stats, setStats] = useState({
     total: 0,
     worsening: 0,
@@ -35,6 +39,44 @@ export default function FlaresPage() {
       loadFlares();
     }
   }, [userId]);
+
+  // Story 0.3: Hydrate viewMode from user preferences
+  useEffect(() => {
+    if (!userId) return;
+
+    const hydrateViewMode = async () => {
+      try {
+        const user = await userRepository.getById(userId);
+        if (user?.preferences.flareViewMode) {
+          setViewMode(user.preferences.flareViewMode);
+        }
+      } catch (error) {
+        console.error("Failed to load view mode preference:", error);
+      }
+    };
+
+    hydrateViewMode();
+  }, [userId]);
+
+  // Story 0.3: Persist viewMode changes to user preferences
+  const handleViewModeChange = useCallback(async (newMode: ViewMode) => {
+    setViewMode(newMode);
+
+    // Story 0.3 Task 2: Show intro when switching to map/split view
+    if ((newMode === "map" || newMode === "both") && viewMode === "cards") {
+      setShowMapIntro(true);
+    }
+
+    if (!userId) return;
+
+    try {
+      await userRepository.updatePreferences(userId, {
+        flareViewMode: newMode,
+      });
+    } catch (error) {
+      console.error("Failed to persist view mode preference:", error);
+    }
+  }, [userId, viewMode]);
 
   const loadFlares = async () => {
     if (!userId) return;
@@ -149,94 +191,107 @@ export default function FlaresPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
+      {/* Header - Story 0.3: More welcoming copy */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Active Flares</h1>
+            <h1 className="text-3xl font-bold text-foreground">Your Flares</h1>
             <p className="mt-2 text-muted-foreground">
-              Monitor and manage your active symptom flares
+              {stats.total === 0
+                ? "Track and manage symptom flares as they happen"
+                : "Keep tabs on your active flares and their progress"
+              }
             </p>
           </div>
           <button
             onClick={() => setIsFlareCreationModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            aria-label="Create new flare"
           >
             <Plus className="h-5 w-5" />
             New Flare
           </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Activity className="h-4 w-4" />
-              Total Active
-            </div>
-            <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-          </div>
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-            <div className="flex items-center gap-2 text-red-700 text-sm mb-1">
-              <TrendingUp className="h-4 w-4" />
-              Worsening
-            </div>
-            <div className="text-2xl font-bold text-red-900">{stats.worsening}</div>
-          </div>
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <div className="flex items-center gap-2 text-yellow-700 text-sm mb-1">
-              <Activity className="h-4 w-4" />
-              Stable
-            </div>
-            <div className="text-2xl font-bold text-yellow-900">{stats.stable}</div>
-          </div>
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-            <div className="flex items-center gap-2 text-green-700 text-sm mb-1">
-              <TrendingDown className="h-4 w-4" />
-              Improving
-            </div>
-            <div className="text-2xl font-bold text-green-900">{stats.improving}</div>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <div className="text-muted-foreground text-sm mb-1">Avg Severity</div>
-            <div className="text-2xl font-bold text-foreground">{stats.avgSeverity}/10</div>
-          </div>
+        {/* Story 0.3 Task 3: Collapsible summary panel */}
+        <div className="mb-6">
+          <FlaresSummaryPanel
+            stats={stats}
+            selectedRegion={selectedRegion}
+            onClearRegionFilter={() => {
+              setSelectedRegion(null);
+              setSelectedFlareId(null);
+            }}
+          />
         </div>
 
-        {/* View Mode Toggle */}
+        {/* Story 0.3: CTA Buttons for cards-only mode */}
+        {viewMode === "cards" && (
+          <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
+            <p className="text-sm font-medium text-foreground mb-3">
+              Want to visualize where your flares are located?
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => handleViewModeChange("map")}
+                className="inline-flex items-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                aria-label="Switch to map view"
+              >
+                <MapPin className="h-4 w-4" />
+                Explore Map View
+              </button>
+              <button
+                onClick={() => handleViewModeChange("both")}
+                className="inline-flex items-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                aria-label="Switch to split view"
+              >
+                <Layers className="h-4 w-4" />
+                Show Split Layout
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* View Mode Toggle - Story 0.3: Persist preferences */}
         <div className="flex items-center gap-2 border-b border-border">
           <button
-            onClick={() => setViewMode("cards")}
+            onClick={() => handleViewModeChange("cards")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
               viewMode === "cards"
                 ? "border-b-2 border-primary text-primary"
                 : "text-muted-foreground hover:text-foreground"
             )}
+            aria-pressed={viewMode === "cards"}
+            aria-label="Cards only view"
           >
             <LayoutGrid className="h-4 w-4" />
             Cards Only
           </button>
           <button
-            onClick={() => setViewMode("map")}
+            onClick={() => handleViewModeChange("map")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
               viewMode === "map"
                 ? "border-b-2 border-primary text-primary"
                 : "text-muted-foreground hover:text-foreground"
             )}
+            aria-pressed={viewMode === "map"}
+            aria-label="Map only view"
           >
             <MapPin className="h-4 w-4" />
             Map Only
           </button>
           <button
-            onClick={() => setViewMode("both")}
+            onClick={() => handleViewModeChange("both")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
               viewMode === "both"
                 ? "border-b-2 border-primary text-primary"
                 : "text-muted-foreground hover:text-foreground"
             )}
+            aria-pressed={viewMode === "both"}
+            aria-label="Split view with both cards and map"
           >
             <Layers className="h-4 w-4" />
             Split View
@@ -280,7 +335,14 @@ export default function FlaresPage() {
         {/* Body Map Section */}
         {(viewMode === "map" || viewMode === "both") && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-border bg-card p-6">
+            {/* Story 0.3 Task 2: Progressive body map guidance */}
+            <FlaresMapIntro
+              isOpen={showMapIntro}
+              onDismiss={() => setShowMapIntro(false)}
+              viewMode={viewMode === "both" ? "both" : "map"}
+            />
+
+            <div id="flare-cards" className="rounded-lg border border-border bg-card p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-foreground">Body Map View</h2>
                 <BodyViewSwitcher
