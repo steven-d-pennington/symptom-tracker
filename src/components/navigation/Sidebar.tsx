@@ -1,71 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import {
-  FileText,
-  LayoutDashboard,
-  Calendar,
-  Camera,
-  Flame,
-  BarChart3,
-  TrendingUp,
-  Settings,
-  Download,
-  Lock,
-  Info,
-  Sliders,
-} from "lucide-react";
+import { FileText } from "lucide-react";
 import { useActiveRoute } from "./hooks/useActiveRoute";
-import { LucideIcon } from "lucide-react";
-
-interface NavItem {
-  icon: LucideIcon;
-  label: string;
-  href: string;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-const navSections: NavSection[] = [
-  {
-    title: "Primary",
-    items: [
-      { icon: FileText, label: "Daily Reflection", href: "/log" },
-      { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-      { icon: TrendingUp, label: "Analytics", href: "/analytics" },
-      { icon: Calendar, label: "Calendar", href: "/calendar" },
-      { icon: Sliders, label: "Manage", href: "/manage" },
-    ],
-  },
-  {
-    title: "Health Tracking",
-    items: [
-      { icon: Camera, label: "Photo Gallery", href: "/photos" },
-      { icon: Flame, label: "Active Flares", href: "/flares" },
-      { icon: BarChart3, label: "Trigger Analysis", href: "/triggers" },
-    ],
-  },
-  {
-    title: "Settings",
-    items: [
-      { icon: Settings, label: "Settings", href: "/settings" },
-      { icon: Download, label: "Export Data", href: "/export" },
-      { icon: Lock, label: "Privacy", href: "/privacy" },
-      { icon: Info, label: "About", href: "/about" },
-    ],
-  },
-];
+import { getNavPillars } from "@/config/navigation";
 
 export function Sidebar() {
   const { isActive } = useActiveRoute();
+  const navPillars = getNavPillars("desktop");
 
   return (
     <aside
       className="fixed left-0 top-0 bottom-0 z-50 w-64 bg-card border-r border-border hidden md:flex md:flex-col"
-      aria-label="Sidebar navigation"
+      aria-label="Main navigation"
     >
       {/* Logo/Brand */}
       <div className="h-14 flex items-center px-6 border-b border-border">
@@ -77,22 +24,22 @@ export function Sidebar() {
         </Link>
       </div>
 
-      {/* Navigation Sections */}
-      <nav className="flex-1 overflow-y-auto py-4">
-        {navSections.map((section, sectionIndex) => (
-          <div key={section.title} className="mb-6">
+      {/* Navigation Pillars */}
+      <nav className="flex-1 overflow-y-auto py-4" aria-label="Primary navigation pillars">
+        {navPillars.map((pillar, pillarIndex) => (
+          <div key={pillar.id} className="mb-6">
             <h3 className="px-6 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {section.title}
+              {pillar.label}
             </h3>
             <ul className="space-y-1 px-3">
-              {section.items.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
+              {pillar.destinations.map((destination) => {
+                const Icon = destination.icon;
+                const active = isActive(destination.href);
 
                 return (
-                  <li key={item.href}>
+                  <li key={destination.href}>
                     <Link
-                      href={item.href}
+                      href={destination.href}
                       className={`
                         flex items-center gap-3 px-3 py-2 rounded-lg
                         transition-all duration-150
@@ -102,16 +49,17 @@ export function Sidebar() {
                             : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }
                       `}
+                      aria-label={destination.ariaLabel || destination.label}
                       aria-current={active ? "page" : undefined}
                     >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      <span className="truncate">{item.label}</span>
+                      {Icon && <Icon className="w-5 h-5 flex-shrink-0" />}
+                      <span className="truncate">{destination.label}</span>
                     </Link>
                   </li>
                 );
               })}
             </ul>
-            {sectionIndex < navSections.length - 1 && (
+            {pillarIndex < navPillars.length - 1 && (
               <div className="h-px bg-border mx-6 mt-4" />
             )}
           </div>

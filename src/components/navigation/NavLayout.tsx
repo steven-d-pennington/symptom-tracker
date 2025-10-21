@@ -5,6 +5,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { TopBar } from "./TopBar";
 import { BottomTabs } from "./BottomTabs";
 import { Sidebar } from "./Sidebar";
+import { getPageTitle } from "@/config/navigation";
 
 interface NavLayoutProps {
   children: React.ReactNode;
@@ -12,25 +13,6 @@ interface NavLayoutProps {
 
 // Routes that should NOT show navigation (landing page, onboarding, etc.)
 const NO_NAV_ROUTES = ["/", "/onboarding"];
-
-// Get page title based on pathname
-function getPageTitle(pathname: string): string {
-  const titles: Record<string, string> = {
-    "/log": "Daily Log",
-    "/dashboard": "Dashboard",
-    "/analytics": "Analytics",
-    "/photos": "Photo Gallery",
-    "/flares": "Active Flares",
-    "/triggers": "Trigger Analysis",
-    "/more": "More",
-    "/settings": "Settings",
-    "/export": "Export Data",
-    "/privacy": "Privacy",
-    "/about": "About",
-  };
-
-  return titles[pathname] || "Symptom Tracker";
-}
 
 export function NavLayout({ children }: NavLayoutProps) {
   const pathname = usePathname();

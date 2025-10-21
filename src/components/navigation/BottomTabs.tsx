@@ -1,52 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, LayoutDashboard, TrendingUp, Camera, Menu } from "lucide-react";
 import { useActiveRoute } from "./hooks/useActiveRoute";
-import { LucideIcon } from "lucide-react";
-
-interface TabItem {
-  icon: LucideIcon;
-  label: string;
-  href: string;
-  ariaLabel?: string;
-}
-
-const tabs: TabItem[] = [
-  {
-    icon: FileText,
-    label: "Log",
-    href: "/log",
-    ariaLabel: "Daily log",
-  },
-  {
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    href: "/dashboard",
-    ariaLabel: "Dashboard",
-  },
-  {
-    icon: TrendingUp,
-    label: "Analytics",
-    href: "/analytics",
-    ariaLabel: "Analytics and trends",
-  },
-  {
-    icon: Camera,
-    label: "Gallery",
-    href: "/photos",
-    ariaLabel: "Photo gallery",
-  },
-  {
-    icon: Menu,
-    label: "More",
-    href: "/more",
-    ariaLabel: "More options",
-  },
-];
+import { getNavDestinations } from "@/config/navigation";
 
 export function BottomTabs() {
   const { isActive } = useActiveRoute();
+  const tabs = getNavDestinations("mobile");
 
   return (
     <nav
@@ -77,11 +37,13 @@ export function BottomTabs() {
               aria-label={tab.ariaLabel || tab.label}
               aria-current={active ? "page" : undefined}
             >
-              <Icon
-                className={`w-5 h-5 transition-transform ${
-                  active ? "scale-110" : ""
-                }`}
-              />
+              {Icon && (
+                <Icon
+                  className={`w-5 h-5 transition-transform ${
+                    active ? "scale-110" : ""
+                  }`}
+                />
+              )}
               <span
                 className={`text-xs ${
                   active ? "font-semibold" : "font-medium"
