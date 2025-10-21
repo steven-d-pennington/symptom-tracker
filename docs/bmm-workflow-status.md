@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 0.1) - Complete ✅
-- **Overall Progress:** 64% (Story 0.1 context ready; Stories 1.1-1.5 complete; Story 1.6 context ready; 5 of 23 stories done, 21 points)
-- **Next Action:** Implement Story 0.1 (Consolidate Track Navigation) using the generated context
-- **Command to Run:** `*dev-story` (Story 0.1) referencing `docs/ui/ui-ux-revamp-blueprint.md`
-- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) to implement navigation consolidation
-- **Note:** Story 1.6 accessibility work remains on hold until UI/UX revamp navigation foundation lands
+- **Current Workflow:** dev-story (Story 0.1) - Complete ✅
+- **Overall Progress:** 67% (Story 0.1 complete; Stories 1.1-1.5 complete; Story 1.6 context ready; 6 of 23 stories done, 26 points)
+- **Next Action:** User reviews Story 0.1 implementation and runs story-approved when satisfied
+- **Command to Run:** `story-approved` for Story 0.1, or draft Story 0.2 (Dashboard "Today" Refresh)
+- **Agent to Load:** SM (bmad/bmm/agents/sm.md) to advance queue or draft next story
+- **Note:** Story 1.6 accessibility work remains on hold until UI/UX revamp stories (0.1-0.5) complete
 
 ---
 
@@ -106,13 +106,6 @@
 
 #### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 0.1
-- **Story Title:** Consolidate Track Navigation
-- **Story File:** `docs/stories/story-0.1.md`
-- **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-0.1.xml`
-- **Action:** Run `dev-story` workflow to implement navigation consolidation using shared config
-
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
@@ -125,14 +118,15 @@
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 0.1 | docs/stories/story-0.1.md | 2025-10-21 | 5 |
 | 1.5 | docs/stories/story-1.5.md | 2025-10-20 | 5 |
 | 1.4 | docs/stories/story-1.4.md | 2025-10-21 | 5 |
 | 1.1 | docs/stories/story-1.1.md | 2025-10-18 | 3 |
 | 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 5 stories
-**Total points completed:** 21 points
+**Total completed:** 6 stories
+**Total points completed:** 26 points
 
 ---
 
@@ -196,6 +190,7 @@
 - **2025-10-21:** Decision: Pause flare tracking overhaul to prioritize UI/UX revamp per `docs/ui/ui-ux-revamp-blueprint.md`. Shift workflow focus to drafting and implementing navigation/dashboard stories before resuming Story 1.6 accessibility work.
 - **2025-10-21:** Story 0.1 (Consolidate Track Navigation) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 0.2 moved from BACKLOG → TODO for drafting.
 - **2025-10-21:** Completed story-context for Story 0.1 (Consolidate Track Navigation). Context file: docs/stories/story-context-0.1.xml. Story remains IN PROGRESS (Ready). Next: DEV agent should run `*dev-story` using the new navigation context and blueprint references.
+- **2025-10-21:** Completed dev-story for Story 0.1 (Consolidate Track Navigation). All 7 tasks complete, all acceptance criteria met. Implementation: Created src/config/navigation.ts with Track/Analyze/Manage/Support pillar structure. Updated Sidebar.tsx and BottomTabs.tsx to consume getNavPillars("desktop") and getNavDestinations("mobile") respectively. Retired /more hub (redirects to /about). Updated NavLayout.tsx to derive page titles from getPageTitle(). Added 28 unit tests for navigation configuration helpers (all passing). Build verified with Next.js 15.5.4 (no TypeScript errors). Files created: navigation.ts config + 3 test files. Files modified: Sidebar.tsx, BottomTabs.tsx, NavLayout.tsx, more/page.tsx. All ACs satisfied: AC0.1 (pillar consistency across surfaces), AC0.2 (/more retired), AC0.3 (shared labels), AC0.4 (aria-labels updated). Story marked Ready for Review. Progress: 6 of 23 stories complete (67%), 26 points. Pushed to branch claude/follow-workflow-011CULcEAicDVQvDaiajKBRk. Next: User reviews and runs story-approved when satisfied with implementation.
 
 
 ---
