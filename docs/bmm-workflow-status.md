@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** dev-story (Story 0.3) - Complete (Ready for Review) ✅
-- **Overall Progress:** 83% (Story 0.3 complete with all ACs met; Story 0.4 ready for drafting; Story 1.6 paused; 9 of 23 stories complete, 41 points)
-- **Next Action:** Review Story 0.3 implementation, then draft Story 0.4
-- **Command to Run:** Review changes, then `create-story` for Story 0.4
-- **Agent to Load:** SM (bmad/bmm/agents/sm.md) to draft Story 0.4
-- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 waiting in TODO.
+- **Current Workflow:** story-context (Story 0.4) - Complete ✅
+- **Overall Progress:** 87% (Story 0.4 context generated; ready for implementation; Story 0.3 implementation ready for review; Story 1.6 paused; 9 of 23 stories complete, 41 points)
+- **Next Action:** Implement Story 0.4 using the generated context
+- **Command to Run:** Run 'dev-story' workflow to implement Story 0.4
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) to implement the story
+- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 context generated and ready for implementation.
 
 ---
 
@@ -73,7 +73,6 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
-| 0 | 5 | 0.5 | UX Instrumentation & Validation | story-0.5.md |
 | 2 | 1 | 2.1 | Flare Data Model and IndexedDB Schema | story-2.1.md |
 | 2 | 2 | 2.2 | Create New Flare from Body Map | story-2.2.md |
 | 2 | 3 | 2.3 | Active Flares Dashboard | story-2.3.md |
@@ -92,21 +91,27 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 17 stories
+**Total in backlog:** 16 stories
 
 #### TODO (Needs Drafting)
 
-- **Story ID:** 0.4
-- **Story Title:** Navigation Title & Layout Harmonization
-- **Story File:** `docs/stories/story-0.4.md`
+- **Story ID:** 0.5
+- **Story Title:** UX Instrumentation & Validation
+- **Story File:** `docs/stories/story-0.5.md`
 - **Status:** Not created (needs drafting)
-- **Action:** SM should run `create-story` workflow to draft this story using `docs/ui/ui-ux-revamp-blueprint.md`.
+- **Action:** SM should run `create-story` workflow to draft this story.
 
 **Paused Stories:**
 - **Story 1.6** (Body Map Accessibility) - Ready with context, resume after Epic 0 stories 0.1-0.5 complete
 
 #### IN PROGRESS (Approved for Development)
 
+- **Story ID:** 0.4
+- **Story Title:** Navigation Title & Layout Harmonization
+- **Story File:** `docs/stories/story-0.4.md`
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-0.4.xml` (not yet generated)
+- **Action:** SM should run `story-context` workflow to generate implementation context, then DEV agent runs `dev-story` to implement.
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
@@ -134,11 +139,32 @@
 
 ### Next Action Required
 
-**What to do next:** Implement Story 0.3 using the prepared context, then draft Story 0.4
+**What to do next:** Generate context for story 0.4, then implement it
 
-**Command to run:** `dev-story` for Story 0.3, followed by `create-story` for Story 0.4
+**Command to run:** Run 'story-context' workflow to generate implementation context (or skip to dev-story)
 
-**Agent to load:** DEV agent (bmad/bmm/agents/dev.md) for implementation, then SM agent (bmad/bmm/agents/sm.md) to draft the next story
+**Agent to load:** bmad/bmm/agents/sm.md (for story-context) OR bmad/bmm/agents/dev.md (for dev-story)
+
+---
+
+**✅ Story Context Generated Successfully, Steven!**
+
+**Story Details:**
+- Story ID: 0.4
+- Title: Navigation Title & Layout Harmonization
+- Context File: `docs/stories/story-context-0.4.xml`
+
+**Status file updated:**
+- Current step: story-context (Story 0.4) ✓
+- Progress: 87%
+
+**Next Steps:**
+
+1. Load DEV agent (bmad/bmm/agents/dev.md)
+2. Run `dev-story` workflow to implement the story
+3. The context file will provide comprehensive implementation guidance
+
+Check status anytime with: `workflow-status`
 
 ---
 
@@ -190,6 +216,9 @@
 - **2025-10-21:** Completed story-ready for Story 1.6 (Body Map Accessibility and Keyboard Navigation). Story marked Ready for development. Status updated from Draft → Ready in story file (docs/stories/story-1.6.md). Story remains IN PROGRESS (now approved for development). No queue changes (TODO empty, BACKLOG has 17 stories for Epic 2-4). Progress: 5 of 23 stories complete (61%), 21 points. Epic 1 status: 5/6 complete - Story 1.6 is the final story to complete Enhanced Body Map epic. Story includes 7 acceptance criteria for WCAG 2.1 Level AA compliance: tab navigation, keyboard selection, arrow key positioning, screen reader support, ARIA labels, keyboard shortcuts, focus indicators. Next: SM agent should run story-context workflow to generate implementation context, then DEV agent implements Story 1.6 to complete Epic 1.
 - **2025-10-21:** Completed story-context for Story 1.6 (Body Map Accessibility and Keyboard Navigation). Context file: docs/stories/story-context-1.6.xml. Compiled accessibility tasks, documentation, code references, constraints, and keyboard-focused test ideas. Story file updated with context reference. Status file advanced to story-context step. Progress: 62% overall. Next: DEV agent runs `*dev-story` for Story 1.6 to deliver keyboard and screen reader enhancements and close Epic 1.
 - **2025-10-21:** Decision: Pause flare tracking overhaul to prioritize UI/UX revamp per `docs/ui/ui-ux-revamp-blueprint.md`. Shift workflow focus to drafting and implementing navigation/dashboard stories before resuming Story 1.6 accessibility work.
+- **2025-10-22:** Completed create-story for Story 0.4 (Navigation Title & Layout Harmonization). Story file: docs/stories/story-0.4.md. Status: Draft (needs review via story-ready). Story focuses on validating shared navigation configuration harmonization across all components (NavLayout, TopBar, Sidebar, BottomTabs). Includes acceptance criteria for route metadata, title consistency, navigation visibility logic, and comprehensive testing. Next: Review and approve story via story-ready workflow.
+- **2025-10-22:** Completed story-ready for Story 0.4 (Navigation Title & Layout Harmonization). Story marked Ready for development. Moved from TODO → IN PROGRESS. Next story 0.5 moved from BACKLOG → TODO. Story 0.4 is now ready for context generation via story-context workflow, then implementation via dev-story workflow.
+- **2025-10-22:** Completed story-context for Story 0.4 (Navigation Title & Layout Harmonization). Context file: docs/stories/story-context-0.4.xml. Generated comprehensive implementation context including: navigation configuration analysis, existing component interfaces, testing standards, architectural constraints, and detailed test ideas mapped to acceptance criteria. Next: DEV agent should run dev-story to implement.
 - **2025-10-21:** Story 0.1 (Consolidate Track Navigation) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 0.2 moved from BACKLOG → TODO for drafting.
 - **2025-10-21:** Completed story-context for Story 0.1 (Consolidate Track Navigation). Context file: docs/stories/story-context-0.1.xml. Story remains IN PROGRESS (Ready). Next: DEV agent should run `*dev-story` using the new navigation context and blueprint references.
 - **2025-10-21:** Completed dev-story for Story 0.1 (Consolidate Track Navigation). All 7 tasks complete, all acceptance criteria met. Implementation: Created src/config/navigation.ts with Track/Analyze/Manage/Support pillar structure. Updated Sidebar.tsx and BottomTabs.tsx to consume getNavPillars("desktop") and getNavDestinations("mobile") respectively. Retired /more hub (redirects to /about). Updated NavLayout.tsx to derive page titles from getPageTitle(). Added 28 unit tests for navigation configuration helpers (all passing). Build verified with Next.js 15.5.4 (no TypeScript errors). Files created: navigation.ts config + 3 test files. Files modified: Sidebar.tsx, BottomTabs.tsx, NavLayout.tsx, more/page.tsx. All ACs satisfied: AC0.1 (pillar consistency across surfaces), AC0.2 (/more retired), AC0.3 (shared labels), AC0.4 (aria-labels updated). Story marked Ready for Review. Progress: 6 of 23 stories complete (67%), 26 points. Pushed to branch claude/follow-workflow-011CULcEAicDVQvDaiajKBRk. Next: User reviews and runs story-approved when satisfied with implementation.

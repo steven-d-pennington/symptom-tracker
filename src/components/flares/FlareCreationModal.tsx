@@ -75,9 +75,8 @@ export function FlareCreationModal({
   };
 
   const handleCoordinateMark = (regionId: string, coordinates: NormalizedCoordinates) => {
-    if (regionId === selectedRegion) {
-      setMarkedCoordinate(coordinates);
-    }
+    setSelectedRegion(regionId);
+    setMarkedCoordinate(coordinates);
   };
 
   const handleSave = async (addDetails: boolean = false) => {
