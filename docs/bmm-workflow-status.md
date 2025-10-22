@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 2.1) - Complete ✅
-- **Overall Progress:** 98% (Story 2.1 context generated; 12 of 23 stories complete, 56 points)
-- **Next Action:** Load DEV agent and run `dev-story` for Story 2.1 to implement the flare data model
-- **Command to Run:** Load DEV agent (bmad/bmm/agents/dev.md) and run `dev-story` for Story 2.1
-- **Agent to Load:** SM (bmad/bmm/agents/sm.md) for context, DEV (bmad/bmm/agents/dev.md) for implementation
-- **Note:** Epics 0 (UI/UX Revamp) and Epic 1 (Body Map) both 100% complete! 🎉
+- **Current Workflow:** dev-story (Story 2.1) - Complete ✅
+- **Overall Progress:** 100% (Story 2.1 implementation complete; 13 of 23 stories complete, 64 points)
+- **Next Action:** Begin Story 2.2 (Create New Flare from Body Map) - run `create-story` to draft
+- **Command to Run:** Load SM agent (bmad/bmm/agents/sm.md) and run `create-story` for Story 2.2
+- **Agent to Load:** SM (bmad/bmm/agents/sm.md) for story drafting
+- **Note:** Epics 0 (UI/UX Revamp) and Epic 1 (Body Map) both 100% complete! Story 2.1 foundation layer ready for flare lifecycle features! 🎉
 
 ---
 
@@ -97,20 +97,17 @@
 - **Story Title:** Create New Flare from Body Map
 - **Story File:** `docs/stories/story-2.2.md`
 - **Status:** Not created (needs drafting)
-- **Action:** SM should run `create-story` workflow to draft this story (after Story 2.1 approved).
+- **Action:** SM should run `create-story` workflow to draft this story.
 
 #### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 2.1
-- **Story Title:** Flare Data Model and IndexedDB Schema
-- **Story File:** `docs/stories/story-2.1.md`
-- **Story Status:** Ready for Development
-- **Action:** SM can run `story-context` workflow to generate implementation context, or DEV can run `dev-story` workflow to implement directly.
+- None (Story 2.1 complete! Ready to draft Story 2.2)
 
 #### DONE (Completed Stories)
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 2.1 | docs/stories/story-2.1.md | 2025-10-22 | 8 |
 | 1.6 | docs/stories/story-1.6.md | 2025-10-22 | 5 |
 | 0.5 | docs/stories/story-0.5.md | 2025-10-22 | 5 |
 | 0.4 | docs/stories/story-0.4.md | 2025-10-22 | 5 |
@@ -123,8 +120,8 @@
 | 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 12 stories
-**Total points completed:** 56 points
+**Total completed:** 13 stories
+**Total points completed:** 64 points
 
 ---
 
@@ -254,6 +251,8 @@ Check status anytime with: `workflow-status`
 - **2025-10-21:** Completed story-ready for Story 0.3 (Flares View Simplification). Story status set to Ready. Queue unchanged: Story 0.3 remains IN PROGRESS for DEV with context, Story 0.4 stays in TODO awaiting drafting.
 - **2025-10-22:** Completed dev-story for Story 0.3 (Flares View Simplification). All 5 tasks complete, all acceptance criteria met (AC0.3.1-AC0.3.4). Implementation: Cards-first layout with persistent preference via Dexie v16 migration, progressive body map guidance (FlaresMapIntro component with keyboard support), collapsible summary panel (FlaresSummaryPanel with ARIA live regions), and comprehensive accessibility improvements. Files modified: flares page, schema, db client, userRepository (4 files). Files created: 2 components + 3 test files (5 files). Testing: 35 tests added, FlaresSummaryPanel 100% pass rate. Build verified with Next.js 15.5.4. All ACs satisfied: AC0.3.1 (cards-first with CTA buttons and preference persistence), AC0.3.2 (progressive guidance with focus management and skip links), AC0.3.3 (collapsible panel with accessible announcements), AC0.3.4 (keyboard navigation and ARIA attributes). Story marked Ready for Review. Progress: 9 of 23 stories complete (83%), 41 points. Pushed to branch claude/execute-dev-story-011CUM5qgwQuhvTRFrj9huHF. Next: User reviews implementation, then SM agent drafts Story 0.4.
 - **2025-10-22:** Completed dev-story for Story 0.4 (Navigation Title & Layout Harmonization). All 5 tasks complete, all acceptance criteria met. Implementation: Verified existing shared navigation configuration from Story 0.1 is complete. Centralized navigation visibility logic by moving NO_NAV_ROUTES to shared config (src/config/navigation.ts) and adding shouldShowNavigation() helper function. Updated NavLayout to use centralized logic. Added comprehensive test coverage (44 passing tests) covering navigation visibility, title rendering, configuration completeness, and surface filtering. Enhanced JSDoc in TopBar, Sidebar, BottomTabs, and NavLayout to reference shared config as single source of truth. Files modified: navigation.ts (added NO_NAV_ROUTES + shouldShowNavigation), NavLayout.tsx (uses centralized logic, enhanced JSDoc), TopBar.tsx (JSDoc), Sidebar.tsx (JSDoc), BottomTabs.tsx (JSDoc), navigation.test.ts (added 16 new tests). Build verified with Next.js 15.5.4 - no TypeScript errors. All ACs satisfied: AC1 (complete route metadata verified), AC2 (titles update via getPageTitle from shared config), AC3 (navigation visibility centralized via shouldShowNavigation), AC4 (comprehensive tests verify Log/Dashboard titles across surfaces). Story marked Ready for Review. Progress: 10 of 23 stories complete (89%), 46 points. Pushed to branch claude/execute-story-workflow-011CUMRMERXE2DLYrAiV7ekT. Next: User reviews and runs story-approved when satisfied with implementation.
+- **2025-10-22:** Completed story-context for Story 2.1 (Flare Data Model and IndexedDB Schema). Context file: docs/stories/story-context-2.1.xml. Generated comprehensive implementation context including schema design, repository patterns, testing strategies, and all relevant code references. Next: DEV agent implements Story 2.1.
+- **2025-10-22:** Completed dev-story for Story 2.1 (Flare Data Model and IndexedDB Schema). All 4 major tasks complete, all 7 acceptance criteria met. Implementation: Created complete TypeScript type system with FlareStatus/FlareEventType/FlareTrend enums, FlareRecord/FlareEventRecord interfaces, and Zod validation schemas (src/types/flare.ts, src/types/index.ts). Extended Dexie schema from v17 to v18 with refactored flares table and new flareEvents table (src/lib/db/schema.ts, src/lib/db/client.ts). Added compound indexes: [userId+status], [userId+bodyRegionId], [userId+startDate] for flares; [flareId+timestamp], [userId+timestamp] for flareEvents. Implemented flareRepository with 7 core methods: createFlare, updateFlare, getFlareById, getActiveFlares, getResolvedFlares, addFlareEvent, getFlareHistory - all using atomic Dexie transactions with userId isolation (src/lib/repositories/flareRepository.ts, src/lib/repositories/index.ts). Comprehensive test suite: 37 tests covering all CRUD operations, compound index queries, schema migration, type validation, and offline-first persistence - 100% pass rate (src/lib/repositories/__tests__/flareRepository.test.ts). Added structuredClone polyfill to jest.setup.js for fake-indexeddb compatibility. Build verified with Next.js 15.5.4 - TypeScript compilation succeeds. Added backward compatibility stubs (getActiveFlaresWithTrend, getStats, etc.) for legacy UI components with deprecation warnings. Updated dashboard and flares pages to use new createFlare API. Story marked Done. Progress: 13 of 23 stories complete (100%), 64 points. Epic 2 (Flare Lifecycle Management) foundation complete. Pushed to branch claude/implement-story-2.1-011CUNUfEw8ckjt8sym9cUTm. Next: SM agent should draft Story 2.2 (Create New Flare from Body Map).
 
 ---
 
