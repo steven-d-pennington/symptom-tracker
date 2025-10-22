@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-10-21
+- **Last Updated:** 2025-10-22
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-ready (Story 0.3) - Complete ✅
-- **Overall Progress:** 78% (Story 0.3 approved for development with context ready; Story 0.4 queued; Story 1.6 paused; 8 of 23 stories complete, 36 points)
-- **Next Action:** Hand off Story 0.3 to DEV agent, then draft Story 0.4
-- **Command to Run:** `dev-story` for Story 0.3, then `create-story` for Story 0.4
-- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) for implementation, then SM (bmad/bmm/agents/sm.md) to draft the next story
-- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 now waiting in TODO after Story 0.3 drafting.
+- **Current Workflow:** dev-story (Story 0.3) - Complete (Ready for Review) ✅
+- **Overall Progress:** 83% (Story 0.3 complete with all ACs met; Story 0.4 ready for drafting; Story 1.6 paused; 9 of 23 stories complete, 41 points)
+- **Next Action:** Review Story 0.3 implementation, then draft Story 0.4
+- **Command to Run:** Review changes, then `create-story` for Story 0.4
+- **Agent to Load:** SM (bmad/bmm/agents/sm.md) to draft Story 0.4
+- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 waiting in TODO.
 
 ---
 
@@ -107,13 +107,6 @@
 
 #### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 0.3
-- **Story Title:** Flares View Simplification
-- **Story File:** `docs/stories/story-0.3.md`
-- **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-0.3.xml`
-- **Action:** DEV agent should run `dev-story` using the generated context to implement this story.
-
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
@@ -125,6 +118,7 @@
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 0.3 | docs/stories/story-0.3.md | 2025-10-22 | 5 |
 | 0.2 | docs/stories/story-0.2.md | 2025-10-21 | 5 |
 | 0.1 | docs/stories/story-0.1.md | 2025-10-21 | 5 |
 | 1.5 | docs/stories/story-1.5.md | 2025-10-20 | 5 |
@@ -133,8 +127,8 @@
 | 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 8 stories
-**Total points completed:** 36 points
+**Total completed:** 9 stories
+**Total points completed:** 41 points
 
 ---
 
@@ -208,6 +202,7 @@
 - **2025-10-21:** Completed create-story for Story 0.3 (Flares View Simplification). Story file: docs/stories/story-0.3.md. Status: Draft (needs story-ready approval). Story defines cards-first entry with persisted view preference, progressive body map guidance, collapsible summary panel, and accessibility requirements tied to Story 1.6 prep. Queue advanced: Story 0.3 now IN PROGRESS (draft ready for review); Story 0.4 (Navigation Title & Layout Harmonization) moved from BACKLOG → TODO. Next: SM agent runs `story-ready` for Story 0.3, then drafts Story 0.4.
 - **2025-10-21:** Completed story-context for Story 0.3 (Flares View Simplification). Context file: docs/stories/story-context-0.3.xml. Story status updated to ContextReadyDraft. Next: Run `story-ready` to approve, then hand off to DEV agent with the new context.
 - **2025-10-21:** Completed story-ready for Story 0.3 (Flares View Simplification). Story status set to Ready. Queue unchanged: Story 0.3 remains IN PROGRESS for DEV with context, Story 0.4 stays in TODO awaiting drafting.
+- **2025-10-22:** Completed dev-story for Story 0.3 (Flares View Simplification). All 5 tasks complete, all acceptance criteria met (AC0.3.1-AC0.3.4). Implementation: Cards-first layout with persistent preference via Dexie v16 migration, progressive body map guidance (FlaresMapIntro component with keyboard support), collapsible summary panel (FlaresSummaryPanel with ARIA live regions), and comprehensive accessibility improvements. Files modified: flares page, schema, db client, userRepository (4 files). Files created: 2 components + 3 test files (5 files). Testing: 35 tests added, FlaresSummaryPanel 100% pass rate. Build verified with Next.js 15.5.4. All ACs satisfied: AC0.3.1 (cards-first with CTA buttons and preference persistence), AC0.3.2 (progressive guidance with focus management and skip links), AC0.3.3 (collapsible panel with accessible announcements), AC0.3.4 (keyboard navigation and ARIA attributes). Story marked Ready for Review. Progress: 9 of 23 stories complete (83%), 41 points. Pushed to branch claude/execute-dev-story-011CUM5qgwQuhvTRFrj9huHF. Next: User reviews implementation, then SM agent drafts Story 0.4.
 
 ---
 
