@@ -82,19 +82,53 @@ export default function FlaresPage() {
     if (!userId) return;
 
     try {
-      const activeFlares = await flareRepository.getActiveFlaresWithTrend(userId);
-      setFlares(activeFlares);
+      // Story 2.1: Use new API - getActiveFlares + getFlareHistory
+      const flareRecords = await flareRepository.getActiveFlares(userId);
+
+      // Fetch event history for each flare and calculate trends
+      const flaresWithTrends = await Promise.all(
+        flareRecords.map(async (flare) => {
+          const events = await flareRepository.getFlareHistory(userId, flare.id);
+
+          // Calculate trend from event history
+          const severityEvents = events.filter(
+            e => e.severity !== undefined && (e.eventType === 'created' || e.eventType === 'severity_update')
+          ).sort((a, b) => a.timestamp - b.timestamp);
+
+          let trend: 'worsening' | 'stable' | 'improving' = 'stable';
+          if (severityEvents.length >= 2) {
+            const recent = severityEvents.slice(-2);
+            const change = recent[1].severity! - recent[0].severity!;
+            if (change > 0) trend = 'worsening';
+            else if (change < 0) trend = 'improving';
+          }
+
+          // Convert FlareRecord to ActiveFlare format
+          return {
+            id: flare.id,
+            userId: flare.userId,
+            symptomName: flare.bodyRegionId,
+            bodyRegions: [flare.bodyRegionId],
+            severity: flare.currentSeverity,
+            status: flare.status as ActiveFlare['status'],
+            startDate: new Date(flare.startDate),
+            trend,
+          } as ActiveFlare & { trend: 'worsening' | 'stable' | 'improving' };
+        })
+      );
+
+      setFlares(flaresWithTrends);
 
       // Calculate stats
-      const worsening = activeFlares.filter(f => f.trend === "worsening").length;
-      const improving = activeFlares.filter(f => f.trend === "improving").length;
-      const stable = activeFlares.filter(f => f.trend === "stable").length;
-      const avgSeverity = activeFlares.length > 0
-        ? activeFlares.reduce((sum, f) => sum + f.severity, 0) / activeFlares.length
+      const worsening = flaresWithTrends.filter(f => f.trend === "worsening").length;
+      const improving = flaresWithTrends.filter(f => f.trend === "improving").length;
+      const stable = flaresWithTrends.filter(f => f.trend === "stable").length;
+      const avgSeverity = flaresWithTrends.length > 0
+        ? flaresWithTrends.reduce((sum, f) => sum + f.severity, 0) / flaresWithTrends.length
         : 0;
 
       setStats({
-        total: activeFlares.length,
+        total: flaresWithTrends.length,
         worsening,
         improving,
         stable,

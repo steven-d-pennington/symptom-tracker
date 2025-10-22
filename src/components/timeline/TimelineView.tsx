@@ -68,12 +68,46 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       endOfDay.setHours(23, 59, 59, 999);
 
       // Query all event types in parallel
-      const [medicationEvents, triggerEvents, activeFlares, foodEvents] = await Promise.all([
+      const [medicationEvents, triggerEvents, flareRecords, foodEvents] = await Promise.all([
         medicationEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime()),
         triggerEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime()),
-        flareRepository.getActiveFlaresWithTrend(userId),
+        flareRepository.getActiveFlares(userId), // Story 2.1: Use new API
         foodEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime())
       ]);
+
+      // Story 2.1: Convert flareRecords to ActiveFlare format with trends
+      const activeFlares = await Promise.all(
+        flareRecords.map(async (flare) => {
+          const events = await flareRepository.getFlareHistory(userId, flare.id);
+
+          // Calculate trend from event history
+          const severityEvents = events.filter(
+            e => e.severity !== undefined && (e.eventType === 'created' || e.eventType === 'severity_update')
+          ).sort((a, b) => a.timestamp - b.timestamp);
+
+          let trend: 'worsening' | 'stable' | 'improving' = 'stable';
+          if (severityEvents.length >= 2) {
+            const recent = severityEvents.slice(-2);
+            const change = recent[1].severity! - recent[0].severity!;
+            if (change > 0) trend = 'worsening';
+            else if (change < 0) trend = 'improving';
+          }
+
+          // Convert to ActiveFlare format
+          return {
+            id: flare.id,
+            userId: flare.userId,
+            symptomName: flare.bodyRegionId,
+            bodyRegions: [flare.bodyRegionId],
+            severity: flare.currentSeverity,
+            status: flare.status,
+            startDate: new Date(flare.startDate),
+            endDate: flare.endDate ? new Date(flare.endDate) : undefined,
+            notes: undefined, // Notes are in event history now
+            trend,
+          };
+        })
+      );
 
       const medicationIds = Array.from(new Set(medicationEvents.map(event => event.medicationId)));
       const triggerIds = Array.from(new Set(triggerEvents.map(event => event.triggerId)));

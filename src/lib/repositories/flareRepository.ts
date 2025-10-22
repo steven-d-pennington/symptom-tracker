@@ -238,6 +238,38 @@ export async function getFlareHistory(
 }
 
 /**
+ * Deletes a flare and all associated events.
+ * Enforces user isolation.
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param flareId - UUID of flare to delete
+ * @returns Promise resolving when deletion is complete
+ * @throws Error if flare not found or userId mismatch
+ */
+export async function deleteFlare(
+  userId: string,
+  flareId: string
+): Promise<void> {
+  // Verify flare exists and belongs to user
+  const flare = await db.flares.get(flareId);
+  if (!flare) {
+    throw new Error(`Flare not found: ${flareId}`);
+  }
+  if (flare.userId !== userId) {
+    throw new Error(`Access denied: Flare ${flareId} does not belong to user ${userId}`);
+  }
+
+  // Use transaction to delete flare and all associated events atomically
+  await db.transaction("rw", [db.flares, db.flareEvents], async () => {
+    // Delete all events associated with this flare
+    await db.flareEvents.where("flareId").equals(flareId).delete();
+
+    // Delete the flare itself
+    await db.flares.delete(flareId);
+  });
+}
+
+/**
  * DEPRECATED: Temporary backward compatibility functions for old UI components.
  * These will be removed once Stories 2.2-2.8 update the UI to use new schema.
  */
@@ -310,6 +342,7 @@ export const flareRepository = {
   getResolvedFlares,
   addFlareEvent,
   getFlareHistory,
+  deleteFlare,
   // Deprecated backward compatibility - will be removed in future stories
   getActiveFlaresWithTrend,
   getStats,

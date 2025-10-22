@@ -157,6 +157,7 @@ function DashboardContent() {
     bodyRegionId: string;
     severity: number;
     notes?: string;
+    coordinates?: { regionId: string; x: number; y: number };
   }) => {
     if (!userId) return;
 
@@ -165,6 +166,7 @@ function DashboardContent() {
       bodyRegionId: flareData.bodyRegionId,
       initialSeverity: flareData.severity,
       currentSeverity: flareData.severity,
+      coordinates: flareData.coordinates,
     });
 
     // Refresh the dashboard and close modal

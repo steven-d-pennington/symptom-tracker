@@ -3,19 +3,47 @@
 import { useState, useEffect } from "react";
 import { flareRepository } from "@/lib/repositories/flareRepository";
 import { ActiveFlare } from "@/lib/types/flare";
+import { FlareRecord, FlareEventRecord } from "@/lib/db/schema";
 import { ArrowUp, ArrowRight, ArrowDown, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { FlareUpdateModal, FlareUpdate } from "./FlareUpdateModal";
 
 type FlareWithTrend = ActiveFlare & { trend: "worsening" | "stable" | "improving" };
 type SortOption = "severity" | "recency";
+type FlareTrend = "worsening" | "stable" | "improving";
+
+/**
+ * Calculate trend based on flare event history
+ * Compares recent severity changes to determine if flare is improving/worsening/stable
+ */
+function calculateTrend(flare: FlareRecord, events: FlareEventRecord[]): FlareTrend {
+  // Filter to severity-related events only
+  const severityEvents = events.filter(
+    e => e.severity !== undefined && (e.eventType === 'created' || e.eventType === 'severity_update')
+  ).sort((a, b) => a.timestamp - b.timestamp); // Chronological order
+
+  if (severityEvents.length < 2) {
+    return 'stable'; // Not enough data to determine trend
+  }
+
+  // Compare last 2 severity values
+  const recent = severityEvents.slice(-2);
+  const previousSeverity = recent[0].severity!;
+  const currentSeverity = recent[1].severity!;
+
+  const change = currentSeverity - previousSeverity;
+
+  if (change > 0) return 'worsening'; // Severity increased
+  if (change < 0) return 'improving'; // Severity decreased
+  return 'stable'; // No change
+}
 
 interface ActiveFlareCardsProps {
   userId: string;
   onUpdateFlare?: (flareId: string) => void;
   externalFlares?: FlareWithTrend[];
   filterByRegion?: string | null;
-  repository?: Pick<typeof flareRepository, "getActiveFlaresWithTrend" | "resolve" | "updateSeverity" | "addIntervention" | "update">;
+  repository?: typeof flareRepository;
 }
 
 export function ActiveFlareCards({
@@ -37,8 +65,31 @@ export function ActiveFlareCards({
     try {
       setLoading(true);
       setError(null);
-      const activeFlares = await repository.getActiveFlaresWithTrend(userId);
-      setFlares(activeFlares);
+
+      // Story 2.1: Use new API - getActiveFlares + getFlareHistory
+      const flareRecords = await repository.getActiveFlares(userId);
+
+      // Fetch event history for each flare and calculate trends
+      const flaresWithTrends = await Promise.all(
+        flareRecords.map(async (flare) => {
+          const events = await repository.getFlareHistory(userId, flare.id);
+          const trend = calculateTrend(flare, events);
+
+          // Convert FlareRecord to ActiveFlare format for backward compatibility
+          return {
+            id: flare.id,
+            userId: flare.userId,
+            symptomName: flare.bodyRegionId, // Legacy field - bodyRegionId serves as symptomName
+            bodyRegions: [flare.bodyRegionId], // Wrap in array for legacy compatibility
+            severity: flare.currentSeverity,
+            status: flare.status as ActiveFlare['status'],
+            startDate: new Date(flare.startDate),
+            trend,
+          } as ActiveFlare & { trend: FlareTrend };
+        })
+      );
+
+      setFlares(flaresWithTrends);
     } catch (err) {
       console.error("Failed to load active flares:", err);
       setError("Failed to load active flares. Please try again.");

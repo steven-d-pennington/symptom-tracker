@@ -318,6 +318,7 @@ export function NewFlareDialog({
                     onCoordinateCapture={handleCoordinateCapture}
                     coordinateCursorActive={formData.bodyRegions.length > 0}
                     coordinateMarker={coordinateMarkerNodes}
+                    userId={userId}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">

@@ -136,9 +136,7 @@ export const flareRecordSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
   startDate: z.number().positive("Start date must be a positive timestamp"),
   endDate: z.number().positive("End date must be a positive timestamp").optional(),
-  status: z.nativeEnum(FlareStatus, {
-    errorMap: () => ({ message: "Status must be active, improving, worsening, or resolved" }),
-  }),
+  status: z.nativeEnum(FlareStatus),
   bodyRegionId: z.string().min(1, "Body region ID is required"),
   coordinates: z
     .object({
@@ -167,11 +165,7 @@ export const flareRecordSchema = z.object({
 export const flareEventRecordSchema = z.object({
   id: z.string().uuid("ID must be a valid UUID"),
   flareId: z.string().uuid("Flare ID must be a valid UUID"),
-  eventType: z.nativeEnum(FlareEventType, {
-    errorMap: () => ({
-      message: "Event type must be created, severity_update, trend_change, intervention, or resolved",
-    }),
-  }),
+  eventType: z.nativeEnum(FlareEventType),
   timestamp: z.number().positive("Timestamp must be a positive value"),
   severity: z
     .number()
@@ -179,11 +173,7 @@ export const flareEventRecordSchema = z.object({
     .min(1, "Severity must be at least 1")
     .max(10, "Severity must be at most 10")
     .optional(),
-  trend: z
-    .nativeEnum(FlareTrend, {
-      errorMap: () => ({ message: "Trend must be improving, stable, or worsening" }),
-    })
-    .optional(),
+  trend: z.nativeEnum(FlareTrend).optional(),
   notes: z.string().optional(),
   interventions: z.string().optional(),
   userId: z.string().min(1, "User ID is required"),

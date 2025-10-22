@@ -254,7 +254,10 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
         case 'flare-updated':
         case 'flare-resolved':
           // Delete the entire flare
-          await flareRepository.delete(event.eventRef.id);
+          if (!userId) {
+            throw new Error('User not found');
+          }
+          await flareRepository.deleteFlare(userId, event.eventRef.id);
           break;
 
         case 'food':
