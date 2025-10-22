@@ -12,11 +12,11 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** dev-story (Story 0.4) - Complete ✅
-- **Overall Progress:** 89% (Story 0.4 implementation complete; Story 0.3 ready for review; Story 1.6 paused; 10 of 23 stories complete, 46 points)
-- **Next Action:** Review Story 0.4 implementation and approve
-- **Command to Run:** Run 'story-approved' to mark Story 0.4 complete and advance queue
-- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) or user approval
+- **Current Workflow:** story-context (Story 0.5) - Complete ✅
+- **Overall Progress:** 94% (Story 0.5 context generated; Story 0.4 approved and done; Story 1.6 paused; 11 of 23 stories complete, 51 points)
+- **Next Action:** Implement Story 0.5, then continue Epic 2 drafting
+- **Command to Run:** Load DEV agent and run 'dev-story' for Story 0.5 (UX Instrumentation &amp; Validation)
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md)
 - **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 implementation complete and ready for review.
 
 ---
@@ -73,7 +73,6 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
-| 2 | 1 | 2.1 | Flare Data Model and IndexedDB Schema | story-2.1.md |
 | 2 | 2 | 2.2 | Create New Flare from Body Map | story-2.2.md |
 | 2 | 3 | 2.3 | Active Flares Dashboard | story-2.3.md |
 | 2 | 4 | 2.4 | Update Flare Status (Severity and Trend) | story-2.4.md |
@@ -91,13 +90,13 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 16 stories
+**Total in backlog:** 15 stories
 
 #### TODO (Needs Drafting)
 
-- **Story ID:** 0.5
-- **Story Title:** UX Instrumentation & Validation
-- **Story File:** `docs/stories/story-0.5.md`
+- **Story ID:** 2.1
+- **Story Title:** Flare Data Model and IndexedDB Schema
+- **Story File:** `docs/stories/story-2.1.md`
 - **Status:** Not created (needs drafting)
 - **Action:** SM should run `create-story` workflow to draft this story.
 
@@ -106,6 +105,12 @@
 
 #### IN PROGRESS (Approved for Development)
 
+- **Story ID:** 0.5
+- **Story Title:** UX Instrumentation & Validation
+- **Story File:** `docs/stories/story-0.5.md`
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-0.5.xml`
+- **Action:** DEV should run `dev-story` workflow to implement this story using the new context.
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
@@ -134,30 +139,29 @@
 
 ### Next Action Required
 
-**What to do next:** Generate context for story 0.4, then implement it
+**What to do next:** Implement story 0.5 with the DEV workflow
 
-**Command to run:** Run 'story-context' workflow to generate implementation context (or skip to dev-story)
+**Command to run:** Load DEV agent and run 'dev-story' for Story 0.5 (UX Instrumentation &amp; Validation)
 
-**Agent to load:** bmad/bmm/agents/sm.md (for story-context) OR bmad/bmm/agents/dev.md (for dev-story)
+**Agent to load:** bmad/bmm/agents/dev.md
 
 ---
 
 **✅ Story Context Generated Successfully, Steven!**
 
 **Story Details:**
-- Story ID: 0.4
-- Title: Navigation Title & Layout Harmonization
-- Context File: `docs/stories/story-context-0.4.xml`
+- Story ID: 0.5
+- Title: UX Instrumentation &amp; Validation
+- Context File: `docs/stories/story-context-0.5.xml`
 
 **Status file updated:**
-- Current step: story-context (Story 0.4) ✓
-- Progress: 87%
+- Current step: story-context (Story 0.5) ✓
+- Progress: 94%
 
 **Next Steps:**
-
 1. Load DEV agent (bmad/bmm/agents/dev.md)
 2. Run `dev-story` workflow to implement the story
-3. The context file will provide comprehensive implementation guidance
+3. Leverage the new context file for architecture, code, and testing guidance
 
 Check status anytime with: `workflow-status`
 
@@ -182,6 +186,8 @@ Check status anytime with: `workflow-status`
 - **2025-10-18:** Started new workflow status for Flare Tracking & Body Map Enhancements epic. Previous epics (Food Journal + Correlation Analysis) archived as complete.
 - **2025-10-18:** Completed PRD workflow. Delivered PRD.md with 14 functional requirements, 3 non-functional requirements, user journey, and UX/UI vision. Created epics.md with full story breakdown: 23 stories total across 4 epics. Key requirements: groin regions on body map, zoom/pan for precision tracking, persistent flare entities with lifecycle tracking (onset → progression → resolution), problem area analytics, and photo documentation.
 - **2025-10-18:** Completed solution-architecture workflow. Generated solution-architecture.md with complete technical design. Key decisions: Single new dependency (react-zoom-pan-pinch@3.6.1), minimal schema changes (FlareRecord coordinates link, groin regions enum), no global state management, analytics calculated on-demand. Cohesion check passed at 98% readiness. Skipped per-epic tech specs (Level 2 optimization). Populated story backlog with 23 stories across 4 epics. Phase 3 (Solutioning) complete. Ready for Phase 4 (Implementation) - SM to draft Story 1.1.
+- **2025-10-22:** Story 0.5 (UX Instrumentation & Validation) approved via story-ready workflow. Status moved to Ready, context generation recommended next.
+- **2025-10-22:** Story 0.5 (UX Instrumentation & Validation) story-context completed. Context saved to docs/stories/story-context-0.5.xml; next workflow: dev-story.
 - **2025-10-18:** Completed create-story for Story 1.1 (Add Groin Regions to Body Map SVG). Story file: docs/stories/story-1.1.md. Status: Draft (needs review via story-ready). Next: Review and approve story. Story includes 6 acceptance criteria, detailed task breakdown with 5 major tasks and 19 subtasks, comprehensive dev notes with architecture context, file modification list (3 files to modify, 3 test files to create), and risk mitigation strategies. Story is foundational for Epic 1 - all subsequent body map precision features build on this.
 - **2025-10-18:** Completed story-ready for Story 1.1 (Add Groin Regions to Body Map SVG). Story marked Ready for development. Moved from TODO → READY FOR DEVELOPMENT. Next story 1.2 (Implement Zoom Controls for Body Map) moved from BACKLOG → TODO. Story 1.1 is now ready for context generation via story-context workflow, then implementation via dev-story workflow.
 - **2025-10-18:** Completed story-context for Story 1.1 (Add Groin Regions to Body Map SVG). Context file: docs/stories/story-context-1.1.xml. Generated comprehensive implementation context including: existing body map infrastructure analysis (124 code references found), current groin region implementation (single region needs split into 3), SVG path coordinates, BodyRegion interface, FrontBody component patterns, dependencies (React 19.1.0, Next.js 15.5.4, TypeScript 5.x), testing standards (Jest 30.2.0, React Testing Library 16.3.0), and 7 test ideas mapped to acceptance criteria. Context includes knowledge from memory about brownfield architecture patterns. Next: DEV agent should run dev-story to implement.
@@ -214,6 +220,10 @@ Check status anytime with: `workflow-status`
 - **2025-10-22:** Completed create-story for Story 0.4 (Navigation Title & Layout Harmonization). Story file: docs/stories/story-0.4.md. Status: Draft (needs review via story-ready). Story focuses on validating shared navigation configuration harmonization across all components (NavLayout, TopBar, Sidebar, BottomTabs). Includes acceptance criteria for route metadata, title consistency, navigation visibility logic, and comprehensive testing. Next: Review and approve story via story-ready workflow.
 - **2025-10-22:** Completed story-ready for Story 0.4 (Navigation Title & Layout Harmonization). Story marked Ready for development. Moved from TODO → IN PROGRESS. Next story 0.5 moved from BACKLOG → TODO. Story 0.4 is now ready for context generation via story-context workflow, then implementation via dev-story workflow.
 - **2025-10-22:** Completed story-context for Story 0.4 (Navigation Title & Layout Harmonization). Context file: docs/stories/story-context-0.4.xml. Generated comprehensive implementation context including: navigation configuration analysis, existing component interfaces, testing standards, architectural constraints, and detailed test ideas mapped to acceptance criteria. Next: DEV agent should run dev-story to implement.
+- **2025-10-22:** Completed story-approved for Story 0.4 (Navigation Title & Layout Harmonization). Story approved and marked done by DEV agent. Moved from IN PROGRESS → DONE. Story 0.5 moved from TODO → IN PROGRESS. Story 2.1 moved from BACKLOG → TODO. Progress: 11 of 23 stories complete (91%), 51 points.
+- **2025-10-22:** Completed create-story for Story 0.5 (UX Instrumentation & Validation). Story file: docs/stories/story-0.5.md. Status: Draft (needs review via story-ready). Story introduces privacy-aware UX instrumentation hooks, reproducible walkthrough scripts, documentation updates, and baseline reporting tasks to validate the UI revamp. Next: SM agent runs `story-ready` to approve Story 0.5, then queues `story-context` for implementation handoff.
+- **2025-10-22:** Completed story-ready for Story 0.5 (UX Instrumentation & Validation). Story marked Ready for development. Status updated in story file (docs/stories/story-0.5.md). Story moved to IN PROGRESS, Story 2.1 remains in TODO. Progress updated to 93%. Recommended next step: run `story-context` to prepare implementation guidance.
+- **2025-10-22:** Completed story-context for Story 0.5 (UX Instrumentation & Validation). Context file: docs/stories/story-context-0.5.xml. Compiled success metrics, privacy constraints, Dexie migration requirements, and instrumentation touchpoints across dashboard quick actions, navigation surfaces, and privacy controls. Story file updated with context reference. Next: DEV agent runs `dev-story` to implement instrumentation and validation workflow.
 - **2025-10-21:** Story 0.1 (Consolidate Track Navigation) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 0.2 moved from BACKLOG → TODO for drafting.
 - **2025-10-21:** Completed story-context for Story 0.1 (Consolidate Track Navigation). Context file: docs/stories/story-context-0.1.xml. Story remains IN PROGRESS (Ready). Next: DEV agent should run `*dev-story` using the new navigation context and blueprint references.
 - **2025-10-21:** Completed dev-story for Story 0.1 (Consolidate Track Navigation). All 7 tasks complete, all acceptance criteria met. Implementation: Created src/config/navigation.ts with Track/Analyze/Manage/Support pillar structure. Updated Sidebar.tsx and BottomTabs.tsx to consume getNavPillars("desktop") and getNavDestinations("mobile") respectively. Retired /more hub (redirects to /about). Updated NavLayout.tsx to derive page titles from getPageTitle(). Added 28 unit tests for navigation configuration helpers (all passing). Build verified with Next.js 15.5.4 (no TypeScript errors). Files created: navigation.ts config + 3 test files. Files modified: Sidebar.tsx, BottomTabs.tsx, NavLayout.tsx, more/page.tsx. All ACs satisfied: AC0.1 (pillar consistency across surfaces), AC0.2 (/more retired), AC0.3 (shared labels), AC0.4 (aria-labels updated). Story marked Ready for Review. Progress: 6 of 23 stories complete (67%), 26 points. Pushed to branch claude/follow-workflow-011CULcEAicDVQvDaiajKBRk. Next: User reviews and runs story-approved when satisfied with implementation.

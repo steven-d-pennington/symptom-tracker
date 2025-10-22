@@ -1,6 +1,6 @@
 # Story 0.4: Navigation Title & Layout Harmonization
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
@@ -81,6 +81,11 @@ Amp
 ### Debug Log References
 
 Implementation completed all tasks successfully. All navigation configuration verified as complete with proper metadata, pillar ordering, and surface visibility. Components properly consume shared config via helper functions. Navigation visibility logic centralized in shared config. Comprehensive test coverage added (44 tests passing). Documentation updated with JSDoc references to shared config. Build verified with no TypeScript errors.
+
+### Completion Notes
+
+**Completed:** 2025-10-22
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing, deployed
 
 ### Completion Notes List
 

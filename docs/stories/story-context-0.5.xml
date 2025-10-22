@@ -1,0 +1,258 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>0</epicId>
+    <storyId>5</storyId>
+    <title>UX Instrumentation &amp; Validation</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-22</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-0.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>product owner validating the redesign</asA>
+    <iWant>scripts and basic instrumentation to measure success criteria</iWant>
+    <soThat>I can confirm the revamp improved usability before resuming flare implementation</soThat>
+    <tasks>- Task 1: Author reproducible UX validation scripts
+      - Task 2: Extend data layer for UX telemetry
+      - Task 3: Wire instrumentation into navigation surfaces
+      - Task 4: Document instrumentation workflow
+      - Task 5: Capture baseline results and update status</tasks>
+  </story>
+
+  <acceptanceCriteria>1. AC0.5.1 — UX walkthrough scripts captured with targets (<=30s to log a flare, <=3 hops to reach Analytics) and stored alongside the blueprint.
+2. AC0.5.2 — Privacy-aware navigation instrumentation implemented, persisting local UX events only when analyticsOptIn is true.
+3. AC0.5.3 — Documentation (blueprint or README) updated with instructions for running validation and interpreting results.
+4. AC0.5.4 — Baseline timings and open risks recorded in docs/bmm-workflow-status.md after executing the scripts once.</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 0.5: UX Instrumentation &amp; Validation</section>
+        <snippet>Provides the user story, acceptance criteria, and prerequisites for validating the UX revamp before resuming flare features.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ui/ui-ux-revamp-blueprint.md</path>
+        <title>UI/UX Revamp Blueprint</title>
+        <section>5.3 Success Metrics</section>
+        <snippet>Defines target timings and navigation discovery goals that the instrumentation must measure (<=30s to log a flare, <=3 steps to reach Analytics, Manage Data discoverability).</snippet>
+      </doc>
+      <doc>
+        <path>docs/ui/ui-ux-revamp-blueprint.md</path>
+        <title>UI/UX Revamp Blueprint</title>
+        <section>5.4 Measurement Ideas</section>
+        <snippet>Calls for instrumenting navigation events and maintaining manual walkthrough scripts with step counts and timing for ongoing validation.</snippet>
+      </doc>
+      <doc>
+        <path>README.md</path>
+        <title>Project Overview</title>
+        <section>Privacy &amp; Trust Commitments</section>
+        <snippet>Highlights the promise of no tracking, no telemetry, and no third-party scripts—instrumentation must remain local and privacy-preserving.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Monitoring &amp; Observability</section>
+        <snippet>Reaffirms the privacy-first stance with no external analytics, reinforcing that UX telemetry must be stored locally via Dexie.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/app/(protected)/dashboard/page.tsx</path>
+        <kind>function</kind>
+        <symbol>handleLogFlare / handleLogMedication / handleLogSymptom / handleLogTrigger / handleLogFood</symbol>
+        <reason>Route-based quick action handlers that should emit UX events when users initiate logging flows.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/quick-log/QuickLogButtons.tsx</path>
+        <kind>component</kind>
+        <symbol>QuickLogButtons</symbol>
+        <reason>Quick action button grid whose tap/click events need instrumentation and accessibility-preserving logging.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/onboarding/components/PrivacyStep.tsx</path>
+        <kind>component</kind>
+        <symbol>PrivacyStep</symbol>
+        <reason>Captures the analyticsOptIn preference that must gate all telemetry writes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/userRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>updatePreferences</symbol>
+        <reason>Repository method used to persist user privacy settings; future UX event repository should align with this pattern.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>interface</kind>
+        <symbol>PrivacySettings / UserPreferences</symbol>
+        <reason>Defines analyticsOptIn on the PrivacySettings interface—a required flag for any instrumentation flow.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>version(16)</symbol>
+        <reason>Latest Dexie migration baseline; adding UX events will require bumping to version 17 with appropriate stores and indexes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/privacy/page.tsx</path>
+        <kind>page</kind>
+        <symbol>Privacy Overview</symbol>
+        <reason>Communicates the no-analytics guarantee that instrumentation must respect; useful for linking documentation updates.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/NavLayout.tsx</path>
+        <kind>component</kind>
+        <symbol>NavLayout</symbol>
+        <reason>Central navigation surface where instrumentation can observe pillar switches and route transitions.</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>configuration</kind>
+        <symbol>getNavDestinations / getNavPillars</symbol>
+        <reason>Shared navigation metadata; instrumentation should use this as the source of truth when emitting event detail payloads.</reason>
+      </artifact>
+      <artifact>
+        <path>jest.setup.js</path>
+        <kind>test setup</kind>
+        <symbol>fake-indexeddb bootstrap</symbol>
+        <reason>Provides IndexedDB mocks (fake-indexeddb) needed to test Dexie-backed UX event persistence.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>react</package>
+        <version>19.1.0</version>
+        <reason>Core UI framework for instrumentation hooks and components.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>next</package>
+        <version>15.5.4</version>
+        <reason>App Router environment providing route-based quick actions that instrumentation must observe.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>dexie</package>
+        <version>4.2.0</version>
+        <reason>IndexedDB wrapper used for all local-first persistence; the UX events table should extend this schema.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>fake-indexeddb</package>
+        <version>6.2.4</version>
+        <reason>Testing dependency already wired via jest.setup.js to simulate IndexedDB when verifying UX telemetry writes.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>@testing-library/react</package>
+        <version>16.3.0</version>
+        <reason>Primary UI testing library; will validate instrumented interactions and accessibility affordances.</reason>
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <path>README.md</path>
+      <description>Maintain the no-tracking commitment—UX telemetry must remain local-only with explicit opt-in.</description>
+    </constraint>
+    <constraint>
+      <path>src/lib/db/schema.ts</path>
+      <description>Respect analyticsOptIn on PrivacySettings; events must not be persisted for users who decline analytics.</description>
+    </constraint>
+    <constraint>
+      <path>src/lib/db/client.ts</path>
+      <description>Dexie migrations must increment beyond version 16 and preserve backwards compatibility for existing stores.</description>
+    </constraint>
+    <constraint>
+      <path>docs/ui/ui-ux-revamp-blueprint.md</path>
+      <description>Walkthrough scripts must measure the blueprint&apos;s defined success metrics (<=30s to log a flare, <=3 navigation steps to Analytics).</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>PrivacySettings</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface PrivacySettings {
+  dataStorage: "local" | "encrypted-local";
+  analyticsOptIn: boolean;
+  crashReportsOptIn: boolean;
+}</signature>
+      <path>src/lib/db/schema.ts</path>
+      <reason>Existing interface governing analyticsOptIn; UX instrumentation should read this to gate event persistence.</reason>
+    </interface>
+    <interface>
+      <name>QuickLogButtonsProps</name>
+      <kind>React component props</kind>
+      <signature>interface QuickLogButtonsProps {
+  onLogFlare: () =&gt; void;
+  onLogMedication: () =&gt; void;
+  onLogSymptom: () =&gt; void;
+  onLogTrigger: () =&gt; void;
+  onLogFood: () =&gt; void;
+  disabled?: boolean;
+  loading?: boolean;
+}</signature>
+      <path>src/components/quick-log/QuickLogButtons.tsx</path>
+      <reason>Instrumentation should integrate with the existing callback props without breaking accessibility or loading states.</reason>
+    </interface>
+    <interface>
+      <name>UxEventRecord (proposed)</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface UxEventRecord {
+  id?: string;
+  userId: string;
+  eventType: string;
+  target: string;
+  metadataJson: string;
+  createdAt: number;
+}</signature>
+      <path>src/lib/db/schema.ts (to add)</path>
+      <reason>Proposed Dexie record shape for storing UX instrumentation events with compound indexes on userId and eventType.</reason>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use Jest with React Testing Library and fake-indexeddb to validate Dexie-backed UX event persistence, ensuring analyticsOptIn gating and accessibility expectations remain intact.</standards>
+    <locations>jest.setup.js - IndexedDB mocks for Dexie tests
+src/lib/repositories/__tests__/ - Repository unit tests (add uxEventRepository.test.ts)
+src/components/quick-log/__tests__/ - Quick action component tests for instrumentation hooks
+src/components/navigation/__tests__/ - Navigation surface tests covering pillar switch telemetry</locations>
+    <ideas>
+      <idea>
+        <id>AC0.5.1</id>
+        <description>Execute walkthrough scripts in a scripted test (or manual checklist) capturing elapsed time <=30s for logging a flare and <=3 navigational steps to Analytics.</description>
+        <type>manual</type>
+      </idea>
+      <idea>
+        <id>AC0.5.2</id>
+        <description>Repository test verifying recordEvent writes UX events when analyticsOptIn is true and skips persistence when false.</description>
+        <type>unit</type>
+      </idea>
+      <idea>
+        <id>AC0.5.2</id>
+        <description>Component test asserting QuickLogButtons triggers recordUxEvent exactly once per click and that payloads include destination metadata.</description>
+        <type>component</type>
+      </idea>
+      <idea>
+        <id>AC0.5.2</id>
+        <description>Navigation integration test confirming pillar switches invoke instrumentation hooks with the correct href and pillar identifiers.</description>
+        <type>integration</type>
+      </idea>
+      <idea>
+        <id>AC0.5.3</id>
+        <description>Docs regression test (lint or snapshot) ensuring README or blueprint updates mention validation scripts and opt-in requirements.</description>
+        <type>documentation</type>
+      </idea>
+      <idea>
+        <id>AC0.5.4</id>
+        <description>Workflow-level test/checklist verifying baseline results are appended to docs/bmm-workflow-status.md after running the scripts.</description>
+        <type>manual</type>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>
