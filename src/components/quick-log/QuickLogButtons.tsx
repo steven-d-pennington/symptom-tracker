@@ -1,8 +1,9 @@
 "use client";
 
-import { type ElementType } from "react";
+import { type ElementType, useCallback } from "react";
 import { Utensils } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
 
 interface QuickLogButtonsProps {
   onLogFlare: () => void;
@@ -12,6 +13,8 @@ interface QuickLogButtonsProps {
   onLogFood: () => void;
   disabled?: boolean;
   loading?: boolean;
+  instrumentationContext?: string;
+  disableInstrumentation?: boolean;
 }
 
 interface QuickLogButtonConfig {
@@ -32,8 +35,11 @@ export function QuickLogButtons({
   onLogFood,
   disabled = false,
   loading = false,
+  instrumentationContext = "quick-actions.card",
+  disableInstrumentation = false,
 }: QuickLogButtonsProps) {
   const isDisabled = disabled || loading;
+  const { recordUxEvent } = useUxInstrumentation();
 
   const buttons: QuickLogButtonConfig[] = [
     {
@@ -78,6 +84,27 @@ export function QuickLogButtons({
     },
   ];
 
+  const handleButtonClick = useCallback(
+    (config: QuickLogButtonConfig) => () => {
+      if (isDisabled) {
+        return;
+      }
+
+      if (!disableInstrumentation) {
+        void recordUxEvent(`quickAction.${config.id}`, {
+          metadata: {
+            context: instrumentationContext,
+            label: config.label,
+            ariaLabel: config.ariaLabel,
+          },
+        });
+      }
+
+      config.onClick();
+    },
+    [disableInstrumentation, instrumentationContext, isDisabled, recordUxEvent],
+  );
+
   return (
     <section
       className="w-full"
@@ -90,7 +117,7 @@ export function QuickLogButtons({
           <button
             key={button.id}
             type="button"
-            onClick={button.onClick}
+            onClick={handleButtonClick(button)}
             disabled={isDisabled}
             aria-label={button.ariaLabel}
             className={cn(

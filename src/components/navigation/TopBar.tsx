@@ -2,8 +2,9 @@
 
 import { ArrowLeft, Menu, Wifi, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UserProfileIndicator } from "./UserProfileIndicator";
+import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
 
 /**
  * TopBar component - Displays page title and navigation controls
@@ -36,6 +37,7 @@ export function TopBar({
 }: TopBarProps) {
   const router = useRouter();
   const [isOnline, setIsOnline] = useState(true);
+  const { recordUxEvent } = useUxInstrumentation();
 
   useEffect(() => {
     setIsOnline(navigator.onLine);
@@ -52,9 +54,19 @@ export function TopBar({
     };
   }, []);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
+    void recordUxEvent("navigation.back", {
+      metadata: { surface: "topBar" },
+    });
     router.back();
-  };
+  }, [recordUxEvent, router]);
+
+  const handleMenuClick = useCallback(() => {
+    void recordUxEvent("navigation.menu.toggle", {
+      metadata: { surface: "topBar" },
+    });
+    onMenuClick?.();
+  }, [onMenuClick, recordUxEvent]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-14 bg-card border-b border-border md:left-64">
@@ -63,7 +75,7 @@ export function TopBar({
         <div className="flex items-center gap-3">
           {showMenu && (
             <button
-              onClick={onMenuClick}
+              onClick={handleMenuClick}
               className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Open menu"
             >

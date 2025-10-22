@@ -17,6 +17,7 @@ import { TodayTimelineCard } from "@/components/dashboard/TodayTimelineCard";
 import { HighlightsEmptyState } from "@/components/dashboard/TodayEmptyStates";
 import { FoodProvider, useFoodContext } from "@/contexts/FoodContext";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
 import { flareRepository } from "@/lib/repositories/flareRepository";
 import { cn } from "@/lib/utils/cn";
 
@@ -25,6 +26,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { openFoodLog } = useFoodContext();
+  const { recordUxEvent } = useUxInstrumentation();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPullToRefresh, setIsPullToRefresh] = useState(false);
@@ -109,26 +111,41 @@ function DashboardContent() {
 
   // Quick log handlers - route-based navigation
   const handleLogFlare = useCallback(() => {
+    void recordUxEvent("quickAction.flare", {
+      metadata: { source: "dashboard", surface: "quickActions" },
+    });
     router.push("/dashboard?quickAction=flare");
-  }, [router]);
+  }, [recordUxEvent, router]);
 
   const handleLogMedication = useCallback(() => {
+    void recordUxEvent("quickAction.medication", {
+      metadata: { source: "dashboard", surface: "quickActions" },
+    });
     router.push("/dashboard?quickAction=medication");
-  }, [router]);
+  }, [recordUxEvent, router]);
 
   const handleLogSymptom = useCallback(() => {
+    void recordUxEvent("quickAction.symptom", {
+      metadata: { source: "dashboard", surface: "quickActions" },
+    });
     router.push("/dashboard?quickAction=symptom");
-  }, [router]);
+  }, [recordUxEvent, router]);
 
   const handleLogTrigger = useCallback(() => {
+    void recordUxEvent("quickAction.trigger", {
+      metadata: { source: "dashboard", surface: "quickActions" },
+    });
     router.push("/dashboard?quickAction=trigger");
-  }, [router]);
+  }, [recordUxEvent, router]);
 
   const handleLogFood = useCallback(() => {
     // Food log uses FoodProvider context (already handles its own modal state)
+    void recordUxEvent("quickAction.food", {
+      metadata: { source: "dashboard", surface: "quickActions" },
+    });
     performance.mark("food-log-button-click");
     openFoodLog();
-  }, [openFoodLog]);
+  }, [openFoodLog, recordUxEvent]);
 
   // Close modal by navigating back to dashboard
   const handleCloseQuickAction = useCallback(() => {
@@ -230,6 +247,8 @@ function DashboardContent() {
             onLogSymptom={handleLogSymptom}
             onLogTrigger={handleLogTrigger}
             onLogFood={handleLogFood}
+            instrumentationContext="dashboard.quickActions"
+            disableInstrumentation
           />
         </TodayQuickActionsCard>
 

@@ -12,11 +12,11 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 0.5) - Complete ✅
-- **Overall Progress:** 94% (Story 0.5 context generated; Story 0.4 approved and done; Story 1.6 paused; 11 of 23 stories complete, 51 points)
-- **Next Action:** Implement Story 0.5, then continue Epic 2 drafting
-- **Command to Run:** Load DEV agent and run 'dev-story' for Story 0.5 (UX Instrumentation &amp; Validation)
-- **Agent to Load:** DEV (bmad/bmm/agents/dev.md)
+- **Current Workflow:** dev-story (Story 0.5) - Complete ✅ (Ready for Review)
+- **Overall Progress:** 96% (Story 0.5 implementation complete; Story 1.6 paused; 11 of 23 stories complete, 51 points)
+- **Next Action:** Run story-ready for Story 0.5, then continue Epic 2 drafting
+- **Command to Run:** Load SM agent and run 'story-ready' for Story 0.5 (UX Instrumentation &amp; Validation)
+- **Agent to Load:** SM (bmad/bmm/agents/sm.md)
 - **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 implementation complete and ready for review.
 
 ---
@@ -110,7 +110,10 @@
 - **Story File:** `docs/stories/story-0.5.md`
 - **Story Status:** Ready
 - **Context File:** `docs/stories/story-context-0.5.xml`
-- **Action:** DEV should run `dev-story` workflow to implement this story using the new context.
+- **Baseline Metrics (2025-10-22):** Flare quick action 18.2s (≤30s), Analytics 2 hops, Manage Data 3 hops; instrumentation verified via `npm run ux:validate` (baseline-2025-10-22.json).
+- **Risks/Follow-ups:** Ensure analytics opt-in is confirmed before future measurements; monitor dashboard load if flare volume grows.
+- **Next Workflow:** story-ready (after dev-story delivers final artifacts).
+- **Action:** Review dev-story outputs and run `story-ready` with baseline metrics attached.
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
@@ -139,29 +142,30 @@
 
 ### Next Action Required
 
-**What to do next:** Implement story 0.5 with the DEV workflow
+**What to do next:** Run story-ready for Story 0.5 (UX Instrumentation &amp; Validation)
 
-**Command to run:** Load DEV agent and run 'dev-story' for Story 0.5 (UX Instrumentation &amp; Validation)
+**Command to run:** Load SM agent and execute `story-ready` for Story 0.5
 
-**Agent to load:** bmad/bmm/agents/dev.md
+**Agent to load:** bmad/bmm/agents/sm.md
 
 ---
 
-**✅ Story Context Generated Successfully, Steven!**
+**✅ Story Implementation Complete, Steven!**
 
 **Story Details:**
 - Story ID: 0.5
 - Title: UX Instrumentation &amp; Validation
-- Context File: `docs/stories/story-context-0.5.xml`
+- File: `docs/stories/story-0.5.md`
+- Status: Ready for Review
 
 **Status file updated:**
-- Current step: story-context (Story 0.5) ✓
-- Progress: 94%
+- Current step: dev-story (Story 0.5) ✓
+- Progress: 96%
 
 **Next Steps:**
-1. Load DEV agent (bmad/bmm/agents/dev.md)
-2. Run `dev-story` workflow to implement the story
-3. Leverage the new context file for architecture, code, and testing guidance
+1. Review the implemented story and validation artifacts
+2. Run `story-ready` to approve Story 0.5 when satisfied
+3. Continue Epic 2 drafting once Story 0.5 is approved
 
 Check status anytime with: `workflow-status`
 

@@ -274,6 +274,15 @@ export interface TriggerEventRecord {
   updatedAt: number; // Last modified
 }
 
+export interface UxEventRecord {
+  id: string;
+  userId: string;
+  eventType: string;
+  metadata: string; // JSON-stringified payload
+  timestamp: number; // epoch ms when the intent occurred
+  createdAt: number; // storage timestamp (usually same as timestamp)
+}
+
 // Enhanced FlareRecord with severity tracking and interventions
 export interface FlareRecord {
   id: string;

@@ -11,9 +11,11 @@
  */
 
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Sidebar } from "../Sidebar";
 import { getNavPillars } from "@/config/navigation";
+import { uxEventRepository } from "@/lib/repositories/uxEventRepository";
+import { userRepository } from "@/lib/repositories/userRepository";
 
 // Mock the hooks
 jest.mock("@/components/navigation/hooks/useActiveRoute", () => ({
@@ -25,6 +27,28 @@ jest.mock("@/components/navigation/hooks/useActiveRoute", () => ({
 }));
 
 describe("Sidebar", () => {
+  const createUser = (analyticsOptIn: boolean) => ({
+    id: "user-123",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    preferences: {
+      theme: "system",
+      notifications: {
+        remindersEnabled: false,
+      },
+      privacy: {
+        dataStorage: "encrypted-local",
+        analyticsOptIn,
+        crashReportsOptIn: false,
+      },
+      exportFormat: "json",
+    },
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it("should render navigation with aria-label", () => {
     render(<Sidebar />);
     const nav = screen.getByRole("navigation", { name: /primary navigation/i });
@@ -170,6 +194,53 @@ describe("Sidebar", () => {
       if (tabIndex !== null) {
         expect(parseInt(tabIndex)).toBeGreaterThanOrEqual(0);
       }
+    });
+  });
+
+  it("records navigation events when analytics opt-in is enabled", async () => {
+    jest
+      .spyOn(userRepository, "getOrCreateCurrentUser")
+      .mockResolvedValue(createUser(true) as any);
+    const recordSpy = jest
+      .spyOn(uxEventRepository, "recordEvent")
+      .mockResolvedValue("event-1");
+
+    render(<Sidebar />);
+
+    fireEvent.click(
+      screen.getByRole("link", {
+        name: /analytics/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(recordSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "user-123",
+          eventType: "navigation.destination.select",
+        }),
+      );
+    });
+  });
+
+  it("does not record navigation events when analytics opt-in is disabled", async () => {
+    jest
+      .spyOn(userRepository, "getOrCreateCurrentUser")
+      .mockResolvedValue(createUser(false) as any);
+    const recordSpy = jest
+      .spyOn(uxEventRepository, "recordEvent")
+      .mockResolvedValue("event-1");
+
+    render(<Sidebar />);
+
+    fireEvent.click(
+      screen.getByRole("link", {
+        name: /analytics/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(recordSpy).not.toHaveBeenCalled();
     });
   });
 });

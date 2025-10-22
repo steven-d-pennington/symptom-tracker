@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback } from "react";
 import { useActiveRoute } from "./hooks/useActiveRoute";
 import { getNavDestinations } from "@/config/navigation";
+import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
 
 /**
  * BottomTabs component - Mobile navigation tabs
@@ -16,6 +18,20 @@ export function BottomTabs() {
   const { isActive } = useActiveRoute();
   // Consume shared navigation config - automatically filtered for mobile surface
   const tabs = getNavDestinations("mobile");
+  const { recordUxEvent } = useUxInstrumentation();
+
+  const createClickHandler = useCallback(
+    (href: string, label: string) => () => {
+      void recordUxEvent("navigation.destination.select", {
+        metadata: {
+          surface: "bottomTabs",
+          href,
+          label,
+        },
+      });
+    },
+    [recordUxEvent],
+  );
 
   return (
     <nav
@@ -34,6 +50,7 @@ export function BottomTabs() {
             <Link
               key={tab.href}
               href={tab.href}
+              onClick={createClickHandler(tab.href, tab.label)}
               className={`
                 flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-lg
                 min-w-[64px] transition-all duration-150

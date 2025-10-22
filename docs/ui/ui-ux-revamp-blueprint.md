@@ -117,9 +117,9 @@ flowchart TD
 3. Prepare layout for Story 1.6 accessibility enhancements (focus order, aria).
 
 ### Phase 5 – Validation & Instrumentation (Days 17-20)
-1. Run internal usability walkthroughs using scripts in §5.4.
-2. Capture baseline telemetry if instrumentation is in scope.
-3. Update `docs/bmm-workflow-status.md` with progress, feed insights into backlog.
+1. Run internal usability walkthroughs using `docs/ui/ux-validation-scripts.md` (see §5.4) and document timings, blockers, and risks in the new checklist.
+2. Enable analytics opt-in for the test user, execute `npm run ux:validate` to review/export recent UX events (JSON/CSV), and archive the export outside the repository.
+3. Update both the validation scripts summary table and `docs/bmm-workflow-status.md` with baseline metrics, outstanding risks, and follow-up actions feeding into the backlog.
 
 ## 7. Initial Story Seeds (to be created after blueprint acceptance)
 1. **Story 1.x:** “Consolidate Track Navigation” – Update Sidebar/Bottom Tabs to pillar structure, remove redundant routes.

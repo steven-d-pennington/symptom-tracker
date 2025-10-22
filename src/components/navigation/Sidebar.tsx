@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { FileText, X } from "lucide-react";
+import { useCallback, useEffect } from "react";
 import { useActiveRoute } from "./hooks/useActiveRoute";
 import { getNavPillars } from "@/config/navigation";
-import { useEffect } from "react";
+import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
 
 /**
  * Sidebar component - Desktop and mobile navigation drawer
@@ -27,6 +28,7 @@ export function Sidebar({ isMobile = false, isOpen = false, onClose }: SidebarPr
   const { isActive } = useActiveRoute();
   // Consume shared navigation config - automatically filtered for desktop surface
   const navPillars = getNavPillars("desktop");
+  const { recordUxEvent } = useUxInstrumentation();
 
   // Close mobile menu on escape key
   useEffect(() => {
@@ -59,6 +61,24 @@ export function Sidebar({ isMobile = false, isOpen = false, onClose }: SidebarPr
       onClose();
     }
   };
+
+  const createNavigationHandler = useCallback(
+    (href: string, label: string, pillarId: string) => () => {
+      void recordUxEvent("navigation.destination.select", {
+        metadata: {
+          surface: isMobile ? "sidebar.mobile" : "sidebar.desktop",
+          href,
+          label,
+          pillar: pillarId,
+        },
+      });
+
+      if (isMobile && onClose) {
+        onClose();
+      }
+    },
+    [isMobile, onClose, recordUxEvent],
+  );
 
   if (isMobile) {
     return (
@@ -115,7 +135,7 @@ export function Sidebar({ isMobile = false, isOpen = false, onClose }: SidebarPr
                       <li key={destination.href}>
                         <Link
                           href={destination.href}
-                          onClick={handleLinkClick}
+                          onClick={createNavigationHandler(destination.href, destination.label, pillar.id)}
                           className={`
                             flex items-center gap-3 px-3 py-2 rounded-lg
                             transition-all duration-150
@@ -186,6 +206,7 @@ export function Sidebar({ isMobile = false, isOpen = false, onClose }: SidebarPr
                   <li key={destination.href}>
                     <Link
                       href={destination.href}
+                      onClick={createNavigationHandler(destination.href, destination.label, pillar.id)}
                       className={`
                         flex items-center gap-3 px-3 py-2 rounded-lg
                         transition-all duration-150

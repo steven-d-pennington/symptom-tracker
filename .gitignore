@@ -8,6 +8,8 @@
 .qoder/rules/byterover-rules.md
 .augment/rules/byterover-rules.md# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+.local/
+
 # dependencies
 /node_modules
 /.pnp

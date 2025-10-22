@@ -1,6 +1,8 @@
 import type { ComponentProps } from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QuickLogButtons } from "../QuickLogButtons";
+import { uxEventRepository } from "@/lib/repositories/uxEventRepository";
+import { userRepository } from "@/lib/repositories/userRepository";
 
 describe("QuickLogButtons", () => {
   const createMockHandlers = () => {
@@ -31,6 +33,10 @@ describe("QuickLogButtons", () => {
 
   beforeEach(() => {
   mockHandlers = createMockHandlers();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("renders all quick-log buttons with correct labels", () => {
@@ -135,5 +141,64 @@ describe("QuickLogButtons", () => {
 
     rerender(<QuickLogButtons {...mockHandlers} loading={false} />);
     expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+  });
+
+  const createUser = (analyticsOptIn: boolean) => ({
+    id: "user-123",
+    email: "user@example.com",
+    name: "Test User",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    preferences: {
+      theme: "system",
+      notifications: {
+        remindersEnabled: false,
+      },
+      privacy: {
+        dataStorage: "encrypted-local",
+        analyticsOptIn,
+        crashReportsOptIn: false,
+      },
+      exportFormat: "json",
+    },
+  });
+
+  it("records UX event when analytics opt-in is enabled", async () => {
+    jest
+      .spyOn(userRepository, "getOrCreateCurrentUser")
+      .mockResolvedValue(createUser(true) as any);
+    const recordSpy = jest
+      .spyOn(uxEventRepository, "recordEvent")
+      .mockResolvedValue("event-1");
+
+    renderComponent();
+
+    fireEvent.click(screen.getByLabelText("Log new flare"));
+
+    await waitFor(() => {
+      expect(recordSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "user-123",
+          eventType: "quickAction.flare",
+        }),
+      );
+    });
+  });
+
+  it("does not record UX events when analytics opt-in is disabled", async () => {
+    jest
+      .spyOn(userRepository, "getOrCreateCurrentUser")
+      .mockResolvedValue(createUser(false) as any);
+    const recordSpy = jest
+      .spyOn(uxEventRepository, "recordEvent")
+      .mockResolvedValue("event-1");
+
+    renderComponent();
+
+    fireEvent.click(screen.getByLabelText("Log new flare"));
+
+    await waitFor(() => {
+      expect(recordSpy).not.toHaveBeenCalled();
+    });
   });
 });

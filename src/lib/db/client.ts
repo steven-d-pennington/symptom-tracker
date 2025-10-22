@@ -14,6 +14,7 @@ import {
   PhotoComparisonRecord,
   SymptomRecord,
   SymptomInstanceRecord,
+  UxEventRecord,
   TriggerEventRecord, // New
   TriggerRecord,
   UserRecord,
@@ -27,6 +28,7 @@ export class SymptomTrackerDatabase extends Dexie {
   medicationEvents!: Table<MedicationEventRecord, string>; // New
   triggers!: Table<TriggerRecord, string>;
   triggerEvents!: Table<TriggerEventRecord, string>; // New
+  uxEvents!: Table<UxEventRecord, string>;
   dailyEntries!: Table<DailyEntryRecord, string>;
   attachments!: Table<AttachmentRecord, string>;
   bodyMapLocations!: Table<BodyMapLocationRecord, string>;
@@ -280,6 +282,7 @@ export class SymptomTrackerDatabase extends Dexie {
       foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
       foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
       foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
     }).upgrade(async (trans) => {
       // Seed flareViewMode preference for existing users (Story 0.3)
       await trans.table("users").toCollection().modify((user: any) => {
@@ -287,6 +290,28 @@ export class SymptomTrackerDatabase extends Dexie {
           user.preferences.flareViewMode = "cards";
         }
       });
+    });
+
+    // Version 17: Add UX events table for local instrumentation
+    this.version(17).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, userId, symptomId, bodyRegionId, status, startDate, [userId+status], [userId+startDate], [userId+bodyRegionId]",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
     });
   }
 }

@@ -190,6 +190,8 @@ Protected Routes:
 - ✅ **No Account Required** - No email, no password, no personal info
 - ✅ **Open Source** - Transparent code you can audit yourself
 
+> **Note:** Optional UX instrumentation for validation is opt-in and remains on-device. Enable it via Settings → Privacy, and export recent events locally with `npm run ux:validate` when reviewing releases.
+
 ### Security Features
 
 **Photo Encryption**
