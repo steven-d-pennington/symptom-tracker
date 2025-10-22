@@ -6,23 +6,30 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { TopBar } from "./TopBar";
 import { BottomTabs } from "./BottomTabs";
 import { Sidebar } from "./Sidebar";
-import { getPageTitle } from "@/config/navigation";
+import { getPageTitle, shouldShowNavigation } from "@/config/navigation";
 
 interface NavLayoutProps {
   children: React.ReactNode;
 }
 
-// Routes that should NOT show navigation (landing page, onboarding, etc.)
-const NO_NAV_ROUTES = ["/", "/onboarding"];
-
+/**
+ * Main navigation layout component
+ *
+ * Orchestrates navigation display across all surfaces (desktop sidebar, mobile menu, top bar, bottom tabs).
+ * Uses shared navigation configuration from @/config/navigation for:
+ * - Page title resolution via getPageTitle()
+ * - Navigation visibility logic via shouldShowNavigation()
+ * - Pillar structure consumed by Sidebar and BottomTabs
+ *
+ * @see src/config/navigation.ts - Single source of truth for navigation
+ */
 export function NavLayout({ children }: NavLayoutProps) {
   const pathname = usePathname();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Check if current route should show navigation
-  const showNav =
-    !NO_NAV_ROUTES.includes(pathname) && !pathname.startsWith("/onboarding");
+  // Use centralized navigation visibility logic from shared config
+  const showNav = shouldShowNavigation(pathname);
 
   const pageTitle = getPageTitle(pathname);
 

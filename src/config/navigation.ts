@@ -212,3 +212,30 @@ export function getDestinationByHref(
   }
   return undefined;
 }
+
+/**
+ * Routes that should NOT show navigation (landing page, onboarding, etc.)
+ * Centralized configuration for navigation visibility logic.
+ */
+export const NO_NAV_ROUTES = ["/", "/onboarding"];
+
+/**
+ * Check if a route should display navigation
+ * @param pathname - Current route pathname
+ * @returns true if navigation should be shown, false otherwise
+ */
+export function shouldShowNavigation(pathname: string): boolean {
+  // Exact match for no-nav routes
+  if (NO_NAV_ROUTES.includes(pathname)) {
+    return false;
+  }
+
+  // Check if route starts with any no-nav prefix (e.g., /onboarding/step1)
+  for (const route of NO_NAV_ROUTES) {
+    if (route !== "/" && pathname.startsWith(route)) {
+      return false;
+    }
+  }
+
+  return true;
+}

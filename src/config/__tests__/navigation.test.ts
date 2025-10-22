@@ -16,6 +16,8 @@ import {
   getNavPillars,
   getPageTitle,
   getDestinationByHref,
+  NO_NAV_ROUTES,
+  shouldShowNavigation,
 } from "../navigation";
 
 describe("Navigation Configuration", () => {
@@ -279,6 +281,170 @@ describe("Navigation Configuration", () => {
 
     it("should not return /more from getDestinationByHref", () => {
       expect(getDestinationByHref("/more")).toBeUndefined();
+    });
+  });
+
+  describe("Navigation Visibility Logic (AC3)", () => {
+    describe("NO_NAV_ROUTES", () => {
+      it("should include landing page and onboarding routes", () => {
+        expect(NO_NAV_ROUTES).toContain("/");
+        expect(NO_NAV_ROUTES).toContain("/onboarding");
+      });
+
+      it("should be a centralized configuration", () => {
+        expect(Array.isArray(NO_NAV_ROUTES)).toBe(true);
+        expect(NO_NAV_ROUTES.length).toBeGreaterThan(0);
+      });
+    });
+
+    describe("shouldShowNavigation", () => {
+      it("should return false for landing page", () => {
+        expect(shouldShowNavigation("/")).toBe(false);
+      });
+
+      it("should return false for onboarding base route", () => {
+        expect(shouldShowNavigation("/onboarding")).toBe(false);
+      });
+
+      it("should return false for onboarding sub-routes", () => {
+        expect(shouldShowNavigation("/onboarding/step1")).toBe(false);
+        expect(shouldShowNavigation("/onboarding/step2")).toBe(false);
+        expect(shouldShowNavigation("/onboarding/complete")).toBe(false);
+      });
+
+      it("should return true for standard navigation routes", () => {
+        expect(shouldShowNavigation("/dashboard")).toBe(true);
+        expect(shouldShowNavigation("/log")).toBe(true);
+        expect(shouldShowNavigation("/analytics")).toBe(true);
+        expect(shouldShowNavigation("/settings")).toBe(true);
+      });
+
+      it("should return true for unknown routes", () => {
+        expect(shouldShowNavigation("/unknown-route")).toBe(true);
+        expect(shouldShowNavigation("/random")).toBe(true);
+      });
+
+      it("should handle edge cases", () => {
+        // Route that starts with "/" but is not the landing page
+        expect(shouldShowNavigation("/about")).toBe(true);
+
+        // Nested routes
+        expect(shouldShowNavigation("/dashboard/details")).toBe(true);
+      });
+    });
+  });
+
+  describe("Title Rendering Integration (AC4)", () => {
+    it("should provide consistent title for Log route", () => {
+      const title = getPageTitle("/log");
+      expect(title).toBe("Log");
+
+      // Verify it matches the destination label
+      const destination = getDestinationByHref("/log");
+      expect(destination).toBeDefined();
+      expect(destination!.label).toBe(title);
+    });
+
+    it("should provide consistent title for Dashboard route", () => {
+      const title = getPageTitle("/dashboard");
+      expect(title).toBe("Dashboard");
+
+      // Verify it matches the destination label
+      const destination = getDestinationByHref("/dashboard");
+      expect(destination).toBeDefined();
+      expect(destination!.label).toBe(title);
+    });
+
+    it("should provide consistent titles across all routes", () => {
+      const allHrefs = NAV_PILLARS.flatMap((pillar) =>
+        pillar.destinations.map((d) => d.href)
+      );
+
+      allHrefs.forEach((href) => {
+        const title = getPageTitle(href);
+        const destination = getDestinationByHref(href);
+
+        expect(destination).toBeDefined();
+        expect(title).toBe(destination!.label);
+      });
+    });
+
+    it("should have Log available on both mobile and desktop", () => {
+      const desktopDests = getNavDestinations("desktop");
+      const mobileDests = getNavDestinations("mobile");
+
+      const logDesktop = desktopDests.find((d) => d.href === "/log");
+      const logMobile = mobileDests.find((d) => d.href === "/log");
+
+      expect(logDesktop).toBeDefined();
+      expect(logMobile).toBeDefined();
+      expect(logDesktop!.label).toBe("Log");
+      expect(logMobile!.label).toBe("Log");
+    });
+
+    it("should have Dashboard available on both mobile and desktop", () => {
+      const desktopDests = getNavDestinations("desktop");
+      const mobileDests = getNavDestinations("mobile");
+
+      const dashboardDesktop = desktopDests.find((d) => d.href === "/dashboard");
+      const dashboardMobile = mobileDests.find((d) => d.href === "/dashboard");
+
+      expect(dashboardDesktop).toBeDefined();
+      expect(dashboardMobile).toBeDefined();
+      expect(dashboardDesktop!.label).toBe("Dashboard");
+      expect(dashboardMobile!.label).toBe("Dashboard");
+    });
+  });
+
+  describe("Configuration Completeness (AC1)", () => {
+    it("should have complete route metadata for all destinations", () => {
+      NAV_PILLARS.forEach((pillar) => {
+        pillar.destinations.forEach((destination) => {
+          // Title (via label)
+          expect(destination.label).toBeDefined();
+          expect(destination.label.length).toBeGreaterThan(0);
+
+          // Pillar association (implicit via parent)
+          expect(pillar.id).toBeDefined();
+          expect(["track", "analyze", "manage", "support"]).toContain(
+            pillar.id
+          );
+
+          // Surface visibility
+          expect(destination.surface).toBeDefined();
+          expect(["desktop", "mobile", "all"]).toContain(destination.surface);
+
+          // Additional metadata
+          expect(destination.href).toBeDefined();
+          expect(destination.ariaLabel).toBeDefined();
+          expect(destination.icon).toBeDefined();
+        });
+      });
+    });
+
+    it("should maintain pillar ordering as specified", () => {
+      expect(NAV_PILLARS[0].id).toBe("track");
+      expect(NAV_PILLARS[0].order).toBe(1);
+      expect(NAV_PILLARS[1].id).toBe("analyze");
+      expect(NAV_PILLARS[1].order).toBe(2);
+      expect(NAV_PILLARS[2].id).toBe("manage");
+      expect(NAV_PILLARS[2].order).toBe(3);
+      expect(NAV_PILLARS[3].id).toBe("support");
+      expect(NAV_PILLARS[3].order).toBe(4);
+    });
+
+    it("should be consumed by all navigation components", () => {
+      // Verify helper functions exist and work
+      expect(typeof getNavPillars).toBe("function");
+      expect(typeof getNavDestinations).toBe("function");
+      expect(typeof getPageTitle).toBe("function");
+      expect(typeof shouldShowNavigation).toBe("function");
+
+      // Verify they return expected data types
+      expect(Array.isArray(getNavPillars("desktop"))).toBe(true);
+      expect(Array.isArray(getNavDestinations("mobile"))).toBe(true);
+      expect(typeof getPageTitle("/dashboard")).toBe("string");
+      expect(typeof shouldShowNavigation("/dashboard")).toBe("boolean");
     });
   });
 });

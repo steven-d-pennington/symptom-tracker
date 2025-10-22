@@ -5,11 +5,25 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { UserProfileIndicator } from "./UserProfileIndicator";
 
+/**
+ * TopBar component - Displays page title and navigation controls
+ *
+ * Receives page title from NavLayout component, which derives it from shared
+ * navigation configuration via getPageTitle() function.
+ *
+ * @see src/config/navigation.ts - Single source of truth for page titles
+ * @see src/components/navigation/NavLayout.tsx - Parent component that passes title
+ */
 interface TopBarProps {
+  /** Page title from shared navigation config via NavLayout */
   title: string;
+  /** Whether to show back button */
   showBack?: boolean;
+  /** Whether to show mobile menu button */
   showMenu?: boolean;
+  /** Callback for menu button click */
   onMenuClick?: () => void;
+  /** Additional action buttons */
   actions?: React.ReactNode;
 }
 

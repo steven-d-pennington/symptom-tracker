@@ -4,8 +4,17 @@ import Link from "next/link";
 import { useActiveRoute } from "./hooks/useActiveRoute";
 import { getNavDestinations } from "@/config/navigation";
 
+/**
+ * BottomTabs component - Mobile navigation tabs
+ *
+ * Consumes shared navigation configuration via getNavDestinations("mobile") to display
+ * navigation tabs filtered for mobile surface.
+ *
+ * @see src/config/navigation.ts - Single source of truth for navigation destinations
+ */
 export function BottomTabs() {
   const { isActive } = useActiveRoute();
+  // Consume shared navigation config - automatically filtered for mobile surface
   const tabs = getNavDestinations("mobile");
 
   return (

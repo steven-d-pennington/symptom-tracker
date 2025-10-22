@@ -6,14 +6,26 @@ import { useActiveRoute } from "./hooks/useActiveRoute";
 import { getNavPillars } from "@/config/navigation";
 import { useEffect } from "react";
 
+/**
+ * Sidebar component - Desktop and mobile navigation drawer
+ *
+ * Consumes shared navigation configuration via getNavPillars("desktop") to display
+ * the Track/Analyze/Manage/Support pillar structure with filtered destinations.
+ *
+ * @see src/config/navigation.ts - Single source of truth for navigation pillars
+ */
 interface SidebarProps {
+  /** Whether rendering in mobile mode (as drawer) */
   isMobile?: boolean;
+  /** Whether mobile drawer is open */
   isOpen?: boolean;
+  /** Callback to close mobile drawer */
   onClose?: () => void;
 }
 
 export function Sidebar({ isMobile = false, isOpen = false, onClose }: SidebarProps) {
   const { isActive } = useActiveRoute();
+  // Consume shared navigation config - automatically filtered for desktop surface
   const navPillars = getNavPillars("desktop");
 
   // Close mobile menu on escape key
