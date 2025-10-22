@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   TransformWrapper,
   TransformComponent,
@@ -21,6 +21,7 @@ const CENTER_EASE = 'easeOutQuad';
 export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMapZoomProps) {
   const apiRef = useRef<ReactZoomPanPinchRef | null>(null);
   const [currentZoom, setCurrentZoom] = useState(1);
+  const [showHelp, setShowHelp] = useState(false);
 
   const centerCurrentView = useCallback(
     (ref?: ReactZoomPanPinchRef, scaleOverride?: number) => {
@@ -77,7 +78,7 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
         onInit={handleInit}
         onTransformed={handleTransformed}
       >
-        {({ zoomIn, zoomOut, resetTransform }) => {
+        {({ zoomIn, zoomOut, resetTransform, setTransform }) => {
           const handleZoomIn = () => {
             zoomIn();
             scheduleRecenter();
@@ -92,6 +93,97 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
             resetTransform();
             scheduleRecenter();
           };
+
+          // Keyboard shortcuts
+          useEffect(() => {
+            const handleKeyDown = (event: KeyboardEvent) => {
+              // Only handle shortcuts when body map has focus or is interactive
+              if (currentZoom <= 1 && !["+", "=", "-", "_", "Escape", "?"].includes(event.key)) {
+                return;
+              }
+
+              switch (event.key) {
+                case "+":
+                case "=":
+                  event.preventDefault();
+                  handleZoomIn();
+                  break;
+                case "-":
+                case "_":
+                  event.preventDefault();
+                  handleZoomOut();
+                  break;
+                case "0":
+                  event.preventDefault();
+                  handleReset();
+                  break;
+                case "ArrowUp":
+                  if (currentZoom > 1) {
+                    event.preventDefault();
+                    // Pan up
+                    setTransform(
+                      apiRef.current?.state.positionX || 0,
+                      (apiRef.current?.state.positionY || 0) - 50,
+                      currentZoom,
+                      200,
+                      'easeOutQuad'
+                    );
+                  }
+                  break;
+                case "ArrowDown":
+                  if (currentZoom > 1) {
+                    event.preventDefault();
+                    // Pan down
+                    setTransform(
+                      apiRef.current?.state.positionX || 0,
+                      (apiRef.current?.state.positionY || 0) + 50,
+                      currentZoom,
+                      200,
+                      'easeOutQuad'
+                    );
+                  }
+                  break;
+                case "ArrowLeft":
+                  if (currentZoom > 1) {
+                    event.preventDefault();
+                    // Pan left
+                    setTransform(
+                      (apiRef.current?.state.positionX || 0) - 50,
+                      apiRef.current?.state.positionY || 0,
+                      currentZoom,
+                      200,
+                      'easeOutQuad'
+                    );
+                  }
+                  break;
+                case "ArrowRight":
+                  if (currentZoom > 1) {
+                    event.preventDefault();
+                    // Pan right
+                    setTransform(
+                      (apiRef.current?.state.positionX || 0) + 50,
+                      apiRef.current?.state.positionY || 0,
+                      currentZoom,
+                      200,
+                      'easeOutQuad'
+                    );
+                  }
+                  break;
+                case "Escape":
+                  event.preventDefault();
+                  handleReset();
+                  setShowHelp(false);
+                  break;
+                case "?":
+                  event.preventDefault();
+                  setShowHelp(!showHelp);
+                  break;
+              }
+            };
+
+            document.addEventListener('keydown', handleKeyDown);
+            return () => document.removeEventListener('keydown', handleKeyDown);
+          }, [currentZoom, handleZoomIn, handleZoomOut, handleReset]);
 
           return (
             <>
@@ -141,6 +233,43 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
           );
         }}
       </TransformWrapper>
+
+      {/* Keyboard shortcuts help overlay */}
+      {showHelp && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Keyboard Shortcuts</h3>
+            <div className="space-y-2 text-sm text-gray-700">
+              <div className="flex justify-between">
+                <span>Zoom in:</span>
+                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">+</kbd>
+              </div>
+              <div className="flex justify-between">
+                <span>Zoom out:</span>
+                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">-</kbd>
+              </div>
+              <div className="flex justify-between">
+                <span>Reset zoom:</span>
+                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">0</kbd>
+              </div>
+              <div className="flex justify-between">
+                <span>Pan (when zoomed):</span>
+                <span className="text-xs">Arrow keys</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Reset view:</span>
+                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">Esc</kbd>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowHelp(false)}
+              className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

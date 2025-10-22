@@ -3,6 +3,7 @@
 import React from "react";
 import { BACK_BODY_REGIONS } from "@/lib/data/bodyRegions";
 import { BodyRegion } from "@/lib/types/body-mapping";
+import { useBodyMapAccessibility } from "@/lib/hooks/useBodyMapAccessibility";
 
 interface BackBodyProps {
   selectedRegions?: string[];
@@ -15,6 +16,11 @@ interface BackBodyProps {
   coordinateCursorActive?: boolean;
   coordinateMarker?: React.ReactNode;
   flareOverlay?: React.ReactNode;
+  // Accessibility props
+  userId: string;
+  zoomLevel?: number;
+  isZoomed?: boolean;
+  onCoordinateMark?: (regionId: string, coordinates: { x: number; y: number }) => void;
 }
 
 export function BackBody({
@@ -28,7 +34,27 @@ export function BackBody({
   coordinateCursorActive = false,
   coordinateMarker,
   flareOverlay,
+  userId,
+  zoomLevel = 1,
+  isZoomed = false,
+  onCoordinateMark,
 }: BackBodyProps) {
+  // Accessibility hook
+  const {
+    getTabIndex,
+    handleRegionKeyDown,
+    getAriaLabel,
+    setFocusedRegionId,
+  } = useBodyMapAccessibility({
+    regions: BACK_BODY_REGIONS,
+    selectedRegion: selectedRegions[0],
+    onRegionSelect: onRegionClick,
+    onCoordinateMark,
+    zoomLevel,
+    isZoomed,
+    userId,
+  });
+
   const getSeverityColor = (severity: number): string => {
     if (severity <= 2) return "#10b981"; // green
     if (severity <= 4) return "#fbbf24"; // yellow
@@ -72,6 +98,15 @@ export function BackBody({
     return isFlare ? "flare-pulse" : "";
   };
 
+  // Helper function for accessibility props
+  const getAccessibilityProps = (regionId: string) => ({
+    tabIndex: getTabIndex(regionId),
+    "aria-label": getAriaLabel(regionId),
+    onKeyDown: (e: React.KeyboardEvent) => handleRegionKeyDown(e, regionId),
+    onFocus: () => setFocusedRegionId(regionId),
+    onBlur: () => setFocusedRegionId(null),
+  });
+
   return (
     <svg
       viewBox="0 0 400 800"
@@ -79,6 +114,8 @@ export function BackBody({
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
       onClickCapture={onCoordinateCapture}
+      role="application"
+      aria-label="Interactive body map for flare tracking"
     >
       <defs>
         <style>{`
@@ -110,6 +147,21 @@ export function BackBody({
             stroke: #dc2626;
             stroke-width: 3;
           }
+
+          /* Accessibility focus styles */
+          .body-region:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+            stroke-width: 4;
+          }
+
+          /* High contrast focus for better visibility */
+          @media (prefers-contrast: high) {
+            .body-region:focus-visible {
+              outline: 3px solid #ffffff;
+              outline-offset: 1px;
+            }
+          }
         `}</style>
       </defs>
 
@@ -123,6 +175,7 @@ export function BackBody({
         className={`body-region ${getRegionClassName(BACK_BODY_REGIONS[0])}`}
         fill={getRegionFill(BACK_BODY_REGIONS[0])}
         fillOpacity={getRegionOpacity(BACK_BODY_REGIONS[0])}
+        {...getAccessibilityProps("head-back")}
         onClick={() => onRegionClick?.("head-back")}
         onMouseEnter={() => onRegionHover?.("head-back")}
         onMouseLeave={() => onRegionHover?.(null)}

@@ -1,6 +1,6 @@
 # Story 0.5: UX Instrumentation & Validation
 
-Status: Ready for Review
+Status: Ready
 
 ## Story
 

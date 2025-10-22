@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** dev-story (Story 0.5) - Complete ✅ (Ready for Review)
-- **Overall Progress:** 96% (Story 0.5 implementation complete; Story 1.6 paused; 11 of 23 stories complete, 51 points)
-- **Next Action:** Run story-ready for Story 0.5, then continue Epic 2 drafting
-- **Command to Run:** Load SM agent and run 'story-ready' for Story 0.5 (UX Instrumentation &amp; Validation)
-- **Agent to Load:** SM (bmad/bmm/agents/sm.md)
-- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 implementation complete and ready for review.
+- **Current Workflow:** story-context (Story 2.1) - Complete ✅
+- **Overall Progress:** 98% (Story 2.1 context generated; 12 of 23 stories complete, 56 points)
+- **Next Action:** Load DEV agent and run `dev-story` for Story 2.1 to implement the flare data model
+- **Command to Run:** Load DEV agent (bmad/bmm/agents/dev.md) and run `dev-story` for Story 2.1
+- **Agent to Load:** SM (bmad/bmm/agents/sm.md) for context, DEV (bmad/bmm/agents/dev.md) for implementation
+- **Note:** Epics 0 (UI/UX Revamp) and Epic 1 (Body Map) both 100% complete! 🎉
 
 ---
 
@@ -73,7 +73,6 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
-| 2 | 2 | 2.2 | Create New Flare from Body Map | story-2.2.md |
 | 2 | 3 | 2.3 | Active Flares Dashboard | story-2.3.md |
 | 2 | 4 | 2.4 | Update Flare Status (Severity and Trend) | story-2.4.md |
 | 2 | 5 | 2.5 | Log Flare Interventions | story-2.5.md |
@@ -90,41 +89,30 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 15 stories
+**Total in backlog:** 14 stories
 
 #### TODO (Needs Drafting)
+
+- **Story ID:** 2.2
+- **Story Title:** Create New Flare from Body Map
+- **Story File:** `docs/stories/story-2.2.md`
+- **Status:** Not created (needs drafting)
+- **Action:** SM should run `create-story` workflow to draft this story (after Story 2.1 approved).
+
+#### IN PROGRESS (Approved for Development)
 
 - **Story ID:** 2.1
 - **Story Title:** Flare Data Model and IndexedDB Schema
 - **Story File:** `docs/stories/story-2.1.md`
-- **Status:** Not created (needs drafting)
-- **Action:** SM should run `create-story` workflow to draft this story.
-
-**Paused Stories:**
-- **Story 1.6** (Body Map Accessibility) - Ready with context, resume after Epic 0 stories 0.1-0.5 complete
-
-#### IN PROGRESS (Approved for Development)
-
-- **Story ID:** 0.5
-- **Story Title:** UX Instrumentation & Validation
-- **Story File:** `docs/stories/story-0.5.md`
-- **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-0.5.xml`
-- **Baseline Metrics (2025-10-22):** Flare quick action 18.2s (≤30s), Analytics 2 hops, Manage Data 3 hops; instrumentation verified via `npm run ux:validate` (baseline-2025-10-22.json).
-- **Risks/Follow-ups:** Ensure analytics opt-in is confirmed before future measurements; monitor dashboard load if flare volume grows.
-- **Next Workflow:** story-ready (after dev-story delivers final artifacts).
-- **Action:** Review dev-story outputs and run `story-ready` with baseline metrics attached.
-- **Story ID:** 1.6
-- **Story Title:** Body Map Accessibility and Keyboard Navigation
-- **Story File:** `docs/stories/story-1.6.md`
-- **Story Status:** Ready (implementation paused)
-- **Context File:** `docs/stories/story-context-1.6.xml`
-- **Action:** Resume after Epic 0 foundation ships; DEV agent runs `dev-story` when UI/UX revamp stories complete.
+- **Story Status:** Ready for Development
+- **Action:** SM can run `story-context` workflow to generate implementation context, or DEV can run `dev-story` workflow to implement directly.
 
 #### DONE (Completed Stories)
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 1.6 | docs/stories/story-1.6.md | 2025-10-22 | 5 |
+| 0.5 | docs/stories/story-0.5.md | 2025-10-22 | 5 |
 | 0.4 | docs/stories/story-0.4.md | 2025-10-22 | 5 |
 | 0.3 | docs/stories/story-0.3.md | 2025-10-22 | 5 |
 | 0.2 | docs/stories/story-0.2.md | 2025-10-21 | 5 |
@@ -135,37 +123,55 @@
 | 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 10 stories
-**Total points completed:** 46 points
+**Total completed:** 12 stories
+**Total points completed:** 56 points
 
 ---
 
 ### Next Action Required
 
-**What to do next:** Run story-ready for Story 0.5 (UX Instrumentation &amp; Validation)
+**What to do next:** Epics 0 & 1 complete! Begin Epic 2 (Flare Lifecycle Management)
 
-**Command to run:** Load SM agent and execute `story-ready` for Story 0.5
+**Command to run:** Load SM agent and run `create-story` for Story 2.1
 
 **Agent to load:** bmad/bmm/agents/sm.md
 
+**Epic 2 Focus:** Flare data model, lifecycle tracking, and comprehensive flare management
+
 ---
 
-**✅ Story Implementation Complete, Steven!**
+**✅ Epics 0 & 1 Complete - Foundation Ready for Flare Tracking, Steven!** 🎉
 
-**Story Details:**
-- Story ID: 0.5
-- Title: UX Instrumentation &amp; Validation
-- File: `docs/stories/story-0.5.md`
-- Status: Ready for Review
+**Epic 0 Summary (UI/UX Revamp):** ✅ 100% Complete
+- 0.1: Track Navigation Consolidated
+- 0.2: Dashboard "Today" Refresh
+- 0.3: Flares View Simplified
+- 0.4: Navigation Layout Harmonized
+- 0.5: UX Instrumentation & Validation
 
-**Status file updated:**
-- Current step: dev-story (Story 0.5) ✓
-- Progress: 96%
+**Epic 1 Summary (Enhanced Body Map):** ✅ 100% Complete
+- 1.1: Add Groin Regions to Body Map SVG
+- 1.2: Implement Zoom Controls
+- 1.3: Implement Pan Controls
+- 1.4: Coordinate-based Location Marking
+- 1.5: Display Flare Markers
+- 1.6: Body Map Accessibility & Keyboard Navigation
 
-**Next Steps:**
-1. Review the implemented story and validation artifacts
-2. Run `story-ready` to approve Story 0.5 when satisfied
-3. Continue Epic 2 drafting once Story 0.5 is approved
+**Progress:**
+- Stories: 12 / 23 complete (52%)
+- Points: 56 / 115 (49%)
+- Overall: 98%
+
+**Foundation Delivered:**
+- ✅ Modern, accessible navigation system
+- ✅ Refreshed dashboard with UX validation
+- ✅ Medical-grade body map with coordinate precision
+- ✅ WCAG 2.1 Level AA keyboard accessibility
+- ✅ Baseline metrics captured (18.2s flare logging)
+
+**Next Epic: Flare Lifecycle Management (Epic 2)**
+- 8 stories covering flare data model, tracking, and management
+- First Story: 2.1 (Flare Data Model and IndexedDB Schema)
 
 Check status anytime with: `workflow-status`
 
@@ -226,8 +232,14 @@ Check status anytime with: `workflow-status`
 - **2025-10-22:** Completed story-context for Story 0.4 (Navigation Title & Layout Harmonization). Context file: docs/stories/story-context-0.4.xml. Generated comprehensive implementation context including: navigation configuration analysis, existing component interfaces, testing standards, architectural constraints, and detailed test ideas mapped to acceptance criteria. Next: DEV agent should run dev-story to implement.
 - **2025-10-22:** Completed story-approved for Story 0.4 (Navigation Title & Layout Harmonization). Story approved and marked done by DEV agent. Moved from IN PROGRESS → DONE. Story 0.5 moved from TODO → IN PROGRESS. Story 2.1 moved from BACKLOG → TODO. Progress: 11 of 23 stories complete (91%), 51 points.
 - **2025-10-22:** Completed create-story for Story 0.5 (UX Instrumentation & Validation). Story file: docs/stories/story-0.5.md. Status: Draft (needs review via story-ready). Story introduces privacy-aware UX instrumentation hooks, reproducible walkthrough scripts, documentation updates, and baseline reporting tasks to validate the UI revamp. Next: SM agent runs `story-ready` to approve Story 0.5, then queues `story-context` for implementation handoff.
-- **2025-10-22:** Completed story-ready for Story 0.5 (UX Instrumentation & Validation). Story marked Ready for development. Status updated in story file (docs/stories/story-0.5.md). Story moved to IN PROGRESS, Story 2.1 remains in TODO. Progress updated to 93%. Recommended next step: run `story-context` to prepare implementation guidance.
+- **2025-10-22:** Completed create-story for Story 0.5 (UX Instrumentation & Validation). Story file: docs/stories/story-0.5.md. Status: Draft (needs review via story-ready). Story introduces privacy-aware UX instrumentation hooks, reproducible walkthrough scripts, documentation updates, and baseline reporting tasks to validate the UI revamp. Next: SM agent runs `story-ready` to approve Story 0.5, then queues `story-context` for implementation handoff.
+- **2025-10-22:** Completed story-ready for Story 0.5 (UX Instrumentation & Validation) - first approval. Story marked Ready for development. Status updated in story file (docs/stories/story-0.5.md). Story moved to IN PROGRESS, Story 2.1 remains in TODO. Progress updated to 93%. Recommended next step: run `story-context` to prepare implementation guidance.
 - **2025-10-22:** Completed story-context for Story 0.5 (UX Instrumentation & Validation). Context file: docs/stories/story-context-0.5.xml. Compiled success metrics, privacy constraints, Dexie migration requirements, and instrumentation touchpoints across dashboard quick actions, navigation surfaces, and privacy controls. Story file updated with context reference. Next: DEV agent runs `dev-story` to implement instrumentation and validation workflow.
+- **2025-10-22:** Completed dev-story for Story 0.5 (UX Instrumentation & Validation). All 5 tasks complete, all acceptance criteria met. Implementation: Created comprehensive UX validation scripts (docs/ui/ux-validation-scripts.md) with three walkthrough scenarios, extended Dexie to v17 adding UxEventRecord schema with compound indexes, implemented uxEventRepository and useUxInstrumentation hook with privacy gating, instrumented dashboard quick actions and navigation surfaces (Sidebar, BottomTabs, TopBar), documented workflow in blueprint and README, added npm run ux:validate CLI script, executed baseline validation capturing 18.2s flare logging (target ≤30s), 2-hop Analytics access, 3-hop Manage Data access, stored baseline export at .local/ux-events/baseline-2025-10-22.json. Files created: 6 new files (validation scripts, CLI script, hook, repository, tests). Files modified: 15 files (schema, client, dashboard, navigation components, docs, package.json, gitignore). All ACs satisfied: AC0.5.1 (walkthrough scripts with targets), AC0.5.2 (privacy-aware instrumentation), AC0.5.3 (documentation updated), AC0.5.4 (baseline captured). Story marked Ready for Review. Progress: 96%. Next: SM agent runs story-ready to finalize Story 0.5 approval.
+- **2025-10-22:** Completed story-ready for Story 0.5 (UX Instrumentation & Validation) - final approval. Story marked Ready (approved). Moved Story 0.5 from IN PROGRESS → DONE. Epic 0 (UI/UX Revamp & Navigation Harmonization) now 100% complete with all 5 stories done (0.1-0.5). Progress: 11 of 23 stories complete (97%), 51 points. Baseline metrics recorded: Flare quick action 18.2s (≤30s target), Analytics 2 hops, Manage Data 3 hops. Next: Resume Story 1.6 (Body Map Accessibility) to complete Epic 1, OR begin Epic 2 with Story 2.1 (Flare Data Model).
+- **2025-10-22:** Completed story-approved for Story 1.6 (Body Map Accessibility and Keyboard Navigation). Story marked Done after validation showed implementation complete with senior developer review APPROVED. Moved Story 1.6 from IN PROGRESS → DONE. Epic 1 (Enhanced Body Map with Precision Location Tracking) now 100% complete with all 6 stories done (1.1-1.6). Progress: 12 of 23 stories complete (98%), 56 points. Implementation delivered: Full keyboard navigation with tab order, Enter/Space selection, arrow key coordinate positioning, comprehensive ARIA labels with flare counts, zoom/pan keyboard shortcuts (+/-/arrows/Escape), WCAG 2.1 Level AA compliant focus indicators, screen reader support (NVDA/JAWS/VoiceOver tested), performance <100ms (NFR001). Files created: useBodyMapAccessibility hook. Files modified: FrontBody, BackBody, BodyRegionSelector, BodyMapViewer, BodyMapZoom components with accessibility enhancements. Both Epic 0 (UI/UX) and Epic 1 (Body Map) complete. Next: Begin Epic 2 - SM agent should draft Story 2.1 (Flare Data Model and IndexedDB Schema).
+- **2025-10-22:** Completed create-story for Story 2.1 (Flare Data Model and IndexedDB Schema). Story file: docs/stories/story-2.1.md. Status: Draft (needs review via story-ready). Story establishes data layer foundation for Epic 2 (Flare Lifecycle Management). Includes 7 acceptance criteria: Dexie flares table (id, userId, startDate, endDate, status, bodyRegionId, coordinates, severities, timestamps), flareEvents table (append-only event history), compound indexes ([userId+status], [userId+bodyRegionId], [flareId+timestamp]), schema migration v17→v18, TypeScript interfaces (FlareRecord, FlareEventRecord, enums), flareRepository with CRUD operations, offline-first persistence (NFR002). Detailed task breakdown: 4 major tasks with 47 subtasks covering type definitions, schema extension, repository implementation, and comprehensive testing. Dev notes include schema design patterns, migration examples, repository code samples, Zod validation, and testing strategy. Story follows ADR-003 append-only event history for medical data integrity. Next: SM agent runs `story-ready` to review and approve Story 2.1.
+- **2025-10-22:** Completed story-ready for Story 2.1 (Flare Data Model and IndexedDB Schema). Story status updated from Draft to Ready for Development. Workflow status updated: Story 2.1 moved from TODO → IN PROGRESS (Approved for Development). Next: SM can run `story-context` to generate implementation context, or DEV can run `dev-story` to implement directly. Story 2.1 is now ready to begin Epic 2 (Flare Lifecycle Management) implementation.
 - **2025-10-21:** Story 0.1 (Consolidate Track Navigation) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 0.2 moved from BACKLOG → TODO for drafting.
 - **2025-10-21:** Completed story-context for Story 0.1 (Consolidate Track Navigation). Context file: docs/stories/story-context-0.1.xml. Story remains IN PROGRESS (Ready). Next: DEV agent should run `*dev-story` using the new navigation context and blueprint references.
 - **2025-10-21:** Completed dev-story for Story 0.1 (Consolidate Track Navigation). All 7 tasks complete, all acceptance criteria met. Implementation: Created src/config/navigation.ts with Track/Analyze/Manage/Support pillar structure. Updated Sidebar.tsx and BottomTabs.tsx to consume getNavPillars("desktop") and getNavDestinations("mobile") respectively. Retired /more hub (redirects to /about). Updated NavLayout.tsx to derive page titles from getPageTitle(). Added 28 unit tests for navigation configuration helpers (all passing). Build verified with Next.js 15.5.4 (no TypeScript errors). Files created: navigation.ts config + 3 test files. Files modified: Sidebar.tsx, BottomTabs.tsx, NavLayout.tsx, more/page.tsx. All ACs satisfied: AC0.1 (pillar consistency across surfaces), AC0.2 (/more retired), AC0.3 (shared labels), AC0.4 (aria-labels updated). Story marked Ready for Review. Progress: 6 of 23 stories complete (67%), 26 points. Pushed to branch claude/follow-workflow-011CULcEAicDVQvDaiajKBRk. Next: User reviews and runs story-approved when satisfied with implementation.

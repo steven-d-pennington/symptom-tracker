@@ -13,7 +13,7 @@ describe("FrontBody Component - Groin Regions", () => {
 
   describe("AC1.1: Front body view displays three distinct groin regions", () => {
     it("should render exactly 3 groin SVG elements", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const leftGroin = container.querySelector("#left-groin");
       const centerGroin = container.querySelector("#center-groin");
@@ -25,7 +25,7 @@ describe("FrontBody Component - Groin Regions", () => {
     });
 
     it("should render groin regions as ellipse elements", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const leftGroin = container.querySelector("#left-groin");
       const centerGroin = container.querySelector("#center-groin");
@@ -37,7 +37,7 @@ describe("FrontBody Component - Groin Regions", () => {
     });
 
     it("should NOT render old single groin region", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const oldGroin = container.querySelector("#groin");
       expect(oldGroin).not.toBeInTheDocument();
@@ -46,7 +46,7 @@ describe("FrontBody Component - Groin Regions", () => {
 
   describe("AC1.3: Each groin region is selectable with hover/active states", () => {
     it("should have body-region class for hover styling", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const leftGroin = container.querySelector("#left-groin");
       const centerGroin = container.querySelector("#center-groin");
@@ -58,7 +58,7 @@ describe("FrontBody Component - Groin Regions", () => {
     });
 
     it("should change opacity on hover via CSS", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const leftGroin = container.querySelector("#left-groin");
 
@@ -156,21 +156,21 @@ describe("FrontBody Component - Groin Regions", () => {
 
   describe("AC1.6: Region labels display correctly", () => {
     it("should have aria-label for Left Groin", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const leftGroin = container.querySelector("#left-groin");
       expect(leftGroin).toHaveAttribute("aria-label", "Left Groin");
     });
 
     it("should have aria-label for Center Groin", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const centerGroin = container.querySelector("#center-groin");
       expect(centerGroin).toHaveAttribute("aria-label", "Center Groin");
     });
 
     it("should have aria-label for Right Groin", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const rightGroin = container.querySelector("#right-groin");
       expect(rightGroin).toHaveAttribute("aria-label", "Right Groin");
@@ -217,7 +217,7 @@ describe("FrontBody Component - Groin Regions", () => {
 
   describe("SVG rendering and coordinates", () => {
     it("should render groin regions within viewBox bounds", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const svg = container.querySelector("svg");
       expect(svg).toHaveAttribute("viewBox", "0 0 400 800");
@@ -251,7 +251,7 @@ describe("FrontBody Component - Groin Regions", () => {
     });
 
     it("should have adequate touch target size (minimum 44x44px equivalent)", () => {
-      const { container } = render(<FrontBody />);
+      const { container } = render(<FrontBody userId="test-user" />);
 
       const leftGroin = container.querySelector("#left-groin");
       const rx = Number(leftGroin?.getAttribute("rx"));

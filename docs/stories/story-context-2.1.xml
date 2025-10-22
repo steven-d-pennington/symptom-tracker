@@ -1,0 +1,156 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>1</storyId>
+    <title>Story 2.1: Flare Data Model and IndexedDB Schema</title>
+    <status>Ready for Development</status>
+    <generatedAt>2025-10-22</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer implementing flare lifecycle tracking</asA>
+    <iWant>a robust Dexie schema for flare entities and flare events with proper indexing</iWant>
+    <soThat>flare data persists locally with efficient queries and maintains data integrity throughout the flare lifecycle</soThat>
+    <tasks>
+      <task id="1">Define TypeScript interfaces and types (AC: #2.1.5): Create src/types/flare.ts with FlareStatus enum ('active', 'improving', 'worsening', 'resolved'), FlareEventType enum ('created', 'severity_update', 'trend_change', 'intervention', 'resolved'), FlareTrend enum ('improving', 'stable', 'worsening'), FlareRecord interface matching Dexie schema (id, userId, startDate, endDate?, status, bodyRegionId, coordinates?, initialSeverity, currentSeverity, createdAt, updatedAt), FlareEventRecord interface (id, flareId, eventType, timestamp, severity?, trend?, notes?, interventions?, userId), Zod schemas for runtime validation (flareRecordSchema, flareEventRecordSchema), JSDoc comments documenting field constraints (e.g., severity 1-10 range, coordinates 0-1 normalized), export all types from src/types/index.ts for centralized import.</task>
+      <task id="2">Extend Dexie schema with flares tables (AC: #2.1.1, #2.1.2, #2.1.3, #2.1.4): Update src/lib/db/schema.ts to add flares table definition with all fields from FlareRecord, add flareEvents table definition with all fields from FlareEventRecord, define compound indexes: [userId+status], [userId+bodyRegionId], [userId+startDate] for flares, [flareId+timestamp], [userId+timestamp] for flareEvents, update src/lib/db/client.ts to increment Dexie version (17 → 18), implement db.version(18).stores() migration with flares and flareEvents table definitions, add upgrade callback logging migration success (console.log for development), test migration with empty database (fresh install) and existing v17 database (upgrade path), verify indexes exist using Dexie developer tools or programmatic index inspection.</task>
+      <task id="3">Implement flareRepository with CRUD operations (AC: #2.1.6, #2.1.7): Create src/lib/repositories/flareRepository.ts following existing repository patterns, implement createFlare(userId, data) → returns FlareRecord with UUID, timestamps, initialSeverity=currentSeverity, implement updateFlare(userId, flareId, updates) → returns updated FlareRecord, implement getFlareById(userId, flareId) → returns FlareRecord or null, implement getActiveFlares(userId) → returns FlareRecord[] where status != 'resolved', implement getResolvedFlares(userId) → returns FlareRecord[] where status == 'resolved', implement addFlareEvent(userId, flareId, event) → creates FlareEventRecord, returns event, implement getFlareHistory(userId, flareId) → returns FlareEventRecord[] ordered by timestamp ASC, add error handling for missing flares, duplicate IDs, invalid userId, ensure all methods use Dexie transactions for atomic writes, export flareRepository from src/lib/repositories/index.ts.</task>
+      <task id="4">Add comprehensive test coverage (AC: All): Create src/lib/repositories/__tests__/flareRepository.test.ts using Jest + fake-indexeddb, test createFlare: UUID generation, timestamp initialization, status defaults to 'active', test updateFlare: updates currentSeverity, status, updatedAt timestamp, test getFlareById: retrieves correct flare, returns null for invalid ID, test getActiveFlares: filters by userId+status, excludes resolved flares, test getResolvedFlares: filters by userId+status='resolved', test addFlareEvent: creates event with correct flareId, timestamp ordering, test getFlareHistory: returns events chronologically, filters by flareId, test compound index queries: verify [userId+status] and [userId+bodyRegionId] used, test schema migration: fresh install v18, upgrade v17→v18, test type validation: Zod schema catches invalid severity (0, 11), invalid status enum, test offline-first: writes succeed without network, data persists across page reload.</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC2.1.1">Dexie flares table includes: id (UUID primary key), userId, startDate, endDate (nullable), status (active/improving/worsening/resolved), bodyRegionId, coordinates {x, y} (nullable), initialSeverity, currentSeverity, createdAt, updatedAt, with proper TypeScript interfaces matching the schema structure.</criterion>
+    <criterion id="AC2.1.2">Dexie flareEvents table includes: id (UUID), flareId (foreign key), eventType (created/severity_update/trend_change/intervention/resolved), timestamp, severity (1-10, nullable), trend (improving/stable/worsening, nullable), notes (string, nullable), interventions (JSON array, nullable), userId (for multi-user support), with compound index [flareId+timestamp] for chronological event ordering.</criterion>
+    <criterion id="AC2.1.3">Efficient query indexes configured: [userId+status] for active/resolved flare lists, [userId+bodyRegionId] for problem area analytics, [userId+startDate] for timeline queries, [flareId+timestamp] for event history ordering, ensuring all queries meet NFR001 performance target (&lt;10ms for indexed lookups).</criterion>
+    <criterion id="AC2.1.4">Schema migration handled cleanly: Dexie version increment (v17 → v18) includes upgrade logic preserving existing data, gracefully handling empty initial state, and logging migration success/failure for debugging, following existing migration patterns from previous schema updates.</criterion>
+    <criterion id="AC2.1.5">TypeScript types enforce data integrity: Export FlareRecord, FlareEventRecord, FlareStatus, FlareEventType, FlareTrend types from src/types/flare.ts with strict typing, optional field markers matching schema nullability, Zod validation schemas for runtime type checking, and JSDoc comments documenting each field's purpose and constraints.</criterion>
+    <criterion id="AC2.1.6">Repository pattern encapsulates data access: flareRepository in src/lib/repositories/flareRepository.ts provides: createFlare, updateFlare, getFlareById, getActiveFlares, getResolvedFlares, addFlareEvent, getFlareHistory methods, all accepting userId parameter for multi-user future-proofing, following existing repository conventions from userRepository and other data layers.</criterion>
+    <criterion id="AC2.1.7">Offline-first persistence guaranteed: All flareRepository write operations use immediate IndexedDB transactions with proper error handling, no network dependencies, Dexie transaction guarantees, and confirmation of successful writes before resolving promises, meeting NFR002 requirement for zero data loss.</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic 2: Flare Lifecycle Management" section="Story-2.1" snippet="Comprehensive story specification including acceptance criteria, task breakdown, and functional requirements for flare data model and IndexedDB schema implementation." />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR005-FR009" snippet="Functional requirements for flare lifecycle tracking including data persistence, severity monitoring, and trend analysis capabilities." />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="NFR002" snippet="Offline-first persistence requirement mandating immediate IndexedDB writes with zero data loss guarantee for all flare operations." />
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="Data-Architecture" snippet="Technical design patterns for flare data model including schema design, indexing strategies, and repository layer architecture." />
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="ADR-003" snippet="Append-only flare history decision ensuring medical data integrity through immutable event logging without deletion capabilities." />
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="Dexie-Indexes" snippet="Compound index design patterns for efficient flare queries including [userId+status], [userId+bodyRegionId], and [flareId+timestamp] configurations." />
+      <doc path="AGENTS.md" title="Agent Guidelines" section="Database-Architecture" snippet="Database design conventions including JSON stringification for arrays, compound indexes for performance, and multi-user query patterns." />
+      <doc path="AGENTS.md" title="Agent Guidelines" section="Repository-Pattern" snippet="Repository implementation guidelines including userId parameters for future multi-user support and transaction handling patterns." />
+      <doc path="AGENTS.md" title="Agent Guidelines" section="JSON-Stringification" snippet="Array/object storage conventions in IndexedDB requiring JSON stringification for complex data types like interventions arrays." />
+      <doc path="AGENTS.md" title="Agent Guidelines" section="Type-Safety" snippet="TypeScript strict mode requirements and optional field handling patterns for schema compatibility." />
+    </docs>
+    <code>
+      <artifact path="src/lib/db/schema.ts" kind="schema" symbol="FlareRecord" lines="286-323" reason="Existing FlareRecord interface - requires refactoring to match new schema requirements with simplified structure for flare entities and event history." />
+      <artifact path="src/lib/db/client.ts" kind="database" symbol="SymptomTrackerDatabase" lines="23-317" reason="Current Dexie database client at version 17 - needs version 18 migration for new flares and flareEvents tables with compound indexes." />
+      <artifact path="src/lib/repositories/userRepository.ts" kind="repository" symbol="UserRepository" lines="5-247" reason="Existing repository pattern example - flareRepository should follow similar async method structure and userId parameter conventions." />
+      <artifact path="src/lib/types/flare.ts" kind="types" symbol="ActiveFlare" lines="1-46" reason="Existing flare type definitions - new FlareRecord and FlareEventRecord interfaces should be added alongside existing types for backward compatibility." />
+      <artifact path="src/lib/utils/idGenerator.ts" kind="utility" symbol="generateId" lines="1-10" reason="UUID generation utility - should be used for all flare and flareEvent ID creation following existing patterns." />
+      <artifact path="jest.setup.js" kind="test" symbol="fake-indexeddb setup" lines="1-10" reason="Test environment configuration - flareRepository tests should use fake-indexeddb for IndexedDB mocking." />
+      <artifact path="src/lib/db/client.ts" kind="migration" symbol="version(8).upgrade" lines="83-99" reason="Existing migration pattern example - version 18 upgrade should follow similar structure for flare schema initialization." />
+    </code>
+    <dependencies>
+      <dependency name="dexie" version="4.2.0" purpose="IndexedDB wrapper for local-first data persistence and live queries" />
+      <dependency name="uuid" version="13.0.0" purpose="RFC 4122 UUID v4 generation for flare and event IDs" />
+      <dependency name="fake-indexeddb" version="6.2.4" purpose="IndexedDB mocking for Jest unit tests" />
+      <dependency name="jest" version="30.2.0" purpose="Unit testing framework with React Testing Library integration" />
+      <dependency name="typescript" version="5.x" purpose="Type safety and interface enforcement for flare data models" />
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="C1">Medical data integrity requires append-only event history - FlareEventRecord entries must never be modified or deleted after creation (ADR-003).</constraint>
+    <constraint id="C2">Offline-first persistence mandates immediate IndexedDB writes with zero data loss - all repository operations must complete synchronously to local storage before resolving (NFR002).</constraint>
+    <constraint id="C3">Multi-user future-proofing requires userId parameter in all queries and indexes - even though current implementation is single-user, prepare for multi-user support.</constraint>
+    <constraint id="C4">TypeScript strict mode prohibits any types - all interfaces must have explicit typing with optional field markers matching schema nullability.</constraint>
+    <constraint id="C5">JSON stringification required for IndexedDB array storage - interventions field must be stored as JSON string, not native array (AGENTS.md convention).</constraint>
+    <constraint id="C6">Compound indexes critical for NFR001 performance - all common query patterns must use indexed fields first, then filter in memory if needed (&lt;10ms target).</constraint>
+    <constraint id="C7">Schema migration must preserve existing data - version 18 upgrade logic must handle empty databases and existing v17 data gracefully with logging.</constraint>
+    <constraint id="C8">Repository pattern consistency - flareRepository must follow userRepository conventions with async methods, error handling, and transaction guarantees.</constraint>
+    <constraint id="C9">UUID generation standardization - all IDs must use uuid package v4 generation following existing idGenerator.ts patterns.</constraint>
+    <constraint id="C10">Test coverage minimum 80% - Jest + fake-indexeddb tests must cover all acceptance criteria with comprehensive mocking and assertion patterns.</constraint>
+  </constraints>
+  <interfaces>
+    <interface name="FlareRecord" kind="Database Schema Interface">
+      <signature>interface FlareRecord {
+        id: string;                    // UUID v4 primary key
+        userId: string;                // For multi-user support
+        startDate: number;             // Unix timestamp (Date.now())
+        endDate?: number;              // Nullable until resolved
+        status: FlareStatus;           // 'active' | 'improving' | 'worsening' | 'resolved'
+        bodyRegionId: string;          // Foreign key to bodyRegions
+        coordinates?: { x: number; y: number }; // 0-1 normalized, optional
+        initialSeverity: number;       // 1-10 at creation
+        currentSeverity: number;       // 1-10, updated via events
+        createdAt: number;             // Unix timestamp
+        updatedAt: number;             // Unix timestamp
+      }</signature>
+      <path>src/lib/types/flare.ts</path>
+    </interface>
+    <interface name="FlareEventRecord" kind="Database Schema Interface">
+      <signature>interface FlareEventRecord {
+        id: string;                    // UUID v4
+        flareId: string;               // Foreign key to flares.id
+        eventType: FlareEventType;     // 'created' | 'severity_update' | 'trend_change' | 'intervention' | 'resolved'
+        timestamp: number;             // Unix timestamp
+        severity?: number;             // 1-10, present for severity_update
+        trend?: FlareTrend;            // Present for trend_change
+        notes?: string;                // User notes
+        interventions?: string;        // JSON array stringified
+        userId: string;                // For multi-user support
+      }</signature>
+      <path>src/lib/types/flare.ts</path>
+    </interface>
+    <interface name="flareRepository API" kind="Repository Interface">
+      <signature>interface FlareRepository {
+        createFlare(userId: string, data: Partial&lt;FlareRecord&gt;): Promise&lt;FlareRecord&gt;;
+        updateFlare(userId: string, flareId: string, updates: Partial&lt;FlareRecord&gt;): Promise&lt;FlareRecord&gt;;
+        getFlareById(userId: string, flareId: string): Promise&lt;FlareRecord | null&gt;;
+        getActiveFlares(userId: string): Promise&lt;FlareRecord[]&gt;;
+        getResolvedFlares(userId: string): Promise&lt;FlareRecord[]&gt;;
+        addFlareEvent(userId: string, flareId: string, event: Partial&lt;FlareEventRecord&gt;): Promise&lt;FlareEventRecord&gt;;
+        getFlareHistory(userId: string, flareId: string): Promise&lt;FlareEventRecord[]&gt;;
+      }</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+    </interface>
+    <interface name="Dexie Schema Migration" kind="Database Migration Interface">
+      <signature>db.version(18).stores({
+        flares: 'id, [userId+status], [userId+bodyRegionId], [userId+startDate], userId',
+        flareEvents: 'id, [flareId+timestamp], [userId+timestamp], flareId, userId'
+      }).upgrade(tx => {
+        console.log('Migrated to v18: Added flares and flareEvents tables');
+      });</signature>
+      <path>src/lib/db/client.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest 30.2.0 + React Testing Library 16.3.0 with fake-indexeddb 6.2.4 for IndexedDB mocking, jsdom environment, 80% minimum coverage across branches/functions/lines/statements, repository pattern testing with Dexie transaction mocking, component testing with accessible queries, integration tests for multi-component workflows.</standards>
+    <locations>
+      <location>src/lib/repositories/__tests__/flareRepository.test.ts</location>
+      <location>src/lib/db/__tests__/schema.test.ts</location>
+      <location>src/lib/types/__tests__/flare.test.ts</location>
+      <location>src/lib/db/__tests__/client.test.ts</location>
+    </locations>
+    <ideas>
+      <idea>Test createFlare: UUID generation, timestamp initialization, status defaults to 'active', initialSeverity=currentSeverity</idea>
+      <idea>Test updateFlare: updates currentSeverity, status, updatedAt timestamp, preserves other fields</idea>
+      <idea>Test getFlareById: retrieves correct flare by userId+flareId, returns null for invalid combinations</idea>
+      <idea>Test getActiveFlares: filters by [userId+status] compound index, excludes 'resolved' status</idea>
+      <idea>Test getResolvedFlares: filters by [userId+status]='resolved', returns chronological order</idea>
+      <idea>Test addFlareEvent: creates event with correct flareId, timestamp ordering, JSON stringifies interventions</idea>
+      <idea>Test getFlareHistory: returns events sorted by [flareId+timestamp], filters by userId+flareId</idea>
+      <idea>Test schema migration: fresh install creates v18 tables, upgrade preserves v17 data, logs success</idea>
+      <idea>Test compound index queries: verify Dexie uses indexes for [userId+status], [userId+bodyRegionId] queries</idea>
+      <idea>Test offline-first persistence: writes succeed without network, data persists across page reload</idea>
+      <idea>Test type validation: Zod schemas reject invalid severity ranges (0, 11), invalid enum values</idea>
+      <idea>Test error handling: missing flare throws specific error, duplicate IDs handled gracefully</idea>
+      <idea>Test transaction guarantees: partial failures rollback all changes, atomic write operations</idea>
+      <idea>Test multi-user isolation: userId filtering prevents data leakage between users</idea>
+      <idea>Test performance targets: indexed queries complete in &lt;10ms, bulk operations meet NFR001</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -16,6 +16,11 @@ interface BodyRegionSelectorProps {
   coordinateCursorActive?: boolean;
   coordinateMarker?: React.ReactNode;
   flareOverlay?: React.ReactNode;
+  // Accessibility props
+  userId: string;
+  zoomLevel?: number;
+  isZoomed?: boolean;
+  onCoordinateMark?: (regionId: string, coordinates: { x: number; y: number }) => void;
 }
 
 export function BodyRegionSelector({
@@ -29,6 +34,10 @@ export function BodyRegionSelector({
   coordinateCursorActive = false,
   coordinateMarker,
   flareOverlay,
+  userId,
+  zoomLevel = 1,
+  isZoomed = false,
+  onCoordinateMark,
 }: BodyRegionSelectorProps) {
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -73,6 +82,10 @@ export function BodyRegionSelector({
             coordinateCursorActive={coordinateCursorActive}
             coordinateMarker={coordinateMarker}
             flareOverlay={flareOverlay}
+            userId={userId}
+            zoomLevel={zoomLevel}
+            isZoomed={isZoomed}
+            onCoordinateMark={onCoordinateMark}
           />
         )}
         {view === "back" && (
@@ -87,6 +100,10 @@ export function BodyRegionSelector({
             coordinateCursorActive={coordinateCursorActive}
             coordinateMarker={coordinateMarker}
             flareOverlay={flareOverlay}
+            userId={userId}
+            zoomLevel={zoomLevel}
+            isZoomed={isZoomed}
+            onCoordinateMark={onCoordinateMark}
           />
         )}
         {(view === "left" || view === "right") && (
@@ -101,6 +118,10 @@ export function BodyRegionSelector({
             coordinateCursorActive={coordinateCursorActive}
             coordinateMarker={coordinateMarker}
             flareOverlay={flareOverlay}
+            userId={userId}
+            zoomLevel={zoomLevel}
+            isZoomed={isZoomed}
+            onCoordinateMark={onCoordinateMark}
           />
         )}
       </div>

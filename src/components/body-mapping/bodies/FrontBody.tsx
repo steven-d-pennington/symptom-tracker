@@ -3,6 +3,7 @@
 import React from "react";
 import { FRONT_BODY_REGIONS } from "@/lib/data/bodyRegions";
 import { BodyRegion } from "@/lib/types/body-mapping";
+import { useBodyMapAccessibility } from "@/lib/hooks/useBodyMapAccessibility";
 
 interface FrontBodyProps {
   selectedRegions?: string[];
@@ -15,6 +16,11 @@ interface FrontBodyProps {
   coordinateCursorActive?: boolean;
   coordinateMarker?: React.ReactNode;
   flareOverlay?: React.ReactNode;
+  // Accessibility props
+  userId: string;
+  zoomLevel?: number;
+  isZoomed?: boolean;
+  onCoordinateMark?: (regionId: string, coordinates: { x: number; y: number }) => void;
 }
 
 export function FrontBody({
@@ -28,7 +34,27 @@ export function FrontBody({
   coordinateCursorActive = false,
   coordinateMarker,
   flareOverlay,
+  userId,
+  zoomLevel = 1,
+  isZoomed = false,
+  onCoordinateMark,
 }: FrontBodyProps) {
+  // Accessibility hook
+  const {
+    getTabIndex,
+    handleRegionKeyDown,
+    getAriaLabel,
+    setFocusedRegionId,
+  } = useBodyMapAccessibility({
+    regions: FRONT_BODY_REGIONS,
+    selectedRegion: selectedRegions[0],
+    onRegionSelect: onRegionClick,
+    onCoordinateMark,
+    zoomLevel,
+    isZoomed,
+    userId,
+  });
+
   const getSeverityColor = (severity: number): string => {
     if (severity <= 2) return "#10b981"; // green
     if (severity <= 4) return "#fbbf24"; // yellow
@@ -72,6 +98,15 @@ export function FrontBody({
     return isFlare ? "flare-pulse" : "";
   };
 
+  // Helper function for accessibility props
+  const getAccessibilityProps = (regionId: string) => ({
+    tabIndex: getTabIndex(regionId),
+    "aria-label": getAriaLabel(regionId),
+    onKeyDown: (e: React.KeyboardEvent) => handleRegionKeyDown(e, regionId),
+    onFocus: () => setFocusedRegionId(regionId),
+    onBlur: () => setFocusedRegionId(null),
+  });
+
   return (
     <svg
       viewBox="0 0 400 800"
@@ -79,6 +114,8 @@ export function FrontBody({
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
       onClickCapture={onCoordinateCapture}
+      role="application"
+      aria-label="Interactive body map for flare tracking"
     >
       <defs>
         <style>{`
@@ -110,6 +147,21 @@ export function FrontBody({
             stroke: #dc2626;
             stroke-width: 3;
           }
+
+          /* Accessibility focus styles */
+          .body-region:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+            stroke-width: 4;
+          }
+
+          /* High contrast focus for better visibility */
+          @media (prefers-contrast: high) {
+            .body-region:focus-visible {
+              outline: 3px solid #ffffff;
+              outline-offset: 1px;
+            }
+          }
         `}</style>
       </defs>
 
@@ -123,9 +175,14 @@ export function FrontBody({
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS[0])}`}
         fill={getRegionFill(FRONT_BODY_REGIONS[0])}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS[0])}
+        tabIndex={getTabIndex("head-front")}
+        aria-label={getAriaLabel("head-front")}
         onClick={() => onRegionClick?.("head-front")}
         onMouseEnter={() => onRegionHover?.("head-front")}
         onMouseLeave={() => onRegionHover?.(null)}
+        onKeyDown={(e) => handleRegionKeyDown(e, "head-front")}
+        onFocus={() => setFocusedRegionId("head-front")}
+        onBlur={() => setFocusedRegionId(null)}
       />
 
       {/* Neck */}
@@ -138,9 +195,14 @@ export function FrontBody({
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS[1])}`}
         fill={getRegionFill(FRONT_BODY_REGIONS[1])}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS[1])}
+        tabIndex={getTabIndex("neck-front")}
+        aria-label={getAriaLabel("neck-front")}
         onClick={() => onRegionClick?.("neck-front")}
         onMouseEnter={() => onRegionHover?.("neck-front")}
         onMouseLeave={() => onRegionHover?.(null)}
+        onKeyDown={(e) => handleRegionKeyDown(e, "neck-front")}
+        onFocus={() => setFocusedRegionId("neck-front")}
+        onBlur={() => setFocusedRegionId(null)}
       />
 
       {/* Left Shoulder */}
@@ -153,6 +215,7 @@ export function FrontBody({
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}
+        {...getAccessibilityProps("shoulder-left")}
         onClick={() => onRegionClick?.("shoulder-left")}
         onMouseEnter={() => onRegionHover?.("shoulder-left")}
         onMouseLeave={() => onRegionHover?.(null)}
@@ -352,6 +415,7 @@ export function FrontBody({
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}
+        {...getAccessibilityProps("upper-arm-left")}
         onClick={() => onRegionClick?.("upper-arm-left")}
         onMouseEnter={() => onRegionHover?.("upper-arm-left")}
         onMouseLeave={() => onRegionHover?.(null)}
@@ -368,6 +432,7 @@ export function FrontBody({
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}
+        {...getAccessibilityProps("upper-arm-right")}
         onClick={() => onRegionClick?.("upper-arm-right")}
         onMouseEnter={() => onRegionHover?.("upper-arm-right")}
         onMouseLeave={() => onRegionHover?.(null)}

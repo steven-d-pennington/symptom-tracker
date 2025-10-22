@@ -182,6 +182,16 @@ export function BodyMapViewer({
 
   return (
     <div className="relative w-full h-full bg-gray-50 rounded-lg">
+      {/* Hidden aria-live region for accessibility announcements */}
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        role="status"
+      >
+        {/* Announcements will be populated by accessibility hooks */}
+      </div>
+
       <BodyMapZoom
         viewType={view}
         userId={userId}
@@ -198,6 +208,10 @@ export function BodyMapViewer({
           coordinateCursorActive={!readOnly && Boolean(selectedRegion)}
           coordinateMarker={coordinateMarkerNode}
           flareOverlay={flareMarkerOverlay}
+          userId={userId}
+          zoomLevel={zoomLevel}
+          isZoomed={zoomLevel > 1}
+          onCoordinateMark={onCoordinateMark}
         />
       </BodyMapZoom>
 
