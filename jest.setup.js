@@ -8,6 +8,13 @@ const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
 global.indexedDB = indexedDB;
 global.IDBKeyRange = IDBKeyRange;
 
+// Polyfill structuredClone for Node.js < 17 and fake-indexeddb
+if (typeof structuredClone === 'undefined') {
+  global.structuredClone = (obj) => {
+    return JSON.parse(JSON.stringify(obj));
+  };
+}
+
 // Add Blob.text() method if it doesn't exist (for Node < 18)
 if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
   Blob.prototype.text = function() {

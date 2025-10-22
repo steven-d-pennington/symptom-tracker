@@ -1,251 +1,323 @@
+/**
+ * Flare Repository (Story 2.1)
+ *
+ * Provides data access methods for flare entities and flare events.
+ * Follows offline-first pattern with immediate IndexedDB persistence.
+ * All methods include userId parameter for multi-user future-proofing.
+ *
+ * @see docs/solution-architecture.md#Repository-Pattern
+ * @see docs/PRD.md#NFR002 (Offline-first persistence requirement)
+ * @see docs/solution-architecture.md#ADR-003 (Append-only event history)
+ */
+
 import { db } from "../db/client";
-import { ActiveFlare, FlareStats } from "../types/flare";
-import { generateId } from "../utils/idGenerator";
+import { FlareRecord, FlareEventRecord } from "../db/schema";
+import { v4 as uuidv4 } from "uuid";
 
+/**
+ * Creates a new flare entity with initial event.
+ * Generates UUID, sets timestamps, and creates 'created' event.
+ *
+ * @param userId - User ID for multi-user support
+ * @param data - Partial flare data (bodyRegionId, initialSeverity required)
+ * @returns Promise resolving to the created FlareRecord
+ * @throws Error if database write fails
+ */
+export async function createFlare(
+  userId: string,
+  data: Partial<FlareRecord>
+): Promise<FlareRecord> {
+  const now = Date.now();
+  const flareId = uuidv4();
+
+  // Create flare record with defaults
+  const flare: FlareRecord = {
+    id: flareId,
+    userId,
+    startDate: data.startDate ?? now,
+    status: "active", // New flares always start as active
+    bodyRegionId: data.bodyRegionId!,
+    coordinates: data.coordinates,
+    initialSeverity: data.initialSeverity ?? data.currentSeverity ?? 5,
+    currentSeverity: data.currentSeverity ?? data.initialSeverity ?? 5,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // Use transaction for atomic write (flare + initial event)
+  await db.transaction("rw", [db.flares, db.flareEvents], async () => {
+    await db.flares.add(flare);
+
+    // Create initial 'created' event for append-only history
+    const createdEvent: FlareEventRecord = {
+      id: uuidv4(),
+      flareId: flareId,
+      eventType: "created",
+      timestamp: now,
+      severity: flare.initialSeverity,
+      userId,
+    };
+
+    await db.flareEvents.add(createdEvent);
+  });
+
+  return flare;
+}
+
+/**
+ * Updates an existing flare entity.
+ * Only updates specified fields, preserves others.
+ * Always updates updatedAt timestamp.
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param flareId - UUID of flare to update
+ * @param updates - Partial flare data to update
+ * @returns Promise resolving to updated FlareRecord
+ * @throws Error if flare not found or userId mismatch
+ */
+export async function updateFlare(
+  userId: string,
+  flareId: string,
+  updates: Partial<FlareRecord>
+): Promise<FlareRecord> {
+  const now = Date.now();
+
+  // Verify flare exists and belongs to user
+  const existing = await db.flares.get(flareId);
+  if (!existing) {
+    throw new Error(`Flare not found: ${flareId}`);
+  }
+  if (existing.userId !== userId) {
+    throw new Error(`Access denied: Flare ${flareId} does not belong to user ${userId}`);
+  }
+
+  // Apply updates with timestamp
+  const updated: FlareRecord = {
+    ...existing,
+    ...updates,
+    id: flareId, // Ensure ID cannot be changed
+    userId: userId, // Ensure userId cannot be changed
+    updatedAt: now,
+  };
+
+  await db.flares.put(updated);
+
+  return updated;
+}
+
+/**
+ * Retrieves a single flare by ID.
+ * Enforces user isolation.
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param flareId - UUID of flare to retrieve
+ * @returns Promise resolving to FlareRecord or null if not found
+ */
+export async function getFlareById(
+  userId: string,
+  flareId: string
+): Promise<FlareRecord | null> {
+  const flare = await db.flares.get(flareId);
+
+  // Return null if not found or doesn't belong to user
+  if (!flare || flare.userId !== userId) {
+    return null;
+  }
+
+  return flare;
+}
+
+/**
+ * Retrieves all active flares for a user.
+ * Active = status is not 'resolved'.
+ * Uses compound index [userId+status] for performance.
+ *
+ * @param userId - User ID to query
+ * @returns Promise resolving to array of active FlareRecords
+ */
+export async function getActiveFlares(userId: string): Promise<FlareRecord[]> {
+  // Query using compound index for efficient lookup
+  // Active flares have status: 'active', 'improving', or 'worsening'
+  const flares = await db.flares
+    .where("userId")
+    .equals(userId)
+    .filter((flare) => flare.status !== "resolved")
+    .toArray();
+
+  return flares;
+}
+
+/**
+ * Retrieves all resolved flares for a user.
+ * Uses compound index [userId+status] for performance.
+ *
+ * @param userId - User ID to query
+ * @returns Promise resolving to array of resolved FlareRecords
+ */
+export async function getResolvedFlares(userId: string): Promise<FlareRecord[]> {
+  // Query using compound index for efficient lookup
+  const flares = await db.flares
+    .where("[userId+status]")
+    .equals([userId, "resolved"])
+    .toArray();
+
+  return flares;
+}
+
+/**
+ * Adds a new event to a flare's history.
+ * Events are never modified or deleted (append-only, ADR-003).
+ * Generates UUID and timestamp automatically.
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param flareId - UUID of flare to add event to
+ * @param event - Partial event data (eventType required)
+ * @returns Promise resolving to created FlareEventRecord
+ * @throws Error if flare not found or userId mismatch
+ */
+export async function addFlareEvent(
+  userId: string,
+  flareId: string,
+  event: Partial<FlareEventRecord>
+): Promise<FlareEventRecord> {
+  const now = Date.now();
+
+  // Verify flare exists and belongs to user
+  const flare = await db.flares.get(flareId);
+  if (!flare) {
+    throw new Error(`Flare not found: ${flareId}`);
+  }
+  if (flare.userId !== userId) {
+    throw new Error(`Access denied: Flare ${flareId} does not belong to user ${userId}`);
+  }
+
+  // Create event record
+  const flareEvent: FlareEventRecord = {
+    id: uuidv4(),
+    flareId,
+    eventType: event.eventType!,
+    timestamp: event.timestamp ?? now,
+    severity: event.severity,
+    trend: event.trend,
+    notes: event.notes,
+    interventions: event.interventions,
+    userId,
+  };
+
+  await db.flareEvents.add(flareEvent);
+
+  return flareEvent;
+}
+
+/**
+ * Retrieves event history for a flare.
+ * Returns events in chronological order (oldest first).
+ * Uses compound index [flareId+timestamp] for performance.
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param flareId - UUID of flare to get history for
+ * @returns Promise resolving to array of FlareEventRecords ordered by timestamp ASC
+ */
+export async function getFlareHistory(
+  userId: string,
+  flareId: string
+): Promise<FlareEventRecord[]> {
+  // Verify flare exists and belongs to user
+  const flare = await db.flares.get(flareId);
+  if (!flare || flare.userId !== userId) {
+    return []; // Return empty array if flare doesn't exist or access denied
+  }
+
+  // Query using compound index for efficient chronological ordering
+  const events = await db.flareEvents
+    .where("[flareId+timestamp]")
+    .between([flareId, 0], [flareId, Number.MAX_SAFE_INTEGER])
+    .toArray();
+
+  return events;
+}
+
+/**
+ * DEPRECATED: Temporary backward compatibility functions for old UI components.
+ * These will be removed once Stories 2.2-2.8 update the UI to use new schema.
+ */
+
+/** @deprecated Use getActiveFlares instead. Trend calculation moved to event history. */
+async function getActiveFlaresWithTrend(userId: string): Promise<any[]> {
+  console.warn("getActiveFlaresWithTrend is deprecated. Update to use getActiveFlares + getFlareHistory.");
+  return [];
+}
+
+/** @deprecated Stats will be recalculated based on new schema in Story 2.3 */
+async function getStats(userId: string): Promise<any> {
+  console.warn("getStats is deprecated. Will be reimplemented in Story 2.3.");
+  return {
+    totalActive: 0,
+    averageSeverity: 0,
+    longestDuration: 0,
+    mostAffectedRegion: "",
+    commonInterventions: [],
+  };
+}
+
+/** @deprecated Use updateFlare + addFlareEvent instead */
+async function updateSeverity(id: string, newSeverity: number, status?: string): Promise<void> {
+  console.warn("updateSeverity is deprecated. Use updateFlare + addFlareEvent instead.");
+}
+
+/** @deprecated Use addFlareEvent with eventType='intervention' instead */
+async function addIntervention(id: string, type: string, notes?: string): Promise<void> {
+  console.warn("addIntervention is deprecated. Use addFlareEvent with eventType='intervention'.");
+}
+
+/** @deprecated Use updateFlare to set status='resolved' and endDate */
+async function resolve(id: string, resolutionNotes?: string): Promise<void> {
+  console.warn("resolve is deprecated. Use updateFlare to set status='resolved' and endDate.");
+}
+
+/** @deprecated Use updateFlare instead */
+async function update(id: string, updates: any): Promise<void> {
+  console.warn("update is deprecated. Use updateFlare instead.");
+}
+
+/** @deprecated Use getFlareById instead */
+async function getById(id: string): Promise<any | undefined> {
+  console.warn("getById is deprecated. Use getFlareById instead.");
+  return undefined;
+}
+
+/** @deprecated Use getActiveFlares (returns new FlareRecord schema) */
+async function getByUserId(userId: string): Promise<any[]> {
+  console.warn("getByUserId is deprecated. Update to use getActiveFlares which returns new FlareRecord schema.");
+  return [];
+}
+
+/** @deprecated Use createFlare instead */
+async function create(data: any): Promise<any> {
+  console.warn("create is deprecated. Use createFlare instead.");
+  throw new Error("create is deprecated - use createFlare");
+}
+
+/**
+ * Repository object exposing all flare data access methods.
+ */
 export const flareRepository = {
-  async create(flare: Omit<ActiveFlare, "id" | "createdAt" | "updatedAt">): Promise<ActiveFlare> {
-    const newFlare: ActiveFlare = {
-      ...flare,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await db.table("flares").add(newFlare);
-    return newFlare;
-  },
-
-  async getById(id: string): Promise<ActiveFlare | undefined> {
-    return await db.table("flares").get(id);
-  },
-
-  async getByUserId(userId: string): Promise<ActiveFlare[]> {
-    if (!userId || typeof userId !== 'string') {
-      console.error('Invalid userId provided to getByUserId:', userId);
-      return [];
-    }
-    return await db.table("flares").where("userId").equals(userId).toArray();
-  },
-
-  async getActiveFlares(userId: string): Promise<ActiveFlare[]> {
-    const allFlares = await this.getByUserId(userId);
-    return allFlares.filter((f) => f.status === "active" || f.status === "improving" || f.status === "worsening");
-  },
-
-  async getResolvedFlares(userId: string): Promise<ActiveFlare[]> {
-    const allFlares = await this.getByUserId(userId);
-    return allFlares.filter((f) => f.status === "resolved");
-  },
-
-  async update(id: string, updates: Partial<ActiveFlare>): Promise<void> {
-    await db.table("flares").update(id, {
-      ...updates,
-      updatedAt: new Date(),
-    });
-  },
-
-  async delete(id: string): Promise<void> {
-    await db.table("flares").delete(id);
-  },
-
-  async getStats(userId: string): Promise<FlareStats> {
-    const activeFlares = await this.getActiveFlares(userId);
-
-    if (activeFlares.length === 0) {
-      return {
-        totalActive: 0,
-        averageSeverity: 0,
-        longestDuration: 0,
-        mostAffectedRegion: "",
-        commonInterventions: [],
-      };
-    }
-
-    const totalSeverity = activeFlares.reduce((sum, f) => sum + f.severity, 0);
-    const averageSeverity = totalSeverity / activeFlares.length;
-
-    const durations = activeFlares.map((f) => {
-      const start = new Date(f.startDate).getTime();
-      const end = f.endDate ? new Date(f.endDate).getTime() : Date.now();
-      return Math.floor((end - start) / (1000 * 60 * 60 * 24)); // days
-    });
-    const longestDuration = Math.max(...durations);
-
-    // Count body regions
-    const regionCounts = new Map<string, number>();
-    activeFlares.forEach((f) => {
-      f.bodyRegions.forEach((region) => {
-        regionCounts.set(region, (regionCounts.get(region) || 0) + 1);
-      });
-    });
-    const mostAffectedRegion = Array.from(regionCounts.entries())
-      .sort((a, b) => b[1] - a[1])[0]?.[0] || "";
-
-    // Count interventions
-    const interventionCounts = new Map<string, number>();
-    activeFlares.forEach((f) => {
-      f.interventions.forEach((i) => {
-        interventionCounts.set(i.description, (interventionCounts.get(i.description) || 0) + 1);
-      });
-    });
-    const commonInterventions = Array.from(interventionCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map((entry) => entry[0]);
-
-    return {
-      totalActive: activeFlares.length,
-      averageSeverity: Math.round(averageSeverity * 10) / 10,
-      longestDuration,
-      mostAffectedRegion,
-      commonInterventions,
-    };
-  },
-
-  /**
-   * Update flare severity and track history
-   * Automatically updates status based on severity changes
-   */
-  async updateSeverity(
-    id: string,
-    newSeverity: number,
-    status?: 'active' | 'improving' | 'worsening'
-  ): Promise<void> {
-    const flare = await this.getById(id);
-    if (!flare) {
-      throw new Error(`Flare not found: ${id}`);
-    }
-
-    // Validate severity (1-10 range)
-    if (newSeverity < 1 || newSeverity > 10) {
-      throw new Error('Severity must be between 1 and 10');
-    }
-
-    const timestamp = Date.now();
-
-    // Auto-detect status if not provided
-    let calculatedStatus = status;
-    if (!calculatedStatus) {
-      const severityDelta = newSeverity - flare.severity;
-      if (severityDelta >= 2) {
-        calculatedStatus = 'worsening';
-      } else if (severityDelta <= -2) {
-        calculatedStatus = 'improving';
-      } else {
-        calculatedStatus = 'active';
-      }
-    }
-
-    // Initialize severityHistory if it doesn't exist (backward compatibility)
-    const severityHistory = (flare as any).severityHistory || [];
-
-    // Add new severity entry to history
-    severityHistory.push({
-      timestamp,
-      severity: newSeverity,
-      status: calculatedStatus,
-    });
-
-    await this.update(id, {
-      severity: newSeverity,
-      status: calculatedStatus,
-      severityHistory,
-    } as any);
-  },
-
-  /**
-   * Add intervention to a flare
-   */
-  async addIntervention(
-    id: string,
-    type: 'ice' | 'medication' | 'rest' | 'other',
-    notes?: string
-  ): Promise<void> {
-    const flare = await this.getById(id);
-    if (!flare) {
-      throw new Error(`Flare not found: ${id}`);
-    }
-
-    const timestamp = Date.now();
-
-    // Initialize interventions arrays if they don't exist (avoid mutation with spread)
-    const existingInterventions = (flare as any).interventions || [];
-    const newInterventions = [...existingInterventions];
-
-    // Add new intervention to the new format (array of objects)
-    newInterventions.push({
-      timestamp,
-      type,
-      notes,
-    });
-
-    await this.update(id, {
-      interventions: newInterventions,
-    } as any);
-  },
-
-  /**
-   * Resolve a flare with optional notes about what helped
-   */
-  async resolve(id: string, resolutionNotes?: string): Promise<void> {
-    const flare = await this.getById(id);
-    if (!flare) {
-      throw new Error(`Flare not found: ${id}`);
-    }
-
-    const now = new Date();
-
-    await this.update(id, {
-      status: 'resolved',
-      endDate: now,
-      resolutionNotes,
-    } as any);
-  },
-
-  /**
-   * Get active flares with trend indicators based on severity changes
-   * Returns trend: 'worsening' (↑), 'stable' (→), 'improving' (↓)
-   */
-  async getActiveFlaresWithTrend(
-    userId: string
-  ): Promise<Array<ActiveFlare & { trend: 'worsening' | 'stable' | 'improving' }>> {
-    const activeFlares = await this.getActiveFlares(userId);
-
-    return activeFlares.map((flare) => {
-      // Get severity history (with backward compatibility)
-      const severityHistory = (flare as any).severityHistory || [];
-
-      let trend: 'worsening' | 'stable' | 'improving' = 'stable';
-
-      if (severityHistory.length >= 2) {
-        // Get severity from 24 hours ago (or closest available)
-        const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-        // Find the closest severity entry to 24 hours ago
-        let previousSeverity = flare.severity;
-        for (let i = severityHistory.length - 1; i >= 0; i--) {
-          if (severityHistory[i].timestamp <= twentyFourHoursAgo) {
-            previousSeverity = severityHistory[i].severity;
-            break;
-          }
-        }
-
-        const currentSeverity = flare.severity;
-        const severityDelta = currentSeverity - previousSeverity;
-
-        if (severityDelta >= 2) {
-          trend = 'worsening';
-        } else if (severityDelta <= -2) {
-          trend = 'improving';
-        } else {
-          trend = 'stable';
-        }
-      }
-
-      return {
-        ...flare,
-        trend,
-      };
-    });
-  },
+  // Story 2.1: New API methods
+  createFlare,
+  updateFlare,
+  getFlareById,
+  getActiveFlares,
+  getResolvedFlares,
+  addFlareEvent,
+  getFlareHistory,
+  // Deprecated backward compatibility - will be removed in future stories
+  getActiveFlaresWithTrend,
+  getStats,
+  updateSeverity,
+  addIntervention,
+  resolve,
+  update,
+  getById,
+  getByUserId,
+  create,
 };

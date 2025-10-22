@@ -5,6 +5,7 @@ import {
   BodyMapLocationRecord,
   DailyEntryRecord,
   FlareRecord,
+  FlareEventRecord, // Story 2.1
   FoodCombinationRecord, // New
   FoodEventRecord,
   FoodRecord,
@@ -35,6 +36,7 @@ export class SymptomTrackerDatabase extends Dexie {
   photoAttachments!: Table<PhotoAttachmentRecord, string>;
   photoComparisons!: Table<PhotoComparisonRecord, string>;
   flares!: Table<FlareRecord, string>;
+  flareEvents!: Table<FlareEventRecord, string>; // Story 2.1
   analysisResults!: Table<AnalysisResultRecord, string>;
   foods!: Table<FoodRecord, string>;
   foodEvents!: Table<FoodEventRecord, string>;
@@ -312,6 +314,86 @@ export class SymptomTrackerDatabase extends Dexie {
       foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
       foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
       uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+    });
+
+    // Version 18: Refactor flares for append-only event history (Story 2.1)
+    // Replaces old FlareRecord structure with simplified flares + flareEvents tables
+    this.version(18).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      // Refactored flares table with new schema (simpler structure, events separated)
+      flares: "id, [userId+status], [userId+bodyRegionId], [userId+startDate], userId",
+      // New flareEvents table for append-only history tracking (ADR-003)
+      flareEvents: "id, [flareId+timestamp], [userId+timestamp], flareId, userId",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+    }).upgrade(async (trans) => {
+      console.log("Migrating to v18: Refactoring flares for append-only event history (Story 2.1)");
+
+      // Migration strategy: Preserve any existing flare data by converting to new structure
+      // This handles both fresh installs (empty table) and upgrades from v17
+      const existingFlares = await trans.table("flares").toArray();
+
+      if (existingFlares.length > 0) {
+        console.log(`Migrating ${existingFlares.length} existing flares to new schema...`);
+
+        // Clear the table to apply new schema
+        await trans.table("flares").clear();
+
+        // Convert old flares to new structure
+        for (const oldFlare of existingFlares) {
+          const now = Date.now();
+
+          // Create new flare record with simplified structure
+          const newFlare = {
+            id: oldFlare.id,
+            userId: oldFlare.userId,
+            startDate: oldFlare.startDate instanceof Date ? oldFlare.startDate.getTime() : now,
+            endDate: oldFlare.endDate instanceof Date ? oldFlare.endDate.getTime() : undefined,
+            status: oldFlare.status || "active",
+            bodyRegionId: oldFlare.bodyRegionId || (oldFlare as any).symptomId || "unknown",
+            coordinates: oldFlare.coordinates?.[0] ? {
+              x: oldFlare.coordinates[0].x,
+              y: oldFlare.coordinates[0].y
+            } : undefined,
+            initialSeverity: (oldFlare as any).severity || (oldFlare as any).initialSeverity || 5,
+            currentSeverity: (oldFlare as any).severity || (oldFlare as any).currentSeverity || 5,
+            createdAt: oldFlare.createdAt instanceof Date ? oldFlare.createdAt.getTime() : now,
+            updatedAt: oldFlare.updatedAt instanceof Date ? oldFlare.updatedAt.getTime() : now,
+          };
+
+          await trans.table("flares").add(newFlare);
+
+          // Create initial event for existing flares
+          const createdEvent = {
+            id: `${oldFlare.id}-created`,
+            flareId: oldFlare.id,
+            eventType: "created",
+            timestamp: newFlare.createdAt,
+            severity: newFlare.initialSeverity,
+            userId: oldFlare.userId,
+          };
+
+          await trans.table("flareEvents").add(createdEvent);
+        }
+
+        console.log(`Successfully migrated ${existingFlares.length} flares to v18 schema`);
+      } else {
+        console.log("No existing flares to migrate - fresh v18 schema ready");
+      }
     });
   }
 }

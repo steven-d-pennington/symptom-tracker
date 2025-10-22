@@ -160,17 +160,11 @@ function DashboardContent() {
   }) => {
     if (!userId) return;
 
-    await flareRepository.create({
-      userId,
-      symptomId: "custom",
-      symptomName: "Flare",
-      startDate: new Date(),
-      severity: flareData.severity,
-      bodyRegions: [flareData.bodyRegionId],
-      status: "active",
-      interventions: [],
-      notes: flareData.notes || "",
-      photoIds: [],
+    // Story 2.1: Use new createFlare API with simplified schema
+    await flareRepository.createFlare(userId, {
+      bodyRegionId: flareData.bodyRegionId,
+      initialSeverity: flareData.severity,
+      currentSeverity: flareData.severity,
     });
 
     // Refresh the dashboard and close modal

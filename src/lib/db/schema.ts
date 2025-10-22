@@ -283,43 +283,81 @@ export interface UxEventRecord {
   createdAt: number; // storage timestamp (usually same as timestamp)
 }
 
-// Enhanced FlareRecord with severity tracking and interventions
+/**
+ * Flare entity record (Story 2.1 - refactored for append-only event history pattern).
+ * Represents a single flare instance with its current state.
+ * Historical changes are tracked in separate FlareEventRecord entries (ADR-003).
+ */
 export interface FlareRecord {
+  /** UUID v4 primary key */
   id: string;
+
+  /** User ID for multi-user support */
   userId: string;
-  symptomId: string;
-  symptomName: string;
-  bodyRegionId: string; // Single primary body region
-  bodyRegions: string[]; // Array for backward compatibility
-  startDate: Date;
-  endDate?: Date;
 
-  // New: Current severity and history
-  severity: number; // Current severity (1-10)
-  severityHistory: {
-    timestamp: number;
-    severity: number;
-    status: 'active' | 'improving' | 'worsening';
-  }[];
+  /** Unix timestamp when flare started (Date.now()) */
+  startDate: number;
 
-  // New: Intervention tracking
-  interventions: {
-    timestamp: number;
-    type: 'ice' | 'medication' | 'rest' | 'other';
-    notes?: string;
-  }[];
+  /** Unix timestamp when flare ended (nullable until resolved) */
+  endDate?: number;
 
+  /** Current status of the flare */
   status: "active" | "improving" | "worsening" | "resolved";
-  notes: string;
-  resolutionNotes?: string; // What helped resolve the flare
-  photoIds: string[];
-  createdAt: Date;
-  updatedAt: Date;
+
+  /** Body region ID (foreign key to bodyRegions) */
+  bodyRegionId: string;
+
+  /** Optional normalized coordinates (0-1 scale) within the body region */
   coordinates?: {
-    regionId: string;
     x: number;
     y: number;
-  }[];
+  };
+
+  /** Initial severity when flare was created (1-10 scale) */
+  initialSeverity: number;
+
+  /** Current severity level (1-10 scale, updated via events) */
+  currentSeverity: number;
+
+  /** Unix timestamp when record was created */
+  createdAt: number;
+
+  /** Unix timestamp when record was last updated */
+  updatedAt: number;
+}
+
+/**
+ * Flare event record for append-only history tracking (Story 2.1).
+ * Events are never modified or deleted after creation (ADR-003).
+ * Each event represents a state change in the flare's lifecycle.
+ */
+export interface FlareEventRecord {
+  /** UUID v4 primary key */
+  id: string;
+
+  /** Foreign key to flares.id */
+  flareId: string;
+
+  /** Type of event (created, severity_update, trend_change, intervention, resolved) */
+  eventType: "created" | "severity_update" | "trend_change" | "intervention" | "resolved";
+
+  /** Unix timestamp when event occurred */
+  timestamp: number;
+
+  /** Severity level (1-10) for severity_update events, nullable for other event types */
+  severity?: number;
+
+  /** Trend indicator for trend_change events (improving, stable, worsening) */
+  trend?: "improving" | "stable" | "worsening";
+
+  /** User notes describing the event */
+  notes?: string;
+
+  /** JSON-stringified array of interventions applied (per IndexedDB conventions) */
+  interventions?: string;
+
+  /** User ID for multi-user support */
+  userId: string;
 }
 
 // Food Logging Models (Epic E1)

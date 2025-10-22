@@ -25,10 +25,11 @@ export function ActiveFlareDashboard({ userId }: ActiveFlareDashboardProps) {
   async function loadData() {
     try {
       setIsLoading(true);
+      // TODO Story 2.3: Update to use new FlareRecord schema
       const flares = await flareRepository.getActiveFlares(userId);
       const flareStats = await flareRepository.getStats(userId);
 
-      setActiveFlares(flares);
+      setActiveFlares(flares as any); // Cast to any - component will be updated in Story 2.3
       setStats(flareStats);
     } catch (error) {
       console.error("Failed to load flares:", error);
