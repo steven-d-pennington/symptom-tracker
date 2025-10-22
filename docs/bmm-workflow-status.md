@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 0.4) - Complete ✅
-- **Overall Progress:** 87% (Story 0.4 context generated; ready for implementation; Story 0.3 implementation ready for review; Story 1.6 paused; 9 of 23 stories complete, 41 points)
-- **Next Action:** Implement Story 0.4 using the generated context
-- **Command to Run:** Run 'dev-story' workflow to implement Story 0.4
-- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) to implement the story
-- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 context generated and ready for implementation.
+- **Current Workflow:** dev-story (Story 0.4) - Complete ✅
+- **Overall Progress:** 89% (Story 0.4 implementation complete; Story 0.3 ready for review; Story 1.6 paused; 10 of 23 stories complete, 46 points)
+- **Next Action:** Review Story 0.4 implementation and approve
+- **Command to Run:** Run 'story-approved' to mark Story 0.4 complete and advance queue
+- **Agent to Load:** DEV (bmad/bmm/agents/dev.md) or user approval
+- **Note:** Story 1.6 accessibility work remains paused until Epic 0 foundation ships; Story 0.4 implementation complete and ready for review.
 
 ---
 
@@ -106,12 +106,6 @@
 
 #### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 0.4
-- **Story Title:** Navigation Title & Layout Harmonization
-- **Story File:** `docs/stories/story-0.4.md`
-- **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-0.4.xml` (not yet generated)
-- **Action:** SM should run `story-context` workflow to generate implementation context, then DEV agent runs `dev-story` to implement.
 - **Story ID:** 1.6
 - **Story Title:** Body Map Accessibility and Keyboard Navigation
 - **Story File:** `docs/stories/story-1.6.md`
@@ -123,6 +117,7 @@
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 0.4 | docs/stories/story-0.4.md | 2025-10-22 | 5 |
 | 0.3 | docs/stories/story-0.3.md | 2025-10-22 | 5 |
 | 0.2 | docs/stories/story-0.2.md | 2025-10-21 | 5 |
 | 0.1 | docs/stories/story-0.1.md | 2025-10-21 | 5 |
@@ -132,8 +127,8 @@
 | 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 9 stories
-**Total points completed:** 41 points
+**Total completed:** 10 stories
+**Total points completed:** 46 points
 
 ---
 
@@ -232,6 +227,7 @@ Check status anytime with: `workflow-status`
 - **2025-10-21:** Completed story-context for Story 0.3 (Flares View Simplification). Context file: docs/stories/story-context-0.3.xml. Story status updated to ContextReadyDraft. Next: Run `story-ready` to approve, then hand off to DEV agent with the new context.
 - **2025-10-21:** Completed story-ready for Story 0.3 (Flares View Simplification). Story status set to Ready. Queue unchanged: Story 0.3 remains IN PROGRESS for DEV with context, Story 0.4 stays in TODO awaiting drafting.
 - **2025-10-22:** Completed dev-story for Story 0.3 (Flares View Simplification). All 5 tasks complete, all acceptance criteria met (AC0.3.1-AC0.3.4). Implementation: Cards-first layout with persistent preference via Dexie v16 migration, progressive body map guidance (FlaresMapIntro component with keyboard support), collapsible summary panel (FlaresSummaryPanel with ARIA live regions), and comprehensive accessibility improvements. Files modified: flares page, schema, db client, userRepository (4 files). Files created: 2 components + 3 test files (5 files). Testing: 35 tests added, FlaresSummaryPanel 100% pass rate. Build verified with Next.js 15.5.4. All ACs satisfied: AC0.3.1 (cards-first with CTA buttons and preference persistence), AC0.3.2 (progressive guidance with focus management and skip links), AC0.3.3 (collapsible panel with accessible announcements), AC0.3.4 (keyboard navigation and ARIA attributes). Story marked Ready for Review. Progress: 9 of 23 stories complete (83%), 41 points. Pushed to branch claude/execute-dev-story-011CUM5qgwQuhvTRFrj9huHF. Next: User reviews implementation, then SM agent drafts Story 0.4.
+- **2025-10-22:** Completed dev-story for Story 0.4 (Navigation Title & Layout Harmonization). All 5 tasks complete, all acceptance criteria met. Implementation: Verified existing shared navigation configuration from Story 0.1 is complete. Centralized navigation visibility logic by moving NO_NAV_ROUTES to shared config (src/config/navigation.ts) and adding shouldShowNavigation() helper function. Updated NavLayout to use centralized logic. Added comprehensive test coverage (44 passing tests) covering navigation visibility, title rendering, configuration completeness, and surface filtering. Enhanced JSDoc in TopBar, Sidebar, BottomTabs, and NavLayout to reference shared config as single source of truth. Files modified: navigation.ts (added NO_NAV_ROUTES + shouldShowNavigation), NavLayout.tsx (uses centralized logic, enhanced JSDoc), TopBar.tsx (JSDoc), Sidebar.tsx (JSDoc), BottomTabs.tsx (JSDoc), navigation.test.ts (added 16 new tests). Build verified with Next.js 15.5.4 - no TypeScript errors. All ACs satisfied: AC1 (complete route metadata verified), AC2 (titles update via getPageTitle from shared config), AC3 (navigation visibility centralized via shouldShowNavigation), AC4 (comprehensive tests verify Log/Dashboard titles across surfaces). Story marked Ready for Review. Progress: 10 of 23 stories complete (89%), 46 points. Pushed to branch claude/execute-story-workflow-011CUMRMERXE2DLYrAiV7ekT. Next: User reviews and runs story-approved when satisfied with implementation.
 
 ---
 
