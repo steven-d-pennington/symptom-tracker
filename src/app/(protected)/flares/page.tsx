@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { ActiveFlareCards } from "@/components/flares/ActiveFlareCards";
+import { ActiveFlareCard } from "@/components/flares/ActiveFlareCard";
+import { ActiveFlaresEmptyState } from "@/components/flares/ActiveFlaresEmptyState";
 import { BodyMapViewer } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
@@ -14,7 +16,7 @@ import { ActiveFlare } from "@/lib/types/flare";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useFlares } from "@/lib/hooks/useFlares";
 import { cn } from "@/lib/utils/cn";
-import { LayoutGrid, MapPin, Layers, Plus, TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { LayoutGrid, MapPin, Layers, Plus, TrendingUp, TrendingDown, Activity, ArrowUpDown } from "lucide-react";
 
 type ViewMode = "cards" | "map" | "both";
 

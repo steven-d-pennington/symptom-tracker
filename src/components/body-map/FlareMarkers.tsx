@@ -157,9 +157,9 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
           cx={x}
           cy={y}
           r={markerRadius}
-          className={`${getFlareMarkerColor(flare.status)} stroke-white stroke-2 cursor-pointer hover:opacity-80 transition-opacity`}
+          className={`${getFlareMarkerColor(flare.severity)} stroke-white stroke-2 cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={() => handleMarkerClick(flare.id)}
-          aria-label={`${flare.symptomName} flare - ${flare.status}`}
+          aria-label={`${flare.symptomName} flare - severity ${flare.severity}`}
           role="button"
           tabIndex={0}
           data-testid={`flare-marker-${flare.id}`}

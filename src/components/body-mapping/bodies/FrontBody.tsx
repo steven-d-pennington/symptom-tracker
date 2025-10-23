@@ -56,24 +56,18 @@ export function FrontBody({
   });
 
   const getSeverityColor = (severity: number): string => {
-    if (severity <= 2) return "#10b981"; // green
-    if (severity <= 4) return "#fbbf24"; // yellow
-    if (severity <= 6) return "#f59e0b"; // orange
-    if (severity <= 8) return "#ef4444"; // red
-    return "#991b1b"; // dark red
+    // Story 2.3 AC2.3.2: red 9-10, orange 7-8, yellow 4-6, green 1-3
+    if (severity >= 9) return "#ef4444"; // red-500
+    if (severity >= 7) return "#f97316"; // orange-500
+    if (severity >= 4) return "#eab308"; // yellow-500
+    return "#22c55e"; // green-500
   };
 
   const getRegionFill = (region: BodyRegion): string => {
     const isFlare = flareRegions.includes(region.id);
     const severity = severityByRegion[region.id];
 
-    // Flares get special red coloring regardless of severity
-    if (isFlare) {
-      if (severity <= 4) return "#fca5a5"; // light red
-      if (severity <= 7) return "#ef4444"; // red
-      return "#991b1b"; // dark red
-    }
-
+    // Use severity-based coloring for both flares and symptoms
     if (severity) return getSeverityColor(severity);
     if (selectedRegions.includes(region.id)) return "#3b82f6";
     if (highlightedRegion === region.id) return "#60a5fa";

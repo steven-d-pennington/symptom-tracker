@@ -1,21 +1,45 @@
-import { getFlareMarkerColor, calculateFlareAge, calculateRadialOffsets } from '../flareMarkers';
+import { getFlareMarkerColor, getFlareMarkerColorByStatus, calculateFlareAge, calculateRadialOffsets } from '../flareMarkers';
 
 describe('flareMarkers utilities', () => {
   describe('getFlareMarkerColor', () => {
+    it('returns red for severity 9-10', () => {
+      expect(getFlareMarkerColor(9)).toBe('fill-red-500');
+      expect(getFlareMarkerColor(10)).toBe('fill-red-500');
+    });
+
+    it('returns orange for severity 7-8', () => {
+      expect(getFlareMarkerColor(7)).toBe('fill-orange-500');
+      expect(getFlareMarkerColor(8)).toBe('fill-orange-500');
+    });
+
+    it('returns yellow for severity 4-6', () => {
+      expect(getFlareMarkerColor(4)).toBe('fill-yellow-500');
+      expect(getFlareMarkerColor(5)).toBe('fill-yellow-500');
+      expect(getFlareMarkerColor(6)).toBe('fill-yellow-500');
+    });
+
+    it('returns green for severity 1-3', () => {
+      expect(getFlareMarkerColor(1)).toBe('fill-green-500');
+      expect(getFlareMarkerColor(2)).toBe('fill-green-500');
+      expect(getFlareMarkerColor(3)).toBe('fill-green-500');
+    });
+  });
+
+  describe('getFlareMarkerColorByStatus (legacy)', () => {
     it('returns correct color for active status', () => {
-      expect(getFlareMarkerColor('active')).toBe('fill-red-500');
+      expect(getFlareMarkerColorByStatus('active')).toBe('fill-red-500');
     });
 
     it('returns correct color for worsening status', () => {
-      expect(getFlareMarkerColor('worsening')).toBe('fill-orange-500');
+      expect(getFlareMarkerColorByStatus('worsening')).toBe('fill-orange-500');
     });
 
     it('returns correct color for improving status', () => {
-      expect(getFlareMarkerColor('improving')).toBe('fill-yellow-400');
+      expect(getFlareMarkerColorByStatus('improving')).toBe('fill-yellow-400');
     });
 
     it('returns correct color for resolved status', () => {
-      expect(getFlareMarkerColor('resolved')).toBe('fill-gray-400');
+      expect(getFlareMarkerColorByStatus('resolved')).toBe('fill-gray-400');
     });
   });
 
