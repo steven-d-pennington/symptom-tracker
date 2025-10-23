@@ -531,7 +531,7 @@ export function useFlare(flareId: string, userId: string) {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-2.4.xml` - Complete implementation context generated 2025-10-23
 
 ### Agent Model Used
 

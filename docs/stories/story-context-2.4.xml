@@ -1,0 +1,182 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.4</storyId>
+    <title>Update Flare Status (Severity and Trend)</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user tracking a flare's progression</asA>
+    <iWant>to update the flare's severity and trend status</iWant>
+    <soThat>I can record whether it's getting better or worse</soThat>
+    <tasks>
+      - Task 1: Create FlareUpdateModal component (AC: #2.4.2)
+      - Task 2: Implement update persistence logic (AC: #2.4.3, #2.4.4, #2.4.8)
+      - Task 3: Add "Update Status" button to flare detail view (AC: #2.4.1)
+      - Task 4: Implement React Query cache invalidation (AC: #2.4.5)
+      - Task 5: Create useFlare hook (if needed) (AC: #2.4.1)
+      - Task 6: Add comprehensive tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC2.4.1: Flare detail view shows "Update Status" button accessible to keyboard and screen readers
+    AC2.4.2: Update modal captures severity slider (1-10 with previous value), trend radio buttons (Improving/Stable/Worsening), optional notes (500 char limit), editable timestamp
+    AC2.4.3: System creates append-only FlareEvent record with eventType (severity_update or trend_change)
+    AC2.4.4: Flare's currentSeverity updates atomically via transaction
+    AC2.4.5: React Query cache invalidation triggers ActiveFlareCard updates
+    AC2.4.6: Historical data preserved immutably (ADR-003)
+    AC2.4.7: Update appears in flare history timeline immediately (foundation for Story 2.6)
+    AC2.4.8: Data persists offline-first to IndexedDB (NFR002)
+    AC2.4.9: UI enforces immutability (no edit/delete of past events)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR007: Flare Update" snippet="System shall allow users to update an existing active flare with: new severity rating, trend status (improving/worsening/stable), treatment interventions, and timestamp" />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR008: Complete Flare History" snippet="System shall track complete flare history including all severity changes, trend updates, and interventions in chronological order" />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="NFR002: Offline-First" snippet="All flare data (creation, updates, resolution) shall persist to local IndexedDB immediately with offline-first architecture" />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="NFR003: Immutability" snippet="System shall maintain data integrity for flare lifecycle tracking, ensuring severity history and timestamps are immutably recorded" />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="Journey 1: Day 3 Worsening" snippet="User updates same flare, sets severity: 9/10, marks trend: Worsening, adds intervention note: Applied ice pack, took ibuprofen" />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="Journey 1: Day 7 Improving" snippet="User updates same flare, new severity: 5/10, marks trend: Improving, adds note: Less pain, draining" />
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 2.4: Update Flare Status" snippet="Update modal captures: new severity (1-10 slider showing previous value for context), trend (radio buttons: Improving/Stable/Worsening), optional notes, timestamp. System creates new FlareEvent record with eventType=status_update" />
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="ADR-003: Append-Only Flare History" snippet="FlareRecord.severityHistory is append-only array. Never mutate existing array. Medical data integrity requires immutable audit trail" />
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="Component Architecture: FlareUpdateModal" snippet="Modal component with severity slider, trend radio buttons, notes textarea, timestamp picker. Calls flareRepository.updateFlare() and addFlareEvent() in atomic transaction" />
+      <doc path="docs/stories/story-2.1.md" title="Story 2.1: Flare Data Model" section="FlareRecord Interface" snippet="FlareRecord includes id, userId, startDate, endDate, status, bodyRegionId, coordinates, initialSeverity, currentSeverity, createdAt, updatedAt" />
+      <doc path="docs/stories/story-2.1.md" title="Story 2.1: Flare Data Model" section="FlareEventRecord Interface" snippet="FlareEventRecord includes id, flareId, eventType (created/severity_update/trend_change/intervention/resolved), timestamp, severity, trend, notes, interventions, userId" />
+      <doc path="docs/stories/story-2.1.md" title="Story 2.1: Flare Data Model" section="flareRepository Methods" snippet="Repository exports: createFlare, updateFlare, getFlareById, getActiveFlares, getResolvedFlares, addFlareEvent, getFlareHistory - all with userId isolation" />
+      <doc path="docs/stories/story-2.3.md" title="Story 2.3: Active Flares Dashboard" section="ActiveFlareCard Component" snippet="Card displays body region, severity with color coding (green 1-3, yellow 4-6, orange 7-8, red 9-10), trend arrow (↑ worsening, → stable, ↓ improving), days active, last updated timestamp" />
+      <doc path="docs/stories/story-2.3.md" title="Story 2.3: Active Flares Dashboard" section="React Query Integration" snippet="useFlares hook manages flare list with React Query caching, stale time, and cache invalidation. Updates propagate automatically to ActiveFlareCard components" />
+    </docs>
+
+    <code>
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="updateFlare" lines="102-130" reason="Core method for updating FlareRecord.currentSeverity. Takes userId, flareId, and partial updates. Returns updated FlareRecord. Used in Task 2" />
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="addFlareEvent" lines="191-234" reason="Core method for creating append-only FlareEventRecord. Takes userId, flareId, and event data. Generates UUID and timestamp. Used in Task 2" />
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="getFlareById" lines="133-152" reason="Retrieves single flare with userId isolation. Returns FlareRecord or null. Used by useFlare hook in Task 5" />
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="getFlareHistory" lines="236-260" reason="Retrieves all FlareEventRecords for a flare in chronological order. Used for displaying previous trend/severity values and preparing for Story 2.6 timeline" />
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareRecord" lines="61-94" reason="Primary interface for flare entities. Includes currentSeverity field that gets updated, and updatedAt timestamp" />
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareEventRecord" lines="96-128" reason="Append-only event record interface. eventType can be 'severity_update' or 'trend_change'. Includes severity, trend, notes, timestamp fields" />
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareEventType" lines="24-31" reason="Enum defining event types: Created, SeverityUpdate, TrendChange, Intervention, Resolved. Use SeverityUpdate when severity changes, TrendChange when only trend changes" />
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareTrend" lines="38-43" reason="Enum for trend indicators: Improving, Stable, Worsening. Used in radio button options in modal" />
+      <artifact path="src/components/flares/ActiveFlareCard.tsx" kind="component" symbol="ActiveFlareCard" lines="1-100" reason="Component from Story 2.3 that displays flare information. Will reflect updated severity and trend after cache invalidation. Shows how to format severity colors and trend arrows" />
+      <artifact path="src/components/flares/FlareCreationModal.tsx" kind="component" symbol="FlareCreationModal" lines="1-200" reason="Similar modal pattern from Story 2.2. Reference for modal structure, form validation, loading states, error handling, and Dexie persistence patterns" />
+      <artifact path="src/lib/hooks/useFlares.ts" kind="hook" symbol="useFlares" lines="1-50" reason="React Query hook from Story 2.2/2.3 for fetching flare lists. Shows pattern for cache invalidation via queryClient.invalidateQueries. Model for useFlare hook in Task 5" />
+      <artifact path="src/lib/db/client.ts" kind="database" symbol="db" lines="1-50" reason="Dexie database instance. Use db.transaction() for atomic updates. Access db.flares and db.flareEvents tables" />
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="react" version="19.1.0" />
+        <package name="next" version="15.5.4" />
+        <package name="dexie" version="4.2.0" />
+        <package name="uuid" version="13.0.0" />
+        <package name="zod" version="4.1.12" />
+        <package name="lucide-react" version="0.544.0" />
+        <package name="@tanstack/react-query" version="latest" />
+      </node>
+      <testing>
+        <package name="jest" version="30.2.0" />
+        <package name="@testing-library/react" version="16.3.0" />
+        <package name="@testing-library/jest-dom" version="6.9.1" />
+        <package name="@testing-library/user-event" version="14.6.1" />
+        <package name="fake-indexeddb" version="6.2.4" />
+        <package name="ts-jest" version="29.4.4" />
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>MUST use flareRepository.updateFlare() and addFlareEvent() methods - do not access Dexie directly</constraint>
+    <constraint>MUST create FlareEventRecord with eventType='severity_update' when severity changes, 'trend_change' when only trend changes</constraint>
+    <constraint>MUST use Dexie transaction to ensure atomic update of both FlareRecord and FlareEventRecord</constraint>
+    <constraint>MUST follow ADR-003 append-only pattern - FlareEventRecords are never modified or deleted after creation</constraint>
+    <constraint>MUST follow NFR002 offline-first pattern - all persistence uses IndexedDB with no network dependency</constraint>
+    <constraint>MUST follow NFR003 immutability - no UI for editing or deleting past FlareEventRecords</constraint>
+    <constraint>MUST use FlareTrend enum values (Improving, Stable, Worsening) for trend radio buttons</constraint>
+    <constraint>MUST use FlareEventType enum values (SeverityUpdate, TrendChange) for event type determination</constraint>
+    <constraint>MUST display previous severity value in modal as reference (e.g., "Previous: 7")</constraint>
+    <constraint>MUST limit notes to 500 characters with character counter display</constraint>
+    <constraint>MUST auto-populate timestamp to Date.now() but allow editing via datetime-local input</constraint>
+    <constraint>MUST invalidate React Query cache after update to trigger ActiveFlareCard refresh</constraint>
+    <constraint>MUST show loading state during persistence (disable buttons, show spinner)</constraint>
+    <constraint>MUST handle errors gracefully with user-friendly messages (e.g., "Failed to save update")</constraint>
+    <constraint>MUST implement keyboard accessibility (Tab navigation, Escape to cancel, Enter to submit)</constraint>
+    <constraint>MUST match modal styling patterns from FlareCreationModal (Story 2.2)</constraint>
+    <constraint>Event type logic: If severity changed → SeverityUpdate (can include trend). If only trend changed → TrendChange</constraint>
+    <constraint>Only update FlareRecord.currentSeverity if severity actually changed (compare with flare.currentSeverity)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="flareRepository.updateFlare" kind="function" signature="async function updateFlare(userId: string, flareId: string, updates: Partial&lt;FlareRecord&gt;): Promise&lt;FlareRecord&gt;" path="src/lib/repositories/flareRepository.ts" />
+    <interface name="flareRepository.addFlareEvent" kind="function" signature="async function addFlareEvent(userId: string, flareId: string, event: Partial&lt;FlareEventRecord&gt;): Promise&lt;FlareEventRecord&gt;" path="src/lib/repositories/flareRepository.ts" />
+    <interface name="flareRepository.getFlareById" kind="function" signature="async function getFlareById(userId: string, flareId: string): Promise&lt;FlareRecord | null&gt;" path="src/lib/repositories/flareRepository.ts" />
+    <interface name="flareRepository.getFlareHistory" kind="function" signature="async function getFlareHistory(userId: string, flareId: string): Promise&lt;FlareEventRecord[]&gt;" path="src/lib/repositories/flareRepository.ts" />
+    <interface name="FlareRecord" kind="interface" signature="{ id: string; userId: string; startDate: number; endDate?: number; status: FlareStatus; bodyRegionId: string; coordinates?: Coordinates; initialSeverity: number; currentSeverity: number; createdAt: number; updatedAt: number; }" path="src/types/flare.ts" />
+    <interface name="FlareEventRecord" kind="interface" signature="{ id: string; flareId: string; eventType: FlareEventType; timestamp: number; severity?: number; trend?: FlareTrend; notes?: string; interventions?: string; userId: string; }" path="src/types/flare.ts" />
+    <interface name="FlareTrend" kind="enum" signature="enum FlareTrend { Improving = 'improving', Stable = 'stable', Worsening = 'worsening' }" path="src/types/flare.ts" />
+    <interface name="FlareEventType" kind="enum" signature="enum FlareEventType { Created = 'created', SeverityUpdate = 'severity_update', TrendChange = 'trend_change', Intervention = 'intervention', Resolved = 'resolved' }" path="src/types/flare.ts" />
+    <interface name="useFlare" kind="hook" signature="function useFlare(flareId: string, userId: string): { data: FlareRecord | null; isLoading: boolean; error: Error | null; }" path="src/lib/hooks/useFlare.ts (to be created)" />
+    <interface name="FlareUpdateModal props" kind="component-props" signature="{ isOpen: boolean; onClose: () => void; flare: FlareRecord; userId: string; onUpdate?: () => void; }" path="src/components/flares/FlareUpdateModal.tsx (to be created)" />
+    <interface name="React Query useQueryClient" kind="hook" signature="const queryClient = useQueryClient(); queryClient.invalidateQueries({ queryKey: ['flares'] });" path="@tanstack/react-query" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing uses Jest 30.2.0 with React Testing Library 16.3.0. Test files colocated in __tests__ directories. Use fake-indexeddb 6.2.4 for Dexie mocking. Follow patterns from FlareCreationModal.test.tsx and ActiveFlareCard.test.tsx. All components must have unit tests for rendering, state management, event handlers, and accessibility. Integration tests verify complete update flow with database persistence. Test naming convention: describe blocks for components/functions, it/test blocks for specific behaviors. Use userEvent for simulating user interactions. Mock Next.js router with jest.mock('next/navigation').
+    </standards>
+    <locations>
+      src/components/flares/__tests__/FlareUpdateModal.test.tsx
+      src/lib/hooks/__tests__/useFlare.test.ts
+      src/app/(protected)/flares/[id]/__tests__/page.test.tsx
+    </locations>
+    <ideas>
+      <idea ac="AC2.4.2" test="Modal renders with correct initial values (severity, trend, timestamp)" />
+      <idea ac="AC2.4.2" test="Severity slider updates state on change (1-10 range)" />
+      <idea ac="AC2.4.2" test="Previous severity value displayed as reference label" />
+      <idea ac="AC2.4.2" test="Trend radio buttons select correctly (Improving/Stable/Worsening)" />
+      <idea ac="AC2.4.2" test="Notes textarea accepts input with 500 char limit enforced" />
+      <idea ac="AC2.4.2" test="Character counter displays correctly (e.g., '250/500')" />
+      <idea ac="AC2.4.2" test="Timestamp field auto-populates to current time" />
+      <idea ac="AC2.4.2" test="Timestamp is editable via datetime-local input" />
+      <idea ac="AC2.4.2" test="Cancel button closes modal without saving" />
+      <idea ac="AC2.4.2" test="Cancel button resets form state" />
+      <idea ac="AC2.4.3" test="Severity change creates FlareEventRecord with eventType='severity_update'" />
+      <idea ac="AC2.4.3" test="Trend-only change creates FlareEventRecord with eventType='trend_change'" />
+      <idea ac="AC2.4.3" test="Both severity and trend change creates single 'severity_update' event with trend field" />
+      <idea ac="AC2.4.3" test="Event includes timestamp, severity, trend, and notes fields" />
+      <idea ac="AC2.4.3" test="Event persists to flareEvents table via addFlareEvent()" />
+      <idea ac="AC2.4.4" test="updateFlare() called only when severity changes" />
+      <idea ac="AC2.4.4" test="FlareRecord.currentSeverity updates to new value" />
+      <idea ac="AC2.4.4" test="FlareRecord.updatedAt timestamp updates" />
+      <idea ac="AC2.4.4" test="Atomic transaction ensures both FlareRecord and FlareEventRecord persist together" />
+      <idea ac="AC2.4.5" test="React Query cache invalidation called after successful update" />
+      <idea ac="AC2.4.5" test="Cache invalidation triggers useFlares hook refresh" />
+      <idea ac="AC2.4.5" test="ActiveFlareCard displays updated severity badge color" />
+      <idea ac="AC2.4.5" test="ActiveFlareCard displays updated trend arrow (↑ ↓ →)" />
+      <idea ac="AC2.4.5" test="Last updated timestamp shows current time after update" />
+      <idea ac="AC2.4.6" test="Original FlareEventRecords remain unchanged after update" />
+      <idea ac="AC2.4.6" test="getFlareHistory() returns all events including new one" />
+      <idea ac="AC2.4.6" test="Previous severity values accessible via FlareEventRecord query" />
+      <idea ac="AC2.4.8" test="Update persists to IndexedDB immediately (no network calls)" />
+      <idea ac="AC2.4.8" test="Success confirmation only shown after IndexedDB write completes" />
+      <idea ac="AC2.4.8" test="Error handling displays user-friendly message on persistence failure" />
+      <idea ac="AC2.4.8" test="Loading state shows spinner during database operations" />
+      <idea ac="AC2.4.9" test="UI provides no edit button for past FlareEventRecords" />
+      <idea ac="AC2.4.9" test="UI provides no delete button for past FlareEventRecords" />
+      <idea ac="AC2.4.1" test="Flare detail page renders 'Update Status' button" />
+      <idea ac="AC2.4.1" test="Button click opens FlareUpdateModal" />
+      <idea ac="AC2.4.1" test="Button has proper aria-label for screen readers" />
+      <idea ac="2.4.general" test="Keyboard navigation works (Tab, Escape, Enter)" />
+      <idea ac="2.4.general" test="Focus management: modal traps focus when open" />
+      <idea ac="2.4.general" test="Escape key closes modal" />
+      <idea ac="2.4.general" test="Form validation prevents invalid submissions" />
+      <idea ac="2.4.general" test="useFlare hook fetches flare data correctly" />
+      <idea ac="2.4.general" test="useFlare hook returns loading/error states" />
+      <idea ac="2.4.general" test="Integration: Complete update flow from button click to persistence" />
+    </ideas>
+  </tests>
+</story-context>
