@@ -1,0 +1,288 @@
+import { db } from "../db/client";
+import { FoodRecord, FoodEventRecord, MealType, PortionSize } from "../db/schema";
+import { generateId } from "../utils/idGenerator";
+import { seedFoodsService } from "../services/food/seedFoodsService";
+
+export type FoodEventPreset = "first-day" | "one-week" | "heavy-user" | "one-year-heavy";
+
+interface GenerateFoodEventDataOptions {
+  userId: string;
+  preset: FoodEventPreset;
+}
+
+export interface GenerateFoodEventDataResult {
+  foodEventsCreated: number;
+  foodsCreated: number;
+  startDate: string;
+  endDate: string;
+  userId: string;
+}
+
+interface FoodEventGenerationContext {
+  userId: string;
+  foods: FoodRecord[];
+  startDate: Date;
+  endDate: Date;
+  daysToGenerate: number;
+}
+
+interface PresetConfig {
+  daysBack: number;
+  mealsPerDay: { min: number; max: number };
+  snackChance: number; // 0-1 probability of having snacks
+}
+
+/**
+ * Generate realistic food event stream data based on preset
+ */
+export async function generateFoodEventData(
+  options: GenerateFoodEventDataOptions
+): Promise<GenerateFoodEventDataResult> {
+  if (typeof window === "undefined") {
+    throw new Error("generateFoodEventData can only run in the browser");
+  }
+
+  const { userId, preset } = options;
+
+  // Configure preset parameters
+  const presetConfig = getPresetConfig(preset);
+
+  const now = new Date();
+  const startDate = new Date(now);
+  startDate.setDate(startDate.getDate() - presetConfig.daysBack);
+  startDate.setHours(0, 0, 0, 0);
+
+  // Ensure foods are seeded
+  await seedFoodsService.seedDefaultFoods(userId, db);
+  const foods = await db.foods.where({ userId, isActive: true }).toArray();
+  const activeFoods = foods.filter((f: FoodRecord) => f.name !== "__SEED_COMPLETE_V1__");
+
+  const context: FoodEventGenerationContext = {
+    userId,
+    foods: activeFoods,
+    startDate,
+    endDate: now,
+    daysToGenerate: presetConfig.daysBack + 1,
+  };
+
+  // Clear existing food event data
+  await db.foodEvents.where({ userId }).delete();
+
+  // Generate food events
+  const foodEvents = generateFoodEvents(context, presetConfig);
+
+  // Persist to database
+  await db.foodEvents.bulkAdd(foodEvents);
+
+  console.log("[Food Event Data] Created:", {
+    foodEvents: foodEvents.length,
+    foods: activeFoods.length,
+  });
+
+  return {
+    foodEventsCreated: foodEvents.length,
+    foodsCreated: activeFoods.length,
+    startDate: startDate.toISOString(),
+    endDate: now.toISOString(),
+    userId,
+  };
+}
+
+function getPresetConfig(preset: FoodEventPreset): PresetConfig {
+  switch (preset) {
+    case "first-day":
+      return {
+        daysBack: 0,
+        mealsPerDay: { min: 2, max: 3 },
+        snackChance: 0.5,
+      };
+    case "one-week":
+      return {
+        daysBack: 6,
+        mealsPerDay: { min: 2, max: 3 },
+        snackChance: 0.6,
+      };
+    case "heavy-user":
+      return {
+        daysBack: 29,
+        mealsPerDay: { min: 3, max: 3 },
+        snackChance: 0.8,
+      };
+    case "one-year-heavy":
+      return {
+        daysBack: 364,
+        mealsPerDay: { min: 3, max: 3 },
+        snackChance: 0.7,
+      };
+  }
+}
+
+/**
+ * Generate realistic food events with varied meal types and portions
+ */
+function generateFoodEvents(
+  context: FoodEventGenerationContext,
+  config: PresetConfig
+): FoodEventRecord[] {
+  const events: FoodEventRecord[] = [];
+  const now = Date.now();
+
+  // Group foods by category for realistic meal composition
+  const foodsByCategory = context.foods.reduce((acc, food) => {
+    if (!acc[food.category]) {
+      acc[food.category] = [];
+    }
+    acc[food.category].push(food);
+    return acc;
+  }, {} as Record<string, FoodRecord[]>);
+
+  const mealTemplates = {
+    breakfast: ["Breakfast", "Proteins", "Fruits", "Dairy", "Beverages"],
+    lunch: ["Proteins", "Vegetables", "Grains", "Beverages"],
+    dinner: ["Proteins", "Vegetables", "Grains", "Beverages"],
+    snack: ["Snacks", "Fruits", "Dairy"],
+  };
+
+  for (let dayOffset = 0; dayOffset < context.daysToGenerate; dayOffset++) {
+    const currentDate = new Date(context.startDate);
+    currentDate.setDate(currentDate.getDate() + dayOffset);
+
+    const mealsToday = Math.floor(
+      Math.random() * (config.mealsPerDay.max - config.mealsPerDay.min + 1) + config.mealsPerDay.min
+    );
+
+    // Generate breakfast
+    if (mealsToday >= 1) {
+      const breakfastTime = new Date(currentDate);
+      breakfastTime.setHours(7 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 60), 0, 0);
+
+      if (breakfastTime.getTime() <= now) {
+        events.push(
+          createMealEvent(context.userId, breakfastTime, "breakfast", mealTemplates.breakfast, foodsByCategory, now)
+        );
+      }
+    }
+
+    // Generate lunch
+    if (mealsToday >= 2) {
+      const lunchTime = new Date(currentDate);
+      lunchTime.setHours(12 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0, 0);
+
+      if (lunchTime.getTime() <= now) {
+        events.push(
+          createMealEvent(context.userId, lunchTime, "lunch", mealTemplates.lunch, foodsByCategory, now)
+        );
+      }
+    }
+
+    // Generate dinner
+    if (mealsToday >= 3) {
+      const dinnerTime = new Date(currentDate);
+      dinnerTime.setHours(18 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 60), 0, 0);
+
+      if (dinnerTime.getTime() <= now) {
+        events.push(
+          createMealEvent(context.userId, dinnerTime, "dinner", mealTemplates.dinner, foodsByCategory, now)
+        );
+      }
+    }
+
+    // Generate snacks
+    if (Math.random() < config.snackChance) {
+      const snackCount = Math.floor(Math.random() * 2) + 1; // 1-2 snacks
+
+      for (let i = 0; i < snackCount; i++) {
+        const snackHour = i === 0
+          ? 10 + Math.floor(Math.random() * 2) // Morning snack: 10-11am
+          : 15 + Math.floor(Math.random() * 2); // Afternoon snack: 3-4pm
+
+        const snackTime = new Date(currentDate);
+        snackTime.setHours(snackHour, Math.floor(Math.random() * 60), 0, 0);
+
+        if (snackTime.getTime() <= now) {
+          events.push(
+            createMealEvent(context.userId, snackTime, "snack", mealTemplates.snack, foodsByCategory, now)
+          );
+        }
+      }
+    }
+  }
+
+  return events;
+}
+
+function createMealEvent(
+  userId: string,
+  timestamp: Date,
+  mealType: MealType,
+  categoryTemplate: string[],
+  foodsByCategory: Record<string, FoodRecord[]>,
+  now: number
+): FoodEventRecord {
+  const mealId = generateId();
+  const selectedFoods: FoodRecord[] = [];
+  const portionMap: Record<string, PortionSize> = {};
+
+  // Select 1-4 foods from relevant categories
+  const foodCount = mealType === "snack"
+    ? Math.floor(Math.random() * 2) + 1 // 1-2 foods for snacks
+    : Math.floor(Math.random() * 3) + 2; // 2-4 foods for meals
+
+  // Shuffle and select categories
+  const shuffledCategories = [...categoryTemplate].sort(() => Math.random() - 0.5);
+
+  for (let i = 0; i < foodCount && i < shuffledCategories.length; i++) {
+    const category = shuffledCategories[i];
+    const categoryFoods = foodsByCategory[category];
+
+    if (categoryFoods && categoryFoods.length > 0) {
+      const food = categoryFoods[Math.floor(Math.random() * categoryFoods.length)];
+      selectedFoods.push(food);
+
+      // Assign portion size with realistic distribution
+      const portionRoll = Math.random();
+      let portion: PortionSize;
+      if (portionRoll < 0.2) {
+        portion = "small";
+      } else if (portionRoll < 0.8) {
+        portion = "medium";
+      } else {
+        portion = "large";
+      }
+      portionMap[food.id] = portion;
+    }
+  }
+
+  // Generate occasional notes
+  let notes: string | undefined;
+  if (Math.random() < 0.15) {
+    const noteOptions = [
+      "Felt satisfied",
+      "Still hungry after",
+      "Very filling",
+      "Ate quickly",
+      "Enjoyed this meal",
+      "Not very hungry",
+      "Ate out",
+      "Home cooked",
+      "Leftovers",
+      "New recipe",
+    ];
+    notes = noteOptions[Math.floor(Math.random() * noteOptions.length)];
+  }
+
+  return {
+    id: generateId(),
+    userId,
+    mealId,
+    foodIds: JSON.stringify(selectedFoods.map(f => f.id)),
+    timestamp: timestamp.getTime(),
+    mealType,
+    portionMap: JSON.stringify(portionMap),
+    notes,
+    photoIds: undefined,
+    favoritesSnapshot: undefined,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
