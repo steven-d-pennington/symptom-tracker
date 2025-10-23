@@ -1,0 +1,250 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.3</storyId>
+    <title>Active Flares Dashboard</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user with active flares</asA>
+    <iWant>to see a list of all my current active flares</iWant>
+    <soThat>I can quickly review and update them</soThat>
+    <tasks>
+      - Task 1: Create Active Flares page component (AC: #2.3.1, #2.3.7)
+      - Task 2: Create ActiveFlareCard component (AC: #2.3.2, #2.3.4)
+      - Task 3: Implement list rendering and sorting (AC: #2.3.3)
+      - Task 4: Create empty state component (AC: #2.3.5)
+      - Task 5: Implement pull-to-refresh for mobile (AC: #2.3.6)
+      - Task 6: Add comprehensive tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - AC2.3.1: Active Flares page displays filtered list at `/flares` route using useFlares hook with {status: 'active'} filter
+    - AC2.3.2: Each list item displays comprehensive flare information (body region, severity with color coding, trend arrow, days active, last updated)
+    - AC2.3.3: List sorted by priority with user control (default severity descending, toggle to recent updates, preference persisted to localStorage)
+    - AC2.3.4: Tapping flare navigates to detail page at `/flares/[id]` with keyboard accessibility
+    - AC2.3.5: Empty state guides user to body map when no active flares
+    - AC2.3.6: Pull-to-refresh on mobile triggers data refresh
+    - AC2.3.7: Flare count badge displays total active flares in page header
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" title="Product Requirements Document">
+        <section>Journey 1: Tracking a New Flare from Onset to Resolution</section>
+        <snippet>Step 5: User views "Problem Areas" dashboard showing left groin has 3 flares in past 90 days. Active flares list allows quick review and updates.</snippet>
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document">
+        <section>User Interface Design Goals - Flare Management Interface</section>
+        <snippet>"Active Flares" list provides at-a-glance status dashboard. Each flare shows: location, current severity, trend arrow, days active</snippet>
+      </doc>
+      <doc path="docs/epics.md" title="Epic Breakdown">
+        <section>Epic 2: Flare Lifecycle Management - Story 2.3</section>
+        <snippet>Active Flares page displays list of all flares with status "Active". Each list item shows: body location, severity (1-10 with color coding), trend arrow, days active, last updated timestamp. List sorted by severity (highest first) or most recently updated. Tapping flare opens detail view. Empty state: "No active flares. Tap body map to track a new flare." Pull-to-refresh updates list. Flare count badge shows total active flares.</snippet>
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture">
+        <section>Component Architecture - Epic 2: Flare Lifecycle Management</section>
+        <snippet>FlareList component: Active/resolved lists. FlareCard component: Display component. Repository pattern: flareRepository with CRUD operations. Service layer: flareService business logic.</snippet>
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture">
+        <section>Repository and Service Architecture</section>
+        <snippet>Next.js App Router project structure. Pages at src/app/(protected)/flares/. Components at src/components/flares/. Hooks at src/lib/hooks/useFlares.ts. Repository at src/lib/repositories/flareRepository.ts.</snippet>
+      </doc>
+      <doc path="docs/stories/story-2.1.md" title="Story 2.1: Flare Data Model and IndexedDB Schema">
+        <section>Data Layer Foundation</section>
+        <snippet>flareRepository implements getActiveFlares(userId), getFlareHistory(userId, flareId). FlareRecord schema with status, currentSeverity, startDate, bodyRegionId, coordinates. FlareEventRecord for append-only event history.</snippet>
+      </doc>
+      <doc path="docs/stories/story-2.2.md" title="Story 2.2: Create New Flare from Body Map">
+        <section>useFlares Hook Implementation</section>
+        <snippet>useFlares hook created with React Query patterns. Polls for updates every 5 seconds. Returns data, isLoading, error, refetch. FlareCreationModal uses custom event pattern (flare:created) and ARIA live regions.</snippet>
+      </doc>
+      <doc path="docs/stories/story-0.1.md" title="Story 0.1: Consolidate Track Navigation">
+        <section>Track Navigation Pillar</section>
+        <snippet>Track navigation pillar established with shared navigation config at src/config/navigation.ts. Flares page accessible via Track pillar.</snippet>
+      </doc>
+      <doc path="docs/stories/story-0.2.md" title="Story 0.2: Dashboard Today Refresh">
+        <section>Empty State UI Patterns</section>
+        <snippet>Empty states use centered card layout with heading, message, and CTA button. Components follow semantic structure with ARIA roles and guided messaging.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/lib/hooks/useFlares.ts" kind="hook" symbol="useFlares" lines="49-150">
+        <reason>CRITICAL: Core hook for fetching active flares. Already implemented with polling (5s intervals), trend calculation, filtering by status/region. Returns {data, isLoading, error, refetch}. Story 2.3 will use this hook with {status: 'active'} filter.</reason>
+      </artifact>
+      <artifact path="src/app/(protected)/flares/page.tsx" kind="page" symbol="FlaresPage" lines="1-409">
+        <reason>EXISTING PAGE: Current implementation shows cards/map/split views with FlareCreationModal. Story 2.3 enhances this page with ActiveFlareCard component, proper sorting, and empty states. Uses useFlares hook at line 23. View mode persistence already implemented (lines 54-89).</reason>
+      </artifact>
+      <artifact path="src/components/flares/ActiveFlareCards.tsx" kind="component" symbol="ActiveFlareCards" lines="49-417">
+        <reason>EXISTING COMPONENT: Implements flare card list with sorting (severity/recency), trend calculation, Update/Resolve buttons. Lines 175-182 implement sorting logic. Lines 184-186 calculate duration. Lines 188-197 render trend icons. Story 2.3 may reuse or refactor this component.</reason>
+      </artifact>
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareRecord" lines="61-94">
+        <reason>Core FlareRecord interface with id, userId, startDate, endDate, status, bodyRegionId, coordinates, initialSeverity, currentSeverity, createdAt, updatedAt. Used by all flare operations.</reason>
+      </artifact>
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareEventRecord" lines="101-128">
+        <reason>FlareEventRecord interface for append-only event history. Contains eventType, timestamp, severity, trend, notes, interventions. Used by calculateTrend function.</reason>
+      </artifact>
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareStatus" lines="10-15">
+        <reason>FlareStatus enum: Active, Improving, Worsening, Resolved. Used for status filtering in useFlares hook.</reason>
+      </artifact>
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareTrend" lines="39-43">
+        <reason>FlareTrend enum: Improving, Stable, Worsening. Used for trend arrows in UI.</reason>
+      </artifact>
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="getActiveFlares">
+        <reason>Repository method to fetch all active flares for a user. Returns FlareRecord[]. Called by useFlares hook.</reason>
+      </artifact>
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="getFlareHistory">
+        <reason>Repository method to fetch event history for a flare. Returns FlareEventRecord[]. Used by calculateTrend function in useFlares hook.</reason>
+      </artifact>
+      <artifact path="src/lib/data/bodyRegions.ts" kind="data" symbol="bodyRegions">
+        <reason>Body region lookup data. Maps bodyRegionId to region name. Used to display body location on flare cards.</reason>
+      </artifact>
+      <artifact path="src/components/flares/__tests__/ActiveFlareCards.test.tsx" kind="test" symbol="ActiveFlareCards tests" lines="18-326">
+        <reason>Comprehensive test suite for ActiveFlareCards component. 32 tests covering all acceptance criteria: empty state, card rendering, severity/trend display, sorting, Update/Resolve buttons. Good reference for Story 2.3 test patterns.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="19.1.0" />
+        <package name="next" version="15.5.4" />
+        <package name="typescript" version="^5" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="zod" version="^4.1.12" />
+        <package name="lucide-react" version="^0.544.0" />
+        <package name="date-fns" version="(not installed, recommend adding for relative timestamps)" />
+      </node>
+      <testing>
+        <package name="jest" version="^30.2.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+        <package name="@testing-library/user-event" version="^14.6.1" />
+        <package name="fake-indexeddb" version="^6.2.4" />
+        <package name="jest-environment-jsdom" version="^30.2.0" />
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - MUST use existing useFlares hook from src/lib/hooks/useFlares.ts with {userId, status: 'active'} options
+    - MUST use flareRepository methods (getActiveFlares, getFlareHistory) - NO direct Dexie queries in components
+    - MUST follow existing ActiveFlareCards component patterns: trend calculation, sorting logic, duration calculation
+    - MUST use existing bodyRegions lookup from src/lib/data/bodyRegions.ts to display region names
+    - Sort preference MUST persist to localStorage key 'flares-list-sort' for cross-session memory
+    - Severity color coding MUST match FlareMarkers from Story 1.5: red 9-10, orange 7-8, yellow 4-6, green 1-3
+    - Trend arrows MUST use lucide-react icons: ArrowUp (worsening), ArrowRight (stable), ArrowDown (improving)
+    - Empty state MUST follow patterns from Story 0.2: centered card, heading, message, CTA button with ARIA roles
+    - Page MUST be accessible via Track navigation pillar from Story 0.1 (src/config/navigation.ts)
+    - Days active calculation: Math.floor((Date.now() - startDate) / (1000 * 60 * 60 * 24)) + 1
+    - Relative timestamps: Use date-fns formatDistanceToNow() or similar for "2 hours ago" format (install if needed)
+    - Pull-to-refresh implementation: Consider react-pull-to-refresh library or custom hook (optional for MVP)
+    - Navigation to detail page: Use Next.js router.push(`/flares/${flareId}`) with keyboard Enter key support
+    - Flare count badge: Derive from flares.length for reactive updates (e.g., "Active Flares (3)")
+    - Testing: Use Jest + React Testing Library with fake-indexeddb for IndexedDB mocking
+    - Follow existing test patterns from ActiveFlareCards.test.tsx: describe blocks per AC, it blocks per scenario
+  </constraints>
+
+  <interfaces>
+    <interface name="useFlares" kind="hook">
+      <signature>
+        function useFlares(options: {
+          userId: string;
+          includeResolved?: boolean;
+          status?: 'active' | 'resolved' | Array&lt;'active' | 'resolved'&gt;;
+          bodyRegionId?: string;
+        }): {
+          data: Array&lt;ActiveFlare & { trend: FlareTrend }&gt;;
+          isLoading: boolean;
+          isError: boolean;
+          error: Error | null;
+          refetch: () => void;
+        }
+      </signature>
+      <path>src/lib/hooks/useFlares.ts</path>
+    </interface>
+    <interface name="flareRepository.getActiveFlares" kind="repository-method">
+      <signature>async function getActiveFlares(userId: string): Promise&lt;FlareRecord[]&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+    </interface>
+    <interface name="flareRepository.getFlareHistory" kind="repository-method">
+      <signature>async function getFlareHistory(userId: string, flareId: string): Promise&lt;FlareEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+    </interface>
+    <interface name="FlareRecord" kind="interface">
+      <signature>
+        interface FlareRecord {
+          id: string;
+          userId: string;
+          startDate: number;
+          endDate?: number;
+          status: FlareStatus;
+          bodyRegionId: string;
+          coordinates?: { x: number; y: number };
+          initialSeverity: number;
+          currentSeverity: number;
+          createdAt: number;
+          updatedAt: number;
+        }
+      </signature>
+      <path>src/types/flare.ts</path>
+    </interface>
+    <interface name="bodyRegions" kind="data-array">
+      <signature>
+        const bodyRegions: Array&lt;{
+          id: string;
+          name: string;
+          center?: { x: number; y: number };
+        }&gt;
+      </signature>
+      <path>src/lib/data/bodyRegions.ts</path>
+    </interface>
+    <interface name="Next.js router.push" kind="navigation">
+      <signature>import { useRouter } from 'next/navigation'; const router = useRouter(); router.push('/flares/[id]')</signature>
+      <path>Next.js App Router</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Jest 30.2.0 with React Testing Library 16.3.0. Test files at src/app/(protected)/flares/__tests__/page.test.tsx and src/components/flares/__tests__/ActiveFlareCard.test.tsx. Use fake-indexeddb for IndexedDB mocking. Follow existing patterns: describe blocks per acceptance criterion, it blocks per test scenario. Mock flareRepository methods. Test accessibility with ARIA queries and keyboard events. Test localStorage persistence with window.localStorage mock.
+    </standards>
+    <locations>
+      - src/app/(protected)/flares/__tests__/page.test.tsx (new file for page tests)
+      - src/components/flares/__tests__/ActiveFlareCard.test.tsx (new file for component tests)
+    </locations>
+    <ideas>
+      <test ac="AC2.3.1" idea="Test page renders with loading state initially (isLoading true)" />
+      <test ac="AC2.3.1" idea="Test page displays list of active flares when useFlares returns data" />
+      <test ac="AC2.3.1" idea="Test page filters by status='active' (verify useFlares called with correct options)" />
+      <test ac="AC2.3.2" idea="Test ActiveFlareCard displays body region name (mock bodyRegions lookup)" />
+      <test ac="AC2.3.2" idea="Test severity displayed with color coding (red 9-10, orange 7-8, yellow 4-6, green 1-3)" />
+      <test ac="AC2.3.2" idea="Test trend arrow displays correctly (ArrowUp worsening, ArrowRight stable, ArrowDown improving)" />
+      <test ac="AC2.3.2" idea="Test trend arrow shows '--' when no trend available" />
+      <test ac="AC2.3.2" idea="Test days active calculated correctly (mock Date.now(), test 1 day, 5 days, 30 days)" />
+      <test ac="AC2.3.2" idea="Test last updated timestamp shows relative format ('2 hours ago', '1 day ago')" />
+      <test ac="AC2.3.3" idea="Test default sort by severity descending (highest first)" />
+      <test ac="AC2.3.3" idea="Test sort toggle switches to recent updates (most recent updatedAt first)" />
+      <test ac="AC2.3.3" idea="Test sort preference persists to localStorage key 'flares-list-sort'" />
+      <test ac="AC2.3.3" idea="Test sort preference loads from localStorage on mount" />
+      <test ac="AC2.3.4" idea="Test click on flare card calls router.push with correct flareId" />
+      <test ac="AC2.3.4" idea="Test Enter key on focused card triggers navigation (keyboard accessibility)" />
+      <test ac="AC2.3.4" idea="Test hover state styling applied (verify className)" />
+      <test ac="AC2.3.4" idea="Test focus state styling applied (verify focus ring)" />
+      <test ac="AC2.3.5" idea="Test empty state displays when useFlares returns empty array" />
+      <test ac="AC2.3.5" idea="Test empty state shows heading 'No active flares'" />
+      <test ac="AC2.3.5" idea="Test empty state shows message 'Tap body map to track a new flare.'" />
+      <test ac="AC2.3.5" idea="Test empty state 'Go to Body Map' button navigates to /body-map" />
+      <test ac="AC2.3.6" idea="Test pull-to-refresh triggers useFlares refetch on mobile (mock touch events)" />
+      <test ac="AC2.3.6" idea="Test pull-to-refresh shows loading spinner during refresh" />
+      <test ac="AC2.3.6" idea="Test pull-to-refresh only works on mobile/touch devices (media query check)" />
+      <test ac="AC2.3.7" idea="Test flare count badge displays correct number (e.g., '(3)')" />
+      <test ac="AC2.3.7" idea="Test flare count badge updates when flares added/removed (mock useFlares data change)" />
+      <test ac="All" idea="Test error state displays user-friendly message when useFlares returns error" />
+      <test ac="All" idea="Test screen reader announces list and flare summaries (ARIA attributes)" />
+    </ideas>
+  </tests>
+</story-context>
