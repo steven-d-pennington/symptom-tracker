@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-10-22
+- **Last Updated:** 2025-10-23
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** dev-story (Story 2.1) - Complete ✅
-- **Overall Progress:** 100% (Story 2.1 implementation complete; 13 of 23 stories complete, 64 points)
-- **Next Action:** Begin Story 2.2 (Create New Flare from Body Map) - run `create-story` to draft
-- **Command to Run:** Load SM agent (bmad/bmm/agents/sm.md) and run `create-story` for Story 2.2
-- **Agent to Load:** SM (bmad/bmm/agents/sm.md) for story drafting
-- **Note:** Epics 0 (UI/UX Revamp) and Epic 1 (Body Map) both 100% complete! Story 2.1 foundation layer ready for flare lifecycle features! 🎉
+- **Current Workflow:** story-approved (Story 2.2) - Complete ✅ | create-story (Story 2.3) - Ready
+- **Overall Progress:** 61% (14 of 23 stories complete, 72 points)
+- **Next Action:** Load SM agent and draft Story 2.3 (Active Flares Dashboard)
+- **Command to Run:** Load SM agent (`bmad/bmm/agents/sm.md`) and run `create-story` workflow for Story 2.3
+- **Agent to Load:** SM (bmad/bmm/agents/sm.md)
+- **Note:** Epic 2 foundation complete! Story 2.2 flare creation from body map fully implemented with comprehensive testing. Ready to continue Epic 2 with active flares dashboard. 🎉
 
 ---
 
@@ -73,7 +73,6 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
-| 2 | 3 | 2.3 | Active Flares Dashboard | story-2.3.md |
 | 2 | 4 | 2.4 | Update Flare Status (Severity and Trend) | story-2.4.md |
 | 2 | 5 | 2.5 | Log Flare Interventions | story-2.5.md |
 | 2 | 6 | 2.6 | View Flare History Timeline | story-2.6.md |
@@ -89,24 +88,29 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 14 stories
+**Total in backlog:** 13 stories
 
 #### TODO (Needs Drafting)
 
-- **Story ID:** 2.2
-- **Story Title:** Create New Flare from Body Map
-- **Story File:** `docs/stories/story-2.2.md`
+- **Story ID:** 2.3
+- **Story Title:** Active Flares Dashboard
+- **Story File:** `docs/stories/story-2.3.md`
 - **Status:** Not created (needs drafting)
 - **Action:** SM should run `create-story` workflow to draft this story.
 
 #### IN PROGRESS (Approved for Development)
 
-- None (Story 2.1 complete! Ready to draft Story 2.2)
+- **Story ID:** 2.3
+- **Story Title:** Active Flares Dashboard
+- **Story File:** `docs/stories/story-2.3.md`
+- **Status:** Not created (needs drafting)
+- **Action:** SM should run `create-story` workflow to draft this story.
 
 #### DONE (Completed Stories)
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 2.2 | docs/stories/story-2.2.md | 2025-10-23 | 8 |
 | 2.1 | docs/stories/story-2.1.md | 2025-10-22 | 8 |
 | 1.6 | docs/stories/story-1.6.md | 2025-10-22 | 5 |
 | 0.5 | docs/stories/story-0.5.md | 2025-10-22 | 5 |
@@ -115,13 +119,13 @@
 | 0.2 | docs/stories/story-0.2.md | 2025-10-21 | 5 |
 | 0.1 | docs/stories/story-0.1.md | 2025-10-21 | 5 |
 | 1.5 | docs/stories/story-1.5.md | 2025-10-20 | 5 |
-| 1.4 | docs/stories/story-1.4.md | 2025-10-21 | 5 |
+| 1.4 | docs/stories/story-1.4.md | 2025-10-20 | 5 |
 | 1.1 | docs/stories/story-1.1.md | 2025-10-18 | 3 |
 | 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 13 stories
-**Total points completed:** 64 points
+**Total completed:** 14 stories
+**Total points completed:** 72 points
 
 ---
 
@@ -155,8 +159,8 @@
 - 1.6: Body Map Accessibility & Keyboard Navigation
 
 **Progress:**
-- Stories: 12 / 23 complete (52%)
-- Points: 56 / 115 (49%)
+- Stories: 14 / 23 complete (61%)
+- Points: 72 / 115 (63%)
 - Overall: 98%
 
 **Foundation Delivered:**
@@ -193,6 +197,7 @@ Check status anytime with: `workflow-status`
 - **2025-10-18:** Started new workflow status for Flare Tracking & Body Map Enhancements epic. Previous epics (Food Journal + Correlation Analysis) archived as complete.
 - **2025-10-18:** Completed PRD workflow. Delivered PRD.md with 14 functional requirements, 3 non-functional requirements, user journey, and UX/UI vision. Created epics.md with full story breakdown: 23 stories total across 4 epics. Key requirements: groin regions on body map, zoom/pan for precision tracking, persistent flare entities with lifecycle tracking (onset → progression → resolution), problem area analytics, and photo documentation.
 - **2025-10-18:** Completed solution-architecture workflow. Generated solution-architecture.md with complete technical design. Key decisions: Single new dependency (react-zoom-pan-pinch@3.6.1), minimal schema changes (FlareRecord coordinates link, groin regions enum), no global state management, analytics calculated on-demand. Cohesion check passed at 98% readiness. Skipped per-epic tech specs (Level 2 optimization). Populated story backlog with 23 stories across 4 epics. Phase 3 (Solutioning) complete. Ready for Phase 4 (Implementation) - SM to draft Story 1.1.
+- **2025-10-23:** Completed dev-story and story-approved for Story 2.2 (Create New Flare from Body Map). Implementation complete with all 6 tasks: modal component with form validation, body map integration with coordinate selection, real-time UI updates via useFlares hook, success notifications with toast actions, offline-first error handling, and comprehensive tests (16/16 passing). Story moved to DONE section. Progress: 14 of 23 stories complete (61%), 72 points. Epic 2 foundation complete - flare creation from body map fully functional. Next: SM agent should draft Story 2.3 (Active Flares Dashboard).
 - **2025-10-22:** Story 0.5 (UX Instrumentation & Validation) approved via story-ready workflow. Status moved to Ready, context generation recommended next.
 - **2025-10-22:** Story 0.5 (UX Instrumentation & Validation) story-context completed. Context saved to docs/stories/story-context-0.5.xml; next workflow: dev-story.
 - **2025-10-18:** Completed create-story for Story 1.1 (Add Groin Regions to Body Map SVG). Story file: docs/stories/story-1.1.md. Status: Draft (needs review via story-ready). Next: Review and approve story. Story includes 6 acceptance criteria, detailed task breakdown with 5 major tasks and 19 subtasks, comprehensive dev notes with architecture context, file modification list (3 files to modify, 3 test files to create), and risk mitigation strategies. Story is foundational for Epic 1 - all subsequent body map precision features build on this.
@@ -253,6 +258,9 @@ Check status anytime with: `workflow-status`
 - **2025-10-22:** Completed dev-story for Story 0.4 (Navigation Title & Layout Harmonization). All 5 tasks complete, all acceptance criteria met. Implementation: Verified existing shared navigation configuration from Story 0.1 is complete. Centralized navigation visibility logic by moving NO_NAV_ROUTES to shared config (src/config/navigation.ts) and adding shouldShowNavigation() helper function. Updated NavLayout to use centralized logic. Added comprehensive test coverage (44 passing tests) covering navigation visibility, title rendering, configuration completeness, and surface filtering. Enhanced JSDoc in TopBar, Sidebar, BottomTabs, and NavLayout to reference shared config as single source of truth. Files modified: navigation.ts (added NO_NAV_ROUTES + shouldShowNavigation), NavLayout.tsx (uses centralized logic, enhanced JSDoc), TopBar.tsx (JSDoc), Sidebar.tsx (JSDoc), BottomTabs.tsx (JSDoc), navigation.test.ts (added 16 new tests). Build verified with Next.js 15.5.4 - no TypeScript errors. All ACs satisfied: AC1 (complete route metadata verified), AC2 (titles update via getPageTitle from shared config), AC3 (navigation visibility centralized via shouldShowNavigation), AC4 (comprehensive tests verify Log/Dashboard titles across surfaces). Story marked Ready for Review. Progress: 10 of 23 stories complete (89%), 46 points. Pushed to branch claude/execute-story-workflow-011CUMRMERXE2DLYrAiV7ekT. Next: User reviews and runs story-approved when satisfied with implementation.
 - **2025-10-22:** Completed story-context for Story 2.1 (Flare Data Model and IndexedDB Schema). Context file: docs/stories/story-context-2.1.xml. Generated comprehensive implementation context including schema design, repository patterns, testing strategies, and all relevant code references. Next: DEV agent implements Story 2.1.
 - **2025-10-22:** Completed dev-story for Story 2.1 (Flare Data Model and IndexedDB Schema). All 4 major tasks complete, all 7 acceptance criteria met. Implementation: Created complete TypeScript type system with FlareStatus/FlareEventType/FlareTrend enums, FlareRecord/FlareEventRecord interfaces, and Zod validation schemas (src/types/flare.ts, src/types/index.ts). Extended Dexie schema from v17 to v18 with refactored flares table and new flareEvents table (src/lib/db/schema.ts, src/lib/db/client.ts). Added compound indexes: [userId+status], [userId+bodyRegionId], [userId+startDate] for flares; [flareId+timestamp], [userId+timestamp] for flareEvents. Implemented flareRepository with 7 core methods: createFlare, updateFlare, getFlareById, getActiveFlares, getResolvedFlares, addFlareEvent, getFlareHistory - all using atomic Dexie transactions with userId isolation (src/lib/repositories/flareRepository.ts, src/lib/repositories/index.ts). Comprehensive test suite: 37 tests covering all CRUD operations, compound index queries, schema migration, type validation, and offline-first persistence - 100% pass rate (src/lib/repositories/__tests__/flareRepository.test.ts). Added structuredClone polyfill to jest.setup.js for fake-indexeddb compatibility. Build verified with Next.js 15.5.4 - TypeScript compilation succeeds. Added backward compatibility stubs (getActiveFlaresWithTrend, getStats, etc.) for legacy UI components with deprecation warnings. Updated dashboard and flares pages to use new createFlare API. Story marked Done. Progress: 13 of 23 stories complete (100%), 64 points. Epic 2 (Flare Lifecycle Management) foundation complete. Pushed to branch claude/implement-story-2.1-011CUNUfEw8ckjt8sym9cUTm. Next: SM agent should draft Story 2.2 (Create New Flare from Body Map).
+- **2025-10-22:** Completed create-story for Story 2.2 (Create New Flare from Body Map). Story file: docs/stories/story-2.2.md. Status: Draft (needs review via story-ready). Story includes 8 acceptance criteria covering: (1) "Create Flare" button appears after coordinate marking, (2) Modal captures severity (1-10 slider), optional notes (500 char limit), editable timestamp, read-only region/coordinates display, (3) UUID v4 generation with initial FlareEventRecord, (4) Flare persisted with status='active' using flareRepository.createFlare(), (5) Immediate appearance in active flares list via React Query cache invalidation, (6) Marker displays on body map at coordinates via FlareMarkers component, (7) Success toast with "View Details"/"Log Another" actions, (8) Offline-first IndexedDB persistence meeting NFR002. Detailed task breakdown with 6 major tasks and 50+ subtasks covering: FlareCreationModal component creation, body map integration, React Query hook setup, toast notifications, error handling, and comprehensive testing. Dev notes include complete component code examples (modal with severity slider, notes textarea, timestamp picker), body map integration pattern, useFlares React Query hook, toast notification setup. Story builds directly on Story 2.1 data layer (flareRepository, FlareRecord schema) and Epic 1 features (Stories 1.4 coordinate capture, 1.5 flare markers). Next: Review and approve story via story-ready workflow.
+- **2025-10-22:** Story 2.2 (Create New Flare from Body Map) marked ready for development by SM agent. Moved from READY FOR REVIEW → IN PROGRESS. Next story 2.3 (Active Flares Dashboard) moved from BACKLOG → TODO for drafting.
+- **2025-10-22:** Completed story-context for Story 2.2 (Create New Flare from Body Map). Context file: docs/stories/story-context-2.2.xml. Generated comprehensive implementation context including: 12 documentation artifacts (PRD FR005/FR006/NFR002, Architecture, Epics, user journeys, prerequisite stories 2.1/1.4/1.5), 11 code artifacts (flareRepository createFlare/addFlareEvent, FlareRecord/FlareEventRecord types, enums, BodyMapViewer, FlareMarkers, useFlares hook, bodyRegions data), 15 constraints (repository usage, coordinate normalization, UUID v4, offline-first, React Query cache invalidation, 44x44px touch targets), 7 interfaces (flareRepository methods, FlareRecord/FlareEventRecord schemas, Coordinates, BodyMapViewer props, useFlares hook), 11 dependencies (React 19.1.0, Next.js 15.5.4, uuid 13.0.0, Dexie 4.2.0, Zod 4.1.12, testing libraries), testing standards (Jest 30.2.0, RTL 16.3.0, fake-indexeddb), 3 test locations, 32 test ideas mapped to all 8 acceptance criteria. Context provides complete implementation guidance for FlareCreationModal component, body map integration ("Create Flare" button), real-time UI updates via React Query, success toast with actions, and offline-first error handling. Story file updated with context reference. Next: DEV agent should run `*dev-story` workflow to implement Story 2.2 using generated context.
 
 ---
 

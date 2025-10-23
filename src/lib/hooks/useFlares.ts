@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { flareRepository } from '@/lib/repositories/flareRepository';
 import { ActiveFlare } from '@/lib/types/flare';
 import { FlareRecord, FlareEventRecord } from '@/lib/db/schema';
@@ -78,6 +78,12 @@ export function useFlares(options: UseFlaresOptions) {
               severity: flare.currentSeverity,
               status: flare.status as ActiveFlare['status'],
               startDate: new Date(flare.startDate),
+              // Convert single coordinate to legacy array format
+              coordinates: flare.coordinates ? [{
+                regionId: flare.bodyRegionId,
+                x: flare.coordinates.x,
+                y: flare.coordinates.y,
+              }] : undefined,
               trend,
             } as ActiveFlare & { trend: FlareTrend };
           })
@@ -130,9 +136,9 @@ export function useFlares(options: UseFlaresOptions) {
   }, [userId, includeResolved, status, bodyRegionId, refreshTrigger]);
 
   // Manual refetch function
-  const refetch = () => {
+  const refetch = useCallback(() => {
     setRefreshTrigger(prev => prev + 1);
-  };
+  }, []);
 
   return {
     data,

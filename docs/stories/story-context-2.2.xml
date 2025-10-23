@@ -1,0 +1,359 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.2</storyId>
+    <title>Create New Flare from Body Map</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-22</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user experiencing a new flare</asA>
+    <iWant>to create a flare entity by marking its location on the body map</iWant>
+    <soThat>I can begin tracking its progression</soThat>
+    <tasks>
+      <task id="1" status="pending">Create FlareCreationModal component with severity slider, notes textarea, timestamp picker, and region/coordinates display (AC 2.2.2, 2.2.3, 2.2.4)</task>
+      <task id="2" status="pending">Integrate modal with body map interface - add "Create Flare" button after coordinate marking (AC 2.2.1)</task>
+      <task id="3" status="pending">Wire up real-time UI updates with React Query cache invalidation for active flares list and FlareMarkers (AC 2.2.5, 2.2.6)</task>
+      <task id="4" status="pending">Add success confirmation toast with "View Details" and "Log Another" actions (AC 2.2.7)</task>
+      <task id="5" status="pending">Implement offline-first error handling with loading states and user-friendly messages (AC 2.2.8)</task>
+      <task id="6" status="pending">Add comprehensive tests: modal rendering, form validation, UUID generation, flare creation, marker display, offline persistence (All ACs)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="2.2.1">Body map coordinate capture triggers flare creation - "Create Flare" button appears after marking location, positioned prominently with clear visual affordance</criterion>
+    <criterion id="2.2.2">Flare creation modal captures essential data - severity slider (1-10), optional notes (500 char limit), editable timestamp, read-only region/coordinates display, Cancel/Save buttons with keyboard shortcuts</criterion>
+    <criterion id="2.2.3">System assigns unique persistent flare ID - UUID v4 generation, initial FlareEventRecord with eventType='created', uniqueness validation before persist</criterion>
+    <criterion id="2.2.4">Flare created with correct initial status - status='active', coordinates from body map, userId from session, using flareRepository.createFlare()</criterion>
+    <criterion id="2.2.5">Flare appears in active flares list immediately - visible without page refresh via React Query cache invalidation</criterion>
+    <criterion id="2.2.6">Flare marker displays on body map at coordinates - FlareMarkers component renders at exact coordinates with status-based color (red for active), 44x44px touch target</criterion>
+    <criterion id="2.2.7">Success confirmation with actionable next steps - toast with "View Details" and "Log Another" actions, auto-dismiss after 5 seconds</criterion>
+    <criterion id="2.2.8">Data persists to IndexedDB immediately - offline-first using flareRepository methods, Dexie transactions, graceful error handling, zero data loss (NFR002)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR005 - Flare Creation</section>
+        <snippet>System shall enable users to create a new flare entity with: body location (region + precise coordinates), initial severity (1-10), optional notes, and timestamp</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR006 - Persistent Flare ID</section>
+        <snippet>System shall assign each flare a unique persistent ID that remains constant throughout the flare's lifecycle</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR002 - Offline-First</section>
+        <snippet>All flare data (creation, updates, resolution) shall persist to local IndexedDB immediately with offline-first architecture, ensuring zero data loss even without network connectivity</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Journey 1: Day 1 - Flare Onset</section>
+        <snippet>User opens body map, selects region, zooms, taps precise location, system captures coordinates, user sets severity 7/10, adds note, system creates flare entity with unique ID and marks status as Active</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>UX Design Principles - Precision Without Complexity</section>
+        <snippet>Flare location marking should be as simple as "tap where it hurts". Touch targets are mobile-optimized (minimum 44x44px)</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Component Architecture - FlareCreateModal</section>
+        <snippet>FlareCreateModal component captures initial severity (1-10 slider), optional notes (500 char limit), editable timestamp, read-only region/coordinates display. On save, generates UUID v4, calls flareRepository.createFlare(), creates initial FlareEventRecord with eventType='created'</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>API Design - FlareService</section>
+        <snippet>createFlare(data: CreateFlareDTO): Promise&lt;FlareRecord&gt; - Creates new flare with UUID generation, coordinate normalization, initial severity, status='active'</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Data Architecture - FlareRecord Schema</section>
+        <snippet>FlareRecord includes: id (UUID), userId, startDate, endDate, status, bodyRegionId, coordinates {x,y normalized 0-1}, createdAt, updatedAt. Coordinates link to precise body map location from Story 1.4</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 2.2 Complete Specification</section>
+        <snippet>8 acceptance criteria covering: Create Flare button after coordinate marking, modal captures severity/notes/timestamp, UUID v4 generation, status='active', immediate appearance in active list, marker on body map, success toast with actions, offline-first IndexedDB persistence</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1 - Flare Data Model</title>
+        <section>Data Layer Foundation</section>
+        <snippet>Implemented FlareRecord schema, flareRepository with createFlare() and addFlareEvent() methods, Dexie v18 schema with compound indexes, TypeScript interfaces, offline-first persistence. This is the foundation Story 2.2 builds on.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.4.md</path>
+        <title>Story 1.4 - Coordinate Capture</title>
+        <section>Prerequisite: Coordinate Marking</section>
+        <snippet>CoordinateMarker component captures precise x,y coordinates (normalized 0-1) when user clicks zoomed body map region. Coordinates stored with bodyRegionId. Story 2.2 uses these coordinates for flare creation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.5.md</path>
+        <title>Story 1.5 - Flare Markers</title>
+        <section>Prerequisite: Marker Display</section>
+        <snippet>FlareMarkers component displays flares on body map at coordinates with status-based colors (active=red). Story 2.2 must integrate with this to show newly created flares immediately.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>createFlare</symbol>
+        <lines>44-85</lines>
+        <reason>Core method for creating flares - Story 2.2 must call this with userId, bodyRegionId, coordinates, currentSeverity, startDate</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>addFlareEvent</symbol>
+        <lines>120-165</lines>
+        <reason>Creates initial 'created' event - Story 2.2 must call after createFlare with eventType='created', severity, optional notes</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>type</kind>
+        <symbol>FlareRecord</symbol>
+        <lines>60-95</lines>
+        <reason>Complete FlareRecord interface definition - modal must construct data matching this schema</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>type</kind>
+        <symbol>FlareEventRecord</symbol>
+        <lines>103-133</lines>
+        <reason>FlareEventRecord interface - initial 'created' event must match this schema</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>enum</kind>
+        <symbol>FlareStatus</symbol>
+        <lines>8-17</lines>
+        <reason>Status enum values - new flares must use FlareStatus.Active</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>enum</kind>
+        <symbol>FlareEventType</symbol>
+        <lines>24-33</lines>
+        <reason>Event type enum - initial event must use FlareEventType.Created</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-200</lines>
+        <reason>Integration point for "Create Flare" button - must display button when coordinates are marked</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/FlareMarkers.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareMarkers</symbol>
+        <lines>1-150</lines>
+        <reason>Displays flare markers on body map - must receive updated flares after creation via React Query</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/hooks/useFlares.ts</path>
+        <kind>hook</kind>
+        <symbol>useFlares</symbol>
+        <lines>1-80</lines>
+        <reason>React Query hook for fetching active flares - must invalidate cache after flare creation</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/CoordinateMarker.tsx</path>
+        <kind>component</kind>
+        <symbol>CoordinateMarker</symbol>
+        <lines>1-100</lines>
+        <reason>Displays coordinate marker on body map - provides coordinates for flare creation</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/data/bodyRegions.ts</path>
+        <kind>data</kind>
+        <symbol>bodyRegions</symbol>
+        <lines>1-500</lines>
+        <reason>Body region definitions with names - modal displays region name from bodyRegionId lookup</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>19.1.0</version>
+        <usage>Component framework - useState, useEffect, useMemo for modal state</usage>
+      </node>
+      <node>
+        <package>next</package>
+        <version>15.5.4</version>
+        <usage>App Router framework - routing, navigation after flare creation</usage>
+      </node>
+      <node>
+        <package>uuid</package>
+        <version>13.0.0</version>
+        <usage>UUID v4 generation for unique flare IDs - import { v4 as uuidv4 }</usage>
+      </node>
+      <node>
+        <package>dexie</package>
+        <version>4.2.0</version>
+        <usage>IndexedDB wrapper - used by flareRepository for offline-first persistence</usage>
+      </node>
+      <node>
+        <package>zod</package>
+        <version>4.1.12</version>
+        <usage>Runtime validation - flareRecordSchema, flareEventRecordSchema validation</usage>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>0.544.0</version>
+        <usage>Icons for modal UI - Close (X), Save, Calendar icons</usage>
+      </node>
+      <node>
+        <package>react-zoom-pan-pinch</package>
+        <version>3.6.1</version>
+        <usage>Body map zoom/pan - modal integrates with zoomed body map coordinates</usage>
+      </node>
+      <node>
+        <package>@testing-library/react</package>
+        <version>16.3.0</version>
+        <usage>Testing framework - render modal, user interactions, assertions</usage>
+      </node>
+      <node>
+        <package>@testing-library/jest-dom</package>
+        <version>6.9.1</version>
+        <usage>Jest matchers - toBeInTheDocument, toHaveValue, etc.</usage>
+      </node>
+      <node>
+        <package>jest</package>
+        <version>30.2.0</version>
+        <usage>Test runner - unit and integration tests</usage>
+      </node>
+      <node>
+        <package>fake-indexeddb</package>
+        <version>6.2.4</version>
+        <usage>Mock IndexedDB for testing - offline persistence tests</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1">Modal must use flareRepository.createFlare() - do not call Dexie directly</constraint>
+    <constraint id="2">Coordinates must be normalized 0-1 scale (validated by Zod schema)</constraint>
+    <constraint id="3">Severity must be integer 1-10 (validated by Zod schema)</constraint>
+    <constraint id="4">UUID generation must use uuid v4 (import { v4 as uuidv4 } from 'uuid')</constraint>
+    <constraint id="5">Initial event must have eventType='created' (FlareEventType.Created enum)</constraint>
+    <constraint id="6">New flares must have status='active' (FlareStatus.Active enum)</constraint>
+    <constraint id="7">Timestamp must be Unix milliseconds (Date.now())</constraint>
+    <constraint id="8">Notes character limit 500 chars (enforce in UI with counter)</constraint>
+    <constraint id="9">Touch targets minimum 44x44px (NFR001 - mobile optimization)</constraint>
+    <constraint id="10">Modal must work with existing BodyMapViewer component - no breaking changes</constraint>
+    <constraint id="11">FlareMarkers must receive updated data via React Query - use queryClient.invalidateQueries(['flares'])</constraint>
+    <constraint id="12">All database writes must complete before showing success message (NFR002 - zero data loss)</constraint>
+    <constraint id="13">Error handling must be user-friendly - no technical jargon in error messages</constraint>
+    <constraint id="14">Modal must support keyboard navigation - Esc to close, Tab order logical</constraint>
+    <constraint id="15">Offline-first architecture - flare creation must work without network</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>flareRepository.createFlare</name>
+      <kind>function</kind>
+      <signature>createFlare(userId: string, data: { bodyRegionId: string; coordinates?: Coordinates; currentSeverity?: number; startDate?: number }): Promise&lt;FlareRecord&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <description>Creates new flare with UUID generation, defaults severity to 5, startDate to Date.now(), status to 'active'. Returns complete FlareRecord.</description>
+    </interface>
+    <interface>
+      <name>flareRepository.addFlareEvent</name>
+      <kind>function</kind>
+      <signature>addFlareEvent(userId: string, flareId: string, event: { eventType: FlareEventType; timestamp?: number; severity?: number; notes?: string }): Promise&lt;FlareEventRecord&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <description>Creates append-only event record. Validates userId matches flare owner. Defaults timestamp to Date.now().</description>
+    </interface>
+    <interface>
+      <name>FlareRecord</name>
+      <kind>interface</kind>
+      <signature>{ id: string; userId: string; startDate: number; endDate?: number; status: FlareStatus; bodyRegionId: string; coordinates?: Coordinates; initialSeverity: number; currentSeverity: number; createdAt: number; updatedAt: number }</signature>
+      <path>src/types/flare.ts</path>
+      <description>Complete flare entity stored in IndexedDB. Coordinates optional (backward compatible).</description>
+    </interface>
+    <interface>
+      <name>FlareEventRecord</name>
+      <kind>interface</kind>
+      <signature>{ id: string; flareId: string; eventType: FlareEventType; timestamp: number; severity?: number; trend?: FlareTrend; notes?: string; interventions?: string; userId: string }</signature>
+      <path>src/types/flare.ts</path>
+      <description>Append-only event history. Initial 'created' event requires: eventType='created', timestamp, severity, optional notes.</description>
+    </interface>
+    <interface>
+      <name>Coordinates</name>
+      <kind>interface</kind>
+      <signature>{ x: number; y: number }</signature>
+      <path>src/types/flare.ts</path>
+      <description>Normalized coordinates 0-1 scale. x: left-to-right, y: top-to-bottom relative to body region.</description>
+    </interface>
+    <interface>
+      <name>BodyMapViewer props</name>
+      <kind>component-props</kind>
+      <signature>{ view: 'front' | 'back' | 'left' | 'right'; onCoordinateMark?: (data: { bodyRegionId: string; coordinates: Coordinates }) => void; userId: string }</signature>
+      <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+      <description>Body map component. onCoordinateMark callback fires when user marks coordinates. Story 2.2 adds "Create Flare" button when coordinates are marked.</description>
+    </interface>
+    <interface>
+      <name>useFlares hook</name>
+      <kind>hook</kind>
+      <signature>useFlares(userId: string): { flares: ActiveFlare[]; isLoading: boolean; error: Error | null; refetch: () => void }</signature>
+      <path>src/lib/hooks/useFlares.ts</path>
+      <description>React Query hook for active flares. Provides refetch() method and queryClient access for cache invalidation.</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest 30.2.0 with React Testing Library 16.3.0 for unit and integration tests. fake-indexeddb 6.2.4 for mocking IndexedDB operations. Test coverage target 80% for service/util layers. All tests must run in isolation without side effects. Use descriptive test names following pattern: "should [expected behavior] when [condition]".</standards>
+    <locations>
+      <location>src/components/flares/__tests__/FlareCreationModal.test.tsx</location>
+      <location>src/components/body-mapping/__tests__/BodyMapViewer.test.tsx</location>
+      <location>src/__tests__/integration/flare-creation-flow.test.tsx</location>
+    </locations>
+    <ideas>
+      <test ac="2.2.1">Verify "Create Flare" button appears when coordinates are marked on body map</test>
+      <test ac="2.2.1">Verify button does not appear before coordinates are marked</test>
+      <test ac="2.2.1">Verify button is positioned prominently and keyboard accessible</test>
+      <test ac="2.2.2">Verify modal renders with severity slider defaulting to 5</test>
+      <test ac="2.2.2">Verify severity slider updates value display (1-10)</test>
+      <test ac="2.2.2">Verify notes textarea has 500 character limit with counter</test>
+      <test ac="2.2.2">Verify timestamp defaults to current time but is editable</test>
+      <test ac="2.2.2">Verify body region name displays correctly (read-only)</test>
+      <test ac="2.2.2">Verify coordinates display as percentages (read-only)</test>
+      <test ac="2.2.2">Verify Esc key closes modal, Enter key saves (when valid)</test>
+      <test ac="2.2.3">Verify UUID v4 is generated for each new flare</test>
+      <test ac="2.2.3">Verify multiple flares get unique IDs (no collisions)</test>
+      <test ac="2.2.3">Verify initial FlareEventRecord created with eventType='created'</test>
+      <test ac="2.2.4">Verify flare persisted with status='active'</test>
+      <test ac="2.2.4">Verify flare includes correct bodyRegionId and coordinates</test>
+      <test ac="2.2.4">Verify flareRepository.createFlare() called with correct parameters</test>
+      <test ac="2.2.4">Verify userId matches current session user</test>
+      <test ac="2.2.5">Verify React Query cache invalidated after flare creation</test>
+      <test ac="2.2.5">Verify new flare appears in active flares list without refresh</test>
+      <test ac="2.2.6">Verify FlareMarkers component receives updated flare data</test>
+      <test ac="2.2.6">Verify new marker renders at exact coordinates</test>
+      <test ac="2.2.6">Verify marker color is red for active status</test>
+      <test ac="2.2.6">Verify marker size meets 44x44px touch target requirement</test>
+      <test ac="2.2.7">Verify success toast displays after save</test>
+      <test ac="2.2.7">Verify toast includes "View Details" and "Log Another" buttons</test>
+      <test ac="2.2.7">Verify toast auto-dismisses after 5 seconds</test>
+      <test ac="2.2.8">Verify flare persists to IndexedDB before success message</test>
+      <test ac="2.2.8">Verify offline flare creation works (no network)</test>
+      <test ac="2.2.8">Verify error handling displays user-friendly messages</test>
+      <test ac="2.2.8">Verify modal stays open on error for retry</test>
+      <test ac="2.2.8">Integration: Create flare → reload page → flare still exists</test>
+    </ideas>
+  </tests>
+</story-context>

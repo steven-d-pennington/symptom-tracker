@@ -5,7 +5,6 @@ import { BodyRegionSelector } from "./BodyRegionSelector";
 import { BodyMapZoom } from "@/components/body-map/BodyMapZoom";
 import { BodyMapLocation } from "@/lib/types/body-mapping";
 import { CoordinateMarker } from "@/components/body-map/CoordinateMarker";
-import { FlareMarkers } from "@/components/body-map/FlareMarkers";
 import {
   denormalizeCoordinates,
   getRegionBounds,
@@ -26,6 +25,7 @@ interface BodyMapViewerProps {
   multiSelect?: boolean;
   flareSeverityByRegion?: Record<string, number>;
   onCoordinateMark?: (regionId: string, coordinates: NormalizedCoordinates) => void;
+  showFlareMarkers?: boolean;
 }
 
 export function BodyMapViewer({
@@ -40,6 +40,7 @@ export function BodyMapViewer({
   multiSelect = false,
   flareSeverityByRegion = {},
   onCoordinateMark,
+  showFlareMarkers = true,
 }: BodyMapViewerProps) {
   // Calculate severity by region for visualization
   // Merge symptom severity and flare severity (flares take priority with red coloring)
@@ -110,6 +111,11 @@ export function BodyMapViewer({
         return;
       }
 
+      // If this region isn't already selected, select it first
+      if (selectedRegion !== regionId) {
+        onRegionSelect(regionId);
+      }
+
       const svgElement = event.currentTarget;
       svgRef.current = svgElement;
 
@@ -142,8 +148,11 @@ export function BodyMapViewer({
       }));
 
       onCoordinateMark?.(regionId, normalized);
+      
+      // Prevent the onClick handler from firing to avoid double region selection
+      event.stopPropagation();
     },
-    [onCoordinateMark, readOnly, selectedRegion]
+    [onCoordinateMark, onRegionSelect, readOnly, selectedRegion]
   );
 
   const activeMarker = useMemo(() => {
@@ -175,10 +184,19 @@ export function BodyMapViewer({
   }, [activeMarker, selectedRegion, zoomLevel]);
 
   const flareMarkerOverlay = useMemo(() => {
+    if (!showFlareMarkers) {
+      return null;
+    }
+
+    // Dynamic import to avoid router dependency in tests
+    const FlareMarkers = React.lazy(() => import("@/components/body-map/FlareMarkers").then(module => ({ default: module.FlareMarkers })));
+
     return (
-      <FlareMarkers viewType={view} zoomLevel={zoomLevel} userId={userId} />
+      <React.Suspense fallback={null}>
+        <FlareMarkers viewType={view} zoomLevel={zoomLevel} userId={userId} />
+      </React.Suspense>
     );
-  }, [view, zoomLevel, userId]);
+  }, [view, zoomLevel, userId, showFlareMarkers]);
 
   return (
     <div className="relative w-full h-full bg-gray-50 rounded-lg">

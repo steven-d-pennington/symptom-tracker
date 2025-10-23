@@ -37,10 +37,13 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
   const handleInit = useCallback(
     (ref: ReactZoomPanPinchRef) => {
       apiRef.current = ref;
-      centerCurrentView(ref);
-      onZoomChange?.(ref.state.scale);
+      // Center with slight downward offset to better position the body
+      if (ref.setTransform) {
+        ref.setTransform(0, 100, 0.8, 0);
+      }
+      onZoomChange?.(0.8);
     },
-    [centerCurrentView, onZoomChange]
+    [onZoomChange]
   );
 
   const handleTransformed = useCallback(
@@ -59,12 +62,12 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
   return (
     <div className="relative w-full h-full">
       <TransformWrapper
-        initialScale={1}
-        minScale={1}
+        initialScale={0.8}
+        minScale={0.5}
         maxScale={3}
         centerOnInit
-        centerZoomedOut
-        limitToBounds={true}
+        centerZoomedOut={false}
+        limitToBounds={false}
         wheel={{ smoothStep: 0.005, disabled: false }}
         pinch={{ step: 5, disabled: false }}
         doubleClick={{ disabled: false, mode: 'zoomIn' }}

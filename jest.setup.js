@@ -27,9 +27,19 @@ if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
   };
 }
 
-// Mock Dexie
-jest.mock('@/lib/db/client', () => ({
-  db: {},
+// Mock next/navigation globally for all tests
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
 }));
 
 // Mock ResizeObserver for Radix UI components

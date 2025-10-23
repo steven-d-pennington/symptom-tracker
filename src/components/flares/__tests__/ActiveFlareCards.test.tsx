@@ -2,13 +2,14 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ActiveFlare } from "@/lib/types/flare";
 import { ActiveFlareCards } from "../ActiveFlareCards";
 
-const mockGetActiveFlaresWithTrend = jest.fn();
+const mockGetActiveFlares = jest.fn();
 const mockResolve = jest.fn();
 
 const mockRepository = {
-  getActiveFlaresWithTrend: mockGetActiveFlaresWithTrend,
+  getActiveFlares: mockGetActiveFlares,
   resolve: mockResolve,
-};
+  getFlareHistory: jest.fn().mockResolvedValue([]),
+} as any;
 
 // Mock window.confirm and alert
 global.confirm = jest.fn();
@@ -42,13 +43,13 @@ describe("ActiveFlareCards", () => {
     jest.clearAllMocks();
     (global.confirm as jest.Mock).mockReturnValue(false);
     // Set default implementations
-    mockGetActiveFlaresWithTrend.mockResolvedValue([]);
+    mockGetActiveFlares.mockResolvedValue([]);
     mockResolve.mockResolvedValue(undefined);
   });
 
   describe("AC1: Displays 0-5 active flare cards", () => {
     it("should render zero flares with empty state", async () => {
-      mockGetActiveFlaresWithTrend.mockResolvedValue([]);
+      mockGetActiveFlares.mockResolvedValue([]);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -59,7 +60,7 @@ describe("ActiveFlareCards", () => {
 
     it("should render one flare card", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -74,7 +75,7 @@ describe("ActiveFlareCards", () => {
         createMockFlare("flare-2"),
         createMockFlare("flare-3"),
       ];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -89,7 +90,7 @@ describe("ActiveFlareCards", () => {
       const mockFlares = Array.from({ length: 5 }, (_, i) =>
         createMockFlare(`flare-${i + 1}`)
       );
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -103,7 +104,7 @@ describe("ActiveFlareCards", () => {
       const mockFlares = Array.from({ length: 7 }, (_, i) =>
         createMockFlare(`flare-${i + 1}`)
       );
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -118,7 +119,7 @@ describe("ActiveFlareCards", () => {
       const mockFlares = [
         createMockFlare("flare-1", { bodyRegions: ["Lower Back", "Hip"] }),
       ];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -129,7 +130,7 @@ describe("ActiveFlareCards", () => {
 
     it("should display severity in X/10 format", async () => {
       const mockFlares = [createMockFlare("flare-1", { severity: 7 })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -140,7 +141,7 @@ describe("ActiveFlareCards", () => {
 
     it("should display trend arrow for worsening", async () => {
       const mockFlares = [createMockFlare("flare-1", { trend: "worsening" })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -151,7 +152,7 @@ describe("ActiveFlareCards", () => {
 
     it("should display trend arrow for improving", async () => {
       const mockFlares = [createMockFlare("flare-1", { trend: "improving" })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -162,7 +163,7 @@ describe("ActiveFlareCards", () => {
 
     it("should display trend arrow for stable", async () => {
       const mockFlares = [createMockFlare("flare-1", { trend: "stable" })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -175,7 +176,7 @@ describe("ActiveFlareCards", () => {
   describe("AC3: Quick action buttons on each card", () => {
     it("should render Update and Resolve buttons", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -188,7 +189,7 @@ describe("ActiveFlareCards", () => {
 
   describe("AC4: Empty state when no active flares", () => {
     it("should show empty state message", async () => {
-      mockGetActiveFlaresWithTrend.mockResolvedValue([]);
+      mockGetActiveFlares.mockResolvedValue([]);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -204,7 +205,7 @@ describe("ActiveFlareCards", () => {
   describe("AC5: Trend arrows with color coding", () => {
     it("should use red color for worsening trend", async () => {
       const mockFlares = [createMockFlare("flare-1", { trend: "worsening" })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -216,7 +217,7 @@ describe("ActiveFlareCards", () => {
 
     it("should use yellow color for stable trend", async () => {
       const mockFlares = [createMockFlare("flare-1", { trend: "stable" })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -228,7 +229,7 @@ describe("ActiveFlareCards", () => {
 
     it("should use green color for improving trend", async () => {
       const mockFlares = [createMockFlare("flare-1", { trend: "improving" })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -244,7 +245,7 @@ describe("ActiveFlareCards", () => {
       const mockFlares = [
         createMockFlare("flare-1", { startDate: new Date(Date.now() - 1000) }),
       ];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -259,7 +260,7 @@ describe("ActiveFlareCards", () => {
           startDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         }),
       ];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -274,7 +275,7 @@ describe("ActiveFlareCards", () => {
           startDate: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
         }),
       ];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -287,7 +288,7 @@ describe("ActiveFlareCards", () => {
   describe("AC7: Update button opens modal", () => {
     it("should call onUpdateFlare callback when Update is clicked", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       const onUpdateFlare = jest.fn();
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} onUpdateFlare={onUpdateFlare} />);
@@ -304,7 +305,7 @@ describe("ActiveFlareCards", () => {
 
     it("should open FlareUpdateModal when Update button is clicked", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -324,7 +325,7 @@ describe("ActiveFlareCards", () => {
   describe("AC8: Resolve button shows confirmation and resolves flare", () => {
     it("should show confirmation dialog when Resolve is clicked", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -342,7 +343,7 @@ describe("ActiveFlareCards", () => {
 
     it("should call repository.resolve when confirmation is accepted", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
       mockResolve.mockResolvedValue(undefined);
       (global.confirm as jest.Mock).mockReturnValue(true);
 
@@ -362,7 +363,7 @@ describe("ActiveFlareCards", () => {
 
     it("should not call repository.resolve when confirmation is cancelled", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
       (global.confirm as jest.Mock).mockReturnValue(false);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
@@ -381,7 +382,7 @@ describe("ActiveFlareCards", () => {
       const mockFlaresInitial = [createMockFlare("flare-1")];
       const mockFlaresAfter: typeof mockFlaresInitial = [];
 
-      mockGetActiveFlaresWithTrend
+      mockGetActiveFlares
         .mockResolvedValueOnce(mockFlaresInitial)
         .mockResolvedValueOnce(mockFlaresAfter);
 
@@ -410,7 +411,7 @@ describe("ActiveFlareCards", () => {
         createMockFlare("flare-2", { severity: 8, symptomName: "High Severity" }),
         createMockFlare("flare-3", { severity: 5, symptomName: "Mid Severity" }),
       ];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -437,7 +438,7 @@ describe("ActiveFlareCards", () => {
           startDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
         }),
       ];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -459,7 +460,7 @@ describe("ActiveFlareCards", () => {
         createMockFlare("flare-1", { severity: 3, symptomName: "Low Severity" }),
         createMockFlare("flare-2", { severity: 8, symptomName: "High Severity" }),
       ];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -483,7 +484,7 @@ describe("ActiveFlareCards", () => {
 
   describe("Loading state", () => {
     it("should show loading skeleton initially", () => {
-      mockGetActiveFlaresWithTrend.mockImplementation(
+      mockGetActiveFlares.mockImplementation(
         () => new Promise(() => {}) // Never resolves
       );
 
@@ -497,7 +498,7 @@ describe("ActiveFlareCards", () => {
 
   describe("Error state", () => {
     it("should show error message when loading fails", async () => {
-      mockGetActiveFlaresWithTrend.mockRejectedValue(
+      mockGetActiveFlares.mockRejectedValue(
         new Error("Network error")
       );
 
@@ -514,7 +515,7 @@ describe("ActiveFlareCards", () => {
   describe("Accessibility", () => {
     it("should have proper ARIA labels on buttons", async () => {
       const mockFlares = [createMockFlare("flare-1", { symptomName: "Test Flare" })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -526,7 +527,7 @@ describe("ActiveFlareCards", () => {
 
     it("should have proper section label", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -539,7 +540,7 @@ describe("ActiveFlareCards", () => {
   describe("Edge cases", () => {
     it("should handle flare with no body regions", async () => {
       const mockFlares = [createMockFlare("flare-1", { bodyRegions: [] })];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
 
       render(<ActiveFlareCards userId={mockUserId} repository={mockRepository} />);
 
@@ -550,7 +551,7 @@ describe("ActiveFlareCards", () => {
 
     it("should handle failed resolve gracefully", async () => {
       const mockFlares = [createMockFlare("flare-1")];
-      mockGetActiveFlaresWithTrend.mockResolvedValue(mockFlares);
+      mockGetActiveFlares.mockResolvedValue(mockFlares);
       mockResolve.mockRejectedValue(new Error("Resolve failed"));
       (global.confirm as jest.Mock).mockReturnValue(true);
 

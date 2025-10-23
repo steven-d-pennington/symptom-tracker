@@ -115,6 +115,30 @@ describe("flareRepository", () => {
       const stored = await db.flares.get(flare.id);
       expect(stored).toEqual(flare);
     });
+    it("should accept custom timestamp and persist initial notes on event", async () => {
+      const customTimestamp = Date.parse("2025-10-20T12:00:00Z");
+      const flare = await createFlare(testUserId, {
+        bodyRegionId: "left-ankle",
+        initialSeverity: 4,
+        startDate: customTimestamp,
+        createdAt: customTimestamp,
+        updatedAt: customTimestamp,
+        initialEventNotes: "Captured immediately after exercise",
+      });
+
+      expect(flare.startDate).toBe(customTimestamp);
+      expect(flare.createdAt).toBe(customTimestamp);
+      expect(flare.updatedAt).toBe(customTimestamp);
+
+      const events = await db.flareEvents.where("flareId").equals(flare.id).toArray();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        eventType: "created",
+        timestamp: customTimestamp,
+        notes: "Captured immediately after exercise",
+      });
+    });
+
   });
 
   describe("updateFlare", () => {
@@ -506,7 +530,7 @@ describe("flareRepository", () => {
     });
   });
 
-  describe("Schema Migration (v17 ’ v18)", () => {
+  describe("Schema Migration (v17 ï¿½ v18)", () => {
     it("should handle fresh v18 install with empty database", async () => {
       // Database is already at v18 from beforeEach setup
       const flare = await createFlare(testUserId, {

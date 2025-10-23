@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ActiveFlareCards } from "@/components/flares/ActiveFlareCards";
 import { BodyMapViewer } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
@@ -12,6 +12,7 @@ import { flareRepository } from "@/lib/repositories/flareRepository";
 import { userRepository } from "@/lib/repositories/userRepository";
 import { ActiveFlare } from "@/lib/types/flare";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { useFlares } from "@/lib/hooks/useFlares";
 import { cn } from "@/lib/utils/cn";
 import { LayoutGrid, MapPin, Layers, Plus, TrendingUp, TrendingDown, Activity } from "lucide-react";
 
@@ -19,28 +20,37 @@ type ViewMode = "cards" | "map" | "both";
 
 export default function FlaresPage() {
   const { userId } = useCurrentUser();
+  const { data: flares = [], isLoading: flaresLoading, refetch: refetchFlares } = useFlares({ userId: userId || '', includeResolved: true });
   const [viewMode, setViewMode] = useState<ViewMode>("cards"); // Story 0.3: Default to cards-first
-  const [flares, setFlares] = useState<Array<ActiveFlare & { trend: "worsening" | "stable" | "improving" }>>([]);
   const [selectedFlareId, setSelectedFlareId] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<"front" | "back" | "left" | "right">("front");
+  const [selectedCoordinates, setSelectedCoordinates] = useState<{
+    bodyRegionId: string;
+    bodyRegionName: string;
+    coordinates: { x: number; y: number };
+  } | null>(null);
   const [isFlareCreationModalOpen, setIsFlareCreationModalOpen] = useState(false);
   const [showMapIntro, setShowMapIntro] = useState(false); // Story 0.3 Task 2: Progressive guidance
-  const [stats, setStats] = useState({
-    total: 0,
-    worsening: 0,
-    improving: 0,
-    stable: 0,
-    avgSeverity: 0,
-  });
 
-  useEffect(() => {
-    if (userId) {
-      loadFlares();
-    }
-  }, [userId]);
+  // Calculate stats from flares data
+  const stats = useMemo(() => {
+    const worsening = flares.filter(f => f.trend === "worsening").length;
+    const improving = flares.filter(f => f.trend === "improving").length;
+    const stable = flares.filter(f => f.trend === "stable").length;
+    const avgSeverity = flares.length > 0
+      ? flares.reduce((sum, f) => sum + f.severity, 0) / flares.length
+      : 0;
 
-  // Story 0.3: Hydrate viewMode from user preferences
+    return {
+      total: flares.length,
+      worsening,
+      improving,
+      stable,
+      avgSeverity: Math.round(avgSeverity * 10) / 10,
+    };
+  }, [flares]);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -78,87 +88,6 @@ export default function FlaresPage() {
     }
   }, [userId, viewMode]);
 
-  const loadFlares = async () => {
-    if (!userId) return;
-
-    try {
-      // Story 2.1: Use new API - getActiveFlares + getFlareHistory
-      const flareRecords = await flareRepository.getActiveFlares(userId);
-
-      // Fetch event history for each flare and calculate trends
-      const flaresWithTrends = await Promise.all(
-        flareRecords.map(async (flare) => {
-          const events = await flareRepository.getFlareHistory(userId, flare.id);
-
-          // Calculate trend from event history
-          const severityEvents = events.filter(
-            e => e.severity !== undefined && (e.eventType === 'created' || e.eventType === 'severity_update')
-          ).sort((a, b) => a.timestamp - b.timestamp);
-
-          let trend: 'worsening' | 'stable' | 'improving' = 'stable';
-          if (severityEvents.length >= 2) {
-            const recent = severityEvents.slice(-2);
-            const change = recent[1].severity! - recent[0].severity!;
-            if (change > 0) trend = 'worsening';
-            else if (change < 0) trend = 'improving';
-          }
-
-          // Convert FlareRecord to ActiveFlare format
-          return {
-            id: flare.id,
-            userId: flare.userId,
-            symptomName: flare.bodyRegionId,
-            bodyRegions: [flare.bodyRegionId],
-            severity: flare.currentSeverity,
-            status: flare.status as ActiveFlare['status'],
-            startDate: new Date(flare.startDate),
-            trend,
-          } as ActiveFlare & { trend: 'worsening' | 'stable' | 'improving' };
-        })
-      );
-
-      setFlares(flaresWithTrends);
-
-      // Calculate stats
-      const worsening = flaresWithTrends.filter(f => f.trend === "worsening").length;
-      const improving = flaresWithTrends.filter(f => f.trend === "improving").length;
-      const stable = flaresWithTrends.filter(f => f.trend === "stable").length;
-      const avgSeverity = flaresWithTrends.length > 0
-        ? flaresWithTrends.reduce((sum, f) => sum + f.severity, 0) / flaresWithTrends.length
-        : 0;
-
-      setStats({
-        total: flaresWithTrends.length,
-        worsening,
-        improving,
-        stable,
-        avgSeverity: Math.round(avgSeverity * 10) / 10,
-      });
-    } catch (error) {
-      console.error("Failed to load flares:", error);
-    }
-  };
-
-  const handleFlareCreate = async (flareData: {
-    bodyRegionId: string;
-    severity: number;
-    notes?: string;
-    coordinates?: { regionId: string; x: number; y: number };
-  }) => {
-    if (!userId) return;
-
-    // Story 2.1: Use new createFlare API with simplified schema
-    await flareRepository.createFlare(userId, {
-      bodyRegionId: flareData.bodyRegionId,
-      initialSeverity: flareData.severity,
-      currentSeverity: flareData.severity,
-      coordinates: flareData.coordinates,
-    });
-
-    await loadFlares();
-    setIsFlareCreationModalOpen(false);
-  };
-
   // Calculate severity by region for heat map
   const flareSeverityByRegion = flares.reduce((acc, flare) => {
     flare.bodyRegions.forEach((regionId) => {
@@ -181,9 +110,12 @@ export default function FlaresPage() {
 
   const handleRegionSelect = (regionId: string) => {
     if (selectedRegion === regionId) {
-      // Deselect if clicking the same region
-      setSelectedRegion(null);
-      setSelectedFlareId(null);
+      // Don't deselect if coordinates are marked (allows re-clicking to mark different coordinates)
+      if (!selectedCoordinates) {
+        setSelectedRegion(null);
+        setSelectedFlareId(null);
+        setSelectedCoordinates(null); // Clear coordinates when deselecting region
+      }
     } else {
       setSelectedRegion(regionId);
       setSelectedFlareId(null);
@@ -194,6 +126,34 @@ export default function FlaresPage() {
         setSelectedFlareId(flareWithRegion.id);
       }
     }
+  };
+
+  const handleCoordinateMark = (regionId: string, coordinates: { x: number; y: number }) => {
+    // Get region name for display
+    const regionName = regionId.replace(/-/g, ' ');
+    
+    setSelectedCoordinates({
+      bodyRegionId: regionId,
+      bodyRegionName: regionName,
+      coordinates,
+    });
+    
+    // Also select the region for consistency
+    setSelectedRegion(regionId);
+    setSelectedFlareId(null);
+  };
+
+  const handleCreateFlareFromCoordinates = () => {
+    if (selectedCoordinates) {
+      setIsFlareCreationModalOpen(true);
+    }
+  };
+
+  const handleFlareCreated = () => {
+    // Clear coordinate selection after successful creation
+    setSelectedCoordinates(null);
+    // Refresh flares data
+    refetchFlares();
   };
 
   const handleFlareCardClick = (flareId: string) => {
@@ -398,7 +358,7 @@ export default function FlaresPage() {
                 </div>
               )}
 
-              <div className="h-[600px] bg-gray-50 rounded-lg mb-4 overflow-visible">
+              <div className="h-[600px] bg-gray-50 rounded-lg mb-4 overflow-visible relative">
                 <BodyMapViewer
                   view={currentView}
                   userId={userId}
@@ -406,7 +366,20 @@ export default function FlaresPage() {
                   onRegionSelect={handleRegionSelect}
                   flareSeverityByRegion={flareSeverityByRegion}
                   readOnly={false}
+                  onCoordinateMark={handleCoordinateMark}
                 />
+                
+                {/* Create Flare Button - appears when coordinates are selected */}
+                {selectedCoordinates && (
+                  <button
+                    onClick={handleCreateFlareFromCoordinates}
+                    className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
+                    aria-label="Create flare at marked location"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create Flare Here
+                  </button>
+                )}
               </div>
 
               <BodyMapLegend />
@@ -425,8 +398,9 @@ export default function FlaresPage() {
         <FlareCreationModal
           isOpen={isFlareCreationModalOpen}
           onClose={() => setIsFlareCreationModalOpen(false)}
-          onSave={handleFlareCreate}
           userId={userId}
+          selection={selectedCoordinates}
+          onCreated={handleFlareCreated}
         />
       )}
     </div>

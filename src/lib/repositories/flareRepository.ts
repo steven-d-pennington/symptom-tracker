@@ -15,6 +15,18 @@ import { FlareRecord, FlareEventRecord } from "../db/schema";
 import { v4 as uuidv4 } from "uuid";
 
 /**
+ * Input contract for creating a flare. Extends the FlareRecord shape with
+ * optional metadata used to seed the initial 'created' event.
+ */
+export interface CreateFlareInput extends Partial<FlareRecord> {
+  /**
+   * Optional notes that should be persisted with the initial 'created' event.
+   * Stored on FlareEventRecord.notes to keep the main record lightweight.
+   */
+  initialEventNotes?: string;
+}
+
+/**
  * Creates a new flare entity with initial event.
  * Generates UUID, sets timestamps, and creates 'created' event.
  *
@@ -25,24 +37,35 @@ import { v4 as uuidv4 } from "uuid";
  */
 export async function createFlare(
   userId: string,
-  data: Partial<FlareRecord>
+  data: CreateFlareInput
 ): Promise<FlareRecord> {
   const now = Date.now();
-  const flareId = uuidv4();
+  const flareId = data.id ?? uuidv4();
+
+  if (!data.bodyRegionId) {
+    throw new Error("createFlare: bodyRegionId is required");
+  }
+
+  const startDate = data.startDate ?? now;
+  const initialSeverity = data.initialSeverity ?? data.currentSeverity ?? 5;
+  const currentSeverity = data.currentSeverity ?? initialSeverity;
 
   // Create flare record with defaults
   const flare: FlareRecord = {
     id: flareId,
     userId,
-    startDate: data.startDate ?? now,
-    status: "active", // New flares always start as active
-    bodyRegionId: data.bodyRegionId!,
+    startDate,
+    endDate: data.endDate,
+    status: data.status ?? "active", // New flares always start as active unless explicitly overridden
+    bodyRegionId: data.bodyRegionId,
     coordinates: data.coordinates,
-    initialSeverity: data.initialSeverity ?? data.currentSeverity ?? 5,
-    currentSeverity: data.currentSeverity ?? data.initialSeverity ?? 5,
-    createdAt: now,
-    updatedAt: now,
+    initialSeverity,
+    currentSeverity,
+    createdAt: data.createdAt ?? startDate,
+    updatedAt: data.updatedAt ?? startDate,
   };
+
+  const initialEventNotes = data.initialEventNotes?.trim();
 
   // Use transaction for atomic write (flare + initial event)
   await db.transaction("rw", [db.flares, db.flareEvents], async () => {
@@ -51,11 +74,12 @@ export async function createFlare(
     // Create initial 'created' event for append-only history
     const createdEvent: FlareEventRecord = {
       id: uuidv4(),
-      flareId: flareId,
+      flareId,
       eventType: "created",
-      timestamp: now,
+      timestamp: startDate,
       severity: flare.initialSeverity,
       userId,
+      notes: initialEventNotes || undefined,
     };
 
     await db.flareEvents.add(createdEvent);

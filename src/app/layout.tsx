@@ -4,6 +4,7 @@ import { OnboardingRedirectGate } from "./onboarding/components/OnboardingRedire
 import { OfflineIndicator, InstallPrompt, UpdateNotification } from "@/components/pwa";
 import { NavLayout } from "@/components/navigation/NavLayout";
 import { MigrationProvider } from "@/components/providers/MigrationProvider";
+import { ToastContainer } from "@/components/common/ToastContainer";
 
 export const metadata: Metadata = {
   title: "Pocket Symptom Tracker",
@@ -57,6 +58,8 @@ export default function RootLayout({
           <OfflineIndicator />
           <InstallPrompt />
           <UpdateNotification />
+          {/* Toast Notifications */}
+          <ToastContainer />
         </MigrationProvider>
       </body>
     </html>

@@ -1,321 +1,513 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Save, FileText } from "lucide-react";
-import { BodyMapViewer } from "../body-mapping/BodyMapViewer";
+import React, { FormEvent, useEffect, useMemo, useState } from "react";
+import { Save, X } from "lucide-react";
 import { flareRepository } from "@/lib/repositories/flareRepository";
-import { NormalizedCoordinates } from "@/lib/utils/coordinates";
+import type { FlareRecord } from "@/lib/db/schema";
+import type { CreateFlareInput } from "@/lib/repositories/flareRepository";
+import { toast } from "@/components/common/Toast";
+import { BodyMapViewer } from "@/components/body-mapping/BodyMapViewer";
+import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
+import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
 
-export interface NewFlareData {
+type Coordinates = {
+  x: number;
+  y: number;
+};
+
+export interface FlareCreationSelection {
   bodyRegionId: string;
-  severity: number;
-  notes?: string;
-  coordinates?: { regionId: string; x: number; y: number };
+  bodyRegionName?: string;
+  coordinates: Coordinates;
 }
 
 interface FlareCreationModalProps {
+  /** Controls modal visibility */
   isOpen: boolean;
+  /** Close handler (also used for backdrop + Esc) */
   onClose: () => void;
-  onSave: (data: NewFlareData) => Promise<void>;
+  /** Current user id for repository writes */
   userId: string;
+  /**
+   * Location data captured from the body map.
+   * Save is disabled until a selection is provided.
+   */
+  selection: FlareCreationSelection | null;
+  /**
+   * Optional override for persistence logic.
+   * Defaults to flareRepository.createFlare when not provided.
+   */
+  onSave?: (payload: {
+    timestamp: number;
+    severity: number;
+    notes?: string;
+    selection: FlareCreationSelection;
+  }) => Promise<FlareRecord | void>;
+  /** Invoked after a successful save with the created flare record */
+  onCreated?: (flare: FlareRecord) => void;
 }
+
+const MAX_NOTES_LENGTH = 500;
+
+const severityLabel = (value: number): string => {
+  if (value <= 1) return "Minimal";
+  if (value <= 3) return "Mild";
+  if (value <= 5) return "Moderate";
+  if (value <= 7) return "Severe";
+  if (value <= 9) return "Very Severe";
+  return "Excruciating";
+};
+
+const pad = (value: number): string => value.toString().padStart(2, "0");
+
+const formatDateTimeLocal = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const parseDateTimeLocal = (value: string): number | null => {
+  if (!value) {
+    return null;
+  }
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? null : timestamp;
+};
+
+const formatPercentage = (value: number): string =>
+  `${Math.round(value * 1000) / 10}%`;
 
 export function FlareCreationModal({
   isOpen,
   onClose,
-  onSave,
   userId,
+  selection,
+  onSave,
+  onCreated,
 }: FlareCreationModalProps) {
-  const [view, setView] = useState<"front" | "back" | "left" | "right">("front");
-  const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [severity, setSeverity] = useState<number>(5);
   const [notes, setNotes] = useState<string>("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [validationError, setValidationError] = useState<string>("");
-  const [markedCoordinate, setMarkedCoordinate] = useState<NormalizedCoordinates | null>(null);
+  const [timestampValue, setTimestampValue] = useState<string>(formatDateTimeLocal(new Date()));
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Reset form when modal opens
+  // Internal body map selection state (used when no external selection provided)
+  const [internalSelection, setInternalSelection] = useState<FlareCreationSelection | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<"front" | "back" | "left" | "right">("front");
+
+  // Use external selection if provided, otherwise use internal selection
+  const effectiveSelection = selection || internalSelection;
+  const hasSelection = Boolean(effectiveSelection?.bodyRegionId && effectiveSelection?.coordinates);
+
   useEffect(() => {
-    if (isOpen) {
-      setSelectedRegion("");
-      setSeverity(5);
-      setNotes("");
-      setValidationError("");
-      setMarkedCoordinate(null);
+    if (!isOpen) {
+      return;
     }
+
+    // Reset form state on open
+    setSeverity(5);
+    setNotes("");
+    setTimestampValue(formatDateTimeLocal(new Date()));
+    setErrorMessage(null);
+    setInternalSelection(null);
+    setSelectedRegion(null);
+    setCurrentView("front");
   }, [isOpen]);
 
-  // Handle Escape key
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
         onClose();
       }
+      if (event.key === "Enter" && (event.target as HTMLElement)?.tagName !== "TEXTAREA") {
+        // Allow Enter to submit from header/inputs (textarea already supports Enter for newlines)
+        event.preventDefault();
+        const form = document.getElementById("flare-creation-form") as HTMLFormElement | null;
+        form?.requestSubmit();
+      }
     };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const getSeverityLabel = (value: number): string => {
-    if (value === 1) return "Minimal";
-    if (value <= 3) return "Mild";
-    if (value <= 5) return "Moderate";
-    if (value <= 7) return "Severe";
-    if (value <= 9) return "Very Severe";
-    return "Excruciating";
-  };
-
-  const validateForm = (): boolean => {
-    if (!selectedRegion) {
-      setValidationError("Please select a body location");
-      return false;
+  const regionLabel = useMemo(() => {
+    if (!effectiveSelection?.bodyRegionId) {
+      return "Select a region on the body map";
     }
-    setValidationError("");
-    return true;
-  };
+    if (effectiveSelection.bodyRegionName) {
+      return effectiveSelection.bodyRegionName;
+    }
+    return effectiveSelection.bodyRegionId.replace(/-/g, " ");
+  }, [effectiveSelection]);
 
-  const handleCoordinateMark = (regionId: string, coordinates: NormalizedCoordinates) => {
+  // Internal body map handlers
+  const handleRegionSelect = (regionId: string) => {
     setSelectedRegion(regionId);
-    setMarkedCoordinate(coordinates);
   };
 
-  const handleSave = async (addDetails: boolean = false) => {
-    if (!validateForm()) return;
+  const handleCoordinateMark = (regionId: string, coordinates: { x: number; y: number }) => {
+    const regionName = regionId.replace(/-/g, ' ');
+    
+    setInternalSelection({
+      bodyRegionId: regionId,
+      bodyRegionName: regionName,
+      coordinates,
+    });
+    
+    // Also select the region for consistency
+    setSelectedRegion(regionId);
+  };
+
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
+  const handleNotesChange = (value: string) => {
+    if (value.length > MAX_NOTES_LENGTH) {
+      setNotes(value.slice(0, MAX_NOTES_LENGTH));
+      return;
+    }
+    setNotes(value);
+  };
+
+  const defaultSave = async (payload: {
+    timestamp: number;
+    severity: number;
+    notes?: string;
+    selection: FlareCreationSelection;
+  }): Promise<FlareRecord> => {
+    const trimmedNotes = payload.notes?.trim();
+    const createPayload: CreateFlareInput = {
+      bodyRegionId: payload.selection.bodyRegionId,
+      coordinates: payload.selection.coordinates,
+      initialSeverity: payload.severity,
+      currentSeverity: payload.severity,
+      startDate: payload.timestamp,
+      createdAt: payload.timestamp,
+      updatedAt: payload.timestamp,
+      initialEventNotes: trimmedNotes && trimmedNotes.length > 0 ? trimmedNotes : undefined,
+    };
+
+    return flareRepository.createFlare(userId, createPayload);
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage(null);
+
+    if (!hasSelection || !effectiveSelection) {
+      setErrorMessage("Body location not provided. Please tap a region on the body map first.");
+      return;
+    }
+
+    const timestamp = parseDateTimeLocal(timestampValue);
+    if (timestamp === null) {
+      setErrorMessage("Please provide a valid date and time.");
+      return;
+    }
 
     setIsSaving(true);
     try {
-      const flareData: NewFlareData = {
-        bodyRegionId: selectedRegion,
+      const trimmedNotes = notes.trim();
+      const saveHandler = onSave ?? defaultSave;
+      const result = await saveHandler({
+        timestamp,
         severity,
-        notes: notes.trim() || undefined,
-        coordinates: markedCoordinate
-          ? {
-              regionId: selectedRegion,
-              x: markedCoordinate.x,
-              y: markedCoordinate.y,
-            }
-          : undefined,
-      };
+        notes: trimmedNotes.length > 0 ? trimmedNotes : undefined,
+        selection: effectiveSelection!,
+      });
 
-      await onSave(flareData);
+      const createdFlare: FlareRecord | undefined =
+        (result as FlareRecord | undefined) ?? undefined;
 
-      // TODO: If addDetails is true, open EventDetailModal (Story 2.6 not yet implemented)
-      if (addDetails) {
-        console.log("Add Details - EventDetailModal not yet implemented (Story 2.6)");
+      if (createdFlare) {
+        // Show success toast with action buttons
+        toast.success("Flare created successfully", {
+          description: `Flare logged in ${effectiveSelection?.bodyRegionName || effectiveSelection?.bodyRegionId || 'selected area'}`,
+          actions: [
+            {
+              label: "View Details",
+              onClick: () => {
+                // TODO: Navigate to flare details page when implemented
+                console.log("Navigate to flare details:", createdFlare.id);
+              },
+            },
+            {
+              label: "Log Another",
+              onClick: () => {
+                // Reset form for another flare
+                setSeverity(5);
+                setNotes("");
+                setTimestampValue(formatDateTimeLocal(new Date()));
+                setErrorMessage(null);
+                // Keep modal open for another entry
+                return;
+              },
+            },
+          ],
+          duration: 5000,
+        });
+
+        // Dispatch custom event for any other listeners
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("flare:created", {
+              detail: {
+                flare: createdFlare,
+                selection,
+                severity,
+                timestamp,
+              },
+            })
+          );
+        }
+        onCreated?.(createdFlare);
       }
 
       onClose();
     } catch (error) {
-      console.error("Failed to save flare:", error);
-      setValidationError("Failed to save flare. Please try again.");
+      console.error("Failed to create flare", error);
+      
+      // Handle specific error types for offline-first experience
+      let errorMessage = "Saving flare failed. Please try again.";
+      
+      if (error instanceof Error) {
+        const errorString = error.message.toLowerCase();
+        
+        if (errorString.includes('quota') || errorString.includes('storage')) {
+          errorMessage = "Storage full. Please free up space and try again.";
+        } else if (errorString.includes('constraint') || errorString.includes('unique')) {
+          // Handle duplicate ID - retry with new UUID
+          errorMessage = "Creating flare failed. Retrying...";
+          // Could implement automatic retry logic here
+        } else if (errorString.includes('network') || errorString.includes('offline')) {
+          errorMessage = "You're offline. Flare will be saved when connection returns.";
+        } else if (errorString.includes('permission') || errorString.includes('denied')) {
+          errorMessage = "Permission denied. Please check your browser settings.";
+        }
+      }
+      
+      setErrorMessage(errorMessage);
+      // Keep modal open on error so user can retry
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity"
         aria-hidden="true"
+        onClick={handleBackdropClick}
       />
 
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6"
+        onClick={handleBackdropClick}
+      >
         <div
-          className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl md:max-w-2xl md:rounded-xl"
-          onClick={(e) => e.stopPropagation()}
           role="dialog"
+          aria-modal="true"
           aria-labelledby="flare-creation-title"
           aria-describedby="flare-creation-description"
-          style={{
-            maxWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? '100%' : '42rem',
-            maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? '100vh' : '90vh',
-            height: typeof window !== 'undefined' && window.innerWidth < 768 ? '100vh' : 'auto',
-            borderRadius: typeof window !== 'undefined' && window.innerWidth < 768 ? '0' : undefined,
-          }}
+          className="relative w-full max-w-xl max-h-[90vh] rounded-2xl bg-white shadow-xl focus:outline-none flex flex-col"
         >
-          {/* Header */}
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white p-4 md:p-6">
-            <div>
-              <h2 id="flare-creation-title" className="text-xl font-semibold text-gray-900">
-                🔥 Log New Flare
-              </h2>
-              <p id="flare-creation-description" className="mt-1 text-sm text-gray-600">
-                Quick flare logging (10-15 seconds)
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-              aria-label="Close modal"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-4 md:p-6 space-y-6">
-            {/* Step 1: Body Location */}
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Step 1: Where is the flare? <span className="text-red-500">*</span>
-              </label>
-
-              {/* View Picker */}
-              <div className="flex gap-2 mb-4">
-                {(["front", "back", "left", "right"] as const).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setView(v)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${
-                      view === v
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-
-              {/* Compact Body Map */}
-              <div className="h-96 border-2 border-gray-200 rounded-lg overflow-hidden">
-                <BodyMapViewer
-                  view={view}
-                  userId={userId}
-                  selectedRegion={selectedRegion}
-                  onRegionSelect={setSelectedRegion}
-                  multiSelect={false}
-                  readOnly={false}
-                  onCoordinateMark={handleCoordinateMark}
-                />
-              </div>
-
-              {selectedRegion && (
-                <p className="mt-2 text-sm text-green-600 font-medium">
-                  ✓ Selected: {selectedRegion}
-                  {markedCoordinate && (
-                    <span className="ml-2 text-xs text-gray-600">
-                      (Precise location marked: x={markedCoordinate.x.toFixed(2)}, y={markedCoordinate.y.toFixed(2)})
-                    </span>
-                  )}
+          <form id="flare-creation-form" onSubmit={handleSubmit} className="flex flex-col h-full min-h-0" noValidate>
+            <header className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-5">
+              <div>
+                <h2 id="flare-creation-title" className="text-xl font-semibold text-gray-900">
+                  Create New Flare
+                </h2>
+                <p id="flare-creation-description" className="mt-1 text-sm text-gray-600">
+                  {selection ? "Confirm details for the flare you just marked on the body map." : "Select a location on the body map and confirm flare details."}
                 </p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full border border-transparent p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                aria-label="Close"
+                disabled={isSaving}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+
+            {/* Body Map Selection (only shown when no external selection provided) */}
+            {!selection && (
+              <div className="border-b border-gray-200 px-6 py-4 flex-shrink-0">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-gray-900">Select Body Location</h3>
+                  <BodyViewSwitcher
+                    currentView={currentView}
+                    onViewChange={setCurrentView}
+                  />
+                </div>
+                <div className="h-[300px] bg-gray-50 rounded-lg mb-3 overflow-visible relative">
+                  <BodyMapViewer
+                    key={`${currentView}-${isOpen}`}
+                    view={currentView}
+                    userId={userId}
+                    selectedRegion={selectedRegion || undefined}
+                    onRegionSelect={handleRegionSelect}
+                    readOnly={false}
+                    onCoordinateMark={handleCoordinateMark}
+                    showFlareMarkers={false}
+                  />
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <BodyMapLegend />
+                  <p className="text-xs text-gray-500">💡 Click region, then click again to mark exact location</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+              <section className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                <p className="text-sm font-medium text-gray-700">Body Location</p>
+                <p className="mt-1 text-base font-semibold text-gray-900">
+                  {regionLabel}
+                </p>
+                {effectiveSelection?.coordinates ? (
+                  <p className="mt-1 text-xs text-gray-600">
+                    Coordinates:{" "}
+                    <strong>
+                      {formatPercentage(effectiveSelection.coordinates.x)}, {formatPercentage(effectiveSelection.coordinates.y)}
+                    </strong>{" "}
+                    (normalized within the selected region)
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Waiting for precise coordinates&hellip;
+                  </p>
+                )}
+              </section>
+
+              <section>
+                <label
+                  htmlFor="flare-severity"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Initial severity <span className="text-red-500">*</span>
+                </label>
+
+                <div className="rounded-lg border border-gray-200 px-4 py-3">
+                  <div className="flex items-center justify-between text-xs uppercase tracking-wide text-gray-500">
+                    <span>1 · Minimal</span>
+                    <span>10 · Excruciating</span>
+                  </div>
+                  <div className="mt-4 flex items-center gap-4">
+                    <input
+                      id="flare-severity"
+                      type="range"
+                      min={1}
+                      max={10}
+                      step={1}
+                      value={severity}
+                      onChange={(event) => setSeverity(Number(event.target.value))}
+                      className="flex-1 accent-red-500"
+                      aria-valuemin={1}
+                      aria-valuemax={10}
+                      aria-valuenow={severity}
+                    />
+                    <div className="flex min-w-[88px] flex-col items-center rounded-md bg-red-50 px-3 py-2">
+                      <span className="text-lg font-semibold text-red-600">{severity}/10</span>
+                      <span className="text-[11px] font-medium uppercase tracking-wide text-red-500">
+                        {severityLabel(severity)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="flare-notes" className="text-sm font-medium text-gray-700">
+                    Notes (optional)
+                  </label>
+                  <span className="text-xs text-gray-500">{notes.length}/{MAX_NOTES_LENGTH}</span>
+                </div>
+                <textarea
+                  id="flare-notes"
+                  value={notes}
+                  onChange={(event) => handleNotesChange(event.target.value)}
+                  rows={4}
+                  maxLength={MAX_NOTES_LENGTH}
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  placeholder="Add context, triggers, or symptom details…"
+                  aria-describedby="flare-notes-helper"
+                />
+                <p id="flare-notes-helper" className="mt-1 text-xs text-gray-500">
+                  Notes are stored with the initial event and help explain flare context later.
+                </p>
+              </section>
+
+              <section>
+                <label htmlFor="flare-timestamp" className="mb-2 block text-sm font-medium text-gray-700">
+                  Timestamp <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="flare-timestamp"
+                  type="datetime-local"
+                  value={timestampValue}
+                  onChange={(event) => setTimestampValue(event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Adjust if the flare started earlier. We store times in local time and convert to epoch milliseconds.
+                </p>
+              </section>
+
+              {errorMessage && (
+                <div
+                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  {errorMessage}
+                </div>
               )}
             </div>
 
-            {/* Step 2: Severity */}
-            <div>
-              <label htmlFor="severity-slider" className="block text-sm font-medium text-gray-900 mb-2">
-                Step 2: Severity <span className="text-red-500">*</span>
-              </label>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">1 = Minimal</span>
-                  <span className="text-2xl font-bold text-gray-900">
-                    {severity}/10
-                  </span>
-                  <span className="text-sm text-gray-600">10 = Excruciating</span>
-                </div>
-
-                <input
-                  id="severity-slider"
-                  type="range"
-                  min="1"
-                  max="10"
-                  step="1"
-                  value={severity}
-                  onChange={(e) => setSeverity(parseInt(e.target.value))}
-                  className="w-full h-3 bg-gradient-to-r from-yellow-200 via-orange-400 to-red-600 rounded-lg appearance-none cursor-pointer slider-thumb"
-                  aria-label="Flare severity"
-                  aria-valuemin={1}
-                  aria-valuemax={10}
-                  aria-valuenow={severity}
-                  aria-valuetext={getSeverityLabel(severity)}
-                />
-
-                <div className="text-center">
-                  <span className="inline-block px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-full">
-                    {getSeverityLabel(severity)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3: Optional Notes */}
-            <div>
-              <label htmlFor="notes-field" className="block text-sm font-medium text-gray-900 mb-2">
-                Step 3: Any details? (optional)
-              </label>
-              <textarea
-                id="notes-field"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any details? (optional)"
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                aria-label="Optional notes"
-              />
-            </div>
-
-            {/* Validation Error */}
-            {validationError && (
-              <div
-                className="p-3 bg-red-50 border border-red-200 rounded-md"
-                role="alert"
-                aria-live="polite"
-              >
-                <p className="text-sm text-red-600">{validationError}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="sticky bottom-0 border-t border-gray-200 bg-white p-4 md:p-6">
-            <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <footer className="flex flex-col gap-3 border-t border-gray-200 px-6 py-5 sm:flex-row sm:justify-end">
               <button
+                type="button"
                 onClick={onClose}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSaving}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Cancel
+                Cancel (Esc)
               </button>
               <button
-                onClick={() => handleSave(true)}
-                disabled={isSaving}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Save and add more details"
+                type="submit"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!hasSelection || isSaving}
               >
-                <FileText className="h-4 w-4" />
-                Add Details
+                <Save className="h-4 w-4" />
+                {isSaving ? "Saving…" : "Save Flare (Enter)"}
               </button>
-              <button
-                onClick={() => handleSave(false)}
-                disabled={isSaving}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Save flare"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Save
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+            </footer>
+          </form>
         </div>
       </div>
-
     </>
   );
 }

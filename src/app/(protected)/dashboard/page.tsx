@@ -152,28 +152,6 @@ function DashboardContent() {
     router.push("/dashboard");
   }, [router]);
 
-  // Handle flare creation
-  const handleFlareCreate = useCallback(async (flareData: {
-    bodyRegionId: string;
-    severity: number;
-    notes?: string;
-    coordinates?: { regionId: string; x: number; y: number };
-  }) => {
-    if (!userId) return;
-
-    // Story 2.1: Use new createFlare API with simplified schema
-    await flareRepository.createFlare(userId, {
-      bodyRegionId: flareData.bodyRegionId,
-      initialSeverity: flareData.severity,
-      currentSeverity: flareData.severity,
-      coordinates: flareData.coordinates,
-    });
-
-    // Refresh the dashboard and close modal
-    setRefreshKey(prev => prev + 1);
-    router.push("/dashboard");
-  }, [userId, router]);
-
   // Handle logged events
   const handleEventLogged = useCallback(() => {
     setRefreshKey(prev => prev + 1);
@@ -259,8 +237,13 @@ function DashboardContent() {
         <FlareCreationModal
           isOpen={true}
           onClose={handleCloseQuickAction}
-          onSave={handleFlareCreate}
           userId={userId}
+          selection={null}
+          onCreated={() => {
+            // Refresh the dashboard after flare creation
+            setRefreshKey(prev => prev + 1);
+            router.push("/dashboard");
+          }}
         />
       )}
 
