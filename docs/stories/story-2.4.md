@@ -1,6 +1,6 @@
 # Story 2.4: Update Flare Status (Severity and Trend)
 
-Status: Draft
+Status: Ready
 
 ## Story
 
