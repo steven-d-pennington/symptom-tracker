@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 2.3) - Complete ✅
-- **Overall Progress:** 62% (14 of 23 stories complete, 72 points)
-- **Next Action:** Load DEV agent and implement Story 2.3 (Active Flares Dashboard)
-- **Command to Run:** Load DEV agent (`bmad/bmm/agents/dev.md`) and run `dev-story` workflow for Story 2.3
+- **Current Workflow:** story-context (Story 2.4) - Complete ✅
+- **Overall Progress:** 66% (14 of 23 stories complete, 76 points)
+- **Next Action:** Implement Story 2.4 (Update Flare Status - Severity and Trend)
+- **Command to Run:** Load DEV agent (`bmad/bmm/agents/dev.md`) and run `dev-story` workflow for Story 2.4
 - **Agent to Load:** DEV (bmad/bmm/agents/dev.md)
-- **Note:** Story 2.3 drafted and context generated! Comprehensive implementation context includes existing useFlares hook, ActiveFlareCards component patterns, testing standards, and 27 test ideas. Ready for DEV implementation. 🎉
+- **Note:** Story 2.4 context generated! Comprehensive implementation context includes 13 documentation artifacts (PRD FR007/FR008/NFR002/NFR003, Architecture ADR-003, Epics Story 2.4, prerequisite stories 2.1/2.3), 11 code artifacts (flareRepository updateFlare/addFlareEvent/getFlareById/getFlareHistory methods, FlareRecord/FlareEventRecord types, FlareEventType/FlareTrend enums, ActiveFlareCard component, FlareCreationModal patterns, useFlares hook, Dexie client), 18 constraints (MUST use repository methods, MUST follow ADR-003 append-only pattern, MUST use atomic transactions, MUST invalidate React Query cache, event type determination logic), 11 interfaces (repository API signatures, FlareRecord/FlareEventRecord schemas, useFlare hook to create), 7 runtime + 6 testing dependencies, testing standards (Jest + RTL patterns), 3 test locations, 42 test ideas mapped to all 9 acceptance criteria. Context provides complete implementation guidance for FlareUpdateModal component, useFlare hook, flare detail page integration, atomic persistence logic, and React Query cache management. Ready for DEV implementation. 🎉
 
 ---
 
@@ -73,8 +73,6 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
-| 2 | 4 | 2.4 | Update Flare Status (Severity and Trend) | story-2.4.md |
-| 2 | 5 | 2.5 | Log Flare Interventions | story-2.5.md |
 | 2 | 6 | 2.6 | View Flare History Timeline | story-2.6.md |
 | 2 | 7 | 2.7 | Mark Flare as Resolved | story-2.7.md |
 | 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md |
@@ -88,23 +86,24 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 13 stories
+**Total in backlog:** 11 stories
 
 #### TODO (Needs Drafting)
 
-- **Story ID:** 2.3
-- **Story Title:** Active Flares Dashboard
-- **Story File:** `docs/stories/story-2.3.md`
+- **Story ID:** 2.5
+- **Story Title:** Log Flare Interventions
+- **Story File:** `docs/stories/story-2.5.md`
 - **Status:** Not created (needs drafting)
 - **Action:** SM should run `create-story` workflow to draft this story.
 
 #### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 2.3
-- **Story Title:** Active Flares Dashboard
-- **Story File:** `docs/stories/story-2.3.md`
-- **Status:** Not created (needs drafting)
-- **Action:** SM should run `create-story` workflow to draft this story.
+- **Story ID:** 2.4
+- **Story Title:** Update Flare Status (Severity and Trend)
+- **Story File:** `docs/stories/story-2.4.md`
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-2.4.xml` ✅
+- **Action:** DEV should run `dev-story` workflow to implement this story using the generated context.
 
 #### DONE (Completed Stories)
 
@@ -263,6 +262,9 @@ Check status anytime with: `workflow-status`
 - **2025-10-22:** Completed story-context for Story 2.2 (Create New Flare from Body Map). Context file: docs/stories/story-context-2.2.xml. Generated comprehensive implementation context including: 12 documentation artifacts (PRD FR005/FR006/NFR002, Architecture, Epics, user journeys, prerequisite stories 2.1/1.4/1.5), 11 code artifacts (flareRepository createFlare/addFlareEvent, FlareRecord/FlareEventRecord types, enums, BodyMapViewer, FlareMarkers, useFlares hook, bodyRegions data), 15 constraints (repository usage, coordinate normalization, UUID v4, offline-first, React Query cache invalidation, 44x44px touch targets), 7 interfaces (flareRepository methods, FlareRecord/FlareEventRecord schemas, Coordinates, BodyMapViewer props, useFlares hook), 11 dependencies (React 19.1.0, Next.js 15.5.4, uuid 13.0.0, Dexie 4.2.0, Zod 4.1.12, testing libraries), testing standards (Jest 30.2.0, RTL 16.3.0, fake-indexeddb), 3 test locations, 32 test ideas mapped to all 8 acceptance criteria. Context provides complete implementation guidance for FlareCreationModal component, body map integration ("Create Flare" button), real-time UI updates via React Query, success toast with actions, and offline-first error handling. Story file updated with context reference. Next: DEV agent should run `*dev-story` workflow to implement Story 2.2 using generated context.
 - **2025-10-23:** Completed create-story for Story 2.3 (Active Flares Dashboard). Story file: docs/stories/story-2.3.md. Status: Draft (needs review via story-ready). Story includes 7 acceptance criteria: (1) Active Flares page displays filtered list at /flares route using useFlares hook with {status: 'active'} filter, (2) Each list item displays comprehensive flare information (body region, severity with color coding, trend arrow, days active, last updated), (3) List sorted by priority with user control (default severity descending, toggle to recent updates, preference persisted to localStorage), (4) Tapping flare navigates to detail page with keyboard accessibility, (5) Empty state guides user to body map when no active flares, (6) Pull-to-refresh on mobile triggers data refresh, (7) Flare count badge displays total active flares. Detailed task breakdown with 6 major tasks and 82 subtasks. Comprehensive dev notes include complete ActiveFlareCard component code example, empty state component, pull-to-refresh hook, useFlares hook integration, file modification list (5 new files, 0 modified files, 2 test files), performance targets. Story builds on Story 2.2 (useFlares hook), Story 2.1 (flareRepository), Story 0.1 (Track navigation), Story 0.2 (empty state patterns). Next: SM agent should run story-ready to approve draft, then generate context via story-context workflow.
 - **2025-10-23:** Completed story-context for Story 2.3 (Active Flares Dashboard). Context file: docs/stories/story-context-2.3.xml. Generated comprehensive implementation context including: 9 documentation artifacts (PRD Journey 1, User Interface Design Goals, Epic 2 Story 2.3, Solution Architecture Component Architecture and Repository Structure, prerequisite stories 2.1/2.2/0.1/0.2), 11 code artifacts (useFlares hook with polling and trend calculation, existing FlaresPage with view modes, ActiveFlareCards component with sorting logic, FlareRecord/FlareEventRecord types, FlareStatus/FlareTrend enums, flareRepository methods, bodyRegions data, comprehensive test suite reference), 16 constraints (MUST use existing useFlares hook, MUST use flareRepository methods, MUST follow ActiveFlareCards patterns, MUST persist sort to localStorage 'flares-list-sort', MUST match FlareMarkers color coding, MUST use lucide-react trend icons, MUST follow Story 0.2 empty state patterns, duration calculation formula, relative timestamp formatting with date-fns), 6 interfaces (useFlares hook signature, flareRepository.getActiveFlares/getFlareHistory methods, FlareRecord interface, bodyRegions data array, Next.js router.push), 2 dependency categories (8 runtime packages: React 19.1.0, Next.js 15.5.4, Dexie 4.2.0, uuid 13.0.0, Zod 4.1.12, lucide-react 0.544.0, recommend date-fns; 6 testing packages: Jest 30.2.0, RTL 16.3.0, fake-indexeddb 6.2.4), testing standards (Jest + RTL patterns from ActiveFlareCards.test.tsx), 2 test file locations, 27 test ideas mapped to all 7 acceptance criteria. Context provides complete implementation guidance for ActiveFlareCard component, empty state component, sorting logic, localStorage persistence, pull-to-refresh (optional), and comprehensive accessibility testing. Story file updated with context reference. Next: DEV agent should run `dev-story` workflow to implement Story 2.3.
+- **2025-10-23:** Completed create-story for Story 2.4 (Update Flare Status - Severity and Trend). Story file: docs/stories/story-2.4.md. Status: Draft (needs review via story-ready). Story includes 9 acceptance criteria covering: (1) "Update Status" button in flare detail view, (2) modal form capturing severity slider with previous value context, trend radio buttons (Improving/Stable/Worsening), optional notes with 500 char limit, editable timestamp, (3) append-only FlareEvent creation with eventType (severity_update or trend_change), (4) atomic FlareRecord.currentSeverity update via transaction, (5) React Query cache invalidation to refresh ActiveFlareCard trend arrows and severity badges, (6) immutable historical data preservation (ADR-003), (7) immediate timeline appearance for Story 2.6 foundation, (8) offline-first IndexedDB persistence (NFR002), (9) UI enforcement of immutability (no edit/delete of past events). Detailed task breakdown with 6 major tasks and 60+ subtasks. Comprehensive dev notes include: complete FlareUpdateModal component code with severity slider showing previous value, trend radio buttons using FlareTrend enum, notes textarea with character counter, timestamp picker, validation logic; flare detail page integration with useFlare hook and React Query cache invalidation; useFlare hook implementation; event type determination logic (severity_update vs trend_change); atomic transaction pattern; file modification list (3 new components, 1 new hook, 2 test files). Story builds on Story 2.1 data layer (updateFlare, addFlareEvent methods) and Story 2.3 UI (ActiveFlareCard displays updated values). Implements PRD Journey 1 steps (Day 3: Worsening, Day 7: Improving). Next: Review and approve story via story-ready workflow.
+- **2025-10-23:** Story 2.4 (Update Flare Status - Severity and Trend) marked ready for development by SM agent. Story file status updated from Draft → Ready. Moved from TODO → IN PROGRESS in workflow status. Next story 2.5 (Log Flare Interventions) moved from BACKLOG → TODO for future drafting. Story 2.4 is now ready for context generation via story-context workflow (recommended) or direct implementation via dev-story workflow.
+- **2025-10-23:** Completed story-context for Story 2.4 (Update Flare Status - Severity and Trend). Context file: docs/stories/story-context-2.4.xml. Generated comprehensive implementation context including: 13 documentation artifacts (PRD FR007/FR008/NFR002/NFR003 immutability requirements, Architecture ADR-003 append-only pattern, Epics Story 2.4 specification, prerequisite stories 2.1 data model/2.3 UI integration), 11 code artifacts (flareRepository.updateFlare/addFlareEvent/getFlareById/getFlareHistory methods from Story 2.1, FlareRecord/FlareEventRecord types with currentSeverity/eventType fields, FlareTrend/FlareEventType enums, ActiveFlareCard component from Story 2.3 showing severity badges and trend arrows, FlareCreationModal patterns from Story 2.2 for modal structure/validation/persistence, useFlares React Query hook, Dexie client with transaction support), 18 constraints (MUST use flareRepository methods not direct Dexie access, MUST create eventType='severity_update' when severity changes or 'trend_change' when only trend changes, MUST use atomic Dexie transaction for FlareRecord+FlareEventRecord updates, MUST follow ADR-003 append-only pattern - never modify/delete FlareEventRecords, MUST follow NFR002 offline-first IndexedDB persistence, MUST invalidate React Query cache to refresh ActiveFlareCard, MUST display previous severity value as reference in modal, MUST limit notes to 500 chars with counter, MUST auto-populate timestamp with editing allowed, event type determination logic documented), 11 interfaces (flareRepository API signatures for updateFlare/addFlareEvent/getFlareById/getFlareHistory, FlareRecord interface with currentSeverity field, FlareEventRecord interface with eventType/severity/trend/notes fields, FlareTrend enum values, FlareEventType enum values, useFlare hook signature to create, FlareUpdateModal component props, React Query useQueryClient for cache invalidation), 7 runtime dependencies (React 19.1.0, Next.js 15.5.4, Dexie 4.2.0, uuid 13.0.0, Zod 4.1.12, lucide-react, React Query) + 6 testing dependencies (Jest 30.2.0, RTL 16.3.0, fake-indexeddb 6.2.4), testing standards (Jest + RTL patterns from FlareCreationModal and ActiveFlareCard tests, colocated __tests__ directories), 3 test file locations, 42 test ideas mapped to all 9 acceptance criteria covering modal rendering/state/validation, event creation logic (severity_update vs trend_change), atomic persistence, React Query cache invalidation, ActiveFlareCard updates, immutability enforcement, keyboard accessibility, complete integration flows. Context provides complete implementation guidance for FlareUpdateModal component with severity slider/trend radio buttons/notes/timestamp, useFlare hook for fetching single flare, flare detail page with Update Status button, atomic transaction pattern for dual-table updates, React Query cache management. Story file updated with context reference. Next: DEV agent should run dev-story to implement Story 2.4.
 
 ---
 
