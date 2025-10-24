@@ -60,8 +60,8 @@ export async function generateFoodEventData(
     throw new Error(`Failed to seed foods: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
-  const foods = await db.foods.where({ userId, isActive: true }).toArray();
-  const activeFoods = foods.filter((f: FoodRecord) => f.name !== "__SEED_COMPLETE_V1__");
+  const foods = await db.foods.where({ userId }).toArray();
+  const activeFoods = foods.filter((f: FoodRecord) => f.isActive && f.name !== "__SEED_COMPLETE_V1__");
 
   if (activeFoods.length === 0) {
     throw new Error("No foods available. Please ensure food seeding completed successfully.");

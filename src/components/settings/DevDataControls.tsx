@@ -100,7 +100,7 @@ export function DevDataControls() {
     }
   };
 
-  const handleGenerateAll = async (preset: "one-week" | "heavy-user") => {
+  const handleGenerateAll = async (preset: "one-week" | "heavy-user" | "one-year-heavy") => {
     if (!userId) {
       setQuickError("No user found. Please complete onboarding first.");
       return;
@@ -245,6 +245,14 @@ export function DevDataControls() {
             className="inline-flex items-center rounded-md bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isLoading ? "Generating…" : "Generate All (30 Days)"}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleGenerateAll("one-year-heavy")}
+            disabled={isLoading}
+            className="inline-flex items-center rounded-md bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? "Generating…" : "Generate All (1 Year)"}
           </button>
           <button
             type="button"

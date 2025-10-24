@@ -6,9 +6,9 @@ import {
   MedicationEventRecord,
   TriggerEventRecord,
   SymptomInstanceRecord,
+  FlareRecord,
 } from "../db/schema";
 import { generateId } from "../utils/idGenerator";
-import { ActiveFlare, FlareIntervention } from "../types/flare";
 
 export type EventStreamPreset = "first-day" | "one-week" | "heavy-user" | "one-year-heavy" | "edge-cases";
 
@@ -688,8 +688,8 @@ function generateSymptomInstances(
 function generateFlares(
   context: EventGenerationContext,
   config: PresetConfig
-): ActiveFlare[] {
-  const flares: ActiveFlare[] = [];
+): FlareRecord[] {
+  const flares: FlareRecord[] = [];
   const now = new Date();
   const nowTimestamp = now.getTime();
 
@@ -778,18 +778,8 @@ function generateFlares(
       pattern = "fluctuating";
     }
 
-    const severityHistory: Array<{ timestamp: number; severity: number; status: "active" | "improving" | "worsening" }> = [];
-    const interventions: FlareIntervention[] = [];
-
     let currentSeverity = initialSeverity;
     let currentStatus: "active" | "improving" | "worsening" = "active";
-
-    // Add initial severity
-    severityHistory.push({
-      timestamp: startDate.getTime(),
-      severity: currentSeverity,
-      status: "active",
-    });
 
     // Generate severity progression with more realistic updates
     const maxUpdates = Math.min(flareDuration, Math.floor(Math.random() * 8) + 3); // 3-10 updates
@@ -833,53 +823,6 @@ function generateFlares(
           }
           break;
       }
-
-      severityHistory.push({
-        timestamp: updateDate.getTime(),
-        severity: currentSeverity,
-        status: currentStatus,
-      });
-
-      // Add interventions more frequently for severe flares
-      const interventionChance = currentSeverity >= 7 ? 0.6 : 0.35;
-      if (Math.random() < interventionChance) {
-        const interventionTypes: Array<{ 
-          type: "medication" | "treatment" | "lifestyle" | "other"; 
-          description: string 
-        }> = [
-          { type: "treatment", description: "Applied ice pack for 20 minutes" },
-          { type: "treatment", description: "Warm compress applied" },
-          { type: "medication", description: "Took ibuprofen 400mg" },
-          { type: "medication", description: "Applied antibiotic ointment" },
-          { type: "medication", description: "Took prescribed pain medication" },
-          { type: "lifestyle", description: "Rested and avoided friction" },
-          { type: "lifestyle", description: "Changed to loose clothing" },
-          { type: "lifestyle", description: "Applied clean dressing" },
-          { type: "treatment", description: "Cleaned area with gentle soap" },
-          { type: "other", description: "Elevated affected area" },
-          { type: "other", description: "Applied medical honey dressing" },
-        ];
-        const intervention = interventionTypes[Math.floor(Math.random() * interventionTypes.length)];
-        
-        // Some interventions are more effective than others (1-5 scale)
-        let effectiveness: number | undefined;
-        if (pattern === "improving") {
-          effectiveness = Math.floor(Math.random() * 2) + 4; // 4-5 (effective)
-        } else if (pattern === "worsening") {
-          effectiveness = Math.floor(Math.random() * 3) + 1; // 1-3 (less effective)
-        } else {
-          effectiveness = Math.floor(Math.random() * 3) + 2; // 2-4 (moderate)
-        }
-        
-        interventions.push({
-          id: generateId(),
-          type: intervention.type,
-          description: intervention.description,
-          appliedAt: updateDate,
-          effectiveness,
-          notes: undefined,
-        });
-      }
     }
 
     // Determine if flare should be resolved
@@ -888,47 +831,20 @@ function generateFlares(
       (pattern === "improving" && currentSeverity <= 2 && Math.random() < 0.4) ||
       (flareAge > flareDuration && Math.random() < 0.5);
 
-    // Select body region(s) - some flares affect multiple areas
-    const regionCount = Math.random() < 0.2 ? 2 : 1; // 20% chance of multiple regions
-    const selectedRegions: string[] = [];
-    for (let r = 0; r < regionCount; r++) {
-      const region = bodyRegions[Math.floor(Math.random() * bodyRegions.length)];
-      if (!selectedRegions.includes(region)) {
-        selectedRegions.push(region);
-      }
-    }
-
-    // Generate notes for some flares
-    let notes = "";
-    if (Math.random() < 0.3) {
-      const noteOptions = [
-        "Started suddenly after stressful week",
-        "Noticed after wearing tight clothing",
-        "Woke up with this flare",
-        "Seems related to recent dietary changes",
-        "Similar to previous flare in this area",
-        "Very painful, affecting daily activities",
-        "Moderate discomfort, manageable",
-        "Area feels warm to touch",
-      ];
-      notes = noteOptions[Math.floor(Math.random() * noteOptions.length)];
-    }
+    // Select body region - pick one from the available regions
+    const selectedRegion = bodyRegions[Math.floor(Math.random() * bodyRegions.length)];
 
     flares.push({
       id: generateId(),
       userId: context.userId,
-      symptomId: flareSymptom.id,
-      symptomName: flareSymptom.name,
-      startDate,
-      endDate: shouldResolve ? new Date(startDate.getTime() + flareDuration * 24 * 60 * 60 * 1000) : undefined,
-      severity: currentSeverity,
-      bodyRegions: selectedRegions,
+      startDate: startDate.getTime(),
+      endDate: shouldResolve ? startDate.getTime() + flareDuration * 24 * 60 * 60 * 1000 : undefined,
       status: shouldResolve ? "resolved" : currentStatus,
-      interventions,
-      notes,
-      photoIds: [],
-      createdAt: now,
-      updatedAt: now,
+      bodyRegionId: selectedRegion,
+      initialSeverity,
+      currentSeverity,
+      createdAt: nowTimestamp,
+      updatedAt: nowTimestamp,
     });
   }
 
