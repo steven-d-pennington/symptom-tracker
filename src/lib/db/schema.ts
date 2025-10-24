@@ -356,6 +356,12 @@ export interface FlareEventRecord {
   /** JSON-stringified array of interventions applied (per IndexedDB conventions) */
   interventions?: string;
 
+  /** Intervention type for intervention events (Story 2.5) */
+  interventionType?: "ice" | "heat" | "medication" | "rest" | "drainage" | "other";
+
+  /** Specific intervention details (medication name/dosage, treatment notes, etc.) */
+  interventionDetails?: string;
+
   /** User ID for multi-user support */
   userId: string;
 }

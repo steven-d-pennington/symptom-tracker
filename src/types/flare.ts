@@ -43,6 +43,19 @@ export enum FlareTrend {
 }
 
 /**
+ * Types of interventions that can be applied to treat a flare.
+ * Used to categorize treatment approaches for effectiveness tracking.
+ */
+export enum InterventionType {
+  Ice = "ice",
+  Heat = "heat",
+  Medication = "medication",
+  Rest = "rest",
+  Drainage = "drainage",
+  Other = "other",
+}
+
+/**
  * Normalized coordinates (0-1 scale) for marking exact anatomical locations.
  * Coordinates are relative to the body region's bounding box.
  */
@@ -123,6 +136,12 @@ export interface FlareEventRecord {
   /** JSON-stringified array of interventions applied (per IndexedDB conventions) */
   interventions?: string;
 
+  /** Intervention type for intervention events (eventType='intervention') */
+  interventionType?: InterventionType;
+
+  /** Specific intervention details (medication name/dosage, treatment notes, etc.) */
+  interventionDetails?: string;
+
   /** User ID for multi-user support (future-proofing) */
   userId: string;
 }
@@ -176,6 +195,8 @@ export const flareEventRecordSchema = z.object({
   trend: z.nativeEnum(FlareTrend).optional(),
   notes: z.string().optional(),
   interventions: z.string().optional(),
+  interventionType: z.nativeEnum(InterventionType).optional(),
+  interventionDetails: z.string().max(500, "Intervention details must be at most 500 characters").optional(),
   userId: z.string().min(1, "User ID is required"),
 });
 
