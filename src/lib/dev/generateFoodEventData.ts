@@ -271,7 +271,8 @@ function createMealEvent(
     notes = noteOptions[Math.floor(Math.random() * noteOptions.length)];
   }
 
-  return {
+  // Build the record, only including optional fields if they have values
+  const record: FoodEventRecord = {
     id: generateId(),
     userId,
     mealId,
@@ -279,10 +280,14 @@ function createMealEvent(
     timestamp: timestamp.getTime(),
     mealType,
     portionMap: JSON.stringify(portionMap),
-    notes,
-    photoIds: undefined,
-    favoritesSnapshot: undefined,
     createdAt: now,
     updatedAt: now,
   };
+
+  // Only add optional fields if they have values
+  if (notes) {
+    record.notes = notes;
+  }
+
+  return record;
 }
