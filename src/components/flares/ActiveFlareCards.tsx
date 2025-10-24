@@ -6,7 +6,8 @@ import { ActiveFlare } from "@/lib/types/flare";
 import { FlareRecord, FlareEventRecord } from "@/lib/db/schema";
 import { ArrowUp, ArrowRight, ArrowDown, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { FlareUpdateModal, FlareUpdate } from "./FlareUpdateModal";
+import { FlareUpdateModal } from "./FlareUpdateModal";
+import { getBodyRegionById } from "@/lib/data/bodyRegions";
 
 type FlareWithTrend = ActiveFlare & { trend: "worsening" | "stable" | "improving" };
 type SortOption = "severity" | "recency";
@@ -58,7 +59,7 @@ export function ActiveFlareCards({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  const [selectedFlare, setSelectedFlare] = useState<ActiveFlare | null>(null);
+  const [selectedFlare, setSelectedFlare] = useState<FlareRecord | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const loadFlares = async () => {
@@ -75,11 +76,15 @@ export function ActiveFlareCards({
           const events = await repository.getFlareHistory(userId, flare.id);
           const trend = calculateTrend(flare, events);
 
+          // Get body region name for display
+          const bodyRegion = getBodyRegionById(flare.bodyRegionId);
+
           // Convert FlareRecord to ActiveFlare format for backward compatibility
           return {
             id: flare.id,
             userId: flare.userId,
-            symptomName: flare.bodyRegionId, // Legacy field - bodyRegionId serves as symptomName
+            symptomId: flare.bodyRegionId, // Use bodyRegionId as symptomId for legacy compatibility
+            symptomName: bodyRegion?.name || flare.bodyRegionId, // Use body region name or fallback to ID
             bodyRegions: [flare.bodyRegionId], // Wrap in array for legacy compatibility
             severity: flare.currentSeverity,
             status: flare.status as ActiveFlare['status'],
@@ -123,11 +128,17 @@ export function ActiveFlareCards({
     }
   };
 
-  const handleUpdate = (flareId: string) => {
-    const flare = flares.find(f => f.id === flareId);
-    if (flare) {
-      setSelectedFlare(flare);
-      setUpdateModalOpen(true);
+  const handleUpdate = async (flareId: string) => {
+    try {
+      // Fetch fresh flare data from repository
+      const flareRecord = await repository.getFlareById(userId, flareId);
+      if (flareRecord) {
+        setSelectedFlare(flareRecord);
+        setUpdateModalOpen(true);
+      }
+    } catch (err) {
+      console.error("Failed to load flare for update:", err);
+      alert("Failed to load flare data. Please try again.");
     }
     
     // Call optional callback if provided
@@ -136,35 +147,9 @@ export function ActiveFlareCards({
     }
   };
 
-  const handleFlareUpdateSave = async (update: FlareUpdate) => {
-    if (!selectedFlare) return;
-
-    try {
-      // Update severity and status
-      await repository.updateSeverity(
-        selectedFlare.id,
-        update.severity,
-        update.status
-      );
-
-      // Add intervention if selected
-      if (update.intervention) {
-        await repository.addIntervention(
-          selectedFlare.id,
-          update.intervention,
-          update.notes
-        );
-      } else if (update.notes) {
-        // Update notes if provided but no intervention
-        await repository.update(selectedFlare.id, { notes: update.notes });
-      }
-
-      // Refresh flares list
-      await loadFlares();
-    } catch (err) {
-      console.error("Failed to save flare update:", err);
-      throw err; // Re-throw to let modal handle error display
-    }
+  const handleFlareUpdate = () => {
+    // Refetch flares data to update the UI
+    loadFlares();
   };
 
   // Apply region filter if provided
@@ -409,7 +394,8 @@ export function ActiveFlareCards({
             setUpdateModalOpen(false);
             setSelectedFlare(null);
           }}
-          onSave={handleFlareUpdateSave}
+          userId={userId}
+          onUpdate={handleFlareUpdate}
         />
       )}
     </section>

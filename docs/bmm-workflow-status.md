@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-10-23
+- **Last Updated:** 2025-10-24
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** story-context (Story 2.4) - Complete ✅
-- **Overall Progress:** 66% (14 of 23 stories complete, 76 points)
-- **Next Action:** Implement Story 2.4 (Update Flare Status - Severity and Trend)
-- **Command to Run:** Load DEV agent (`bmad/bmm/agents/dev.md`) and run `dev-story` workflow for Story 2.4
-- **Agent to Load:** DEV (bmad/bmm/agents/dev.md)
-- **Note:** Story 2.4 context generated! Comprehensive implementation context includes 13 documentation artifacts (PRD FR007/FR008/NFR002/NFR003, Architecture ADR-003, Epics Story 2.4, prerequisite stories 2.1/2.3), 11 code artifacts (flareRepository updateFlare/addFlareEvent/getFlareById/getFlareHistory methods, FlareRecord/FlareEventRecord types, FlareEventType/FlareTrend enums, ActiveFlareCard component, FlareCreationModal patterns, useFlares hook, Dexie client), 18 constraints (MUST use repository methods, MUST follow ADR-003 append-only pattern, MUST use atomic transactions, MUST invalidate React Query cache, event type determination logic), 11 interfaces (repository API signatures, FlareRecord/FlareEventRecord schemas, useFlare hook to create), 7 runtime + 6 testing dependencies, testing standards (Jest + RTL patterns), 3 test locations, 42 test ideas mapped to all 9 acceptance criteria. Context provides complete implementation guidance for FlareUpdateModal component, useFlare hook, flare detail page integration, atomic persistence logic, and React Query cache management. Ready for DEV implementation. 🎉
+- **Current Workflow:** Story 2.5 ready for development ✅
+- **Overall Progress:** 71% (15 of 23 stories complete, 84 points)
+- **Next Action:** Generate context for Story 2.5 or implement directly
+- **Command to Run:** Run `story-context` for Story 2.5 (recommended) OR `dev-story` (direct implementation)
+- **Agent to Load:** SM (for story-context) OR DEV (for dev-story) - bmad/bmm/agents/sm.md or bmad/bmm/agents/dev.md
+- **Note:** Story 2.5 (Log Flare Interventions) marked Ready for development! Story moved from TODO → IN PROGRESS. Next story 2.6 (View Flare History Timeline) moved from BACKLOG → TODO. Recommended: generate context via story-context workflow before implementation.
 
 ---
 
@@ -73,7 +73,6 @@
 
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
-| 2 | 6 | 2.6 | View Flare History Timeline | story-2.6.md |
 | 2 | 7 | 2.7 | Mark Flare as Resolved | story-2.7.md |
 | 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md |
 | 3 | 1 | 3.1 | Calculate and Display Problem Areas | story-3.1.md |
@@ -86,29 +85,30 @@
 | 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
 | 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
 
-**Total in backlog:** 11 stories
+**Total in backlog:** 10 stories
 
 #### TODO (Needs Drafting)
+
+- **Story ID:** 2.6
+- **Story Title:** View Flare History Timeline
+- **Story File:** `docs/stories/story-2.6.md`
+- **Status:** Not created (needs drafting)
+- **Action:** SM should run `create-story` workflow to draft this story
+
+#### IN PROGRESS (Approved for Development)
 
 - **Story ID:** 2.5
 - **Story Title:** Log Flare Interventions
 - **Story File:** `docs/stories/story-2.5.md`
-- **Status:** Not created (needs drafting)
-- **Action:** SM should run `create-story` workflow to draft this story.
-
-#### IN PROGRESS (Approved for Development)
-
-- **Story ID:** 2.4
-- **Story Title:** Update Flare Status (Severity and Trend)
-- **Story File:** `docs/stories/story-2.4.md`
 - **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-2.4.xml` ✅
-- **Action:** DEV should run `dev-story` workflow to implement this story using the generated context.
+- **Context File:** Context not yet generated
+- **Action:** SM should run `story-context` workflow to generate implementation context, or DEV can run `dev-story` to implement directly
 
 #### DONE (Completed Stories)
 
 | Story ID | File | Completed Date | Points |
 |----------|------|----------------|--------|
+| 2.4 | docs/stories/story-2.4.md | 2025-10-24 | 8 |
 | 2.2 | docs/stories/story-2.2.md | 2025-10-23 | 8 |
 | 2.1 | docs/stories/story-2.1.md | 2025-10-22 | 8 |
 | 1.6 | docs/stories/story-1.6.md | 2025-10-22 | 5 |
@@ -123,20 +123,27 @@
 | 1.2 | docs/stories/story-1.2.md | 2025-10-20 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-20 | 3 |
 
-**Total completed:** 14 stories
-**Total points completed:** 72 points
+**Total completed:** 15 stories
+**Total points completed:** 80 points
 
 ---
 
 ### Next Action Required
 
-**What to do next:** Epics 0 & 1 complete! Begin Epic 2 (Flare Lifecycle Management)
+**What to do next:** Story 2.4 (Update Flare Status) completed successfully! 🎉
 
-**Command to run:** Load SM agent and run `create-story` for Story 2.1
+**Command to run:** Load SM agent and run `create-story` for Story 2.5 (Log Flare Interventions)
 
 **Agent to load:** bmad/bmm/agents/sm.md
 
-**Epic 2 Focus:** Flare data model, lifecycle tracking, and comprehensive flare management
+**Story 2.4 Summary:** ✅ All 9 acceptance criteria met
+- Modal captures severity (1-10) and trend updates with notes
+- Creates append-only FlareEvent records with atomic transactions
+- Updates ActiveFlareCards UI with fresh data and trend indicators
+- Maintains immutability per ADR-003 medical-grade audit trail
+- Comprehensive testing (34 tests passing) and accessibility compliance
+
+**Epic 2 Progress:** 3 of 8 stories complete (2.1, 2.2, 2.4) - Core flare management foundation established
 
 ---
 
@@ -193,6 +200,9 @@ Check status anytime with: `workflow-status`
 
 ## Decision Log
 
+- **2025-10-24:** Story 2.5 (Log Flare Interventions) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Story file status updated from Draft → Ready. Next story 2.6 (View Flare History Timeline) moved from BACKLOG → TODO for drafting. Story 2.5 is now ready for context generation via story-context workflow (recommended) or direct implementation via dev-story workflow.
+- **2025-10-24:** Completed create-story for Story 2.5 (Log Flare Interventions). Story file: docs/stories/story-2.5.md. Status: Draft (needs review via story-ready). Story includes 7 acceptance criteria covering: (1) "Log Intervention" button in flare detail view, (2) intervention modal capturing intervention type dropdown (Ice/Heat/Medication/Rest/Drainage/Other), specific details textarea (500 char limit), editable timestamp, (3) append-only FlareEvent creation with eventType="intervention", (4) intervention appears in flare history timeline with icon/label, (5) multiple interventions can be logged for same flare, (6) intervention history visible in chronological order, (7) offline-first IndexedDB persistence (NFR002). Detailed task breakdown with 7 major tasks and 29 subtasks. Comprehensive dev notes include: InterventionType enum definition, complete InterventionLogModal component code, intervention history display component with icon mapping, flare detail page integration, file modification list (4 new components, 2 type extensions, 4 test files). Story extends FlareEventRecord interface with interventionType and interventionDetails fields. Builds on Story 2.4 flare detail page infrastructure and Story 2.1 data layer. Implements PRD Journey 1 intervention tracking (Day 3: "Applied ice pack, took ibuprofen"). Prepares foundation for Story 2.6 timeline visualization and Story 3.5 intervention effectiveness analysis. Next: Review and approve story via story-ready workflow.
+- **2025-10-24:** Completed dev-story and story-approved for Story 2.4 (Update Flare Status - Severity and Trend). Implementation delivered: FlareUpdateModal component with severity slider (1-10), trend radio buttons (Improving/Stable/Worsening), notes textarea (500 char limit), timestamp field, atomic persistence with Dexie transactions, append-only FlareEvent records, React Query cache invalidation, comprehensive tests (34 tests passing), accessibility compliance (WCAG 2.1 AA), fixed critical data flow bug (fresh FlareRecord fetching instead of stale ActiveFlare conversion). All 9 acceptance criteria met: modal form validation, append-only events, atomic updates, UI refresh, immutability enforcement, offline-first persistence. Files created: FlareUpdateModal.tsx, useFlare.ts hook, 2 test files. Files modified: flares/[id]/page.tsx, ActiveFlareCards.tsx, bodyRegions.ts. Story moved from IN PROGRESS → DONE. Progress: 15 of 23 stories complete (65%), 80 points. Epic 2 flare management foundation strengthened - users can now track flare progression with severity/trend updates. Next: SM should draft Story 2.5 (Log Flare Interventions).
 - **2025-10-18:** Started new workflow status for Flare Tracking & Body Map Enhancements epic. Previous epics (Food Journal + Correlation Analysis) archived as complete.
 - **2025-10-18:** Completed PRD workflow. Delivered PRD.md with 14 functional requirements, 3 non-functional requirements, user journey, and UX/UI vision. Created epics.md with full story breakdown: 23 stories total across 4 epics. Key requirements: groin regions on body map, zoom/pan for precision tracking, persistent flare entities with lifecycle tracking (onset → progression → resolution), problem area analytics, and photo documentation.
 - **2025-10-18:** Completed solution-architecture workflow. Generated solution-architecture.md with complete technical design. Key decisions: Single new dependency (react-zoom-pan-pinch@3.6.1), minimal schema changes (FlareRecord coordinates link, groin regions enum), no global state management, analytics calculated on-demand. Cohesion check passed at 98% readiness. Skipped per-epic tech specs (Level 2 optimization). Populated story backlog with 23 stories across 4 epics. Phase 3 (Solutioning) complete. Ready for Phase 4 (Implementation) - SM to draft Story 1.1.

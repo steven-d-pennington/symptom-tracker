@@ -111,3 +111,11 @@ export function getRegionsForView(view: "front" | "back" | "left" | "right"): Bo
       return FRONT_BODY_REGIONS;
   }
 }
+
+/**
+ * Get a body region by its ID from all available regions
+ */
+export function getBodyRegionById(id: string): BodyRegion | undefined {
+  const allRegions = [...FRONT_BODY_REGIONS, ...BACK_BODY_REGIONS];
+  return allRegions.find(region => region.id === id);
+}
