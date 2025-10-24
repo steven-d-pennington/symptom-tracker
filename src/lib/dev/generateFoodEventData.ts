@@ -53,9 +53,21 @@ export async function generateFoodEventData(
   startDate.setHours(0, 0, 0, 0);
 
   // Ensure foods are seeded
-  await seedFoodsService.seedDefaultFoods(userId, db);
+  try {
+    await seedFoodsService.seedDefaultFoods(userId, db);
+  } catch (error) {
+    console.error("[Food Event Data] Error seeding foods:", error);
+    throw new Error(`Failed to seed foods: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
   const foods = await db.foods.where({ userId, isActive: true }).toArray();
   const activeFoods = foods.filter((f: FoodRecord) => f.name !== "__SEED_COMPLETE_V1__");
+
+  if (activeFoods.length === 0) {
+    throw new Error("No foods available. Please ensure food seeding completed successfully.");
+  }
+
+  console.log(`[Food Event Data] Found ${activeFoods.length} foods for user`);
 
   const context: FoodEventGenerationContext = {
     userId,
@@ -66,13 +78,41 @@ export async function generateFoodEventData(
   };
 
   // Clear existing food event data
-  await db.foodEvents.where({ userId }).delete();
+  try {
+    await db.foodEvents.where({ userId }).delete();
+    console.log("[Food Event Data] Cleared existing food events");
+  } catch (error) {
+    console.error("[Food Event Data] Error clearing food events:", error);
+    throw new Error("Failed to clear existing food events. The database may need to be upgraded.");
+  }
 
   // Generate food events
   const foodEvents = generateFoodEvents(context, presetConfig);
 
+  if (foodEvents.length === 0) {
+    throw new Error("Failed to generate any food events. Please check the data generation logic.");
+  }
+
+  console.log(`[Food Event Data] Generated ${foodEvents.length} food events`);
+
+  // Validate events before persisting
+  for (const event of foodEvents) {
+    if (!event.id || !event.userId || !event.mealId || !event.foodIds ||
+        typeof event.timestamp !== 'number' || !event.mealType || !event.portionMap ||
+        typeof event.createdAt !== 'number' || typeof event.updatedAt !== 'number') {
+      console.error("[Food Event Data] Invalid event:", event);
+      throw new Error("Generated food event is missing required fields");
+    }
+  }
+
   // Persist to database
-  await db.foodEvents.bulkAdd(foodEvents);
+  try {
+    await db.foodEvents.bulkAdd(foodEvents);
+    console.log("[Food Event Data] Successfully persisted food events");
+  } catch (error) {
+    console.error("[Food Event Data] Error persisting food events:", error);
+    throw new Error(`Failed to save food events: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 
   console.log("[Food Event Data] Created:", {
     foodEvents: foodEvents.length,
@@ -157,9 +197,10 @@ function generateFoodEvents(
       breakfastTime.setHours(7 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 60), 0, 0);
 
       if (breakfastTime.getTime() <= now) {
-        events.push(
-          createMealEvent(context.userId, breakfastTime, "breakfast", mealTemplates.breakfast, foodsByCategory, now)
-        );
+        const event = createMealEvent(context.userId, breakfastTime, "breakfast", mealTemplates.breakfast, foodsByCategory, now);
+        if (event) {
+          events.push(event);
+        }
       }
     }
 
@@ -169,9 +210,10 @@ function generateFoodEvents(
       lunchTime.setHours(12 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0, 0);
 
       if (lunchTime.getTime() <= now) {
-        events.push(
-          createMealEvent(context.userId, lunchTime, "lunch", mealTemplates.lunch, foodsByCategory, now)
-        );
+        const event = createMealEvent(context.userId, lunchTime, "lunch", mealTemplates.lunch, foodsByCategory, now);
+        if (event) {
+          events.push(event);
+        }
       }
     }
 
@@ -181,9 +223,10 @@ function generateFoodEvents(
       dinnerTime.setHours(18 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 60), 0, 0);
 
       if (dinnerTime.getTime() <= now) {
-        events.push(
-          createMealEvent(context.userId, dinnerTime, "dinner", mealTemplates.dinner, foodsByCategory, now)
-        );
+        const event = createMealEvent(context.userId, dinnerTime, "dinner", mealTemplates.dinner, foodsByCategory, now);
+        if (event) {
+          events.push(event);
+        }
       }
     }
 
@@ -200,9 +243,10 @@ function generateFoodEvents(
         snackTime.setHours(snackHour, Math.floor(Math.random() * 60), 0, 0);
 
         if (snackTime.getTime() <= now) {
-          events.push(
-            createMealEvent(context.userId, snackTime, "snack", mealTemplates.snack, foodsByCategory, now)
-          );
+          const event = createMealEvent(context.userId, snackTime, "snack", mealTemplates.snack, foodsByCategory, now);
+          if (event) {
+            events.push(event);
+          }
         }
       }
     }
@@ -218,7 +262,7 @@ function createMealEvent(
   categoryTemplate: string[],
   foodsByCategory: Record<string, FoodRecord[]>,
   now: number
-): FoodEventRecord {
+): FoodEventRecord | null {
   const mealId = generateId();
   const selectedFoods: FoodRecord[] = [];
   const portionMap: Record<string, PortionSize> = {};
@@ -251,6 +295,12 @@ function createMealEvent(
       }
       portionMap[food.id] = portion;
     }
+  }
+
+  // If no foods were selected, don't create the event
+  if (selectedFoods.length === 0) {
+    console.warn(`[Food Event Data] Skipping ${mealType} event - no foods selected`);
+    return null;
   }
 
   // Generate occasional notes
