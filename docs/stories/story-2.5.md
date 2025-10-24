@@ -571,7 +571,7 @@ export function InterventionHistory({ flareId, userId }: InterventionHistoryProp
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-2.5.xml` - Generated 2025-10-24 - Comprehensive implementation context including intervention types, modal patterns from Story 2.4, flareRepository methods, icon mapping, testing guidance
 
 ### Agent Model Used
 
