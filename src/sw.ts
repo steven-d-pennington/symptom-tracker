@@ -141,7 +141,7 @@ async function syncData() {
 }
 
 self.addEventListener("push", (event) => {
-  const options: NotificationOptions = {
+  const options = {
     body: event.data ? event.data.text() : "New health reminder",
     icon: "/icons/icon-192x192.png",
     badge: "/icons/icon-72x72.png",
@@ -152,7 +152,7 @@ self.addEventListener("push", (event) => {
       { action: "view", title: "View" },
       { action: "dismiss", title: "Dismiss" },
     ],
-  };
+  } as NotificationOptions;
 
   event.waitUntil(
     self.registration.showNotification("Pocket Symptom Tracker", options)
