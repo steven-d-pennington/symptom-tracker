@@ -12,7 +12,6 @@ import { photoRepository } from "../repositories/photoRepository";
 import { medicationEventRepository } from "../repositories/medicationEventRepository";
 import { triggerEventRepository } from "../repositories/triggerEventRepository";
 import { symptomInstanceRepository } from "../repositories/symptomInstanceRepository";
-import { flareRepository } from "../repositories/flareRepository";
 import type {
   UserRecord,
   SymptomRecord,
@@ -21,9 +20,14 @@ import type {
   DailyEntryRecord,
   MedicationEventRecord,
   TriggerEventRecord,
+  FlareRecord,
+  FlareEventRecord,
+  FoodRecord,
+  FoodEventRecord,
+  FoodCombinationRecord,
+  UxEventRecord,
 } from "../db/schema";
 import type { Symptom } from "../types/symptoms";
-import type { ActiveFlare } from "../types/flare";
 import type { PhotoAttachment } from "../types/photo";
 
 export interface ExportProgress {
@@ -47,11 +51,17 @@ export interface ExportOptions {
   includeTriggerEvents?: boolean;
   includeSymptomInstances?: boolean;
   includeFlares?: boolean;
+  includeFlareEvents?: boolean;
   // Food journal and correlations
   includeFoodJournal?: boolean;
+  includeFoods?: boolean;
+  includeFoodEvents?: boolean;
+  includeFoodCombinations?: boolean;
   includeCorrelations?: boolean;
   // Optional: when includeCorrelations is true, include only significant results (p < 0.05)
   onlySignificant?: boolean;
+  // UX instrumentation
+  includeUxEvents?: boolean;
   dateRange?: {
     start: string;
     end: string;
@@ -82,11 +92,17 @@ export interface ExportData {
   medicationEvents?: MedicationEventRecord[];
   triggerEvents?: TriggerEventRecord[];
   symptomInstances?: Symptom[];
-  flares?: ActiveFlare[];
+  flares?: FlareRecord[];
+  flareEvents?: FlareEventRecord[];
   // Food Journal (hydrated for convenience)
   foodJournal?: FoodJournalRow[];
+  foods?: FoodRecord[];
+  foodEvents?: FoodEventRecord[];
+  foodCombinations?: FoodCombinationRecord[];
   // Correlation summaries (optional)
   correlations?: CorrelationSummary[];
+  // UX instrumentation events
+  uxEvents?: UxEventRecord[];
 }
 
 export interface FoodJournalRow {
@@ -240,7 +256,17 @@ export class ExportService {
 
     // Flares
     if (options.includeFlares !== false) {
-      data.flares = await flareRepository.getByUserId(userId);
+      data.flares = await db.flares
+        .where("userId")
+        .equals(userId)
+        .toArray();
+    }
+
+    if (options.includeFlareEvents !== false) {
+      data.flareEvents = await db.flareEvents
+        .where("userId")
+        .equals(userId)
+        .toArray();
     }
 
     // Photos (opt-in)
@@ -252,8 +278,9 @@ export class ExportService {
     }
 
     // Food Journal (opt-in)
+    let cachedFoodEvents: FoodEventRecord[] | undefined;
     if (options.includeFoodJournal) {
-      const foodEvents = options.dateRange
+      cachedFoodEvents = options.dateRange
         ? await foodEventRepository.findByDateRange(
             userId,
             new Date(options.dateRange.start).getTime(),
@@ -264,7 +291,7 @@ export class ExportService {
       // Hydrate food names and allergen tags
       const foodMap = new Map<string, { name: string; allergens: string[] }>();
       const uniqueFoodIds = new Set<string>();
-      foodEvents.forEach((e) => {
+      cachedFoodEvents.forEach((e) => {
         JSON.parse(e.foodIds as any as string).forEach((id: string) =>
           uniqueFoodIds.add(id)
         );
@@ -279,7 +306,7 @@ export class ExportService {
         }
       }
 
-      data.foodJournal = foodEvents.map((e) => {
+      data.foodJournal = cachedFoodEvents.map((e) => {
         const foodIds: string[] = JSON.parse(e.foodIds);
         const names = foodIds.map((id) => foodMap.get(id)?.name || id);
         const portionMap = e.portionMap
@@ -311,6 +338,24 @@ export class ExportService {
           notes: e.notes,
         } as FoodJournalRow;
       });
+    }
+
+    if (options.includeFoods !== false) {
+      data.foods = await foodRepository.getAll(userId);
+    }
+
+    if (options.includeFoodEvents !== false) {
+      if (!cachedFoodEvents) {
+        cachedFoodEvents = await foodEventRepository.getAll(userId);
+      }
+      data.foodEvents = cachedFoodEvents;
+    }
+
+    if (options.includeFoodCombinations !== false) {
+      data.foodCombinations = await db.foodCombinations
+        .where("userId")
+        .equals(userId)
+        .toArray();
     }
 
     // Correlation summaries (opt-in)
@@ -359,6 +404,13 @@ export class ExportService {
       }
 
       data.correlations = summaries;
+    }
+
+    if (options.includeUxEvents !== false) {
+      data.uxEvents = await db.uxEvents
+        .where("userId")
+        .equals(userId)
+        .toArray();
     }
 
     return data;
@@ -435,25 +487,39 @@ export class ExportService {
     // Export flares
     if (data.flares && data.flares.length > 0) {
       data.flares.forEach((flare) => {
-        // Export flare start event
         const startTimestamp = new Date(flare.startDate).toISOString();
-        const location = flare.bodyRegions.join(", ");
-        const startDetails = `severity: ${flare.severity}, status: ${flare.status}`;
+        const detailParts = [
+          `status: ${flare.status}`,
+          `initialSeverity: ${flare.initialSeverity}`,
+          `currentSeverity: ${flare.currentSeverity}`,
+          flare.endDate ? `endDate: ${new Date(flare.endDate).toISOString()}` : undefined,
+          flare.coordinates
+            ? `coordinates: (${flare.coordinates.x.toFixed(2)},${flare.coordinates.y.toFixed(2)})`
+            : undefined,
+        ].filter(Boolean) as string[];
+
+        const name = `${flare.bodyRegionId} (${flare.id})`;
+        csvParts.push(
+          `flare,${startTimestamp},${escapeCSV(name)},${escapeCSV(detailParts.join(", "))}`
+        );
+      });
+    }
+
+    if (data.flareEvents && data.flareEvents.length > 0) {
+      data.flareEvents.forEach((event) => {
+        const timestamp = new Date(event.timestamp).toISOString();
+        const detailParts = [
+          `eventType: ${event.eventType}`,
+          event.severity !== undefined ? `severity: ${event.severity}` : undefined,
+          event.trend ? `trend: ${event.trend}` : undefined,
+          event.interventionType ? `intervention: ${event.interventionType}` : undefined,
+          event.interventionDetails ? `details: ${event.interventionDetails}` : undefined,
+          event.notes ? `notes: ${event.notes}` : undefined,
+        ].filter(Boolean) as string[];
 
         csvParts.push(
-          `flare,${startTimestamp},${escapeCSV(location)},${escapeCSV(startDetails)}`
+          `flare-event,${timestamp},${escapeCSV(event.flareId)},${escapeCSV(detailParts.join(", "))}`
         );
-
-        // Export severity history entries
-        const severityHistory = (flare as any).severityHistory || [];
-        severityHistory.forEach((entry: any) => {
-          const historyTimestamp = new Date(entry.timestamp).toISOString();
-          const historyDetails = `severity: ${entry.severity}, status: ${entry.status}`;
-
-          csvParts.push(
-            `flare,${historyTimestamp},${escapeCSV(location)},${escapeCSV(historyDetails)}`
-          );
-        });
       });
     }
 
@@ -538,11 +604,13 @@ export class ExportService {
       triggerEvents,
       symptomInstances,
       flares,
+      flareEvents,
     ] = await Promise.all([
       medicationEventRepository.findByUserId(userId),
       triggerEventRepository.findByUserId(userId),
       symptomInstanceRepository.getAll(userId),
-      flareRepository.getByUserId(userId),
+      db.flares.where("userId").equals(userId).toArray(),
+      db.flareEvents.where("userId").equals(userId).toArray(),
     ]);
 
     return {
@@ -550,16 +618,19 @@ export class ExportService {
       triggerEventCount: triggerEvents.length,
       symptomInstanceCount: symptomInstances.length,
       flareCount: flares.length,
+      flareEventCount: flareEvents.length,
       totalRecords:
         medicationEvents.length +
         triggerEvents.length +
         symptomInstances.length +
-        flares.length,
+        flares.length +
+        flareEvents.length,
       estimatedSize: this.estimateDataSize({
         medicationEvents,
         triggerEvents,
         symptomInstances,
         flares,
+        flareEvents,
       }),
     };
   }
