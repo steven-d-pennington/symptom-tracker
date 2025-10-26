@@ -61,27 +61,31 @@ const mutationQueue = new BackgroundSyncPlugin("symptomUpdatesQueue", {
   maxRetentionTime: 24 * 60,
 });
 
-registerRoute(
-  ({ url, request }) =>
-    url.origin === self.location.origin &&
-    url.pathname.startsWith("/api/") &&
-    ["POST", "PUT", "DELETE"].includes(request.method),
-  new NetworkOnly({ plugins: [mutationQueue] }),
-  ["POST", "PUT", "DELETE"]
-);
+(["POST", "PUT", "DELETE"] as const).forEach((method) => {
+  registerRoute(
+    ({ url, request }) =>
+      url.origin === self.location.origin &&
+      url.pathname.startsWith("/api/") &&
+      request.method === method,
+    new NetworkOnly({ plugins: [mutationQueue] }),
+    method
+  );
+});
 
 const photoQueue = new BackgroundSyncPlugin("photoUploadsQueue", {
   maxRetentionTime: 24 * 60,
 });
 
-registerRoute(
-  ({ url, request }) =>
-    url.origin === self.location.origin &&
-    url.pathname.startsWith("/api/photos") &&
-    ["POST", "PUT"].includes(request.method),
-  new NetworkOnly({ plugins: [photoQueue] }),
-  ["POST", "PUT"]
-);
+(["POST", "PUT"] as const).forEach((method) => {
+  registerRoute(
+    ({ url, request }) =>
+      url.origin === self.location.origin &&
+      url.pathname.startsWith("/api/photos") &&
+      request.method === method,
+    new NetworkOnly({ plugins: [photoQueue] }),
+    method
+  );
+});
 
 setCatchHandler(async ({ event }) => {
   if (event.request.destination === "document") {
