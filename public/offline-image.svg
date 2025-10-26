@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="96" viewBox="0 0 64 48" role="img" aria-labelledby="title desc">
+  <title id="title">Offline placeholder</title>
+  <desc id="desc">A minimal landscape illustration used when offline.</desc>
+  <rect width="64" height="48" fill="#e5e7eb" rx="4" />
+  <path d="M8 36l12-14 10 12 6-6 12 14H8z" fill="#9ca3af"/>
+  <circle cx="22" cy="18" r="4" fill="#9ca3af"/>
+  <path d="M4 42h56" stroke="#d1d5db" stroke-width="2" stroke-linecap="round"/>
+</svg>

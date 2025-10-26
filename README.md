@@ -78,6 +78,20 @@ npm run dev
 
 ---
 
+## 📴 Offline Mode
+
+The Pocket Symptom Tracker is built to keep working when the network disappears.
+
+- **Instant App Shell** – Core routes, styles, and fonts are precached with Workbox so navigations stay fast even with zero connectivity.
+- **IndexedDB Storage** – Dexie persists entries, flare updates, and preferences locally so nothing is lost while offline.
+- **Runtime Caching** – API `GET` requests fall back to cached data, and static assets (scripts, styles, images, fonts) use optimized caching strategies.
+- **Background Sync Queues** – Mutating requests to `/api/**` (including photo uploads) are queued and replayed automatically once you reconnect.
+- **Offline Fallbacks** – Friendly `offline.html` and `offline-image.svg` assets appear when requests can’t complete.
+- **Connectivity Banner** – A persistent footer banner shows real-time online/offline status so users know when data will sync.
+- **Verification Tooling** – Run `npm run pwa:audit` for a quick checklist or `npm run test:e2e -- --grep "offline"` for an automated Playwright smoke test.
+
+---
+
 ## ✨ Features
 
 ### Core Health Tracking
