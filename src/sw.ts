@@ -87,19 +87,25 @@ const photoQueue = new BackgroundSyncPlugin("photoUploadsQueue", {
   );
 });
 
-setCatchHandler(async ({ event }) => {
-  if (event.request.destination === "document") {
+setCatchHandler(async ({ request }) => {
+  if (!request) {
+    return Response.error();
+  }
+
+  if (request.destination === "document") {
     const cached = await caches.match("/offline.html");
     if (cached) {
       return cached;
     }
   }
-  if (event.request.destination === "image") {
+
+  if (request.destination === "image") {
     const cached = await caches.match("/offline-image.svg");
     if (cached) {
       return cached;
     }
   }
+
   return Response.error();
 });
 

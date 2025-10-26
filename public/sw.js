@@ -48,38 +48,48 @@ const mutationQueue = new workbox.backgroundSync.BackgroundSyncPlugin(
   { maxRetentionTime: 24 * 60 }
 );
 
-workbox.routing.registerRoute(
-  ({ url, request }) =>
-    url.origin === self.location.origin &&
-    url.pathname.startsWith("/api/") &&
-    ["POST", "PUT", "DELETE"].includes(request.method),
-  new workbox.strategies.NetworkOnly({ plugins: [mutationQueue] }),
-  ["POST", "PUT", "DELETE"]
-);
+(["POST", "PUT", "DELETE"]).forEach((method) => {
+  workbox.routing.registerRoute(
+    ({ url, request }) =>
+      url.origin === self.location.origin &&
+      url.pathname.startsWith("/api/") &&
+      request.method === method,
+    new workbox.strategies.NetworkOnly({ plugins: [mutationQueue] }),
+    method
+  );
+});
 
 const photoQueue = new workbox.backgroundSync.BackgroundSyncPlugin(
   "photoUploadsQueue",
   { maxRetentionTime: 24 * 60 }
 );
 
-workbox.routing.registerRoute(
-  ({ url, request }) =>
-    url.origin === self.location.origin &&
-    url.pathname.startsWith("/api/photos") &&
-    ["POST", "PUT"].includes(request.method),
-  new workbox.strategies.NetworkOnly({ plugins: [photoQueue] }),
-  ["POST", "PUT"]
-);
+(["POST", "PUT"]).forEach((method) => {
+  workbox.routing.registerRoute(
+    ({ url, request }) =>
+      url.origin === self.location.origin &&
+      url.pathname.startsWith("/api/photos") &&
+      request.method === method,
+    new workbox.strategies.NetworkOnly({ plugins: [photoQueue] }),
+    method
+  );
+});
 
-workbox.routing.setCatchHandler(async ({ event }) => {
-  if (event.request.destination === "document") {
+workbox.routing.setCatchHandler(async ({ request }) => {
+  if (!request) {
+    return Response.error();
+  }
+
+  if (request.destination === "document") {
     const cached = await caches.match("/offline.html");
     if (cached) return cached;
   }
-  if (event.request.destination === "image") {
+
+  if (request.destination === "image") {
     const cached = await caches.match("/offline-image.svg");
     if (cached) return cached;
   }
+
   return Response.error();
 });
 
