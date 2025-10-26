@@ -1,6 +1,20 @@
-/* eslint-disable no-undef */
+/// <reference lib="webworker" />
 
-importScripts("https://storage.googleapis.com/workbox-cdn/releases/6.6.0/workbox-sw.js");
+import { clientsClaim } from "workbox-core";
+import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+import { registerRoute, setCatchHandler, NavigationRoute } from "workbox-routing";
+import {
+  StaleWhileRevalidate,
+  CacheFirst,
+  NetworkFirst,
+  NetworkOnly,
+} from "workbox-strategies";
+import { BackgroundSyncPlugin } from "workbox-background-sync";
+import { ExpirationPlugin } from "workbox-expiration";
+
+declare const self: ServiceWorkerGlobalScope & typeof globalThis & {
+  __WB_MANIFEST?: Array<{ url: string; revision: string }>;
+};
 
 const APP_SHELL_FALLBACKS = [
   { url: "/offline.html", revision: "1" },
@@ -8,23 +22,26 @@ const APP_SHELL_FALLBACKS = [
 ];
 
 self.skipWaiting();
-workbox.core.clientsClaim();
+clientsClaim();
 
-const precacheManifest = self.__WB_MANIFEST || [];
-workbox.precaching.precacheAndRoute([...precacheManifest, ...APP_SHELL_FALLBACKS]);
-workbox.precaching.cleanupOutdatedCaches();
+const precacheManifest = (self.__WB_MANIFEST ?? []) as Array<{
+  url: string;
+  revision: string;
+}>;
+precacheAndRoute([...precacheManifest, ...APP_SHELL_FALLBACKS]);
+cleanupOutdatedCaches();
 
-workbox.routing.registerRoute(
+registerRoute(
   ({ request }) => ["script", "style", "worker"].includes(request.destination),
-  new workbox.strategies.StaleWhileRevalidate({ cacheName: "assets-sw" })
+  new StaleWhileRevalidate({ cacheName: "assets-sw" })
 );
 
-workbox.routing.registerRoute(
+registerRoute(
   ({ request }) => ["image", "font"].includes(request.destination),
-  new workbox.strategies.CacheFirst({
+  new CacheFirst({
     cacheName: "static-imm",
     plugins: [
-      new workbox.expiration.ExpirationPlugin({
+      new ExpirationPlugin({
         maxEntries: 300,
         maxAgeSeconds: 60 * 24 * 3600,
       }),
@@ -32,68 +49,67 @@ workbox.routing.registerRoute(
   })
 );
 
-workbox.routing.registerRoute(
+registerRoute(
   ({ url, request }) =>
     url.origin === self.location.origin &&
     url.pathname.startsWith("/api/") &&
     request.method === "GET",
-  new workbox.strategies.NetworkFirst({
-    cacheName: "api-nf",
-    networkTimeoutSeconds: 3,
-  })
+  new NetworkFirst({ cacheName: "api-nf", networkTimeoutSeconds: 3 })
 );
 
-const mutationQueue = new workbox.backgroundSync.BackgroundSyncPlugin(
-  "symptomUpdatesQueue",
-  { maxRetentionTime: 24 * 60 }
-);
+const mutationQueue = new BackgroundSyncPlugin("symptomUpdatesQueue", {
+  maxRetentionTime: 24 * 60,
+});
 
-(["POST", "PUT", "DELETE"]).forEach((method) => {
-  workbox.routing.registerRoute(
+(["POST", "PUT", "DELETE"] as const).forEach((method) => {
+  registerRoute(
     ({ url, request }) =>
       url.origin === self.location.origin &&
       url.pathname.startsWith("/api/") &&
       request.method === method,
-    new workbox.strategies.NetworkOnly({ plugins: [mutationQueue] }),
+    new NetworkOnly({ plugins: [mutationQueue] }),
     method
   );
 });
 
-const photoQueue = new workbox.backgroundSync.BackgroundSyncPlugin(
-  "photoUploadsQueue",
-  { maxRetentionTime: 24 * 60 }
-);
+const photoQueue = new BackgroundSyncPlugin("photoUploadsQueue", {
+  maxRetentionTime: 24 * 60,
+});
 
-(["POST", "PUT"]).forEach((method) => {
-  workbox.routing.registerRoute(
+(["POST", "PUT"] as const).forEach((method) => {
+  registerRoute(
     ({ url, request }) =>
       url.origin === self.location.origin &&
       url.pathname.startsWith("/api/photos") &&
       request.method === method,
-    new workbox.strategies.NetworkOnly({ plugins: [photoQueue] }),
+    new NetworkOnly({ plugins: [photoQueue] }),
     method
   );
 });
 
-workbox.routing.setCatchHandler(async ({ request }) => {
+setCatchHandler(async ({ request }) => {
   if (!request) {
     return Response.error();
   }
 
   if (request.destination === "document") {
     const cached = await caches.match("/offline.html");
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
   }
 
   if (request.destination === "image") {
     const cached = await caches.match("/offline-image.svg");
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
   }
 
   return Response.error();
 });
 
-const nav = new workbox.routing.NavigationRoute(async (context) => {
+const nav = new NavigationRoute(async (context) => {
   const cached = await caches.match("/index.html");
   if (cached) {
     return cached;
@@ -101,7 +117,7 @@ const nav = new workbox.routing.NavigationRoute(async (context) => {
   return fetch(context.request);
 });
 
-workbox.routing.registerRoute(nav);
+registerRoute(nav);
 
 self.addEventListener("sync", (event) => {
   if (event.tag === "sync-data") {
@@ -136,7 +152,7 @@ self.addEventListener("push", (event) => {
       { action: "view", title: "View" },
       { action: "dismiss", title: "Dismiss" },
     ],
-  };
+  } as NotificationOptions;
 
   event.waitUntil(
     self.registration.showNotification("Pocket Symptom Tracker", options)
@@ -164,3 +180,5 @@ self.addEventListener("message", (event) => {
 });
 
 console.log("[SW] Workbox service worker loaded");
+
+export {};

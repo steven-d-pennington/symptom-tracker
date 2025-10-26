@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { OnboardingRedirectGate } from "./onboarding/components/OnboardingRedirectGate";
-import { OfflineIndicator, InstallPrompt, UpdateNotification } from "@/components/pwa";
+import {
+  OfflineIndicator,
+  InstallPrompt,
+  UpdateNotification,
+  NetworkBanner,
+} from "@/components/pwa";
 import { NavLayout } from "@/components/navigation/NavLayout";
 import { MigrationProvider } from "@/components/providers/MigrationProvider";
 import { ToastContainer } from "@/components/common/ToastContainer";
@@ -58,6 +63,7 @@ export default function RootLayout({
           <OfflineIndicator />
           <InstallPrompt />
           <UpdateNotification />
+          <NetworkBanner />
           {/* Toast Notifications */}
           <ToastContainer />
         </MigrationProvider>
