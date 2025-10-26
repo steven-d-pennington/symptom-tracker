@@ -9,12 +9,23 @@ import { photoRepository } from "../repositories/photoRepository";
 import { ExportData, PhotoExportData } from "./exportService";
 import { PhotoEncryption } from "../utils/photoEncryption";
 import { PhotoAttachment } from "../types/photo";
+import { db } from "../db/client";
 import type {
   SymptomRecord,
   MedicationRecord,
   TriggerRecord,
   DailyEntryRecord,
+  SymptomInstanceRecord,
+  MedicationEventRecord,
+  TriggerEventRecord,
+  FlareRecord,
+  FlareEventRecord,
+  FoodRecord,
+  FoodEventRecord,
+  FoodCombinationRecord,
+  UxEventRecord,
 } from "../db/schema";
+import type { Symptom } from "../types/symptoms";
 import { v4 as uuidv4 } from "uuid";
 
 export interface ImportProgress {
@@ -40,6 +51,15 @@ export interface ImportResult {
     triggers: number;
     dailyEntries: number;
     photos: number;
+    medicationEvents: number;
+    triggerEvents: number;
+    symptomInstances: number;
+    flares: number;
+    flareEvents: number;
+    foods: number;
+    foodEvents: number;
+    foodCombinations: number;
+    uxEvents: number;
   };
   skipped: {
     items: number;
@@ -120,6 +140,15 @@ export class ImportService {
           triggers: 0,
           dailyEntries: 0,
           photos: 0,
+          medicationEvents: 0,
+          triggerEvents: 0,
+          symptomInstances: 0,
+          flares: 0,
+          flareEvents: 0,
+          foods: 0,
+          foodEvents: 0,
+          foodCombinations: 0,
+          uxEvents: 0,
         },
         errors: [
           error instanceof Error ? error.message : "Unknown import error",
@@ -150,6 +179,15 @@ export class ImportService {
         triggers: 0,
         dailyEntries: 0,
         photos: 0,
+        medicationEvents: 0,
+        triggerEvents: 0,
+        symptomInstances: 0,
+        flares: 0,
+        flareEvents: 0,
+        foods: 0,
+        foodEvents: 0,
+        foodCombinations: 0,
+        uxEvents: 0,
       },
       errors: ["CSV import not yet implemented"],
       skipped: {
@@ -190,6 +228,15 @@ export class ImportService {
         triggers: 0,
         dailyEntries: 0,
         photos: 0,
+        medicationEvents: 0,
+        triggerEvents: 0,
+        symptomInstances: 0,
+        flares: 0,
+        flareEvents: 0,
+        foods: 0,
+        foodEvents: 0,
+        foodCombinations: 0,
+        uxEvents: 0,
       },
       errors: [],
       skipped: {
@@ -272,6 +319,96 @@ export class ImportService {
         result.imported.photos = imported.count;
         result.skipped.photos = imported.duplicates;
         result.errors.push(...imported.errors);
+      }
+
+      if (data.medicationEvents && data.medicationEvents.length > 0) {
+        const imported = await this.importMedicationEvents(
+          data.medicationEvents,
+          userId,
+          options
+        );
+        result.imported.medicationEvents = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      if (data.triggerEvents && data.triggerEvents.length > 0) {
+        const imported = await this.importTriggerEvents(
+          data.triggerEvents,
+          userId,
+          options
+        );
+        result.imported.triggerEvents = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      if (data.symptomInstances && data.symptomInstances.length > 0) {
+        const imported = await this.importSymptomInstances(
+          data.symptomInstances,
+          userId,
+          options
+        );
+        result.imported.symptomInstances = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      if (data.flares && data.flares.length > 0) {
+        const imported = await this.importFlares(
+          data.flares,
+          userId,
+          options
+        );
+        result.imported.flares = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      if (data.flareEvents && data.flareEvents.length > 0) {
+        const imported = await this.importFlareEvents(
+          data.flareEvents,
+          userId,
+          options
+        );
+        result.imported.flareEvents = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      if (data.foods && data.foods.length > 0) {
+        const imported = await this.importFoods(
+          data.foods,
+          userId,
+          options
+        );
+        result.imported.foods = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      if (data.foodEvents && data.foodEvents.length > 0) {
+        const imported = await this.importFoodEvents(
+          data.foodEvents,
+          userId,
+          options
+        );
+        result.imported.foodEvents = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      if (data.foodCombinations && data.foodCombinations.length > 0) {
+        const imported = await this.importFoodCombinations(
+          data.foodCombinations,
+          userId,
+          options
+        );
+        result.imported.foodCombinations = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      if (data.uxEvents && data.uxEvents.length > 0) {
+        const imported = await this.importUxEvents(
+          data.uxEvents,
+          userId,
+          options
+        );
+        result.imported.uxEvents = imported.count;
+        result.skipped.items += imported.skipped;
       }
     } catch (error) {
       result.success = false;
@@ -487,6 +624,521 @@ export class ImportService {
         }
       } catch (error) {
         console.error("Failed to import daily entry:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import medication events
+   */
+  private async importMedicationEvents(
+    events: MedicationEventRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const event of events) {
+      try {
+        const id = event.id || uuidv4();
+        const timestamp =
+          typeof event.timestamp === "string"
+            ? new Date(event.timestamp).getTime()
+            : event.timestamp;
+        if (Number.isNaN(timestamp)) {
+          throw new Error("Invalid medication event timestamp");
+        }
+
+        const createdAt =
+          typeof event.createdAt === "number"
+            ? event.createdAt
+            : Date.now();
+        const updatedAt =
+          typeof event.updatedAt === "number"
+            ? event.updatedAt
+            : createdAt;
+
+        const normalized: MedicationEventRecord = {
+          ...event,
+          id,
+          userId,
+          timestamp,
+          taken: Boolean(event.taken),
+          dosage: event.dosage,
+          notes: event.notes,
+          timingWarning:
+            event.timingWarning === "early" || event.timingWarning === "late"
+              ? event.timingWarning
+              : null,
+          createdAt,
+          updatedAt,
+        };
+
+        const existing = await db.medicationEvents.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.medicationEvents.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import medication event:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import trigger events
+   */
+  private async importTriggerEvents(
+    events: TriggerEventRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const event of events) {
+      try {
+        const id = event.id || uuidv4();
+        const timestamp =
+          typeof event.timestamp === "string"
+            ? new Date(event.timestamp).getTime()
+            : event.timestamp;
+        if (Number.isNaN(timestamp)) {
+          throw new Error("Invalid trigger event timestamp");
+        }
+
+        const createdAt =
+          typeof event.createdAt === "number"
+            ? event.createdAt
+            : Date.now();
+        const updatedAt =
+          typeof event.updatedAt === "number"
+            ? event.updatedAt
+            : createdAt;
+
+        const normalized: TriggerEventRecord = {
+          ...event,
+          id,
+          userId,
+          timestamp,
+          intensity: event.intensity,
+          notes: event.notes,
+          createdAt,
+          updatedAt,
+        };
+
+        const existing = await db.triggerEvents.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.triggerEvents.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import trigger event:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import symptom instances
+   */
+  private async importSymptomInstances(
+    symptoms: Symptom[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const symptom of symptoms) {
+      try {
+        const id = symptom.id || uuidv4();
+        const timestamp = new Date(symptom.timestamp);
+        if (Number.isNaN(timestamp.getTime())) {
+          throw new Error("Invalid symptom timestamp");
+        }
+        const updatedAt = symptom.updatedAt
+          ? new Date(symptom.updatedAt)
+          : timestamp;
+        if (Number.isNaN(updatedAt.getTime())) {
+          throw new Error("Invalid symptom updatedAt");
+        }
+
+        const normalized: SymptomInstanceRecord = {
+          id,
+          userId,
+          name: symptom.name,
+          category: symptom.category,
+          severity: symptom.severity,
+          severityScale: JSON.stringify(symptom.severityScale),
+          location: symptom.location,
+          duration: symptom.duration,
+          triggers: symptom.triggers
+            ? JSON.stringify(symptom.triggers)
+            : undefined,
+          notes: symptom.notes,
+          photos: symptom.photos ? JSON.stringify(symptom.photos) : undefined,
+          timestamp,
+          updatedAt,
+        };
+
+        const existing = await db.symptomInstances.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.symptomInstances.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import symptom instance:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import flares
+   */
+  private async importFlares(
+    flares: FlareRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const flare of flares) {
+      try {
+        const id = flare.id || uuidv4();
+
+        const normalizeEpoch = (value: number | string | undefined) => {
+          if (value === undefined || value === null) {
+            return undefined;
+          }
+          if (typeof value === "number") {
+            return value;
+          }
+          const parsed = new Date(value).getTime();
+          if (Number.isNaN(parsed)) {
+            throw new Error("Invalid flare timestamp");
+          }
+          return parsed;
+        };
+
+        const startDate = normalizeEpoch(flare.startDate) ?? Date.now();
+        const createdAt = normalizeEpoch(flare.createdAt) ?? startDate;
+        const updatedAt = normalizeEpoch(flare.updatedAt) ?? createdAt;
+        const endDate = normalizeEpoch(flare.endDate ?? undefined);
+
+        const normalized: FlareRecord = {
+          id,
+          userId,
+          startDate,
+          endDate,
+          status: flare.status ?? "active",
+          bodyRegionId: flare.bodyRegionId,
+          coordinates: flare.coordinates
+            ? {
+                x: Number(flare.coordinates.x),
+                y: Number(flare.coordinates.y),
+              }
+            : undefined,
+          initialSeverity:
+            flare.initialSeverity ?? flare.currentSeverity ?? 0,
+          currentSeverity:
+            flare.currentSeverity ?? flare.initialSeverity ?? 0,
+          createdAt,
+          updatedAt,
+        };
+
+        const existing = await db.flares.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.flares.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import flare:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import flare events
+   */
+  private async importFlareEvents(
+    events: FlareEventRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const event of events) {
+      try {
+        const id = event.id || uuidv4();
+        const timestamp =
+          typeof event.timestamp === "string"
+            ? new Date(event.timestamp).getTime()
+            : event.timestamp;
+        if (Number.isNaN(timestamp)) {
+          throw new Error("Invalid flare event timestamp");
+        }
+
+        const normalized: FlareEventRecord = {
+          ...event,
+          id,
+          userId,
+          flareId: event.flareId,
+          eventType: event.eventType,
+          timestamp,
+          severity: event.severity,
+          trend: event.trend,
+          notes: event.notes,
+          interventions: event.interventions,
+          interventionType: event.interventionType,
+          interventionDetails: event.interventionDetails,
+        };
+
+        const existing = await db.flareEvents.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.flareEvents.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import flare event:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import foods
+   */
+  private async importFoods(
+    foods: FoodRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const food of foods) {
+      try {
+        const id = food.id || uuidv4();
+        const createdAt =
+          typeof food.createdAt === "number" ? food.createdAt : Date.now();
+        const updatedAt =
+          typeof food.updatedAt === "number" ? food.updatedAt : createdAt;
+
+        const normalized: FoodRecord = {
+          ...food,
+          id,
+          userId,
+          createdAt,
+          updatedAt,
+          allergenTags: food.allergenTags ?? JSON.stringify([]),
+        };
+
+        const existing = await db.foods.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.foods.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import food record:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import food events
+   */
+  private async importFoodEvents(
+    events: FoodEventRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const event of events) {
+      try {
+        const id = event.id || uuidv4();
+        const timestamp =
+          typeof event.timestamp === "string"
+            ? new Date(event.timestamp).getTime()
+            : event.timestamp;
+        if (Number.isNaN(timestamp)) {
+          throw new Error("Invalid food event timestamp");
+        }
+
+        const createdAt =
+          typeof event.createdAt === "number"
+            ? event.createdAt
+            : Date.now();
+        const updatedAt =
+          typeof event.updatedAt === "number"
+            ? event.updatedAt
+            : createdAt;
+
+        const normalized: FoodEventRecord = {
+          ...event,
+          id,
+          userId,
+          timestamp,
+          createdAt,
+          updatedAt,
+        };
+
+        const existing = await db.foodEvents.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.foodEvents.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import food event:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import food combinations
+   */
+  private async importFoodCombinations(
+    combinations: FoodCombinationRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const combo of combinations) {
+      try {
+        const id = combo.id || uuidv4();
+        const createdAt =
+          typeof combo.createdAt === "number" ? combo.createdAt : Date.now();
+        const updatedAt =
+          typeof combo.updatedAt === "number" ? combo.updatedAt : createdAt;
+
+        const normalized: FoodCombinationRecord = {
+          ...combo,
+          id,
+          userId,
+          createdAt,
+          updatedAt,
+          lastAnalyzedAt:
+            typeof combo.lastAnalyzedAt === "number"
+              ? combo.lastAnalyzedAt
+              : updatedAt,
+        };
+
+        const existing = await db.foodCombinations.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.foodCombinations.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import food combination:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import UX events
+   */
+  private async importUxEvents(
+    events: UxEventRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const event of events) {
+      try {
+        const id = event.id || uuidv4();
+        const timestamp =
+          typeof event.timestamp === "string"
+            ? new Date(event.timestamp).getTime()
+            : event.timestamp;
+        if (Number.isNaN(timestamp)) {
+          throw new Error("Invalid UX event timestamp");
+        }
+
+        const createdAt =
+          typeof event.createdAt === "number"
+            ? event.createdAt
+            : timestamp;
+
+        const normalized: UxEventRecord = {
+          ...event,
+          id,
+          userId,
+          timestamp,
+          createdAt,
+          metadata:
+            typeof event.metadata === "string"
+              ? event.metadata
+              : JSON.stringify(event.metadata ?? {}),
+        };
+
+        const existing = await db.uxEvents.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.uxEvents.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import UX event:", error);
         skipped++;
       }
     }

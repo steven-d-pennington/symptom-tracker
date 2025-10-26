@@ -86,14 +86,41 @@ describe("ExportService - Food Journal Export", () => {
   let exportService: ExportService;
   const mockUserId = "test-user-123";
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
-    
+
     // Reset all mock implementations
     (foodEventRepository.getAll as jest.Mock) = jest.fn().mockResolvedValue([]);
     (foodEventRepository.findByDateRange as jest.Mock) = jest.fn().mockResolvedValue([]);
+    (foodRepository.getAll as jest.Mock) = jest.fn().mockResolvedValue([]);
     (foodRepository.getById as jest.Mock) = jest.fn().mockResolvedValue(null);
-    
+
+    await db.transaction(
+      "rw",
+      db.flares,
+      db.flareEvents,
+      db.foods,
+      db.foodEvents,
+      db.foodCombinations,
+      db.medicationEvents,
+      db.triggerEvents,
+      db.symptomInstances,
+      db.uxEvents,
+      async () => {
+        await Promise.all([
+          db.flares.clear(),
+          db.flareEvents.clear(),
+          db.foods.clear(),
+          db.foodEvents.clear(),
+          db.foodCombinations.clear(),
+          db.medicationEvents.clear(),
+          db.triggerEvents.clear(),
+          db.symptomInstances.clear(),
+          db.uxEvents.clear(),
+        ]);
+      }
+    );
+
     exportService = new ExportService();
   });
 
@@ -227,6 +254,40 @@ describe("ExportService - Food Journal Export", () => {
       });
       expect(data.foodJournal[0].date).toMatch(/\d{4}-\d{2}-\d{2}/);
       expect(data.foodJournal[0].time).toMatch(/\d{2}:\d{2}/);
+    });
+
+    it("includes flares and flare events in JSON export", async () => {
+      const now = Date.now();
+      await db.flares.add({
+        id: "flare-1",
+        userId: mockUserId,
+        startDate: now,
+        status: "active",
+        bodyRegionId: "shoulder",
+        initialSeverity: 6,
+        currentSeverity: 4,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await db.flareEvents.add({
+        id: "flare-event-1",
+        flareId: "flare-1",
+        userId: mockUserId,
+        eventType: "created",
+        timestamp: now,
+        severity: 6,
+      });
+
+      const blob = await exportService.exportData(mockUserId, {
+        format: "json",
+      });
+
+      const exportedData = JSON.parse(await blob.text());
+      expect(exportedData.flares).toHaveLength(1);
+      expect(exportedData.flares[0].id).toBe("flare-1");
+      expect(exportedData.flareEvents).toHaveLength(1);
+      expect(exportedData.flareEvents[0].id).toBe("flare-event-1");
     });
 
     it("should filter food journal by date range", async () => {
