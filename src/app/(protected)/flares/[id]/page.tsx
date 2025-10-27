@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useFlare } from '@/lib/hooks/useFlare';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { FlareUpdateModal } from '@/components/flares/FlareUpdateModal';
 import { InterventionLogModal } from '@/components/flares/InterventionLogModal';
+import { FlareResolveModal } from '@/components/flares/FlareResolveModal';
 import { InterventionHistory } from '@/components/flares/InterventionHistory';
 import { FlareHistory } from '@/components/flares/FlareHistory';
+import { FlareStatus } from '@/types/flare';
 
 type TabType = 'details' | 'history';
 
@@ -15,10 +17,12 @@ export default function FlareDetailPage() {
   const params = useParams();
   const flareId = params.id as string;
   const { userId } = useCurrentUser();
+  const router = useRouter();
 
   const { data: flare, isLoading, error, refetch } = useFlare(flareId, userId);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isInterventionModalOpen, setIsInterventionModalOpen] = useState(false);
+  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
   const [interventionKey, setInterventionKey] = useState(0);
   const [activeTab, setActiveTab] = useState<TabType>('details');
 
@@ -31,6 +35,12 @@ export default function FlareDetailPage() {
     // Refresh intervention history by incrementing key
     setInterventionKey((prev) => prev + 1);
     refetch();
+  };
+
+  const handleFlareResolved = () => {
+    // Navigate to Active Flares list (resolved flare will no longer appear)
+    // The useFlares hook will automatically filter out resolved flares when the page loads
+    router.push('/flares');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, tab: TabType) => {
@@ -49,9 +59,28 @@ export default function FlareDetailPage() {
     return <div>Error loading flare. Please try again.</div>;
   }
 
+  const isResolved = flare.status === FlareStatus.Resolved;
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Flare Details</h1>
+
+      {/* Resolved Badge */}
+      {isResolved && (
+        <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg font-semibold">Flare Resolved</span>
+            {flare.endDate && (
+              <span className="bg-gray-400 text-white text-xs px-2 py-1 rounded">
+                {new Date(flare.endDate).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-600">
+            This flare has been resolved and cannot be updated. Complete history is available below.
+          </p>
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div role="tablist" className="flex gap-2 border-b mb-6">
@@ -95,23 +124,32 @@ export default function FlareDetailPage() {
             {/* More flare details... */}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 mb-6">
-            <button
-              onClick={() => setIsUpdateModalOpen(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 min-h-[44px]"
-              aria-label="Update flare status"
-            >
-              Update Status
-            </button>
-            <button
-              onClick={() => setIsInterventionModalOpen(true)}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 min-h-[44px]"
-              aria-label="Log intervention"
-            >
-              Log Intervention
-            </button>
-          </div>
+          {/* Action Buttons (hidden for resolved flares) */}
+          {!isResolved && (
+            <div className="flex gap-3 mb-6">
+              <button
+                onClick={() => setIsUpdateModalOpen(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 min-h-[44px]"
+                aria-label="Update flare status"
+              >
+                Update Status
+              </button>
+              <button
+                onClick={() => setIsInterventionModalOpen(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 min-h-[44px]"
+                aria-label="Log intervention"
+              >
+                Log Intervention
+              </button>
+              <button
+                onClick={() => setIsResolveModalOpen(true)}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 min-h-[44px]"
+                aria-label="Mark flare as resolved"
+              >
+                Mark Resolved
+              </button>
+            </div>
+          )}
 
           {/* Intervention History Section */}
           <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -141,6 +179,13 @@ export default function FlareDetailPage() {
         flare={flare}
         userId={userId}
         onLog={handleInterventionLogged}
+      />
+      <FlareResolveModal
+        isOpen={isResolveModalOpen}
+        onClose={() => setIsResolveModalOpen(false)}
+        flare={flare}
+        userId={userId}
+        onResolve={handleFlareResolved}
       />
     </div>
   );

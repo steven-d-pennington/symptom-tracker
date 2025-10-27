@@ -151,26 +151,35 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
 
   return (
     <g data-testid="flare-markers" ref={markerGroupRef}>
-      {markerPositions.map(({ flare, x, y }) => (
-        <circle
-          key={flare.id}
-          cx={x}
-          cy={y}
-          r={markerRadius}
-          className={`${getFlareMarkerColor(flare.severity)} stroke-white stroke-2 cursor-pointer hover:opacity-80 transition-opacity`}
-          onClick={() => handleMarkerClick(flare.id)}
-          aria-label={`${flare.symptomName} flare - severity ${flare.severity}`}
-          role="button"
-          tabIndex={0}
-          data-testid={`flare-marker-${flare.id}`}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleMarkerClick(flare.id);
-            }
-          }}
-        />
-      ))}
+      {markerPositions.map(({ flare, x, y }) => {
+        // Use gray color for resolved flares, otherwise color by severity
+        const markerColor = flare.status === 'resolved'
+          ? 'fill-gray-400'
+          : getFlareMarkerColor(flare.severity);
+
+        const statusLabel = flare.status === 'resolved' ? 'Resolved flare' : `${flare.symptomName} flare - severity ${flare.severity}`;
+
+        return (
+          <circle
+            key={flare.id}
+            cx={x}
+            cy={y}
+            r={markerRadius}
+            className={`${markerColor} stroke-white stroke-2 cursor-pointer hover:opacity-80 transition-opacity`}
+            onClick={() => handleMarkerClick(flare.id)}
+            aria-label={statusLabel}
+            role="button"
+            tabIndex={0}
+            data-testid={`flare-marker-${flare.id}`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleMarkerClick(flare.id);
+              }
+            }}
+          />
+        );
+      })}
     </g>
   );
 }
