@@ -8,7 +8,7 @@ import { FlareRecord, FlareEventRecord } from '@/lib/db/schema';
 interface UseFlaresOptions {
   userId: string;
   includeResolved?: boolean;
-  status?: ActiveFlare['status'] | ActiveFlare['status'][];
+  status?: FlareRecord['status'] | FlareRecord['status'][];
   bodyRegionId?: string;
 }
 
