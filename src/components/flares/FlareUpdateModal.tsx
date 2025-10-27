@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FlareRecord } from '@/lib/db/schema';
-import { FlareTrend, FlareEventType } from '@/types/flare';
+import { FlareTrend } from '@/types/flare';
 import { flareRepository } from '@/lib/repositories/flareRepository';
 
 interface FlareUpdateModalProps {
@@ -41,9 +41,9 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
       const severityChanged = severity !== flare.currentSeverity;
 
       // Determine event type
-      const eventType: FlareEventType = severityChanged
-        ? FlareEventType.SeverityUpdate
-        : FlareEventType.TrendChange;
+      const eventType: "severity_update" | "trend_change" = severityChanged
+        ? "severity_update"
+        : "trend_change";
 
       // Create FlareEvent record (append-only)
       await flareRepository.addFlareEvent(userId, flare.id, {

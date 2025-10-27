@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { InterventionLogModal } from '../InterventionLogModal';
 import { flareRepository } from '@/lib/repositories/flareRepository';
 import { FlareRecord } from '@/lib/db/schema';
-import { InterventionType, FlareEventType } from '@/types/flare';
+import { InterventionType } from '@/types/flare';
 
 // Mock the flare repository
 jest.mock('@/lib/repositories/flareRepository');
@@ -236,7 +236,7 @@ describe('InterventionLogModal', () => {
           'user-123',
           'flare-123',
           expect.objectContaining({
-            eventType: FlareEventType.Intervention,
+            eventType: "intervention",
           })
         );
       });
