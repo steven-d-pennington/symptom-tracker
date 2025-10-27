@@ -17,7 +17,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalytics } from '@/lib/hooks/useAnalytics';
 import { TimeRange } from '@/types/analytics';
-import { TimeRangeSelector } from './TimeRangeSelector';
+import { AnalyticsTimeRangeSelector } from './AnalyticsTimeRangeSelector';
 import { ProblemAreaRow } from './ProblemAreaRow';
 import { ProblemAreasEmptyState } from './ProblemAreasEmptyState';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
@@ -80,7 +80,7 @@ export function ProblemAreasView() {
           <h2 className="text-xl font-semibold text-gray-900">
             Problem Areas - {getTimeRangeLabel(timeRange)}
           </h2>
-          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+          <AnalyticsTimeRangeSelector value={timeRange} onChange={setTimeRange} />
         </div>
 
         {/* Skeleton loading (AC3.1.6) */}
@@ -104,7 +104,7 @@ export function ProblemAreasView() {
           <h2 className="text-xl font-semibold text-gray-900">
             Problem Areas - {getTimeRangeLabel(timeRange)}
           </h2>
-          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+          <AnalyticsTimeRangeSelector value={timeRange} onChange={setTimeRange} />
         </div>
 
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -128,7 +128,7 @@ export function ProblemAreasView() {
         <h2 className="text-xl font-semibold text-gray-900">
           Problem Areas - {getTimeRangeLabel(timeRange)}
         </h2>
-        <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+        <AnalyticsTimeRangeSelector value={timeRange} onChange={setTimeRange} />
       </div>
 
       {/* Problem areas list or empty state (AC3.1.2, AC3.1.4) */}
