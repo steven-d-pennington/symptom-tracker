@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { FlareRecord } from '@/lib/db/schema';
 import { FlareStatus, FlareEventType } from '@/types/flare';
 import { flareRepository } from '@/lib/repositories/flareRepository';
-import { bodyRegions } from '@/lib/data/bodyRegions';
+import { getBodyRegionById } from '@/lib/data/bodyRegions';
 
 interface FlareResolveModalProps {
   isOpen: boolean;
@@ -94,8 +94,8 @@ export function FlareResolveModal({ isOpen, onClose, flare, userId, onResolve }:
   const daysActive = Math.floor((Date.now() - flare.startDate) / (1000 * 60 * 60 * 24));
 
   // Find body region name
-  const bodyRegion = bodyRegions.find(r => r.id === flare.bodyRegionId);
-  const bodyRegionName = bodyRegion?.label || flare.bodyRegionId;
+  const bodyRegion = getBodyRegionById(flare.bodyRegionId);
+  const bodyRegionName = bodyRegion?.name || flare.bodyRegionId;
 
   return (
     <div
