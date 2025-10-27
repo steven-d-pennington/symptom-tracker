@@ -8,8 +8,8 @@ import {
   getTimeRangeMilliseconds,
   withinTimeRange,
   getTimeRangeLabel,
-} from '../timeRange';
-import { FlareRecord } from '../../db/schema';
+} from '@/lib/utils/timeRange';
+import { FlareRecord } from '@/lib/db/schema';
 import { TimeRange } from '@/types/analytics';
 
 describe('timeRange utilities', () => {

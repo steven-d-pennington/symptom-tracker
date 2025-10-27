@@ -5,9 +5,9 @@
  * Tests problem areas calculation, time range filtering, sorting, and thresholds.
  */
 
-import { db } from '../../db/client';
-import { getProblemAreas } from '../analyticsRepository';
-import { FlareRecord } from '../../db/schema';
+import { db } from '@/lib/db/client';
+import { getProblemAreas } from '@/lib/repositories/analyticsRepository';
+import { FlareRecord } from '@/lib/db/schema';
 
 describe('analyticsRepository', () => {
   const testUserId = 'test-user-analytics';

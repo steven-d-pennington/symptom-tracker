@@ -8,8 +8,8 @@
  * @see docs/solution-architecture.md#ADR-004 (On-demand calculation strategy)
  */
 
-import { db } from '../db/client';
-import { FlareRecord } from '../db/schema';
+import { db } from '@/lib/db/client';
+import { FlareRecord } from '@/lib/db/schema';
 import { ProblemArea, TimeRange } from '@/types/analytics';
 import { withinTimeRange } from '@/lib/utils/timeRange';
 

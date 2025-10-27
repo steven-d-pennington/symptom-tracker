@@ -13,14 +13,6 @@
 import { ProblemAreasView } from '@/components/analytics/ProblemAreasView';
 
 /**
- * Analytics page metadata
- */
-export const metadata = {
-  title: 'Flare Analytics',
-  description: 'Analyze your flare patterns and identify problem areas',
-};
-
-/**
  * Flare Analytics Page component.
  * AC3.1.1: Page header, responsive layout, navigation from main flares page.
  */
