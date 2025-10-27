@@ -1,0 +1,413 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.7</storyId>
+    <title>Mark Flare as Resolved</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user whose flare has healed</asA>
+    <iWant>mark the flare as resolved</iWant>
+    <soThat>it moves out of active tracking and into historical records</soThat>
+    <tasks>
+      - Task 1: Create FlareResolveModal component (AC: #2.7.2)
+      - Task 2: Implement resolution persistence logic (AC: #2.7.3, #2.7.6, #2.7.8)
+      - Task 3: Add "Mark Resolved" button to flare detail view (AC: #2.7.1)
+      - Task 4: Implement read-only view for resolved flares (AC: #2.7.7)
+      - Task 5: Update FlareMarkers to show resolved status (AC: #2.7.5)
+      - Task 6: Update Active Flares list filtering (AC: #2.7.4)
+      - Task 7: Add comprehensive tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC2.7.1 — Flare detail view shows "Mark Resolved" button: Page at /flares/[id] displays prominent "Mark Resolved" action button accessible to keyboard and screen readers, positioned alongside "Update Status" and "Log Intervention" buttons
+
+    AC2.7.2 — Resolve modal captures resolution details and confirmation: Modal displays resolution date field (auto-populated to today, editable for retroactive resolution), optional resolution notes textarea (500 char limit), confirmation dialog with warning message, "Confirm Resolution" and "Cancel" buttons
+
+    AC2.7.3 — System updates flare status to "Resolved" and sets endDate: On confirmation, system calls flareRepository.updateFlare() with {status: 'resolved', endDate: selectedDate}, uses atomic transaction for FlareRecord update
+
+    AC2.7.4 — Flare immediately moves from "Active Flares" to "Resolved Flares" list: React Query cache invalidation triggers useFlares hook refresh, resolved flare removed from Active Flares page (/flares) which filters by status='active'
+
+    AC2.7.5 — Body map marker changes to resolved status indicator: FlareMarkers component detects flare status='resolved', marker color changes to gray from red/yellow/orange, marker remains visible on body map at flare coordinates
+
+    AC2.7.6 — Flare history timeline shows resolution event: System creates FlareEventRecord with eventType="resolution", includes resolution date (endDate) and optional notes, resolution event appears at top of FlareHistory timeline
+
+    AC2.7.7 — Resolved flares remain accessible but cannot be updated: Flare detail page detects status='resolved' and displays read-only view, action buttons hidden, "Flare Resolved" badge displayed, FlareHistory timeline remains viewable
+
+    AC2.7.8 — Resolution data persists offline-first: All database writes (updateFlare, addFlareEvent) persist to IndexedDB using Dexie atomic transactions, no network dependency, follows NFR002 and NFR003
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Documentation Artifacts -->
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR009 - Mark Flares as Resolved</section>
+        <snippet>System shall allow users to mark flares as resolved with resolution date and optional resolution notes</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR002 - Offline-First Persistence</section>
+        <snippet>All flare data (creation, updates, resolution) shall persist to local IndexedDB immediately with offline-first architecture, ensuring zero data loss even without network connectivity</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR003 - Data Immutability</section>
+        <snippet>System shall maintain data integrity for flare lifecycle tracking, ensuring severity history and timestamps are immutably recorded and cannot be accidentally modified or deleted</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Journey 1 - Tracking a New Flare from Onset to Resolution</section>
+        <snippet>User journey covering complete flare lifecycle from Day 1 (onset) through Day 12 (resolution), demonstrating resolution step as final stage of flare management</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>ADR-003: Append-Only Flare History</section>
+        <snippet>FlareEvent history is append-only for medical data integrity. Events are never modified or deleted after creation, ensuring immutable audit trail</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Component Architecture</section>
+        <snippet>Flare management components follow modal patterns from Stories 2.4-2.5, integrate with FlareHistory from Story 2.6, and update body map FlareMarkers from Story 1.5</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>Epic 2 - Flare Lifecycle Management</title>
+        <section>Story 2.7: Mark Flare as Resolved</section>
+        <snippet>As a user whose flare has healed, I want to mark the flare as resolved, so that it moves out of active tracking and into historical records. 8 acceptance criteria covering resolution modal, persistence, UI updates, body map markers, and read-only enforcement</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1: Flare Data Model and IndexedDB Schema</title>
+        <section>Foundation</section>
+        <snippet>Provides flareRepository.updateFlare() and addFlareEvent() methods, FlareRecord with status/endDate fields, FlareEventType enum, atomic Dexie transactions, offline-first persistence</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/story-2.3.md</path>
+        <title>Story 2.3: Active Flares Dashboard</title>
+        <section>Active Flares List</section>
+        <snippet>Displays filtered list of active flares (status != 'resolved'). Provides useFlares hook, ActiveFlareCard components, and React Query cache invalidation patterns</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/story-2.4.md</path>
+        <title>Story 2.4: Update Flare Status - Severity and Trend</title>
+        <section>Modal Pattern</section>
+        <snippet>FlareUpdateModal component demonstrates modal structure, form validation, persistence logic with atomic transactions, React Query cache invalidation, and action button patterns</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/story-2.5.md</path>
+        <title>Story 2.5: Log Flare Interventions</title>
+        <section>Modal Pattern and Action Buttons</section>
+        <snippet>InterventionLogModal demonstrates modal UI patterns, textarea character limits (500 chars), flare detail page action button layouts, and event creation patterns</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/story-2.6.md</path>
+        <title>Story 2.6: View Flare History Timeline</title>
+        <section>Timeline Display</section>
+        <snippet>FlareHistory component displays chronological event timeline with event type icons, filtering, and expand/collapse. Resolution event will appear as timeline entry with 'resolution' eventType</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/story-1.5.md</path>
+        <title>Story 1.5: Display Flare Markers on Body Map</title>
+        <section>Body Map Markers</section>
+        <snippet>FlareMarkers component displays flares on body map with status-based color coding. Uses getFlareMarkerColorByStatus() for red/yellow/orange/gray colors based on flare status</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <!-- Code Artifacts -->
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>FlareStatus enum</symbol>
+        <lines>10-15</lines>
+        <reason>Already includes 'Resolved' status value - no changes needed to enum definition</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>FlareEventType enum</symbol>
+        <lines>25-31</lines>
+        <reason>Already includes 'Resolved' event type - enum complete, but FlareEventRecord interface needs resolutionDate/resolutionNotes fields</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>interface</kind>
+        <symbol>FlareRecord</symbol>
+        <lines>74-107</lines>
+        <reason>Already has endDate field (line 85) for storing resolution timestamp. Status field (line 88) will change from 'active' to 'resolved'</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>interface</kind>
+        <symbol>FlareEventRecord</symbol>
+        <lines>114-147</lines>
+        <reason>Needs extension with optional resolutionDate?: number and resolutionNotes?: string fields for resolution events (eventType='resolved')</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>updateFlare()</symbol>
+        <lines>102-130</lines>
+        <reason>Method for updating FlareRecord with {status: 'resolved', endDate: timestamp}. Includes userId validation and atomic persistence</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>addFlareEvent()</symbol>
+        <lines>192-199</lines>
+        <reason>Method for creating FlareEventRecord with eventType='resolved', resolutionDate, resolutionNotes. Follows append-only pattern (ADR-003)</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/[id]/page.tsx</path>
+        <kind>page-component</kind>
+        <symbol>FlareDetailPage</symbol>
+        <lines>14-147</lines>
+        <reason>Flare detail page with tab navigation, action buttons section (lines 98-114), modals. Needs "Mark Resolved" button, FlareResolveModal integration, read-only view logic for resolved flares</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/FlareMarkers.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareMarkers</symbol>
+        <lines>1-100</lines>
+        <reason>Displays flare markers on body map. Uses getFlareMarkerColor() for color logic. Needs to detect status='resolved' and apply gray color (fill-gray-400)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/flareMarkers.ts</path>
+        <kind>utility</kind>
+        <symbol>getFlareMarkerColorByStatus()</symbol>
+        <lines>18-26</lines>
+        <reason>Already implements gray color (fill-gray-400) for resolved status. Logic is ready - FlareMarkers component may need to use this function for status-based coloring</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/FlareUpdateModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareUpdateModal</symbol>
+        <lines>Full component</lines>
+        <reason>Pattern reference for modal structure: form fields, validation, persistence with atomic transactions, loading states, error handling, React Query cache invalidation, keyboard accessibility</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/FlareHistory.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareHistory</symbol>
+        <lines>Full component</lines>
+        <reason>Timeline component that will display resolution events. Needs to handle eventType='resolved' and display resolution icon, date, and notes</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/hooks/useFlare.ts</path>
+        <kind>hook</kind>
+        <symbol>useFlare()</symbol>
+        <lines>Full file</lines>
+        <reason>React Query hook for fetching single flare by ID. Used in flare detail page for real-time updates after resolution</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <runtime>
+        <package name="react" version="19.1.0" />
+        <package name="next" version="15.5.4" />
+        <package name="dexie" version="4.2.0" purpose="IndexedDB persistence with atomic transactions" />
+        <package name="uuid" version="13.0.0" purpose="Generate UUID v4 for FlareEventRecord.id" />
+        <package name="zod" version="4.1.12" purpose="Runtime validation for FlareEventRecord schema" />
+        <package name="lucide-react" version="0.544.0" purpose="Icons for modal and timeline (CheckCircle for resolved)" />
+        <package name="date-fns" version="4.1.0" purpose="Date formatting for resolution date display" />
+        <package name="react-dom" version="19.1.0" />
+      </runtime>
+      <testing>
+        <package name="jest" version="30.2.0" />
+        <package name="@testing-library/react" version="16.3.0" />
+        <package name="@testing-library/jest-dom" version="6.9.1" />
+        <package name="@testing-library/user-event" version="14.6.1" />
+        <package name="fake-indexeddb" version="6.2.4" purpose="Mock IndexedDB for testing persistence" />
+        <package name="jest-environment-jsdom" version="30.2.0" />
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Implementation Constraints -->
+    <constraint priority="critical">MUST use flareRepository.updateFlare() and addFlareEvent() methods - do NOT use direct Dexie db.flares access</constraint>
+    <constraint priority="critical">MUST create FlareEventRecord with eventType='resolved' when marking flare as resolved</constraint>
+    <constraint priority="critical">MUST use atomic Dexie transaction to ensure FlareRecord update (status, endDate) and FlareEventRecord creation complete together</constraint>
+    <constraint priority="critical">MUST follow ADR-003 append-only pattern - FlareEventRecords are never modified or deleted after creation</constraint>
+    <constraint priority="critical">MUST follow NFR002 offline-first architecture - all persistence to IndexedDB with no network dependency</constraint>
+    <constraint priority="critical">MUST invalidate React Query cache for both ['flares'] and ['flare', flareId] query keys after resolution</constraint>
+    <constraint priority="high">Resolution date validation: MUST be greater than or equal to flare.startDate (no retroactive resolution before flare started)</constraint>
+    <constraint priority="high">Resolution date validation: MUST be less than or equal to Date.now() (cannot resolve in future)</constraint>
+    <constraint priority="high">Resolution notes MUST have 500 character limit (consistent with other note fields)</constraint>
+    <constraint priority="high">MUST implement two-step confirmation process: (1) resolution form, (2) confirmation dialog with warning message</constraint>
+    <constraint priority="high">MUST hide action buttons ("Update Status", "Log Intervention", "Mark Resolved") when flare status='resolved'</constraint>
+    <constraint priority="high">MUST display "Flare Resolved" badge with resolution date at top of detail page for resolved flares</constraint>
+    <constraint priority="medium">FlareEventRecord interface needs extension with resolutionDate?: number and resolutionNotes?: string fields</constraint>
+    <constraint priority="medium">FlareMarkers component should use gray color (fill-gray-400) for resolved status - getFlareMarkerColorByStatus() already implements this</constraint>
+    <constraint priority="medium">Resolution date field auto-populates to Date.now() but allows editing for retroactive resolution</constraint>
+    <constraint priority="medium">Character counter MUST display for resolution notes textarea (e.g., "125/500 characters")</constraint>
+    <constraint priority="medium">After successful resolution, navigate user to Active Flares list (/flares) where resolved flare no longer appears</constraint>
+    <constraint priority="low">Follow modal patterns from FlareUpdateModal and InterventionLogModal for consistency</constraint>
+    <constraint priority="low">Use lucide-react CheckCircle icon for resolution events in FlareHistory timeline</constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- API and Component Interfaces -->
+    <interface>
+      <name>flareRepository.updateFlare</name>
+      <kind>repository-method</kind>
+      <signature>async function updateFlare(userId: string, flareId: string, updates: Partial&lt;FlareRecord&gt;): Promise&lt;FlareRecord&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <usage>Call with {status: FlareStatus.Resolved, endDate: resolutionDate} to mark flare as resolved</usage>
+    </interface>
+    <interface>
+      <name>flareRepository.addFlareEvent</name>
+      <kind>repository-method</kind>
+      <signature>async function addFlareEvent(userId: string, flareId: string, event: Partial&lt;FlareEventRecord&gt;): Promise&lt;FlareEventRecord&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <usage>Call with {eventType: FlareEventType.Resolved, timestamp: Date.now(), resolutionDate, resolutionNotes} to create resolution event</usage>
+    </interface>
+    <interface>
+      <name>FlareEventRecord (extended)</name>
+      <kind>interface</kind>
+      <signature>
+        interface FlareEventRecord {
+          id: string;
+          flareId: string;
+          eventType: FlareEventType;
+          timestamp: number;
+          severity?: number;
+          trend?: FlareTrend;
+          notes?: string;
+          interventionType?: InterventionType;
+          interventionDetails?: string;
+          resolutionDate?: number;    // NEW: For resolution events
+          resolutionNotes?: string;   // NEW: For resolution events
+          userId: string;
+        }
+      </signature>
+      <path>src/types/flare.ts</path>
+      <usage>Extend FlareEventRecord interface with resolutionDate and resolutionNotes fields for resolution events</usage>
+    </interface>
+    <interface>
+      <name>FlareResolveModalProps</name>
+      <kind>component-props</kind>
+      <signature>
+        interface FlareResolveModalProps {
+          isOpen: boolean;
+          onClose: () => void;
+          flare: FlareRecord;
+          userId: string;
+          onResolve?: () => void;
+        }
+      </signature>
+      <usage>Props for FlareResolveModal component - follows same pattern as FlareUpdateModal and InterventionLogModal</usage>
+    </interface>
+    <interface>
+      <name>useQueryClient().invalidateQueries</name>
+      <kind>react-query-method</kind>
+      <signature>queryClient.invalidateQueries({ queryKey: ['flares'] })</signature>
+      <usage>Invalidate flares list query to refresh Active Flares page after resolution</usage>
+    </interface>
+    <interface>
+      <name>useRouter().push</name>
+      <kind>next-router-method</kind>
+      <signature>router.push('/flares')</signature>
+      <usage>Navigate to Active Flares list after successful resolution</usage>
+    </interface>
+    <interface>
+      <name>getFlareMarkerColorByStatus</name>
+      <kind>utility-function</kind>
+      <signature>function getFlareMarkerColorByStatus(status: FlareStatus): string</signature>
+      <path>src/lib/utils/flareMarkers.ts</path>
+      <usage>Returns 'fill-gray-400' for status='resolved' - use this for body map marker coloring</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Jest + React Testing Library following existing test patterns from FlareUpdateModal.test.tsx, InterventionLogModal.test.tsx, and FlareHistory.test.tsx. Use fake-indexeddb for IndexedDB mocking. Colocate tests in __tests__ directories. Test files should cover unit tests (component rendering, validation), integration tests (complete flows), and accessibility tests (keyboard nav, ARIA labels)</standards>
+    <locations>
+      src/components/flares/__tests__/FlareResolveModal.test.tsx
+      src/app/(protected)/flares/[id]/__tests__/page.test.tsx
+      src/components/body-map/__tests__/FlareMarkers.test.tsx (extend existing)
+    </locations>
+    <ideas>
+      <!-- Unit Tests - FlareResolveModal Component -->
+      <test ac="AC2.7.2" type="unit">Modal renders with resolution date auto-populated to today's date</test>
+      <test ac="AC2.7.2" type="unit">Resolution date is editable via date picker input (type="date")</test>
+      <test ac="AC2.7.2" type="unit">Notes textarea accepts input and enforces 500 character limit</test>
+      <test ac="AC2.7.2" type="unit">Character counter displays correctly (e.g., "0/500", "125/500", "500/500")</test>
+      <test ac="AC2.7.2" type="unit">Flare summary context displays (body region, severity, days active)</test>
+      <test ac="AC2.7.2" type="unit">Confirmation dialog displays with warning message when "Mark Resolved" clicked</test>
+      <test ac="AC2.7.2" type="unit">"Cancel" button in initial form closes modal without resolving</test>
+      <test ac="AC2.7.2" type="unit">"Cancel" button in confirmation dialog returns to initial form</test>
+      <test ac="AC2.7.2" type="validation">Validation error shown if resolution date is before flare.startDate</test>
+      <test ac="AC2.7.2" type="validation">Validation error shown if resolution date is in the future</test>
+      <test ac="AC2.7.2" type="validation">Validation passes when resolution date is between startDate and now</test>
+      <test ac="AC2.7.2" type="unit">Loading state shows "Resolving..." text during persistence</test>
+      <test ac="AC2.7.2" type="unit">Error message displays if persistence fails</test>
+
+      <!-- Integration Tests - Resolution Flow -->
+      <test ac="AC2.7.3" type="integration">"Confirm Resolution" button calls flareRepository.addFlareEvent with eventType='resolved'</test>
+      <test ac="AC2.7.3" type="integration">"Confirm Resolution" button calls flareRepository.updateFlare with status='resolved' and endDate</test>
+      <test ac="AC2.7.3" type="integration">Resolution event includes resolutionDate and resolutionNotes fields</test>
+      <test ac="AC2.7.3" type="integration">Atomic transaction ensures both FlareRecord update and FlareEventRecord creation complete together</test>
+      <test ac="AC2.7.8" type="integration">Resolution data persists to IndexedDB using fake-indexeddb mock</test>
+      <test ac="AC2.7.8" type="integration">No network calls made during resolution (offline-first verification)</test>
+
+      <!-- Integration Tests - UI Updates -->
+      <test ac="AC2.7.4" type="integration">React Query cache invalidation triggered for ['flares'] query key after resolution</test>
+      <test ac="AC2.7.4" type="integration">React Query cache invalidation triggered for ['flare', flareId] query key after resolution</test>
+      <test ac="AC2.7.4" type="integration">Navigation to /flares route occurs after successful resolution</test>
+      <test ac="AC2.7.4" type="integration">onResolve callback invoked after successful resolution</test>
+
+      <!-- Unit Tests - Flare Detail Page -->
+      <test ac="AC2.7.1" type="unit">Flare detail page renders "Mark Resolved" button for active flares</test>
+      <test ac="AC2.7.1" type="unit">"Mark Resolved" button has aria-label and min-h-[44px] touch target</test>
+      <test ac="AC2.7.1" type="unit">"Mark Resolved" button onClick opens FlareResolveModal</test>
+      <test ac="AC2.7.7" type="unit">"Mark Resolved" button hidden when flare.status === 'resolved'</test>
+      <test ac="AC2.7.7" type="unit">"Update Status" button hidden when flare.status === 'resolved'</test>
+      <test ac="AC2.7.7" type="unit">"Log Intervention" button hidden when flare.status === 'resolved'</test>
+      <test ac="AC2.7.7" type="unit">"Flare Resolved" badge displays for resolved flares with resolution date</test>
+      <test ac="AC2.7.7" type="unit">Read-only informational message shown for resolved flares</test>
+      <test ac="AC2.7.7" type="unit">FlareHistory timeline remains visible for resolved flares</test>
+
+      <!-- Unit Tests - FlareMarkers Component -->
+      <test ac="AC2.7.5" type="unit">FlareMarkers component detects flare with status='resolved'</test>
+      <test ac="AC2.7.5" type="unit">Marker color is gray (fill-gray-400) for resolved flare using getFlareMarkerColorByStatus()</test>
+      <test ac="AC2.7.5" type="unit">Resolved marker remains clickable and navigates to flare detail page</test>
+      <test ac="AC2.7.5" type="unit">Marker ARIA label announces "Resolved flare" for resolved status</test>
+      <test ac="AC2.7.5" type="unit">Color coding verified: active=red, improving=yellow, worsening=orange, resolved=gray</test>
+
+      <!-- Integration Tests - FlareHistory Timeline -->
+      <test ac="AC2.7.6" type="integration">FlareHistory component displays resolution event with eventType='resolved'</test>
+      <test ac="AC2.7.6" type="integration">Resolution event appears at top of timeline (most recent event)</test>
+      <test ac="AC2.7.6" type="integration">Resolution event displays CheckCircle icon from lucide-react</test>
+      <test ac="AC2.7.6" type="integration">Resolution event displays resolution date and notes</test>
+      <test ac="AC2.7.6" type="integration">Resolution event label shows "Flare resolved"</test>
+
+      <!-- Accessibility Tests -->
+      <test ac="AC2.7.2" type="accessibility">Keyboard navigation works: Tab cycles through form fields, Escape closes modal</test>
+      <test ac="AC2.7.2" type="accessibility">ARIA labels present on modal, form fields, and buttons</test>
+      <test ac="AC2.7.2" type="accessibility">Screen reader announces confirmation dialog warning message</test>
+      <test ac="AC2.7.2" type="accessibility">Focus trapped within modal when open</test>
+      <test ac="AC2.7.2" type="accessibility">Focus returns to "Mark Resolved" button when modal closes</test>
+      <test ac="AC2.7.1" type="accessibility">"Mark Resolved" button accessible to keyboard (Enter/Space activation)</test>
+      <test ac="AC2.7.7" type="accessibility">"Flare Resolved" badge accessible to screen readers with resolution date announcement</test>
+
+      <!-- Edge Cases and Error Handling -->
+      <test type="edge-case">Resolution works correctly when flare has coordinates (Story 1.4 integration)</test>
+      <test type="edge-case">Resolution works correctly for flare without coordinates (region-center fallback)</test>
+      <test type="edge-case">Resolution modal handles very long body region names gracefully</test>
+      <test type="edge-case">Resolution works for flares with status='improving' or 'worsening' (not just 'active')</test>
+      <test type="error">Graceful error handling when IndexedDB write fails</test>
+      <test type="error">User-friendly error message displayed on persistence failure</test>
+      <test type="error">Modal remains open on error to allow retry</test>
+    </ideas>
+  </tests>
+</story-context>
