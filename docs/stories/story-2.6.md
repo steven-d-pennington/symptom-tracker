@@ -744,7 +744,7 @@ export default function FlareDetailPage() {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-2.6.xml` - Generated 2025-10-27 - Comprehensive implementation context including 7 acceptance criteria, 3 documentation references, code artifacts (FlareEventType/InterventionType enums, flareRepository.getFlareHistory(), FlareUpdateModal/InterventionHistory patterns), Chart.js + chartjs-plugin-annotation setup, 16 unit + 12 integration + 9 accessibility + 6 performance test ideas, React.memo/useMemo optimization guidance, ADR-003 append-only pattern enforcement
 
 ### Agent Model Used
 
