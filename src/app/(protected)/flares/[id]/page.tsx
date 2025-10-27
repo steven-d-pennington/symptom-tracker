@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
 import { useFlare } from '@/lib/hooks/useFlare';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { FlareUpdateModal } from '@/components/flares/FlareUpdateModal';
@@ -19,7 +18,6 @@ export default function FlareDetailPage() {
   const flareId = params.id as string;
   const { userId } = useCurrentUser();
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const { data: flare, isLoading, error, refetch } = useFlare(flareId, userId);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -40,11 +38,8 @@ export default function FlareDetailPage() {
   };
 
   const handleFlareResolved = () => {
-    // Invalidate queries to refresh flare lists
-    queryClient.invalidateQueries({ queryKey: ['flares'] });
-    queryClient.invalidateQueries({ queryKey: ['flare', flareId] });
-
     // Navigate to Active Flares list (resolved flare will no longer appear)
+    // The useFlares hook will automatically filter out resolved flares when the page loads
     router.push('/flares');
   };
 
