@@ -1,6 +1,6 @@
 # Story 2.3: Active Flares Dashboard
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
