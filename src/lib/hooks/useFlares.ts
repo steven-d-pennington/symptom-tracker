@@ -63,7 +63,13 @@ export function useFlares(options: UseFlaresOptions) {
         // Story 2.8: Fetch resolved flares when status='resolved' or includeResolved=true
         let flareRecords: FlareRecord[] = [];
 
-        if (status === 'resolved' || (includeResolved && status && (Array.isArray(status) ? status.includes('resolved') : status === 'resolved'))) {
+        // Check if we should fetch resolved flares
+        const shouldFetchResolved = status === 'resolved' ||
+          (includeResolved && status && (
+            Array.isArray(status) ? status.includes('resolved' as any) : (status as string) === 'resolved'
+          ));
+
+        if (shouldFetchResolved) {
           // Fetch only resolved flares
           flareRecords = await flareRepository.getResolvedFlares(userId);
         } else {
