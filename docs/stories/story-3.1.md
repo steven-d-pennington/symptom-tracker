@@ -1,6 +1,6 @@
 # Story 3.1: Calculate and Display Problem Areas
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -603,7 +603,7 @@ export default function AnalyticsPage() {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [3-1-calculate-and-display-problem-areas.context.xml](3-1-calculate-and-display-problem-areas.context.xml) - Generated 2025-10-27
 
 ### Agent Model Used
 
