@@ -362,6 +362,12 @@ export interface FlareEventRecord {
   /** Specific intervention details (medication name/dosage, treatment notes, etc.) */
   interventionDetails?: string;
 
+  /** Resolution date for resolution events (eventType='resolved') - Story 2.7 */
+  resolutionDate?: number;
+
+  /** Resolution notes for resolution events (eventType='resolved') - Story 2.7 */
+  resolutionNotes?: string;
+
   /** User ID for multi-user support */
   userId: string;
 }
