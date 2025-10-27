@@ -6,12 +6,8 @@ import { FlareRecord } from '@/lib/db/schema';
 import { FlareStatus } from '@/types/flare';
 import { flareRepository } from '@/lib/repositories/flareRepository';
 
-jest.mock('@/lib/repositories/flareRepository', () => ({
-  flareRepository: {
-    addFlareEvent: jest.fn(),
-    updateFlare: jest.fn(),
-  },
-}));
+// Mock the flare repository
+jest.mock('@/lib/repositories/flareRepository');
 
 const mockFlare: FlareRecord = {
   id: 'flare-1',
@@ -28,8 +24,8 @@ const mockFlare: FlareRecord = {
 describe('FlareResolveModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (flareRepository.addFlareEvent as jest.Mock).mockResolvedValue({});
-    (flareRepository.updateFlare as jest.Mock).mockResolvedValue({});
+    (flareRepository.addFlareEvent as jest.Mock) = jest.fn().mockResolvedValue({});
+    (flareRepository.updateFlare as jest.Mock) = jest.fn().mockResolvedValue({});
   });
 
   describe('Rendering', () => {

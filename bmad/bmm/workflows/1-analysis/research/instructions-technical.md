@@ -447,23 +447,16 @@ Select option (1-5):</ask>
 <action>Find the most recent file (by date in filename)</action>
 
 <check if="status file exists">
-  <action>Load the status file</action>
+  <invoke-workflow path="{project-root}/bmad/bmm/workflows/workflow-status">
+    <param>mode: update</param>
+    <param>action: complete_workflow</param>
+    <param>workflow_name: research</param>
+  </invoke-workflow>
 
-<template-output file="{{status_file_path}}">current_step</template-output>
-<action>Set to: "research (technical)"</action>
-
-<template-output file="{{status_file_path}}">current_workflow</template-output>
-<action>Set to: "research (technical) - Complete"</action>
-
-<template-output file="{{status_file_path}}">progress_percentage</template-output>
-<action>Increment by: 5% (optional Phase 1 workflow)</action>
-
-<template-output file="{{status_file_path}}">decisions_log</template-output>
-<action>Add entry:</action>
-
-```
-- **{{date}}**: Completed research workflow (technical mode). Technical research report generated and saved. Next: Review findings and consider plan-project workflow.
-```
+  <check if="success == true">
+    <output>Status updated! Next: {{next_workflow}}</output>
+  </check>
+</check>
 
 <output>**✅ Technical Research Complete**
 
@@ -478,9 +471,8 @@ Select option (1-5):</ask>
 
 **Next Steps:**
 
-1. Review technical research findings
-2. Share with architecture team
-3. Run `plan-project` to incorporate findings into PRD
+- **Next required:** {{next_workflow}} ({{next_agent}} agent)
+- **Optional:** Review findings with architecture team, or run additional analysis workflows
 
 Check status anytime with: `workflow-status`
 </output>
@@ -497,10 +489,13 @@ Note: Running in standalone mode (no status file).
 
 **Next Steps:**
 
-1. Review technical research findings
-2. Run plan-project workflow
-   </output>
-   </check>
-   </step>
+Since no workflow is in progress:
+
+- Review technical research findings
+- Refer to the BMM workflow guide if unsure what to do next
+- Or run `workflow-init` to create a workflow path and get guided next steps
+  </output>
+  </check>
+  </step>
 
 </workflow>

@@ -225,6 +225,10 @@ export async function addFlareEvent(
     trend: event.trend,
     notes: event.notes,
     interventions: event.interventions,
+    interventionType: event.interventionType,
+    interventionDetails: event.interventionDetails,
+    resolutionDate: event.resolutionDate,
+    resolutionNotes: event.resolutionNotes,
     userId,
   };
 

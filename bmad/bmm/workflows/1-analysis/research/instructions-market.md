@@ -559,23 +559,16 @@ Create compelling executive summary with:
 <action>Find the most recent file (by date in filename)</action>
 
 <check if="status file exists">
-  <action>Load the status file</action>
+  <invoke-workflow path="{project-root}/bmad/bmm/workflows/workflow-status">
+    <param>mode: update</param>
+    <param>action: complete_workflow</param>
+    <param>workflow_name: research</param>
+  </invoke-workflow>
 
-<template-output file="{{status_file_path}}">current_step</template-output>
-<action>Set to: "research ({{research_mode}})"</action>
-
-<template-output file="{{status_file_path}}">current_workflow</template-output>
-<action>Set to: "research ({{research_mode}}) - Complete"</action>
-
-<template-output file="{{status_file_path}}">progress_percentage</template-output>
-<action>Increment by: 5% (optional Phase 1 workflow)</action>
-
-<template-output file="{{status_file_path}}">decisions_log</template-output>
-<action>Add entry:</action>
-
-```
-- **{{date}}**: Completed research workflow ({{research_mode}} mode). Research report generated and saved. Next: Review findings and consider product-brief or plan-project workflows.
-```
+  <check if="success == true">
+    <output>Status updated! Next: {{next_workflow}}</output>
+  </check>
+</check>
 
 <output>**✅ Research Complete ({{research_mode}} mode)**
 
@@ -590,11 +583,8 @@ Create compelling executive summary with:
 
 **Next Steps:**
 
-1. Review research findings
-2. Share with stakeholders
-3. Consider running:
-   - `product-brief` or `game-brief` to formalize vision
-   - `plan-project` if ready to create PRD/GDD
+- **Next required:** {{next_workflow}} ({{next_agent}} agent)
+- **Optional:** Review findings with stakeholders, or run additional analysis workflows (product-brief, game-brief, etc.)
 
 Check status anytime with: `workflow-status`
 </output>
@@ -609,14 +599,15 @@ Check status anytime with: `workflow-status`
 
 Note: Running in standalone mode (no status file).
 
-To track progress across workflows, run `workflow-status` first.
-
 **Next Steps:**
 
-1. Review research findings
-2. Run product-brief or plan-project workflows
-   </output>
-   </check>
-   </step>
+Since no workflow is in progress:
+
+- Review research findings
+- Refer to the BMM workflow guide if unsure what to do next
+- Or run `workflow-init` to create a workflow path and get guided next steps
+  </output>
+  </check>
+  </step>
 
 </workflow>
