@@ -1,6 +1,6 @@
 # Story 2.6: View Flare History Timeline
 
-Status: Draft
+Status: Ready
 
 ## Story
 
