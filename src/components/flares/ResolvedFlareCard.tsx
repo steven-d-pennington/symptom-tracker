@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FlareRecord } from "@/types/flare";
+import { FlareRecord } from "@/lib/db/schema";
 import { flareRepository } from "@/lib/repositories/flareRepository";
 import { FRONT_BODY_REGIONS, BACK_BODY_REGIONS } from "@/lib/data/bodyRegions";
 import { formatDistanceToNow } from "@/lib/utils/dateUtils";

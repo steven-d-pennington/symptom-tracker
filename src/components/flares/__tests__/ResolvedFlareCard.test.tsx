@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ResolvedFlareCard } from '../ResolvedFlareCard';
-import { FlareRecord, FlareStatus } from '@/types/flare';
+import { FlareRecord } from '@/lib/db/schema';
 import { flareRepository } from '@/lib/repositories/flareRepository';
 
 // Mock the flare repository
@@ -29,7 +29,7 @@ describe('ResolvedFlareCard', () => {
     userId: mockUserId,
     startDate: Date.now() - (10 * 24 * 60 * 60 * 1000), // 10 days ago
     endDate: Date.now() - (2 * 24 * 60 * 60 * 1000), // 2 days ago
-    status: FlareStatus.Resolved,
+    status: "resolved",
     bodyRegionId: 'left-groin',
     coordinates: { x: 0.5, y: 0.5 },
     initialSeverity: 6,

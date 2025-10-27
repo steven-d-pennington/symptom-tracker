@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { FlareRecord } from "@/types/flare";
+import { FlareRecord } from "@/lib/db/schema";
 import { FRONT_BODY_REGIONS, BACK_BODY_REGIONS } from "@/lib/data/bodyRegions";
-import { X } from "lucide-react";
 
 interface ResolvedFlaresFiltersProps {
   flares: FlareRecord[];

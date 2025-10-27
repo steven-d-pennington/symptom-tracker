@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ResolvedFlaresPage from '../page';
 import { flareRepository } from '@/lib/repositories/flareRepository';
-import { FlareRecord, FlareStatus } from '@/types/flare';
+import { FlareRecord } from '@/lib/db/schema';
 
 // Mock the flare repository
 jest.mock('@/lib/repositories/flareRepository', () => ({
@@ -48,7 +48,7 @@ describe('ResolvedFlaresPage', () => {
     userId: 'test-user-123',
     startDate: Date.now() - (10 * 24 * 60 * 60 * 1000),
     endDate: Date.now() - (2 * 24 * 60 * 60 * 1000),
-    status: FlareStatus.Resolved,
+    status: "resolved",
     bodyRegionId: 'left-groin',
     coordinates: { x: 0.5, y: 0.5 },
     initialSeverity: 6,

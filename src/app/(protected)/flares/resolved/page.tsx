@@ -6,7 +6,7 @@ import { ResolvedFlareCard } from "@/components/flares/ResolvedFlareCard";
 import { ResolvedFlaresFilters } from "@/components/flares/ResolvedFlaresFilters";
 import { ResolvedFlaresEmptyState } from "@/components/flares/ResolvedFlaresEmptyState";
 import { flareRepository } from "@/lib/repositories/flareRepository";
-import { FlareRecord } from "@/types/flare";
+import { FlareRecord } from "@/lib/db/schema";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 type SortBy = 'resolutionDate' | 'duration' | 'peakSeverity';
