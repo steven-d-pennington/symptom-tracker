@@ -22,7 +22,8 @@ type ViewMode = "cards" | "map" | "both";
 
 export default function FlaresPage() {
   const { userId } = useCurrentUser();
-  const { data: flares = [], isLoading: flaresLoading, refetch: refetchFlares } = useFlares({ userId: userId || '', includeResolved: true });
+  // Story 2.7: Active Flares page filters out resolved flares (AC2.7.4)
+  const { data: flares = [], isLoading: flaresLoading, refetch: refetchFlares } = useFlares({ userId: userId || '', includeResolved: false });
   const [viewMode, setViewMode] = useState<ViewMode>("cards"); // Story 0.3: Default to cards-first
   const [selectedFlareId, setSelectedFlareId] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);

@@ -3,7 +3,7 @@
 import { FlareEventRecord } from '@/lib/db/schema';
 import { FlareEventType, FlareTrend } from '@/types/flare';
 import { formatDistanceToNow } from 'date-fns';
-import { TrendingUp, Activity, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpDown, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface FlareHistoryEntryProps {
   event: FlareEventRecord;
@@ -15,6 +15,8 @@ const eventTypeIcons = {
   severity_update: TrendingUp,
   trend_change: ArrowUpDown,
   intervention: Activity,
+  resolved: CheckCircle,
+  created: Activity,
 };
 
 const trendArrows = {
@@ -105,6 +107,28 @@ export function FlareHistoryEntry({ event, isExpanded, onToggle }: FlareHistoryE
                     : event.interventionDetails.slice(0, 50) + (event.interventionDetails.length > 50 ? '...' : '')
                   }
                 </span>
+              )}
+            </div>
+          )}
+
+          {/* Resolution Info */}
+          {event.eventType === FlareEventType.Resolved && (
+            <div className="mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-green-700">Flare resolved</span>
+                {event.resolutionDate && (
+                  <span className="text-xs text-gray-600">
+                    {new Date(event.resolutionDate).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              {event.resolutionNotes && (
+                <p className="text-sm text-gray-600 mt-1">
+                  {isExpanded
+                    ? event.resolutionNotes
+                    : event.resolutionNotes.slice(0, 50) + (event.resolutionNotes.length > 50 ? '...' : '')
+                  }
+                </p>
               )}
             </div>
           )}

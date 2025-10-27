@@ -142,6 +142,12 @@ export interface FlareEventRecord {
   /** Specific intervention details (medication name/dosage, treatment notes, etc.) */
   interventionDetails?: string;
 
+  /** Resolution date for resolution events (eventType='resolved') */
+  resolutionDate?: number;
+
+  /** Resolution notes for resolution events (eventType='resolved') */
+  resolutionNotes?: string;
+
   /** User ID for multi-user support (future-proofing) */
   userId: string;
 }
@@ -197,6 +203,8 @@ export const flareEventRecordSchema = z.object({
   interventions: z.string().optional(),
   interventionType: z.nativeEnum(InterventionType).optional(),
   interventionDetails: z.string().max(500, "Intervention details must be at most 500 characters").optional(),
+  resolutionDate: z.number().positive("Resolution date must be a positive timestamp").optional(),
+  resolutionNotes: z.string().max(500, "Resolution notes must be at most 500 characters").optional(),
   userId: z.string().min(1, "User ID is required"),
 });
 
