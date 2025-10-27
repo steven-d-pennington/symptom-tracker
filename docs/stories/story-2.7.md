@@ -593,7 +593,9 @@ const getMarkerColor = (status: FlareStatus) => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- **Context File:** `docs/stories/story-context-2.7.xml` (Generated: 2025-10-27)
+- **Lines:** 413 lines
+- **Includes:** 13 documentation artifacts, 12 code artifacts, 7 interfaces, 17 constraints, 8 runtime + 6 testing dependencies, 50+ test ideas mapped to all 8 ACs
 
 ### Agent Model Used
 
