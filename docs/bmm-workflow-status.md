@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** create-story (Story 2.7) - Complete ✅
-- **Overall Progress:** 87% (18 of 23 stories complete, 104 points, Story 2.7 drafted)
-- **Next Action:** Review and approve Story 2.7 via story-ready workflow
-- **Command to Run:** Load SM agent and run `story-ready` to approve Story 2.7
-- **Agent to Load:** SM agent - bmad/bmm/agents/sm.md
-- **Note:** Story 2.7 (Mark Flare as Resolved) successfully drafted with 8 acceptance criteria. Includes FlareResolveModal component, resolution date validation, confirmation dialog, atomic transactions, React Query cache invalidation, read-only view for resolved flares, FlareMarkers gray color for resolved status. Builds on Stories 2.1-2.6 and 1.5. Prepares foundation for Story 2.8. File: docs/stories/story-2.7.md. Next: SM agent should run story-ready to approve Story 2.7.
+- **Current Workflow:** story-ready (Story 2.7) - Complete ✅
+- **Overall Progress:** 87% (18 of 23 stories complete, 104 points, Story 2.7 ready)
+- **Next Action:** Generate context for Story 2.7 via story-context workflow (recommended) OR skip to dev-story for implementation
+- **Command to Run:** Load SM agent and run `story-context` for Story 2.7 OR load DEV agent and run `dev-story`
+- **Agent to Load:** SM agent - bmad/bmm/agents/sm.md (for story-context) OR DEV agent - bmad/bmm/agents/dev.md (for dev-story)
+- **Note:** Story 2.7 (Mark Flare as Resolved) approved and ready for development with 8 acceptance criteria. Status changed from Draft → Ready. Story includes FlareResolveModal component, resolution date validation, confirmation dialog, atomic transactions, React Query cache invalidation, read-only view for resolved flares, FlareMarkers gray color for resolved status. Builds on Stories 2.1-2.6 and 1.5. Prepares foundation for Story 2.8. File: docs/stories/story-2.7.md. Next: Generate implementation context via story-context workflow (recommended).
 
 ---
 
@@ -98,8 +98,9 @@
 - **Story ID:** 2.7
 - **Story Title:** Mark Flare as Resolved
 - **Story File:** `docs/stories/story-2.7.md`
-- **Status:** Draft created (needs approval via story-ready)
-- **Action:** SM should run `story-ready` workflow to approve for development
+- **Story Status:** Ready
+- **Context File:** Context not yet generated
+- **Action:** DEV should run `story-context` workflow to generate context, then `dev-story` workflow to implement this story
 
 #### DONE (Completed Stories)
 
@@ -130,20 +131,20 @@
 
 ### Next Action Required
 
-**What to do next:** Draft Story 2.7 (Mark Flare as Resolved)
+**What to do next:** Generate context for Story 2.7, then implement it
 
-**Command to run:** Run `create-story` workflow to draft Story 2.7
+**Command to run:** Run `story-context` workflow to generate implementation context (or skip to `dev-story`)
 
-**Agent to load:** bmad/bmm/agents/sm.md
+**Agent to load:** bmad/bmm/agents/sm.md (for story-context) OR bmad/bmm/agents/dev.md (for dev-story)
 
-**Story 2.7 Summary:** Next story in Epic 2 (Flare Lifecycle Management)
+**Story 2.7 Summary:** Story approved and ready for implementation
 - Implement UI and logic for marking active flares as resolved
 - Add resolution timestamp and optional notes
 - Update flare status and create resolution event
 - Update active flares dashboard to remove resolved flares
 - Prepare foundation for Story 2.8 (Resolved Flares Archive)
 
-**Epic 2 Progress:** 6 of 8 stories complete (2.1, 2.2, 2.3, 2.4, 2.5, 2.6) - Story 2.7 ready for drafting
+**Epic 2 Progress:** 6 of 8 stories complete (2.1, 2.2, 2.3, 2.4, 2.5, 2.6) - Story 2.7 ready for implementation
 
 ---
 
@@ -200,6 +201,7 @@ Check status anytime with: `workflow-status`
 
 ## Decision Log
 
+- **2025-10-27:** Story 2.7 (Mark Flare as Resolved) marked ready for development by SM agent via story-ready workflow. Story file status updated from Draft → Ready. Story remains in IN PROGRESS (Approved for Development) section. Next recommended action: Run story-context workflow to generate comprehensive implementation context for DEV agent, OR skip directly to dev-story workflow for implementation. Story includes 8 acceptance criteria covering FlareResolveModal with date picker and confirmation dialog, atomic FlareRecord updates (status='resolved', endDate), resolution FlareEvent creation, read-only view enforcement, FlareMarkers gray color for resolved status, and offline-first persistence. Prepares foundation for Story 2.8 (Resolved Flares Archive).
 - **2025-10-27:** Completed create-story for Story 2.7 (Mark Flare as Resolved). Story file: docs/stories/story-2.7.md. Status: Draft (needs review via story-ready). Story includes 8 acceptance criteria covering: (1) "Mark Resolved" button in flare detail view alongside existing action buttons, (2) resolution modal with date picker (defaults to today, editable for retroactive resolution), optional notes textarea (500 char limit), and confirmation dialog with warning message, (3) atomic FlareRecord update (status='resolved', endDate set) via flareRepository.updateFlare(), (4) resolved flare immediately removed from Active Flares list (filtered by status='active'), (5) body map FlareMarkers display gray color for resolved status (from Story 1.5 color coding), (6) FlareHistory timeline shows resolution event (eventType='resolution') with date and notes, (7) read-only view for resolved flares (action buttons hidden, "Flare Resolved" badge displayed, history remains viewable), (8) offline-first IndexedDB persistence using atomic Dexie transactions. Detailed task breakdown with 7 major tasks and 80+ subtasks covering: FlareResolveModal component with confirmation dialog, resolution date validation (not before startDate, not in future), atomic persistence logic with FlareEventRecord creation, flare detail page integration with conditional button/badge rendering, read-only view enforcement, FlareMarkers color update to gray for resolved status, Active Flares list filtering verification, comprehensive test suite (modal validation, persistence flow, UI state changes, color updates). Dev notes include: complete FlareResolveModal component code with two-step confirmation UX, FlareEventType enum extension to include "resolution", FlareEventRecord extension with resolutionDate/resolutionNotes fields, flare detail page conditional rendering for resolved state, FlareMarkers color logic update, React Query cache invalidation for both flares list and detail queries, navigation to Active Flares list after resolution. Story builds on Stories 2.1 (data layer with updateFlare/addFlareEvent), 2.3 (Active Flares filtering), 2.4-2.5 (modal patterns and action button layouts), 2.6 (FlareHistory timeline display), and 1.5 (FlareMarkers body map display). Implements PRD FR009 (mark flares as resolved), FR004 (body map markers), FR008 (history timeline), NFR002 (offline-first persistence), and Journey 1 Day 12 (resolution step). Prepares foundation for Story 2.8 (Resolved Flares Archive) by enabling flare status filtering and endDate calculation. Epic 2 progress: 6/8 stories complete, 2 remaining (2.7 draft, 2.8 in backlog). Next: SM agent should run story-ready to approve Story 2.7 for development.
 - **2025-10-27:** Completed Story 2.6 (View Flare History Timeline) implementation. All 7 acceptance criteria successfully met. Delivered: FlareHistory.tsx (143 lines) with filtering and React Query integration, FlareHistoryEntry.tsx (130 lines) with expand/collapse functionality, FlareHistoryChart.tsx (127 lines) with Chart.js severity visualization and intervention annotations, updated flares/[id]/page.tsx with History tab navigation. Created comprehensive test suite: FlareHistory.test.tsx (90 lines, 3 tests), FlareHistoryEntry.test.tsx (192 lines, 20 tests), FlareHistoryChart.test.tsx (157 lines, 12 tests), page.test.tsx (107 lines, 5 tests). All tests passing. Production build successful - TypeScript compilation verified. Features implemented: reverse-chronological timeline, event filtering (All/Status/Interventions) with localStorage persistence, Chart.js line chart with severity progression over time, intervention vertical annotations, expandable timeline entries (read-only enforcing ADR-003), performance optimizations (React.memo, useMemo), keyboard-accessible tab navigation with ARIA attributes. Story moved from IN PROGRESS → DONE. Progress: 18 of 23 stories complete (85%, was 80%), 104 points (was 96 points). Epic 2 progress: 6/8 stories complete (75%, was 5/8 = 62.5%). Next: SM agent should draft Story 2.7 (Mark Flare as Resolved) via create-story workflow.
 - **2025-10-27:** Retroactively approved Story 2.3 (Active Flares Dashboard) via story-approved workflow. Story was fully implemented on 2025-10-23 with all 6 tasks complete and 7 acceptance criteria met, but formal approval step was skipped when workflow jumped from Story 2.2 to Story 2.4. Implementation verified: FlaresPage component exists (15,824 bytes) with ActiveFlareCards, ActiveFlareCard, and ActiveFlaresEmptyState components. Story provides Active Flares page at /flares route with filtered list using useFlares hook, comprehensive flare information display (body region, severity with color coding, trend arrows, days active, last updated), sortable by severity/recent updates with localStorage persistence, navigation to detail page, empty state guidance, pull-to-refresh on mobile, and flare count badge. All acceptance criteria satisfied: AC2.3.1 (filtered list at /flares), AC2.3.2 (comprehensive info display), AC2.3.3 (sortable with persistence), AC2.3.4 (navigation to detail page), AC2.3.5 (empty state), AC2.3.6 (pull-to-refresh), AC2.3.7 (count badge). Story status updated from "Ready for Review" to "Done". Workflow status updated: Story 2.3 moved to DONE section. Progress corrected: 17 of 23 stories complete (78%, was incorrectly showing 76%), 96 points (was incorrectly showing 88 points). Epic 2 progress corrected: 5/8 stories complete (62.5%, was incorrectly showing 4/8 = 50%). This approval fills a critical gap in the workflow tracking - Active Flares Dashboard has been operational since Story 2.3 implementation and was used as foundation for Stories 2.4 and 2.5.

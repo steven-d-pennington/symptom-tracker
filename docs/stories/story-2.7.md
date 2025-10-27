@@ -1,6 +1,6 @@
 # Story 2.7: Mark Flare as Resolved
 
-Status: Draft
+Status: Ready
 
 ## Story
 
