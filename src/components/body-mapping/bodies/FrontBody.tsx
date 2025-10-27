@@ -13,6 +13,7 @@ interface FrontBodyProps {
   severityByRegion?: Record<string, number>;
   flareRegions?: string[];
   onCoordinateCapture?: (event: React.MouseEvent<SVGSVGElement>) => void;
+  onTouchCoordinateCapture?: (event: React.TouchEvent<SVGSVGElement>) => void;
   coordinateCursorActive?: boolean;
   coordinateMarker?: React.ReactNode;
   flareOverlay?: React.ReactNode;
@@ -31,6 +32,7 @@ export function FrontBody({
   severityByRegion = {},
   flareRegions = [],
   onCoordinateCapture,
+  onTouchCoordinateCapture,
   coordinateCursorActive = false,
   coordinateMarker,
   flareOverlay,
@@ -108,6 +110,7 @@ export function FrontBody({
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
       onClickCapture={onCoordinateCapture}
+      onTouchStart={onTouchCoordinateCapture}
       role="application"
       aria-label="Interactive body map for flare tracking"
     >

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FlareRecord } from '@/lib/db/schema';
-import { InterventionType, FlareEventType } from '@/types/flare';
+import { InterventionType } from '@/types/flare';
 import { flareRepository } from '@/lib/repositories/flareRepository';
 
 interface InterventionLogModalProps {
@@ -45,7 +45,7 @@ export function InterventionLogModal({
     try {
       // Create intervention FlareEvent record (append-only)
       await flareRepository.addFlareEvent(userId, flare.id, {
-        eventType: FlareEventType.Intervention,
+        eventType: "intervention",
         timestamp,
         interventionType,
         interventionDetails: details.trim() || undefined,

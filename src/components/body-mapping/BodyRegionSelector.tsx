@@ -13,6 +13,7 @@ interface BodyRegionSelectorProps {
   severityByRegion?: Record<string, number>;
   flareRegions?: string[];
   onCoordinateCapture?: (event: React.MouseEvent<SVGSVGElement>) => void;
+  onTouchCoordinateCapture?: (event: React.TouchEvent<SVGSVGElement>) => void;
   coordinateCursorActive?: boolean;
   coordinateMarker?: React.ReactNode;
   flareOverlay?: React.ReactNode;
@@ -31,6 +32,7 @@ export function BodyRegionSelector({
   severityByRegion = {},
   flareRegions = [],
   onCoordinateCapture,
+  onTouchCoordinateCapture,
   coordinateCursorActive = false,
   coordinateMarker,
   flareOverlay,
@@ -79,6 +81,7 @@ export function BodyRegionSelector({
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
             onCoordinateCapture={onCoordinateCapture}
+            onTouchCoordinateCapture={onTouchCoordinateCapture}
             coordinateCursorActive={coordinateCursorActive}
             coordinateMarker={coordinateMarker}
             flareOverlay={flareOverlay}
@@ -97,6 +100,7 @@ export function BodyRegionSelector({
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
             onCoordinateCapture={onCoordinateCapture}
+            onTouchCoordinateCapture={onTouchCoordinateCapture}
             coordinateCursorActive={coordinateCursorActive}
             coordinateMarker={coordinateMarker}
             flareOverlay={flareOverlay}
@@ -115,6 +119,7 @@ export function BodyRegionSelector({
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
             onCoordinateCapture={onCoordinateCapture}
+            onTouchCoordinateCapture={onTouchCoordinateCapture}
             coordinateCursorActive={coordinateCursorActive}
             coordinateMarker={coordinateMarker}
             flareOverlay={flareOverlay}

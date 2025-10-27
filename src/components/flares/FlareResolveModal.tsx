@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { FlareRecord } from '@/lib/db/schema';
-import { FlareStatus, FlareEventType } from '@/types/flare';
 import { flareRepository } from '@/lib/repositories/flareRepository';
 import { getBodyRegionById } from '@/lib/data/bodyRegions';
 
@@ -58,7 +57,7 @@ export function FlareResolveModal({ isOpen, onClose, flare, userId, onResolve }:
     try {
       // Create resolution FlareEvent record (append-only)
       await flareRepository.addFlareEvent(userId, flare.id, {
-        eventType: FlareEventType.Resolved,
+        eventType: "resolved",
         timestamp: Date.now(),
         resolutionDate,
         resolutionNotes: notes.trim() || undefined,
@@ -66,7 +65,7 @@ export function FlareResolveModal({ isOpen, onClose, flare, userId, onResolve }:
 
       // Update FlareRecord status to resolved and set endDate
       await flareRepository.updateFlare(userId, flare.id, {
-        status: FlareStatus.Resolved,
+        status: "resolved",
         endDate: resolutionDate,
       });
 

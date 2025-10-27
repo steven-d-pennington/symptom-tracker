@@ -8,7 +8,7 @@ import { FlareRecord, FlareEventRecord } from '@/lib/db/schema';
 interface UseFlaresOptions {
   userId: string;
   includeResolved?: boolean;
-  status?: ActiveFlare['status'] | ActiveFlare['status'][];
+  status?: 'active' | 'improving' | 'worsening' | 'resolved' | ('active' | 'improving' | 'worsening' | 'resolved')[];
   bodyRegionId?: string;
 }
 
@@ -60,8 +60,22 @@ export function useFlares(options: UseFlaresOptions) {
       try {
         setIsLoading(true);
 
-        // Story 2.1: Use new API - getActiveFlares + getFlareHistory
-        const flareRecords = await flareRepository.getActiveFlares(userId);
+        // Story 2.8: Fetch resolved flares when status='resolved' or includeResolved=true
+        let flareRecords: FlareRecord[] = [];
+
+        // Check if we should fetch resolved flares
+        const shouldFetchResolved = status === 'resolved' ||
+          (includeResolved && status && (
+            Array.isArray(status) ? status.includes('resolved' as any) : (status as string) === 'resolved'
+          ));
+
+        if (shouldFetchResolved) {
+          // Fetch only resolved flares
+          flareRecords = await flareRepository.getResolvedFlares(userId);
+        } else {
+          // Fetch active flares (Story 2.1)
+          flareRecords = await flareRepository.getActiveFlares(userId);
+        }
 
         // Fetch event history for each flare and calculate trends
         const flaresWithTrends = await Promise.all(

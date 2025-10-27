@@ -61,7 +61,7 @@ development_status:
   2-5-log-flare-interventions: done
   2-6-view-flare-history-timeline: done
   2-7-mark-flare-as-resolved: done
-  2-8-resolved-flares-archive: ready-for-dev
+  2-8-resolved-flares-archive: review
   epic-2-retrospective: optional
 
   epic-3: backlog
