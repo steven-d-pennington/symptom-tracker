@@ -54,13 +54,14 @@ export function NewFlareDialog({
     }));
   };
 
-  const handleCoordinateCapture = useCallback(
-    (event: React.MouseEvent<SVGSVGElement>) => {
-      const target = event.target as SVGElement | null;
-      if (!target) {
-        return;
-      }
-
+  // Helper function to capture coordinates from either mouse or touch events
+  const captureCoordinatesFromEvent = useCallback(
+    (
+      svgElement: SVGSVGElement,
+      clientX: number,
+      clientY: number,
+      target: SVGElement
+    ) => {
       const isBodyRegionElement = target.classList?.contains("body-region");
       const regionIdFromTarget = target?.id;
       if (!regionIdFromTarget && !isBodyRegionElement) {
@@ -78,12 +79,11 @@ export function NewFlareDialog({
         return;
       }
 
-      const svgElement = event.currentTarget;
       svgRef.current = svgElement;
 
       const point = svgElement.createSVGPoint();
-      point.x = event.clientX;
-      point.y = event.clientY;
+      point.x = clientX;
+      point.y = clientY;
 
       const ctm = svgElement.getScreenCTM();
       if (!ctm) {
@@ -115,6 +115,46 @@ export function NewFlareDialog({
       }));
     },
     [formData.bodyRegions]
+  );
+
+  const handleCoordinateCapture = useCallback(
+    (event: React.MouseEvent<SVGSVGElement>) => {
+      const target = event.target as SVGElement | null;
+      if (!target) {
+        return;
+      }
+
+      captureCoordinatesFromEvent(
+        event.currentTarget,
+        event.clientX,
+        event.clientY,
+        target
+      );
+    },
+    [captureCoordinatesFromEvent]
+  );
+
+  const handleTouchCoordinateCapture = useCallback(
+    (event: React.TouchEvent<SVGSVGElement>) => {
+      // Only handle single touch
+      if (event.touches.length !== 1) {
+        return;
+      }
+
+      const target = event.target as SVGElement | null;
+      if (!target) {
+        return;
+      }
+
+      const touch = event.touches[0];
+      captureCoordinatesFromEvent(
+        event.currentTarget,
+        touch.clientX,
+        touch.clientY,
+        target
+      );
+    },
+    [captureCoordinatesFromEvent]
   );
 
   // Render coordinate markers for all selected regions with captured coordinates
@@ -316,6 +356,7 @@ export function NewFlareDialog({
                     onRegionSelect={handleRegionToggle}
                     multiSelect={true}
                     onCoordinateCapture={handleCoordinateCapture}
+                    onTouchCoordinateCapture={handleTouchCoordinateCapture}
                     coordinateCursorActive={formData.bodyRegions.length > 0}
                     coordinateMarker={coordinateMarkerNodes}
                     userId={userId}
