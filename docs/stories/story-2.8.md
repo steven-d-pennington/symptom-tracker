@@ -1,6 +1,6 @@
 # Story 2.8: Resolved Flares Archive
 
-Status: review
+Status: done
 
 ## Story
 
@@ -702,6 +702,10 @@ export function ResolvedFlaresEmptyState({ hasFilters, onClearFilters }: Resolve
 ---
 
 ## Dev Agent Record
+
+### Completion Notes
+**Completed:** 2025-10-27
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing
 
 ### Context Reference
 
