@@ -120,7 +120,21 @@ export function ActiveFlareCards({
     if (!confirmed) return;
 
     try {
-      await repository.resolve(flareId);
+      const resolutionDate = Date.now();
+
+      // Create resolution FlareEvent record (append-only pattern)
+      await repository.addFlareEvent(userId, flareId, {
+        eventType: "resolved",
+        timestamp: resolutionDate,
+        resolutionDate: resolutionDate,
+      });
+
+      // Update FlareRecord status to resolved and set endDate
+      await repository.updateFlare(userId, flareId, {
+        status: "resolved",
+        endDate: resolutionDate,
+      });
+
       await loadFlares(); // Refresh the list
     } catch (err) {
       console.error("Failed to resolve flare:", err);
