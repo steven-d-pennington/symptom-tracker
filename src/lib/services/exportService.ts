@@ -65,6 +65,11 @@ export interface ExportOptions {
   onlySignificant?: boolean;
   // UX instrumentation
   includeUxEvents?: boolean;
+  // Body map and photo comparisons
+  includeBodyMapLocations?: boolean;
+  includePhotoComparisons?: boolean;
+  // Raw analysis results
+  includeAnalysisResults?: boolean;
   dateRange?: {
     start: string;
     end: string;
@@ -106,6 +111,11 @@ export interface ExportData {
   correlations?: CorrelationSummary[];
   // UX instrumentation events
   uxEvents?: UxEventRecord[];
+  // Body map and photo comparisons
+  bodyMapLocations?: BodyMapLocationRecord[];
+  photoComparisons?: PhotoComparisonRecord[];
+  // Raw analysis results
+  analysisResults?: AnalysisResultRecord[];
 }
 
 export interface FoodJournalRow {
@@ -416,6 +426,30 @@ export class ExportService {
         .toArray();
     }
 
+    // Body Map Locations
+    if (options.includeBodyMapLocations !== false) {
+      data.bodyMapLocations = await db.bodyMapLocations
+        .where("userId")
+        .equals(userId)
+        .toArray();
+    }
+
+    // Photo Comparisons
+    if (options.includePhotoComparisons !== false) {
+      data.photoComparisons = await db.photoComparisons
+        .where("userId")
+        .equals(userId)
+        .toArray();
+    }
+
+    // Raw Analysis Results
+    if (options.includeAnalysisResults !== false) {
+      data.analysisResults = await db.analysisResults
+        .where("userId")
+        .equals(userId)
+        .toArray();
+    }
+
     return data;
   }
 
@@ -566,6 +600,38 @@ export class ExportService {
         const details = detailsParts.join(", ");
         csvParts.push(
           `correlation,${timestamp},${escapeCSV(name)},${escapeCSV(details)}`
+        );
+      });
+    }
+
+    // Export body map locations
+    if (data.bodyMapLocations && data.bodyMapLocations.length > 0) {
+      data.bodyMapLocations.forEach((location) => {
+        const timestamp = new Date(location.createdAt).toISOString();
+        const name = `${location.bodyRegionId}${location.symptomId ? ` - ${location.symptomId}` : ""}`;
+        const details = [
+          `severity: ${location.severity}`,
+          location.coordinates ? `coordinates: (${location.coordinates.x.toFixed(2)},${location.coordinates.y.toFixed(2)})` : undefined,
+          location.notes ? `notes: ${location.notes}` : undefined,
+        ].filter(Boolean).join(", ");
+        csvParts.push(
+          `body-map-location,${timestamp},${escapeCSV(name)},${escapeCSV(details)}`
+        );
+      });
+    }
+
+    // Export photo comparisons
+    if (data.photoComparisons && data.photoComparisons.length > 0) {
+      data.photoComparisons.forEach((comparison) => {
+        const timestamp = new Date(comparison.createdAt).toISOString();
+        const name = comparison.title;
+        const details = [
+          `beforePhotoId: ${comparison.beforePhotoId}`,
+          `afterPhotoId: ${comparison.afterPhotoId}`,
+          comparison.notes ? `notes: ${comparison.notes}` : undefined,
+        ].filter(Boolean).join(", ");
+        csvParts.push(
+          `photo-comparison,${timestamp},${escapeCSV(name)},${escapeCSV(details)}`
         );
       });
     }

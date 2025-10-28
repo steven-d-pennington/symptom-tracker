@@ -24,6 +24,9 @@ import type {
   FoodEventRecord,
   FoodCombinationRecord,
   UxEventRecord,
+  BodyMapLocationRecord,
+  PhotoComparisonRecord,
+  AnalysisResultRecord,
 } from "../db/schema";
 import type { Symptom } from "../types/symptoms";
 import { v4 as uuidv4 } from "uuid";
@@ -60,6 +63,9 @@ export interface ImportResult {
     foodEvents: number;
     foodCombinations: number;
     uxEvents: number;
+    bodyMapLocations: number;
+    photoComparisons: number;
+    analysisResults: number;
   };
   skipped: {
     items: number;
@@ -149,6 +155,9 @@ export class ImportService {
           foodEvents: 0,
           foodCombinations: 0,
           uxEvents: 0,
+          bodyMapLocations: 0,
+          photoComparisons: 0,
+          analysisResults: 0,
         },
         errors: [
           error instanceof Error ? error.message : "Unknown import error",
@@ -188,6 +197,9 @@ export class ImportService {
         foodEvents: 0,
         foodCombinations: 0,
         uxEvents: 0,
+        bodyMapLocations: 0,
+        photoComparisons: 0,
+        analysisResults: 0,
       },
       errors: ["CSV import not yet implemented"],
       skipped: {
@@ -237,6 +249,9 @@ export class ImportService {
         foodEvents: 0,
         foodCombinations: 0,
         uxEvents: 0,
+        bodyMapLocations: 0,
+        photoComparisons: 0,
+        analysisResults: 0,
       },
       errors: [],
       skipped: {
@@ -408,6 +423,39 @@ export class ImportService {
           options
         );
         result.imported.uxEvents = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      // Body Map Locations
+      if (data.bodyMapLocations && data.bodyMapLocations.length > 0) {
+        const imported = await this.importBodyMapLocations(
+          data.bodyMapLocations,
+          userId,
+          options
+        );
+        result.imported.bodyMapLocations = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      // Photo Comparisons
+      if (data.photoComparisons && data.photoComparisons.length > 0) {
+        const imported = await this.importPhotoComparisons(
+          data.photoComparisons,
+          userId,
+          options
+        );
+        result.imported.photoComparisons = imported.count;
+        result.skipped.items += imported.skipped;
+      }
+
+      // Analysis Results
+      if (data.analysisResults && data.analysisResults.length > 0) {
+        const imported = await this.importAnalysisResults(
+          data.analysisResults,
+          userId,
+          options
+        );
+        result.imported.analysisResults = imported.count;
         result.skipped.items += imported.skipped;
       }
     } catch (error) {
@@ -1351,6 +1399,150 @@ export class ImportService {
 
       img.src = url;
     });
+  }
+
+  /**
+   * Import body map locations
+   */
+  private async importBodyMapLocations(
+    locations: BodyMapLocationRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const location of locations) {
+      try {
+        const id = location.id || uuidv4();
+        const createdAt =
+          location.createdAt instanceof Date
+            ? location.createdAt
+            : new Date(location.createdAt);
+        const updatedAt =
+          location.updatedAt instanceof Date
+            ? location.updatedAt
+            : new Date(location.updatedAt);
+
+        const normalized: BodyMapLocationRecord = {
+          ...location,
+          id,
+          userId,
+          createdAt,
+          updatedAt,
+        };
+
+        const existing = await db.bodyMapLocations.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.bodyMapLocations.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import body map location:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import photo comparisons
+   */
+  private async importPhotoComparisons(
+    comparisons: PhotoComparisonRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const comparison of comparisons) {
+      try {
+        const id = comparison.id || uuidv4();
+        const createdAt =
+          comparison.createdAt instanceof Date
+            ? comparison.createdAt
+            : new Date(comparison.createdAt);
+
+        const normalized: PhotoComparisonRecord = {
+          ...comparison,
+          id,
+          userId,
+          createdAt,
+        };
+
+        const existing = await db.photoComparisons.get(id);
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        await db.photoComparisons.put(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import photo comparison:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
+  }
+
+  /**
+   * Import analysis results
+   */
+  private async importAnalysisResults(
+    results: AnalysisResultRecord[],
+    userId: string,
+    options: ImportOptions
+  ): Promise<{ count: number; skipped: number }> {
+    let count = 0;
+    let skipped = 0;
+
+    for (const result of results) {
+      try {
+        const id = result.id;
+        const createdAt =
+          result.createdAt instanceof Date
+            ? result.createdAt
+            : new Date(result.createdAt);
+
+        const normalized: AnalysisResultRecord = {
+          ...result,
+          userId,
+          createdAt,
+        };
+
+        // Analysis results use auto-increment ID, so skip duplicate check by ID
+        // Instead check for duplicate metric+timeRange combination
+        const existing = await db.analysisResults
+          .where("[userId+metric+timeRange]")
+          .equals([userId, result.metric, result.timeRange])
+          .first();
+
+        if (options.mergeStrategy === "skip" && existing) {
+          skipped++;
+          continue;
+        }
+
+        // If replacing, delete the old one first
+        if (options.mergeStrategy === "replace" && existing) {
+          await db.analysisResults.delete(existing.id!);
+        }
+
+        await db.analysisResults.add(normalized);
+        count++;
+      } catch (error) {
+        console.error("Failed to import analysis result:", error);
+        skipped++;
+      }
+    }
+
+    return { count, skipped };
   }
 }
 
