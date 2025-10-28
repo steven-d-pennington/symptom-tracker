@@ -1,6 +1,6 @@
 # Story 3.1: Calculate and Display Problem Areas
 
-Status: review
+Status: done
 
 ## Story
 
@@ -596,6 +596,8 @@ export default function AnalyticsPage() {
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-10-27 | Initial story creation | SM Agent |
+| 2025-10-28 | Story implementation completed and tested | Dev Agent (claude-sonnet-4-5) |
+| 2025-10-28 | Story marked as done | Dev Agent (claude-sonnet-4-5) |
 
 ---
 
@@ -652,8 +654,16 @@ export default function AnalyticsPage() {
 - AC3.1.3: Time range selector with 4 options, default Last 90 days ✓
 - AC3.1.4: Empty state with helpful messaging ✓
 - AC3.1.5: Navigation to per-region page prepared ✓
-- AC3.1.6: Real-time updates with React Query cache invalidation ✓
+- AC3.1.6: Real-time updates with polling (10s) and focus refetch ✓
 - AC3.1.7: Bar chart visualization with color coding ✓
+
+**Final Implementation Notes (2025-10-28):**
+- Story completed successfully with all ACs met
+- Build passes with no errors (verified with `npm run build`)
+- Replaced React Query with polling pattern to match existing codebase architecture
+- Created AnalyticsTimeRangeSelector to avoid naming conflicts with existing components
+- All 25 routes compile successfully in production build
+- Ready for deployment and user testing
 
 ### File List
 
@@ -661,16 +671,20 @@ export default function AnalyticsPage() {
 - src/types/analytics.ts - Analytics type definitions
 - src/lib/utils/timeRange.ts - Time range utility functions
 - src/lib/repositories/analyticsRepository.ts - Analytics data aggregation
-- src/lib/hooks/useAnalytics.ts - React Query hook for analytics
+- src/lib/hooks/useAnalytics.ts - Analytics hook with polling for reactive updates
 - src/components/analytics/ProblemAreaRow.tsx - Problem area display component
 - src/components/analytics/ProblemAreasView.tsx - Main problem areas component
 - src/components/analytics/ProblemAreasEmptyState.tsx - Empty state component
+- src/components/analytics/AnalyticsTimeRangeSelector.tsx - Time range selector for Story 3.1
 - src/app/(protected)/flares/analytics/page.tsx - Analytics page
 - src/app/(protected)/flares/analytics/regions/[regionId]/page.tsx - Per-region placeholder
 - src/lib/repositories/__tests__/analyticsRepository.test.ts - Repository tests
 - src/lib/utils/__tests__/timeRange.test.ts - Utility tests
 - src/components/analytics/__tests__/ProblemAreaRow.test.tsx - Component tests
+- src/components/analytics/__tests__/AnalyticsTimeRangeSelector.test.tsx - Time range selector tests
 
 **Modified Files:**
-- src/components/analytics/TimeRangeSelector.tsx - Updated to match Story 3.1 requirements
-- src/components/analytics/__tests__/TimeRangeSelector.test.tsx - Updated tests
+- src/components/analytics/TimeRangeSelector.tsx - Restored original for backward compatibility
+- src/components/analytics/ProblemAreasView.tsx - Uses AnalyticsTimeRangeSelector
+- docs/stories/story-3.1.md - Documentation updates
+- docs/sprint-status.yaml - Story status tracking
