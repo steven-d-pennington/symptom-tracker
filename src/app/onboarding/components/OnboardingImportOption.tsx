@@ -122,6 +122,9 @@ export function OnboardingImportOption() {
           foodEvents: 0,
           foodCombinations: 0,
           uxEvents: 0,
+          bodyMapLocations: 0,
+          photoComparisons: 0,
+          analysisResults: 0,
         },
         errors: [error instanceof Error ? error.message : "Unknown error"],
         skipped: {
