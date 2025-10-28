@@ -1,137 +1,55 @@
 'use client';
 
 import { useState } from "react";
-import { populateDevDemoData } from "@/lib/dev/populateDemoData";
-import { generateEventStreamData, EventStreamPreset } from "@/lib/dev/generateEventStreamData";
-import { generateFoodEventData, FoodEventPreset } from "@/lib/dev/generateFoodEventData";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { generateComprehensiveData } from "@/lib/dev/generators/orchestrator";
+import { getScenarioConfig, getAllScenarios, ScenarioType } from "@/lib/dev/config/scenarios";
 
 export function DevDataControls() {
-  // Expose controls to everyone (not just development mode)
   const { userId, isLoading: userLoading } = useCurrentUser();
   const [isLoading, setIsLoading] = useState(false);
-  const [quickMessage, setQuickMessage] = useState<string | null>(null);
-  const [quickError, setQuickError] = useState<string | null>(null);
-  const [foodMessage, setFoodMessage] = useState<string | null>(null);
-  const [foodError, setFoodError] = useState<string | null>(null);
-  const [eventMessage, setEventMessage] = useState<string | null>(null);
-  const [eventError, setEventError] = useState<string | null>(null);
-  const [legacyMessage, setLegacyMessage] = useState<string | null>(null);
-  const [legacyError, setLegacyError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('comprehensive');
+  const [selectedYears, setSelectedYears] = useState<number>(1);
 
-  const handlePopulateClick = async (months: number) => {
+  const scenarios = getAllScenarios();
+
+  const handleGenerateScenario = async (scenarioId: ScenarioType, years?: number) => {
     if (!userId) {
-      setLegacyError("No user found. Please complete onboarding first.");
+      setError("No user found. Please complete onboarding first.");
       return;
     }
 
     setIsLoading(true);
-    setLegacyMessage(null);
-    setLegacyError(null);
+    setMessage(null);
+    setError(null);
 
     try {
-      const result = await populateDevDemoData({ userId, months });
-      setLegacyMessage(
-        `Generated ${result.entriesCreated} daily entries, ${result.symptomsCreated} symptoms, ${result.medicationsCreated} medications, and ${result.triggersCreated} triggers from ${result.startDate} to ${result.endDate}. Refresh to see the data!`
+      const config = getScenarioConfig(scenarioId, years);
+      const result = await generateComprehensiveData(userId, config);
+
+      setMessage(
+        `✅ Generated comprehensive test data:\\n\\n` +
+        `📊 **Event Counts:**\\n` +
+        `• ${result.medicationEventsCreated} medication events\\n` +
+        `• ${result.triggerEventsCreated} trigger events\\n` +
+        `• ${result.symptomInstancesCreated} symptom instances\\n` +
+        `• ${result.flaresCreated} flares\\n` +
+        `• ${result.flareEventsCreated} flare events\\n` +
+        `• ${result.foodEventsCreated} food events\\n` +
+        (result.uxEventsCreated > 0 ? `• ${result.uxEventsCreated} UX events\\n` : '') +
+        (result.bodyMapLocationsCreated > 0 ? `• ${result.bodyMapLocationsCreated} body map locations\\n` : '') +
+        (result.photoAttachmentsCreated > 0 ? `• ${result.photoAttachmentsCreated} photos\\n` : '') +
+        `\\n📅 **Time Range:** ${new Date(result.startDate).toLocaleDateString()} to ${new Date(result.endDate).toLocaleDateString()}\\n\\n` +
+        `**Refresh the page to see your data!**`
       );
     } catch (err) {
-      console.error("Failed to populate demo data", err);
-      setLegacyError(
+      console.error("Failed to generate scenario data", err);
+      setError(
         err instanceof Error
           ? err.message
-          : "Something went wrong while creating demo data."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEventStreamClick = async (preset: EventStreamPreset) => {
-    if (!userId) {
-      setEventError("No user found. Please complete onboarding first.");
-      return;
-    }
-
-    setIsLoading(true);
-    setEventMessage(null);
-    setEventError(null);
-
-    try {
-      const result = await generateEventStreamData({ userId, preset });
-      setEventMessage(
-        `Generated ${result.medicationEventsCreated} medication events, ${result.triggerEventsCreated} trigger events, ${result.symptomInstancesCreated} symptom instances, and ${result.flaresCreated} flares from ${new Date(result.startDate).toLocaleDateString()} to ${new Date(result.endDate).toLocaleDateString()}. Refresh to see the data!`
-      );
-    } catch (err) {
-      console.error("Failed to generate event stream data", err);
-      setEventError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while creating event stream data."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFoodEventClick = async (preset: FoodEventPreset) => {
-    if (!userId) {
-      setFoodError("No user found. Please complete onboarding first.");
-      return;
-    }
-
-    setIsLoading(true);
-    setFoodMessage(null);
-    setFoodError(null);
-
-    try {
-      const result = await generateFoodEventData({ userId, preset });
-      setFoodMessage(
-        `Generated ${result.foodEventsCreated} food events across ${result.foodsCreated} different foods from ${new Date(result.startDate).toLocaleDateString()} to ${new Date(result.endDate).toLocaleDateString()}. Refresh to see the data!`
-      );
-    } catch (err) {
-      console.error("Failed to generate food event data", err);
-      setFoodError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while creating food event data."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateAll = async (preset: "one-week" | "heavy-user" | "one-year-heavy") => {
-    if (!userId) {
-      setQuickError("No user found. Please complete onboarding first.");
-      return;
-    }
-
-    setIsLoading(true);
-    setQuickMessage(null);
-    setQuickError(null);
-
-    try {
-      // Generate all data types
-      const [eventResult, foodResult] = await Promise.all([
-        generateEventStreamData({ userId, preset }),
-        generateFoodEventData({ userId, preset }),
-      ]);
-
-      setQuickMessage(
-        `Generated comprehensive seed data:\n` +
-        `• ${eventResult.medicationEventsCreated} medication events\n` +
-        `• ${eventResult.triggerEventsCreated} trigger events\n` +
-        `• ${eventResult.symptomInstancesCreated} symptom instances\n` +
-        `• ${eventResult.flaresCreated} flares\n` +
-        `• ${foodResult.foodEventsCreated} food events\n` +
-        `Refresh to see the data!`
-      );
-    } catch (err) {
-      console.error("Failed to generate comprehensive data", err);
-      setQuickError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while creating comprehensive data."
+          : "Something went wrong while generating data."
       );
     } finally {
       setIsLoading(false);
@@ -140,24 +58,24 @@ export function DevDataControls() {
 
   const handleClearAllData = async () => {
     if (!userId) {
-      setQuickError("No user found. Please complete onboarding first.");
+      setError("No user found. Please complete onboarding first.");
       return;
     }
 
     const confirmed = confirm(
-      "⚠️ WARNING: This will delete ALL data for the current user including:\n\n" +
-      "• All event stream data (medications, triggers, symptoms, flares)\n" +
-      "• All food logs and events\n" +
-      "• All legacy daily entries\n" +
-      "• User definitions (symptoms, medications, triggers, foods)\n\n" +
+      "⚠️ WARNING: This will delete ALL data for the current user including:\\n\\n" +
+      "• All event stream data (medications, triggers, symptoms, flares)\\n" +
+      "• All food logs and events\\n" +
+      "• All legacy daily entries\\n" +
+      "• User definitions (symptoms, medications, triggers, foods)\\n\\n" +
       "This action cannot be undone. Are you sure?"
     );
 
     if (!confirmed) return;
 
     setIsLoading(true);
-    setQuickMessage(null);
-    setQuickError(null);
+    setMessage(null);
+    setError(null);
 
     try {
       const { db } = await import("@/lib/db/client");
@@ -187,10 +105,10 @@ export function DevDataControls() {
         db.uxEvents?.where({ userId }).delete(),
       ]);
 
-      setQuickMessage("✅ All data has been cleared successfully. The app is now in a fresh state.");
+      setMessage("✅ All data has been cleared successfully. The app is now in a fresh state.");
     } catch (err) {
       console.error("Failed to clear data", err);
-      setQuickError(
+      setError(
         err instanceof Error
           ? err.message
           : "Something went wrong while clearing data."
@@ -222,38 +140,96 @@ export function DevDataControls() {
 
   return (
     <div className="mt-10 space-y-6">
-      {/* Quick Actions */}
+      {/* Scenario Selection */}
       <div className="rounded-lg border-2 border-dashed border-purple-500/60 bg-purple-500/10 p-6">
-        <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400">Quick Actions</h3>
+        <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400">
+          📋 Test Data Scenarios
+        </h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Generate comprehensive seed data with all features, or clear all data to start fresh.
+          Choose a scenario optimized for testing specific features. Each scenario generates realistic data patterns.
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-3">
+        {/* Year Selector */}
+        <div className="mt-4 space-y-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Data Time Range (Years): {selectedYears} {selectedYears === 1 ? 'year' : 'years'}
+          </label>
+          <input
+            type="range"
+            min="1"
+            max="5"
+            step="1"
+            value={selectedYears}
+            onChange={(e) => setSelectedYears(Number(e.target.value))}
+            disabled={isLoading}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>1 year</span>
+            <span>2 years</span>
+            <span>3 years</span>
+            <span>4 years</span>
+            <span>5 years</span>
+          </div>
+        </div>
+
+        {/* Scenario Cards */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {scenarios.map((scenario) => (
+            <div
+              key={scenario.id}
+              className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
+                selectedScenario === scenario.id
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                  : 'border-gray-300 dark:border-gray-700 hover:border-purple-400'
+              }`}
+              onClick={() => setSelectedScenario(scenario.id)}
+            >
+              <div className="flex items-start space-x-3">
+                <span className="text-3xl">{scenario.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                    {scenario.name}
+                  </h4>
+                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 line-clamp-3">
+                    {scenario.description}
+                  </p>
+                </div>
+              </div>
+              {selectedScenario === scenario.id && (
+                <div className="absolute top-2 right-2 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Generate Button */}
+        <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => handleGenerateAll("one-week")}
+            onClick={() => handleGenerateScenario(selectedScenario, selectedYears)}
             disabled={isLoading}
             className="inline-flex items-center rounded-md bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {isLoading ? "Generating…" : "Generate All (1 Week)"}
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating…
+              </>
+            ) : (
+              <>
+                Generate {scenarios.find(s => s.id === selectedScenario)?.name}
+              </>
+            )}
           </button>
-          <button
-            type="button"
-            onClick={() => handleGenerateAll("heavy-user")}
-            disabled={isLoading}
-            className="inline-flex items-center rounded-md bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "Generate All (30 Days)"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleGenerateAll("one-year-heavy")}
-            disabled={isLoading}
-            className="inline-flex items-center rounded-md bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "Generate All (1 Year)"}
-          </button>
+
           <button
             type="button"
             onClick={handleClearAllData}
@@ -264,211 +240,68 @@ export function DevDataControls() {
           </button>
         </div>
 
-        <p className="mt-3 text-xs text-muted-foreground">
-          <strong>Generate All:</strong> Creates event stream data (medications, triggers, symptoms, flares) + food events in one click<br />
-          <strong>Clear All Data:</strong> Removes all user data including events, definitions, and legacy entries
-        </p>
-
-        {quickMessage && (
-          <p className="mt-3 text-sm text-purple-700 dark:text-purple-400 whitespace-pre-line" role="status">
-            ✅ {quickMessage}
+        {/* Help Text */}
+        <div className="mt-4 rounded-md bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-200 dark:border-blue-800">
+          <p className="text-xs text-blue-900 dark:text-blue-200">
+            <strong>💡 Tip:</strong> Start with "Quick Start" to explore features, then use specific scenarios to test advanced functionality like correlation analysis or flare tracking.
           </p>
+        </div>
+
+        {message && (
+          <div className="mt-4 rounded-md bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
+            <p className="text-sm text-green-900 dark:text-green-200 whitespace-pre-line">
+              {message}
+            </p>
+          </div>
         )}
 
-        {quickError && (
-          <p className="mt-3 text-sm text-destructive whitespace-pre-line" role="alert">
-            ❌ {quickError}
-          </p>
+        {error && (
+          <div className="mt-4 rounded-md bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
+            <p className="text-sm text-red-900 dark:text-red-200 whitespace-pre-line" role="alert">
+              ❌ {error}
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Food Event Data (NEWEST) */}
-      <div className="rounded-lg border border-dashed border-blue-500/40 bg-blue-500/5 p-6">
-        <h3 className="text-lg font-semibold text-blue-600">Food Event Data (NEWEST)</h3>
+      {/* What Gets Generated */}
+      <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/20 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          📦 What Gets Generated
+        </h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Generate realistic food logging data with varied meals (breakfast, lunch, dinner, snacks) using the complete food catalog (210+ foods).
-          <strong className="block mt-2">⚠️ This will replace all existing food event data for the current user!</strong>
+          Depending on the scenario selected, the following data types may be generated:
         </p>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 md:flex md:flex-wrap">
-          <button
-            type="button"
-            onClick={() => handleFoodEventClick("first-day")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "First Day"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFoodEventClick("one-week")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "One Week"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFoodEventClick("heavy-user")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "Heavy User (30 days)"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFoodEventClick("one-year-heavy")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "1 Year Heavy User"}
-          </button>
-        </div>
-
-        <p className="mt-3 text-xs text-muted-foreground">
-          <strong>First Day:</strong> 2-3 meals today with occasional snacks<br />
-          <strong>One Week:</strong> 2-3 meals/day with snacks (60% chance)<br />
-          <strong>Heavy User:</strong> 3 meals/day for 30 days with frequent snacks (80%)<br />
-          <strong>1 Year Heavy User:</strong> 3 meals/day for 364 days with regular snacks (70%)
-        </p>
-
-        {foodMessage && (
-          <p className="mt-3 text-sm text-blue-600" role="status">
-            ✅ {foodMessage}
-          </p>
-        )}
-
-        {foodError && (
-          <p className="mt-3 text-sm text-destructive" role="alert">
-            ❌ {foodError}
-          </p>
-        )}
-      </div>
-
-      {/* Event Stream Data */}
-      <div className="rounded-lg border border-dashed border-emerald-500/40 bg-emerald-500/5 p-6">
-        <h3 className="text-lg font-semibold text-emerald-600">Event Stream Data</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Generate realistic event-based data with timestamped medication events, trigger events, symptom instances, and flares with severity progression.
-          <strong className="block mt-2">⚠️ This will replace all existing event data for the current user!</strong>
-        </p>
-        <div className="mt-3 rounded-md bg-amber-500/10 border border-amber-500/30 p-3">
-          <p className="text-xs text-amber-900 dark:text-amber-200">
-            <strong>First time using event stream?</strong> Close all other tabs with this app open, then refresh this page.
-            This upgrades the database to support event stream data (version 10).
-          </p>
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 md:flex md:flex-wrap">
-          <button
-            type="button"
-            onClick={() => handleEventStreamClick("first-day")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "First Day"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleEventStreamClick("one-week")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "One Week"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleEventStreamClick("heavy-user")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "Heavy User (30 days)"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleEventStreamClick("one-year-heavy")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "1 Year Heavy User"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleEventStreamClick("edge-cases")}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "Edge Cases"}
-          </button>
-        </div>
-
-        <p className="mt-3 text-xs text-muted-foreground">
-          <strong>First Day:</strong> 2-4 events today, 1 active flare<br />
-          <strong>One Week:</strong> 3-5 events/day, 1-2 active flares with progression<br />
-          <strong>Heavy User:</strong> 5-8 events/day for 30 days, 3-5 flares<br />
-          <strong>1 Year Heavy User:</strong> 6-12 events/day for 364 days, 15-25 flares with varied progressions<br />
-          <strong>Edge Cases:</strong> Variable patterns, missed meds, unusual timing
-        </p>
-
-        {eventMessage && (
-          <p className="mt-3 text-sm text-emerald-600" role="status">
-            ✅ {eventMessage}
-          </p>
-        )}
-
-        {eventError && (
-          <p className="mt-3 text-sm text-destructive" role="alert">
-            ❌ {eventError}
-          </p>
-        )}
-      </div>
-
-      {/* Legacy Daily Entry Data (OLD) */}
-      <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-6">
-        <h3 className="text-lg font-semibold text-primary">Legacy Daily Entry Data (OLD)</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Legacy daily summary model (deprecated). Use Event Stream Data above for new event-based model.
-          <strong className="block mt-2">⚠️ This will replace all existing data for the current user!</strong>
-        </p>
-
-        <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => handlePopulateClick(3)}
-            disabled={isLoading}
-            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "3 Months"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handlePopulateClick(6)}
-            disabled={isLoading}
-            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "6 Months"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handlePopulateClick(12)}
-            disabled={isLoading}
-            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Generating…" : "1 Year"}
-          </button>
-        </div>
-
-        {legacyMessage && (
-          <p className="mt-3 text-sm text-primary" role="status">
-            ✅ {legacyMessage}
-          </p>
-        )}
-
-        {legacyError && (
-          <p className="mt-3 text-sm text-destructive" role="alert">
-            ❌ {legacyError}
-          </p>
-        )}
+        <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+          <li className="flex items-start">
+            <span className="mr-2">💊</span>
+            <span><strong>Medication Events:</strong> Scheduled medication tracking with adherence patterns and timing warnings</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">⚠️</span>
+            <span><strong>Trigger Events:</strong> Environmental and lifestyle triggers with intensity levels and symptom correlations</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">🔥</span>
+            <span><strong>Flare Tracking:</strong> Complete flare lifecycle with severity progression, interventions, and resolutions</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">🍽️</span>
+            <span><strong>Food Events:</strong> Meal logging with intentional patterns for testing correlation analysis</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">📍</span>
+            <span><strong>Body Map Locations:</strong> Symptom and flare locations with coordinate precision</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">📸</span>
+            <span><strong>Photo Attachments:</strong> Placeholder photo blobs for testing photo features (if supported)</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">📊</span>
+            <span><strong>UX Events:</strong> Simulated user interaction analytics</span>
+          </li>
+        </ul>
       </div>
     </div>
   );
