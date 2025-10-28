@@ -4,6 +4,7 @@ import { OnboardingRedirectGate } from "./onboarding/components/OnboardingRedire
 import { OfflineIndicator, InstallPrompt, UpdateNotification } from "@/components/pwa";
 import { NavLayout } from "@/components/navigation/NavLayout";
 import { MigrationProvider } from "@/components/providers/MigrationProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ToastContainer } from "@/components/common/ToastContainer";
 
 export const metadata: Metadata = {
@@ -51,16 +52,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background text-foreground antialiased font-sans">
-        <MigrationProvider>
-          <OnboardingRedirectGate />
-          <NavLayout>{children}</NavLayout>
-          {/* PWA Components */}
-          <OfflineIndicator />
-          <InstallPrompt />
-          <UpdateNotification />
-          {/* Toast Notifications */}
-          <ToastContainer />
-        </MigrationProvider>
+        <ThemeProvider>
+          <MigrationProvider>
+            <OnboardingRedirectGate />
+            <NavLayout>{children}</NavLayout>
+            {/* PWA Components */}
+            <OfflineIndicator />
+            <InstallPrompt />
+            <UpdateNotification />
+            {/* Toast Notifications */}
+            <ToastContainer />
+          </MigrationProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

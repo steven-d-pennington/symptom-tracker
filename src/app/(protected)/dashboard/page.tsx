@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
-import { ActiveFlareCards } from "@/components/flares/ActiveFlareCards";
 import { QuickLogButtons } from "@/components/quick-log/QuickLogButtons";
 import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
 import { MedicationLogModal } from "@/components/medications/MedicationLogModal";
@@ -11,14 +10,11 @@ import { SymptomLogModal } from "@/components/symptoms/SymptomLogModal";
 import { TriggerLogModal } from "@/components/triggers/TriggerLogModal";
 import { FoodLogModal } from "@/components/food/FoodLogModal";
 import TimelineView from "@/components/timeline/TimelineView";
-import { TodayHighlightsCard } from "@/components/dashboard/TodayHighlightsCard";
 import { TodayQuickActionsCard } from "@/components/dashboard/TodayQuickActionsCard";
 import { TodayTimelineCard } from "@/components/dashboard/TodayTimelineCard";
-import { HighlightsEmptyState } from "@/components/dashboard/TodayEmptyStates";
 import { FoodProvider, useFoodContext } from "@/contexts/FoodContext";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
-import { flareRepository } from "@/lib/repositories/flareRepository";
 import { cn } from "@/lib/utils/cn";
 
 function DashboardContent() {
@@ -204,14 +200,6 @@ function DashboardContent() {
             <span>Refresh</span>
           </button>
         </div>
-
-        {/* Today's Highlights Module */}
-        <TodayHighlightsCard>
-          <ActiveFlareCards
-            key={`flares-${refreshKey}`}
-            userId={userId}
-          />
-        </TodayHighlightsCard>
 
         {/* Quick Actions Module */}
         <TodayQuickActionsCard>

@@ -24,6 +24,7 @@ export interface GeneratorConfig {
   flares: {
     count: { min: number; max: number };
     regionClustering: boolean;
+    clusteringIntensity?: 'high' | 'medium' | 'low'; // How concentrated the clustering is
     generateEvents: boolean;
     eventsPerFlare: { min: number; max: number };
     interventionProbability: number; // 0-1

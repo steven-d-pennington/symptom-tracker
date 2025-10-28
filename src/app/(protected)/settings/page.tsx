@@ -1,7 +1,13 @@
+"use client";
+
 import { Settings as SettingsIcon, Bell, Lock, Palette, Globe } from "lucide-react";
 import DevDataControls from "@/components/settings/DevDataControls";
+import { ThemeToggle } from "@/components/settings/ThemeToggle";
+import { useState } from "react";
 
 export default function SettingsPage() {
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
   const settingsSections = [
     {
       title: "Notifications",
@@ -19,7 +25,8 @@ export default function SettingsPage() {
       title: "Appearance",
       icon: Palette,
       description: "Theme and display settings",
-      comingSoon: true,
+      comingSoon: false,
+      content: <ThemeToggle />,
     },
     {
       title: "Language & Region",
@@ -41,31 +48,51 @@ export default function SettingsPage() {
       <div className="space-y-4">
         {settingsSections.map((section) => {
           const Icon = section.icon;
+          const isExpanded = expandedSection === section.title;
+          const hasContent = !section.comingSoon && section.content;
+
           return (
             <div
               key={section.title}
-              className="p-6 rounded-lg border border-border bg-card"
+              className="rounded-lg border border-border bg-card overflow-hidden"
             >
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-primary/10 text-primary">
-                  <Icon className="w-6 h-6" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-foreground">
-                      {section.title}
-                    </h3>
-                    {section.comingSoon && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-orange-500/10 text-orange-700 rounded">
-                        Coming Soon
-                      </span>
-                    )}
+              <button
+                onClick={() =>
+                  hasContent
+                    ? setExpandedSection(isExpanded ? null : section.title)
+                    : undefined
+                }
+                disabled={!hasContent}
+                className={`w-full p-6 text-left ${
+                  hasContent ? "cursor-pointer hover:bg-muted/50" : ""
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-primary/10 text-primary">
+                    <Icon className="w-6 h-6" />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {section.description}
-                  </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-foreground">
+                        {section.title}
+                      </h3>
+                      {section.comingSoon && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-orange-500/10 text-orange-700 rounded">
+                          Coming Soon
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {section.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </button>
+              {hasContent && isExpanded && (
+                <div className="px-6 pb-6 pt-0 border-t border-border">
+                  <div className="pt-4">{section.content}</div>
+                </div>
+              )}
             </div>
           );
         })}

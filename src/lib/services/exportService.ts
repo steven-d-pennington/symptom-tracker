@@ -26,6 +26,9 @@ import type {
   FoodEventRecord,
   FoodCombinationRecord,
   UxEventRecord,
+  BodyMapLocationRecord,
+  PhotoComparisonRecord,
+  AnalysisResultRecord,
 } from "../db/schema";
 import type { Symptom } from "../types/symptoms";
 import type { PhotoAttachment } from "../types/photo";

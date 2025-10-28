@@ -85,7 +85,8 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
       },
       flares: {
         count: { min: 8, max: 12 },
-        regionClustering: true, // Cluster for regional analysis
+        regionClustering: true,
+        clusteringIntensity: 'low', // Slight preferences, mostly varied
         generateEvents: true,
         eventsPerFlare: { min: 5, max: 10 },
         interventionProbability: 0.7, // High intervention rate
@@ -214,7 +215,8 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
       },
       flares: {
         count: { min: 12, max: 16 }, // More flares for clustering
-        regionClustering: true, // KEY: Cluster in problem areas
+        regionClustering: true,
+        clusteringIntensity: 'high', // KEY: Aggressive clustering for analytics testing
         generateEvents: true,
         eventsPerFlare: { min: 4, max: 8 },
         interventionProbability: 0.5,
@@ -258,6 +260,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
       flares: {
         count: { min: Math.floor(years * 15), max: Math.floor(years * 25) },
         regionClustering: true,
+        clusteringIntensity: 'medium', // Balanced - some clustering but good variety
         generateEvents: true,
         eventsPerFlare: { min: 5, max: 10 },
         interventionProbability: 0.6,
@@ -301,6 +304,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
       flares: {
         count: { min: Math.floor(years * 30), max: Math.floor(years * 40) }, // Many flares
         regionClustering: true,
+        clusteringIntensity: 'medium', // Variety for realistic stress testing
         generateEvents: true,
         eventsPerFlare: { min: 8, max: 15 }, // Many events per flare
         interventionProbability: 0.8,

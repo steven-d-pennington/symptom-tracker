@@ -551,35 +551,107 @@ async function generateFlaresWithClustering(
   let bodyRegions: string[];
 
   if (config.flares.regionClustering) {
-    // Cluster flares in 3-4 specific regions
-    const problemRegions = [
-      { id: 'armpit-right', weight: 0.3 },
-      { id: 'groin-left', weight: 0.25 },
-      { id: 'under-breast-right', weight: 0.25 },
-      { id: 'buttocks-left', weight: 0.2 },
+    const intensity = config.flares.clusteringIntensity || 'medium';
+
+    // All possible HS-affected regions
+    const allRegions = [
+      "armpit-right", "armpit-left",
+      "groin-right", "groin-left", "center-groin",
+      "buttock-right", "buttock-left",
+      "under-breast-left", "under-breast-right",
+      "inner-thigh-right", "inner-thigh-left",
+      "chest", "back",
+      "neck-front", "neck-back"
     ];
 
-    bodyRegions = [];
-    for (let i = 0; i < flareCount; i++) {
-      const roll = Math.random();
-      let cumulative = 0;
-      for (const region of problemRegions) {
-        cumulative += region.weight;
-        if (roll < cumulative) {
-          bodyRegions.push(region.id);
-          break;
+    if (intensity === 'high') {
+      // High intensity: 4 regions, aggressive clustering (for Problem Areas testing)
+      const problemRegions = [
+        { id: 'armpit-right', weight: 0.30 },
+        { id: 'groin-left', weight: 0.25 },
+        { id: 'under-breast-right', weight: 0.25 },
+        { id: 'buttocks-left', weight: 0.20 },
+      ];
+
+      bodyRegions = [];
+      for (let i = 0; i < flareCount; i++) {
+        const roll = Math.random();
+        let cumulative = 0;
+        for (const region of problemRegions) {
+          cumulative += region.weight;
+          if (roll < cumulative) {
+            bodyRegions.push(region.id);
+            break;
+          }
+        }
+      }
+    } else if (intensity === 'medium') {
+      // Medium intensity: 7-8 regions, moderate clustering (realistic variation)
+      const problemRegions = [
+        { id: 'armpit-right', weight: 0.18 },
+        { id: 'armpit-left', weight: 0.15 },
+        { id: 'groin-left', weight: 0.14 },
+        { id: 'groin-right', weight: 0.12 },
+        { id: 'under-breast-right', weight: 0.12 },
+        { id: 'buttocks-left', weight: 0.10 },
+        { id: 'inner-thigh-right', weight: 0.10 },
+        { id: 'chest', weight: 0.09 },
+      ];
+
+      bodyRegions = [];
+      for (let i = 0; i < flareCount; i++) {
+        const roll = Math.random();
+        let cumulative = 0;
+        for (const region of problemRegions) {
+          cumulative += region.weight;
+          if (roll < cumulative) {
+            bodyRegions.push(region.id);
+            break;
+          }
+        }
+      }
+    } else {
+      // Low intensity: all regions, slight preferences (most realistic)
+      const problemRegions = [
+        { id: 'armpit-right', weight: 0.10 },
+        { id: 'armpit-left', weight: 0.10 },
+        { id: 'groin-left', weight: 0.09 },
+        { id: 'groin-right', weight: 0.09 },
+        { id: 'center-groin', weight: 0.07 },
+        { id: 'under-breast-right', weight: 0.08 },
+        { id: 'under-breast-left', weight: 0.07 },
+        { id: 'buttocks-left', weight: 0.08 },
+        { id: 'buttocks-right', weight: 0.07 },
+        { id: 'inner-thigh-right', weight: 0.07 },
+        { id: 'inner-thigh-left', weight: 0.07 },
+        { id: 'chest', weight: 0.05 },
+        { id: 'back', weight: 0.04 },
+        { id: 'neck-front', weight: 0.02 },
+      ];
+
+      bodyRegions = [];
+      for (let i = 0; i < flareCount; i++) {
+        const roll = Math.random();
+        let cumulative = 0;
+        for (const region of problemRegions) {
+          cumulative += region.weight;
+          if (roll < cumulative) {
+            bodyRegions.push(region.id);
+            break;
+          }
         }
       }
     }
   } else {
-    // Random distribution across all HS regions
+    // Random distribution across all HS regions (no clustering)
     const allRegions = [
       "armpit-right", "armpit-left",
-      "groin-right", "groin-left",
+      "groin-right", "groin-left", "center-groin",
       "buttock-right", "buttock-left",
-      "chest", "back",
+      "under-breast-left", "under-breast-right",
       "inner-thigh-right", "inner-thigh-left",
-      "neck", "under-breast"
+      "chest", "back",
+      "neck-front", "neck-back"
     ];
 
     bodyRegions = Array(flareCount).fill(0).map(() =>

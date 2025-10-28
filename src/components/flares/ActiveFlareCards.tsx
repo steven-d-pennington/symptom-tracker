@@ -61,6 +61,7 @@ export function ActiveFlareCards({
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedFlare, setSelectedFlare] = useState<FlareRecord | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   const loadFlares = async () => {
     try {
@@ -111,6 +112,11 @@ export function ActiveFlareCards({
       loadFlares();
     }
   }, [userId, externalFlares]);
+
+  // Reset visible count when filter or sort changes
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [filterByRegion, sortBy]);
 
   const handleResolve = async (flareId: string, flareName: string) => {
     const confirmed = window.confirm(
@@ -321,7 +327,7 @@ export function ActiveFlareCards({
       {!isCollapsed && (
         <>
           <div className="space-y-3">
-            {sortedFlares.slice(0, 5).map((flare) => {
+            {sortedFlares.slice(0, visibleCount).map((flare) => {
           const duration = calculateDuration(flare.startDate);
           const bodyLocation = flare.bodyRegions.length > 0
             ? flare.bodyRegions.join(", ")
@@ -391,10 +397,33 @@ export function ActiveFlareCards({
             })}
           </div>
 
+          {/* Load More / Show Less buttons */}
           {filteredFlares.length > 5 && (
-            <p className="text-xs text-muted-foreground text-center">
-              Showing 5 of {filteredFlares.length} active flares
-            </p>
+            <div className="flex flex-col items-center gap-2 pt-2">
+              {visibleCount < filteredFlares.length ? (
+                <>
+                  <button
+                    onClick={() => setVisibleCount(prev => Math.min(prev + 5, filteredFlares.length))}
+                    className="w-full rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  >
+                    Load More ({visibleCount} of {filteredFlares.length})
+                  </button>
+                  <button
+                    onClick={() => setVisibleCount(filteredFlares.length)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Show All
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setVisibleCount(5)}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Show Less
+                </button>
+              )}
+            </div>
           )}
         </>
       )}
