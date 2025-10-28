@@ -48,127 +48,144 @@ So that I can understand region-specific patterns.
   - [ ] 2.7: Calculate recurrenceRate: if >= 2 flares, compute as (totalCount / daysSinceFirstFlare) * 90, otherwise return "Insufficient data"
   - [ ] 2.8: Return RegionStatistics object
 
-- [ ] Task 3: Create RegionFlareCard component (AC: #3.2.2, #3.2.6)
-  - [ ] 3.1: Create `src/components/analytics/RegionFlareCard.tsx` file
-  - [ ] 3.2: Accept props: flare (RegionFlareHistory), onClick (flareId) => void
-  - [ ] 3.3: Format startDate using date-fns: format(startDate, 'MMM dd, yyyy')
-  - [ ] 3.4: Display resolution date or "Active" badge based on flare.status
-  - [ ] 3.5: Display duration in days with label "X days" or "X day"
-  - [ ] 3.6: Display peak severity with color coding: 1-3 green (text-green-600), 4-6 yellow (text-yellow-600), 7-10 red (text-red-600)
-  - [ ] 3.7: Display trend outcome with arrow icons: Improving ↗ (green), Stable → (gray), Worsening ↘ (red), N/A (gray)
-  - [ ] 3.8: Add onClick handler calling onClick(flare.flareId)
-  - [ ] 3.9: Add keyboard navigation: onKeyDown handler for Enter key
-  - [ ] 3.10: Style with Tailwind: border, rounded, p-4, hover:shadow-md, cursor-pointer, min-h-[44px]
-  - [ ] 3.11: Add role="button", tabIndex={0}, aria-label="View details for flare from {startDate}"
-  - [ ] 3.12: Responsive layout: stack info vertically on mobile, grid on desktop
+- [ ] Task 3: Create useRegionAnalytics hook (AC: #3.2.1, #3.2.6)
+  - [ ] 3.1: Create `src/lib/hooks/useRegionAnalytics.ts` file following useAnalytics pattern from Story 3.1
+  - [ ] 3.2: Import analyticsRepository, RegionFlareHistory, RegionStatistics types
+  - [ ] 3.3: Define useRegionAnalytics hook accepting { userId: string, regionId: string }
+  - [ ] 3.4: Initialize state: flares (RegionFlareHistory[]), statistics (RegionStatistics | null), isLoading, error
+  - [ ] 3.5: Implement fetchRegionData async function calling analyticsRepository.getFlaresByRegion and getRegionStatistics
+  - [ ] 3.6: Set up polling interval for reactive updates (10 seconds matching Story 3.1 pattern)
+  - [ ] 3.7: Add window focus listener to refetch on tab switch
+  - [ ] 3.8: Implement manual refetch function with refreshTrigger state
+  - [ ] 3.9: Return { flares, statistics, isLoading, error, refetch }
+  - [ ] 3.10: Add proper cleanup in useEffect return (clearInterval, removeEventListener)
+  - [ ] 3.11: Follow offline-first pattern: all data from IndexedDB via Dexie, no network calls
 
-- [ ] Task 4: Create RegionFlareTimeline component (AC: #3.2.3)
-  - [ ] 4.1: Create `src/components/analytics/RegionFlareTimeline.tsx` component
-  - [ ] 4.2: Accept props: flares (RegionFlareHistory[]), timeRange ('lastYear' | 'allTime')
-  - [ ] 4.3: Install or use existing Chart.js from solution-architecture.md
-  - [ ] 4.4: Configure Chart.js with type: 'scatter' or 'line' for timeline visualization
-  - [ ] 4.5: Map flares to chart data points: x = startDate, y = severity, color = status (red/gray)
-  - [ ] 4.6: Add duration bars using chartjs-plugin-annotation for each flare (startDate to endDate)
-  - [ ] 4.7: Configure x-axis as time scale with appropriate date formatting
-  - [ ] 4.8: Set x-axis range based on timeRange prop: lastYear = 365 days back, allTime = earliest to latest flare
-  - [ ] 4.9: Make timeline horizontally scrollable on mobile using overflow-x-auto
-  - [ ] 4.10: Add hover tooltips showing flare details (date, duration, severity)
-  - [ ] 4.11: Ensure responsive canvas sizing with maintainAspectRatio configuration
+- [ ] Task 4: Create RegionFlareCard component (AC: #3.2.2, #3.2.6)
+  - [ ] 4.1: Create `src/components/analytics/RegionFlareCard.tsx` file
+  - [ ] 4.2: Accept props: flare (RegionFlareHistory), onClick (flareId) => void
+  - [ ] 4.3: Format startDate using date-fns: format(startDate, 'MMM dd, yyyy')
+  - [ ] 4.4: Display resolution date or "Active" badge based on flare.status
+  - [ ] 4.5: Display duration in days with label "X days" or "X day"
+  - [ ] 4.6: Display peak severity with color coding: 1-3 green (text-green-600), 4-6 yellow (text-yellow-600), 7-10 red (text-red-600)
+  - [ ] 4.7: Display trend outcome with arrow icons: Improving ↗ (green), Stable → (gray), Worsening ↘ (red), N/A (gray)
+  - [ ] 4.8: Add onClick handler calling onClick(flare.flareId)
+  - [ ] 4.9: Add keyboard navigation: onKeyDown handler for Enter key
+  - [ ] 4.10: Style with Tailwind: border, rounded, p-4, hover:shadow-md, cursor-pointer, min-h-[44px]
+  - [ ] 4.11: Add role="button", tabIndex={0}, aria-label="View details for flare from {startDate}"
+  - [ ] 4.12: Responsive layout: stack info vertically on mobile, grid on desktop
 
-- [ ] Task 5: Create RegionStatisticsCard component (AC: #3.2.4)
-  - [ ] 5.1: Create `src/components/analytics/RegionStatisticsCard.tsx` component
-  - [ ] 5.2: Accept props: statistics (RegionStatistics)
-  - [ ] 5.3: Display four statistics in grid layout (2x2 on desktop, stack on mobile)
-  - [ ] 5.4: Statistic 1: Total Flares - show totalCount with TrendingUp icon
-  - [ ] 5.5: Statistic 2: Average Duration - show averageDuration + " days" or "No data", with Clock icon
-  - [ ] 5.6: Statistic 3: Average Severity - show averageSeverity with color coding, with Activity icon
-  - [ ] 5.7: Statistic 4: Recurrence Rate - show recurrenceRate (number + " per 90d" or string), with Calendar icon
-  - [ ] 5.8: Style as card with border, rounded, p-6, bg-white
-  - [ ] 5.9: Each statistic has label (text-sm text-gray-600), value (text-2xl font-bold), icon (lucide-react)
-  - [ ] 5.10: Use grid grid-cols-1 md:grid-cols-2 gap-4 for layout
+- [ ] Task 5: Create RegionFlareTimeline component (AC: #3.2.3)
+  - [ ] 5.1: Create `src/components/analytics/RegionFlareTimeline.tsx` component
+  - [ ] 5.2: Accept props: flares (RegionFlareHistory[]), timeRange ('lastYear' | 'allTime')
+  - [ ] 5.3: Install or use existing Chart.js from solution-architecture.md
+  - [ ] 5.4: Configure Chart.js with type: 'scatter' or 'line' for timeline visualization
+  - [ ] 5.5: Map flares to chart data points: x = startDate, y = severity, color = status (red/gray)
+  - [ ] 5.6: Add duration bars using chartjs-plugin-annotation for each flare (startDate to endDate)
+  - [ ] 5.7: Configure x-axis as time scale with appropriate date formatting
+  - [ ] 5.8: Set x-axis range based on timeRange prop: lastYear = 365 days back, allTime = earliest to latest flare
+  - [ ] 5.9: Make timeline horizontally scrollable on mobile using overflow-x-auto
+  - [ ] 5.10: Add hover tooltips showing flare details (date, duration, severity)
+  - [ ] 5.11: Ensure responsive canvas sizing with maintainAspectRatio configuration
 
-- [ ] Task 6: Create FlareStatusFilter component (AC: #3.2.5)
-  - [ ] 6.1: Create `src/components/analytics/FlareStatusFilter.tsx` component
-  - [ ] 6.2: Accept props: value ('all' | 'active' | 'resolved'), onChange (filter) => void, counts { all: number, active: number, resolved: number }
-  - [ ] 6.3: Define filter options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'resolved', label: 'Resolved' }]
-  - [ ] 6.4: Render segmented control or radio button group with three options
-  - [ ] 6.5: Display count for each option in label: "All (10)", "Active (3)", "Resolved (7)"
-  - [ ] 6.6: Highlight selected option with accent color (blue border/background)
-  - [ ] 6.7: Call onChange when selection changes
-  - [ ] 6.8: Add ARIA labels for accessibility
-  - [ ] 6.9: Responsive: horizontal on desktop, stack on mobile
+- [ ] Task 6: Create RegionStatisticsCard component (AC: #3.2.4)
+  - [ ] 6.1: Create `src/components/analytics/RegionStatisticsCard.tsx` component
+  - [ ] 6.2: Accept props: statistics (RegionStatistics)
+  - [ ] 6.3: Display four statistics in grid layout (2x2 on desktop, stack on mobile)
+  - [ ] 6.4: Statistic 1: Total Flares - show totalCount with TrendingUp icon
+  - [ ] 6.5: Statistic 2: Average Duration - show averageDuration + " days" or "No data", with Clock icon
+  - [ ] 6.6: Statistic 3: Average Severity - show averageSeverity with color coding, with Activity icon
+  - [ ] 6.7: Statistic 4: Recurrence Rate - show recurrenceRate (number + " per 90d" or string), with Calendar icon
+  - [ ] 6.8: Style as card with border, rounded, p-6, bg-white
+  - [ ] 6.9: Each statistic has label (text-sm text-gray-600), value (text-2xl font-bold), icon (lucide-react)
+  - [ ] 6.10: Use grid grid-cols-1 md:grid-cols-2 gap-4 for layout
 
-- [ ] Task 7: Create RegionDetailView component (AC: #3.2.1, #3.2.2, #3.2.5, #3.2.7)
-  - [ ] 7.1: Create `src/components/analytics/RegionDetailView.tsx` component
-  - [ ] 7.2: Accept props: regionId (string)
-  - [ ] 7.3: Lookup region name from bodyRegions data
-  - [ ] 7.4: Initialize filter state: `const [filter, setFilter] = useState<FlareFilter>('all')`
-  - [ ] 7.5: Load filter preference from localStorage on mount: `localStorage.getItem('region-filter-{userId}-{regionId}')`
-  - [ ] 7.6: Save filter to localStorage when changed
-  - [ ] 7.7: Fetch flares using analyticsRepository.getFlaresByRegion(userId, regionId)
-  - [ ] 7.8: Fetch statistics using analyticsRepository.getRegionStatistics(userId, regionId)
-  - [ ] 7.9: Filter flares client-side based on filter state: all (no filter), active (status === 'Active'), resolved (status === 'Resolved')
-  - [ ] 7.10: Calculate filter counts: { all: flares.length, active: activeCount, resolved: resolvedCount }
-  - [ ] 7.11: Render page header with region name and back button
-  - [ ] 7.12: Render RegionStatisticsCard with fetched statistics
-  - [ ] 7.13: Render RegionFlareTimeline with flares data
-  - [ ] 7.14: Render FlareStatusFilter with current filter and counts
-  - [ ] 7.15: Render list of RegionFlareCard components (filtered)
-  - [ ] 7.16: Handle empty state: show RegionEmptyState when flares.length === 0
-  - [ ] 7.17: Implement handleFlareClick(flareId): navigate to `/flares/${flareId}`
-  - [ ] 7.18: Handle loading state with skeleton placeholders
-  - [ ] 7.19: Handle error state with error message and retry button
+- [ ] Task 7: Create FlareStatusFilter component (AC: #3.2.5)
+  - [ ] 7.1: Create `src/components/analytics/FlareStatusFilter.tsx` component
+  - [ ] 7.2: Accept props: value ('all' | 'active' | 'resolved'), onChange (filter) => void, counts { all: number, active: number, resolved: number }
+  - [ ] 7.3: Define filter options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'resolved', label: 'Resolved' }]
+  - [ ] 7.4: Render segmented control or radio button group with three options
+  - [ ] 7.5: Display count for each option in label: "All (10)", "Active (3)", "Resolved (7)"
+  - [ ] 7.6: Highlight selected option with accent color (blue border/background)
+  - [ ] 7.7: Call onChange when selection changes
+  - [ ] 7.8: Add ARIA labels for accessibility
+  - [ ] 7.9: Responsive: horizontal on desktop, stack on mobile
 
-- [ ] Task 8: Create RegionEmptyState component (AC: #3.2.7)
-  - [ ] 8.1: Create `src/components/analytics/RegionEmptyState.tsx` component
-  - [ ] 8.2: Accept props: regionName (string)
-  - [ ] 8.3: Display heading: "No flares recorded in this region"
-  - [ ] 8.4: Display message: "Flares in {regionName} will appear here once logged using the body map."
-  - [ ] 8.5: Add link to body map page: `<Link href="/body-map">Log New Flare →</Link>`
-  - [ ] 8.6: Style with bg-gray-50, rounded, p-8, text-center
-  - [ ] 8.7: Add icon: MapPin or Activity from lucide-react
-  - [ ] 8.8: Follow Story 3.1 empty state patterns
+- [ ] Task 8: Create RegionDetailView component (AC: #3.2.1, #3.2.2, #3.2.5, #3.2.7)
+  - [ ] 8.1: Create `src/components/analytics/RegionDetailView.tsx` component
+  - [ ] 8.2: Accept props: regionId (string)
+  - [ ] 8.3: Lookup region name from bodyRegions data
+  - [ ] 8.4: Call useRegionAnalytics hook: `const { flares, statistics, isLoading, error, refetch } = useRegionAnalytics({ userId, regionId })`
+  - [ ] 8.5: Initialize filter state: `const [filter, setFilter] = useState<FlareFilter>('all')`
+  - [ ] 8.6: Load filter preference from localStorage on mount: `localStorage.getItem('region-filter-{userId}-{regionId}')`
+  - [ ] 8.7: Save filter to localStorage when changed
+  - [ ] 8.8: Filter flares client-side based on filter state: all (no filter), active (status === 'Active'), resolved (status === 'Resolved')
+  - [ ] 8.9: Calculate filter counts: { all: flares.length, active: activeCount, resolved: resolvedCount }
+  - [ ] 8.10: Render page header with region name and back button
+  - [ ] 8.11: Render RegionStatisticsCard with fetched statistics
+  - [ ] 8.12: Render RegionFlareTimeline with flares data
+  - [ ] 8.13: Render FlareStatusFilter with current filter and counts
+  - [ ] 8.14: Render list of RegionFlareCard components (filtered)
+  - [ ] 8.15: Handle empty state: show RegionEmptyState when flares.length === 0
+  - [ ] 8.16: Implement handleFlareClick(flareId): navigate to `/flares/${flareId}`
+  - [ ] 8.17: Handle loading state with skeleton placeholders from hook
+  - [ ] 8.18: Handle error state with error message and retry button using hook's refetch
 
-- [ ] Task 9: Update region detail page route (AC: #3.2.1)
-  - [ ] 9.1: Open `src/app/(protected)/flares/analytics/regions/[regionId]/page.tsx` (placeholder from Story 3.1)
-  - [ ] 9.2: Remove placeholder content
-  - [ ] 9.3: Import RegionDetailView component
-  - [ ] 9.4: Extract regionId from route params: `const params = useParams(); const { regionId } = params;`
-  - [ ] 9.5: Render page layout with breadcrumb navigation
-  - [ ] 9.6: Render RegionDetailView component passing regionId prop
-  - [ ] 9.7: Add back button in header: onClick={() => router.push('/flares/analytics')}
-  - [ ] 9.8: Style with container mx-auto, p-4, max-w-6xl
-  - [ ] 9.9: Add page metadata: title "Region Flare History - {regionName}"
+- [ ] Task 9: Create RegionEmptyState component (AC: #3.2.7)
+  - [ ] 9.1: Create `src/components/analytics/RegionEmptyState.tsx` component
+  - [ ] 9.2: Accept props: regionName (string)
+  - [ ] 9.3: Display heading: "No flares recorded in this region"
+  - [ ] 9.4: Display message: "Flares in {regionName} will appear here once logged using the body map."
+  - [ ] 9.5: Add link to body map page: `<Link href="/body-map">Log New Flare →</Link>`
+  - [ ] 9.6: Style with bg-gray-50, rounded, p-8, text-center
+  - [ ] 9.7: Add icon: MapPin or Activity from lucide-react
+  - [ ] 9.8: Follow Story 3.1 empty state patterns
 
-- [ ] Task 10: Add comprehensive tests (AC: All)
-  - [ ] 10.1: Update `src/lib/repositories/__tests__/analyticsRepository.test.ts`
-  - [ ] 10.2: Test getFlaresByRegion returns flares sorted by startDate descending
-  - [ ] 10.3: Test getFlaresByRegion filters by userId and regionId correctly
-  - [ ] 10.4: Test duration calculation: (endDate || now) - startDate in days
-  - [ ] 10.5: Test peak severity extraction from flareEvents
-  - [ ] 10.6: Test trend outcome extraction: most recent status_update event
-  - [ ] 10.7: Test getRegionStatistics calculates all four metrics correctly
-  - [ ] 10.8: Test averageDuration excludes active flares, returns null if no resolved flares
-  - [ ] 10.9: Test recurrenceRate calculation and "Insufficient data" case
-  - [ ] 10.10: Create `src/components/analytics/__tests__/RegionFlareCard.test.tsx`
-  - [ ] 10.11: Test card renders all flare fields: date, duration, severity, trend
-  - [ ] 10.12: Test severity color coding: green/yellow/red ranges
-  - [ ] 10.13: Test trend outcome display with correct icons/colors
-  - [ ] 10.14: Test onClick handler calls props.onClick with flareId
-  - [ ] 10.15: Test keyboard navigation: Enter key triggers click
-  - [ ] 10.16: Test ARIA label includes date context
-  - [ ] 10.17: Test minimum 44px height for touch targets
-  - [ ] 10.18: Create `src/components/analytics/__tests__/RegionDetailView.test.tsx`
-  - [ ] 10.19: Test component fetches and displays flares for region
-  - [ ] 10.20: Test filter controls update flare list (all/active/resolved)
-  - [ ] 10.21: Test statistics summary displays all four metrics
-  - [ ] 10.22: Test timeline visualization renders
-  - [ ] 10.23: Test empty state displays when no flares in region
-  - [ ] 10.24: Test localStorage persistence of filter preference
-  - [ ] 10.25: Test navigation to flare detail on card click
-  - [ ] 10.26: Test loading state shows skeleton placeholders
-  - [ ] 10.27: Test error state shows error message
-  - [ ] 10.28: Test accessibility: ARIA labels, keyboard navigation, focus management
+- [ ] Task 10: Update region detail page route (AC: #3.2.1)
+  - [ ] 10.1: Open `src/app/(protected)/flares/analytics/regions/[regionId]/page.tsx` (placeholder from Story 3.1)
+  - [ ] 10.2: Remove placeholder content
+  - [ ] 10.3: Import RegionDetailView component
+  - [ ] 10.4: Extract regionId from route params: `const params = useParams(); const { regionId } = params;`
+  - [ ] 10.5: Render page layout with breadcrumb navigation
+  - [ ] 10.6: Render RegionDetailView component passing regionId prop
+  - [ ] 10.7: Add back button in header: onClick={() => router.push('/flares/analytics')}
+  - [ ] 10.8: Style with container mx-auto, p-4, max-w-6xl
+  - [ ] 10.9: Add page metadata: title "Region Flare History - {regionName}"
+
+- [ ] Task 11: Add comprehensive tests (AC: All)
+  - [ ] 11.1: Update `src/lib/repositories/__tests__/analyticsRepository.test.ts`
+  - [ ] 11.2: Test getFlaresByRegion returns flares sorted by startDate descending
+  - [ ] 11.3: Test getFlaresByRegion filters by userId and regionId correctly
+  - [ ] 11.4: Test duration calculation: (endDate || now) - startDate in days
+  - [ ] 11.5: Test peak severity extraction from flareEvents
+  - [ ] 11.6: Test trend outcome extraction: most recent status_update event
+  - [ ] 11.7: Test getRegionStatistics calculates all four metrics correctly
+  - [ ] 11.8: Test averageDuration excludes active flares, returns null if no resolved flares
+  - [ ] 11.9: Test recurrenceRate calculation and "Insufficient data" case
+  - [ ] 11.10: Create `src/lib/hooks/__tests__/useRegionAnalytics.test.ts`
+  - [ ] 11.11: Test hook fetches flares and statistics for region
+  - [ ] 11.12: Test hook polls for updates every 10 seconds
+  - [ ] 11.13: Test hook refetches on window focus
+  - [ ] 11.14: Test manual refetch function works
+  - [ ] 11.15: Create `src/components/analytics/__tests__/RegionFlareCard.test.tsx`
+  - [ ] 11.16: Test card renders all flare fields: date, duration, severity, trend
+  - [ ] 11.17: Test severity color coding: green/yellow/red ranges
+  - [ ] 11.18: Test trend outcome display with correct icons/colors
+  - [ ] 11.19: Test onClick handler calls props.onClick with flareId
+  - [ ] 11.20: Test keyboard navigation: Enter key triggers click
+  - [ ] 11.21: Test ARIA label includes date context
+  - [ ] 11.22: Test minimum 44px height for touch targets
+  - [ ] 11.23: Create `src/components/analytics/__tests__/RegionDetailView.test.tsx`
+  - [ ] 11.24: Test component uses useRegionAnalytics hook
+  - [ ] 11.25: Test filter controls update flare list (all/active/resolved)
+  - [ ] 11.26: Test statistics summary displays all four metrics
+  - [ ] 11.27: Test timeline visualization renders
+  - [ ] 11.28: Test empty state displays when no flares in region
+  - [ ] 11.29: Test localStorage persistence of filter preference
+  - [ ] 11.30: Test navigation to flare detail on card click
+  - [ ] 11.31: Test loading state shows skeleton placeholders
+  - [ ] 11.32: Test error state shows error message
+  - [ ] 11.33: Test accessibility: ARIA labels, keyboard navigation, focus management
 
 ## Dev Notes
 
@@ -292,7 +309,112 @@ export const analyticsRepository = {
 };
 ```
 
-**2. RegionFlareCard component:**
+**2. useRegionAnalytics hook:**
+```typescript
+// src/lib/hooks/useRegionAnalytics.ts
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { analyticsRepository } from '@/lib/repositories/analyticsRepository';
+import { RegionFlareHistory, RegionStatistics } from '@/types/analytics';
+
+/**
+ * Hook for fetching region-specific analytics data with polling.
+ * Follows the same pattern as useAnalytics from Story 3.1 and useFlares from Epic 2.
+ * Maintains offline-first architecture with polling for reactive updates.
+ */
+interface UseRegionAnalyticsOptions {
+  userId: string;
+  regionId: string;
+}
+
+interface UseRegionAnalyticsResult {
+  flares: RegionFlareHistory[];
+  statistics: RegionStatistics | null;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
+export function useRegionAnalytics({ userId, regionId }: UseRegionAnalyticsOptions): UseRegionAnalyticsResult {
+  const [flares, setFlares] = useState<RegionFlareHistory[]>([]);
+  const [statistics, setStatistics] = useState<RegionStatistics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refetch = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchRegionData = async () => {
+      if (!userId || !regionId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch both flares and statistics in parallel
+        const [flaresData, statsData] = await Promise.all([
+          analyticsRepository.getFlaresByRegion(userId, regionId),
+          analyticsRepository.getRegionStatistics(userId, regionId)
+        ]);
+
+        if (mounted) {
+          setFlares(flaresData);
+          setStatistics(statsData);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (mounted) {
+          console.error('Failed to fetch region analytics:', err);
+          setError(err instanceof Error ? err : new Error('Failed to fetch region analytics'));
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchRegionData();
+
+    // Set up polling for reactive updates (10 seconds matching Story 3.1)
+    const pollInterval = setInterval(() => {
+      if (mounted) {
+        fetchRegionData();
+      }
+    }, 10000);
+
+    // Refetch when window regains focus
+    const handleFocus = () => {
+      if (mounted) {
+        fetchRegionData();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      mounted = false;
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [userId, regionId, refreshTrigger]);
+
+  return {
+    flares,
+    statistics,
+    isLoading,
+    error,
+    refetch,
+  };
+}
+```
+
+**3. RegionFlareCard component:**
 ```typescript
 // src/components/analytics/RegionFlareCard.tsx
 'use client';
@@ -388,22 +510,21 @@ export function RegionFlareCard({ flare, onClick }: RegionFlareCardProps) {
 }
 ```
 
-**3. RegionDetailView component:**
+**4. RegionDetailView component (using hook):**
 ```typescript
 // src/components/analytics/RegionDetailView.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { analyticsRepository } from '@/lib/repositories/analyticsRepository';
-import { RegionFlareHistory, RegionStatistics } from '@/types/analytics';
+import { useRegionAnalytics } from '@/lib/hooks/useRegionAnalytics';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { bodyRegions } from '@/lib/data/bodyRegions';
 import { RegionFlareCard } from './RegionFlareCard';
 import { RegionStatisticsCard } from './RegionStatisticsCard';
 import { RegionFlareTimeline } from './RegionFlareTimeline';
 import { FlareStatusFilter } from './FlareStatusFilter';
 import { RegionEmptyState } from './RegionEmptyState';
-import { getUserIdFromStorage } from '@/lib/utils/storage';
 
 type FlareFilter = 'all' | 'active' | 'resolved';
 
@@ -413,15 +534,14 @@ interface RegionDetailViewProps {
 
 export function RegionDetailView({ regionId }: RegionDetailViewProps) {
   const router = useRouter();
-  const userId = getUserIdFromStorage();
+  const { userId } = useCurrentUser();
 
   const regionName = bodyRegions.find(r => r.id === regionId)?.name || regionId;
 
-  const [flares, setFlares] = useState<RegionFlareHistory[]>([]);
-  const [statistics, setStatistics] = useState<RegionStatistics | null>(null);
+  // Use hook for data fetching (follows Epic 2 and Story 3.1 pattern)
+  const { flares, statistics, isLoading, error, refetch } = useRegionAnalytics({ userId, regionId });
+
   const [filter, setFilter] = useState<FlareFilter>('all');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
   // Load filter from localStorage
   useEffect(() => {
@@ -436,28 +556,7 @@ export function RegionDetailView({ regionId }: RegionDetailViewProps) {
     localStorage.setItem(`region-filter-${userId}-${regionId}`, filter);
   }, [filter, userId, regionId]);
 
-  // Fetch data
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-        const [flaresData, statsData] = await Promise.all([
-          analyticsRepository.getFlaresByRegion(userId, regionId),
-          analyticsRepository.getRegionStatistics(userId, regionId)
-        ]);
-        setFlares(flaresData);
-        setStatistics(statsData);
-        setError(null);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, [userId, regionId]);
-
-  // Filter flares based on selected filter
+  // Filter flares based on selected filter (client-side)
   const filteredFlares = flares.filter(flare => {
     if (filter === 'active') return flare.status === 'Active';
     if (filter === 'resolved') return flare.status === 'Resolved';
@@ -494,7 +593,7 @@ export function RegionDetailView({ regionId }: RegionDetailViewProps) {
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
         <p className="text-red-800">Error loading region data: {error.message}</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={refetch}
           className="mt-2 text-red-600 underline"
         >
           Retry
@@ -547,27 +646,30 @@ export function RegionDetailView({ regionId }: RegionDetailViewProps) {
 **New Files to Create:**
 - Update `src/types/analytics.ts` - Add RegionFlareHistory and RegionStatistics interfaces
 - Extend `src/lib/repositories/analyticsRepository.ts` - Add getFlaresByRegion and getRegionStatistics methods
+- **`src/lib/hooks/useRegionAnalytics.ts`** - Region analytics hook with polling (follows useAnalytics pattern from Story 3.1)
 - `src/components/analytics/RegionFlareCard.tsx` - Individual flare card display
 - `src/components/analytics/RegionFlareTimeline.tsx` - Timeline visualization with Chart.js
 - `src/components/analytics/RegionStatisticsCard.tsx` - Statistics summary display
 - `src/components/analytics/FlareStatusFilter.tsx` - Filter control component
-- `src/components/analytics/RegionDetailView.tsx` - Main region detail component
+- `src/components/analytics/RegionDetailView.tsx` - Main region detail component (uses useRegionAnalytics hook)
 - `src/components/analytics/RegionEmptyState.tsx` - Empty state component
 - Update `src/app/(protected)/flares/analytics/regions/[regionId]/page.tsx` - Replace placeholder with full implementation
 
 **Existing Dependencies:**
-- `src/lib/db/database.ts` (Dexie instance) ✅
-- `src/types/flare.ts` (FlareRecord interface) ✅
+- `src/lib/db/client.ts` (Dexie instance) ✅
+- `src/lib/db/schema.ts` (FlareRecord, FlareEventRecord interfaces) ✅
 - `src/lib/data/bodyRegions.ts` (body region name lookups) ✅
-- `src/lib/utils/storage.ts` (getUserIdFromStorage helper) ✅
+- `src/lib/hooks/useCurrentUser.ts` (user context hook) ✅
 - `src/lib/repositories/analyticsRepository.ts` (from Story 3.1) ✅
 - Chart.js and chartjs-plugin-annotation (per solution-architecture.md) ✅
 - date-fns (for date formatting, existing dependency) ✅
 
 **Alignment with Solution Architecture:**
 - Extends analytics repository pattern from Story 3.1
+- **Follows hook pattern from Epic 2 (useFlares) and Story 3.1 (useAnalytics)**
+- **Maintains offline-first architecture: Components → Hook → Repository → Dexie → IndexedDB**
 - Uses Chart.js as specified in solution-architecture.md technology stack
-- Follows component architecture: RegionDetailView → RegionFlareCard + RegionStatisticsCard + RegionFlareTimeline
+- Follows component architecture: RegionDetailView → useRegionAnalytics → analyticsRepository → Dexie
 - Maintains offline-first Dexie query patterns
 
 ### Data & State Considerations
