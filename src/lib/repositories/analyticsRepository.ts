@@ -10,7 +10,7 @@
 
 import { db } from '@/lib/db/client';
 import { FlareRecord } from '@/lib/db/schema';
-import { ProblemArea, TimeRange } from '@/types/analytics';
+import { ProblemArea, TimeRange, RegionFlareHistory, RegionStatistics } from '@/types/analytics';
 import { withinTimeRange } from '@/lib/utils/timeRange';
 
 /**
@@ -72,8 +72,144 @@ export async function getProblemAreas(
 }
 
 /**
+ * Fetches all flares for a specific body region with computed metrics.
+ * Returns flares sorted by startDate descending (most recent first).
+ *
+ * Story 3.2 - Task 1: AC3.2.2, AC3.2.4
+ * - Queries flares by userId and bodyRegionId
+ * - Calculates duration in days
+ * - Extracts peak severity from flare events
+ * - Extracts trend outcome from most recent status update
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param regionId - Body region ID to filter by
+ * @returns Promise resolving to array of RegionFlareHistory objects sorted by startDate descending
+ */
+export async function getFlaresByRegion(
+  userId: string,
+  regionId: string
+): Promise<RegionFlareHistory[]> {
+  // Fetch all flares for this region (Task 1.4)
+  const flares = await db.flares
+    .where({ userId, bodyRegionId: regionId })
+    .toArray();
+
+  // Sort by startDate descending (Task 1.5)
+  flares.sort((a, b) => b.startDate - a.startDate);
+
+  // Compute derived fields for each flare
+  const now = Date.now();
+  const regionFlares: RegionFlareHistory[] = [];
+
+  for (const flare of flares) {
+    // Task 1.6: Calculate duration in days
+    const endTime = flare.endDate || now;
+    const durationMs = endTime - flare.startDate;
+    const duration = Math.round(durationMs / (24 * 60 * 60 * 1000));
+
+    // Task 1.7: Get peak severity from flare events
+    const events = await db.flareEvents
+      .where({ flareId: flare.id })
+      .toArray();
+
+    const severityValues = events
+      .filter(e => e.severity !== undefined)
+      .map(e => e.severity!);
+    const peakSeverity = severityValues.length > 0
+      ? Math.max(...severityValues)
+      : flare.initialSeverity || 0;
+
+    // Task 1.8: Get most recent trend outcome
+    const statusUpdates = events
+      .filter(e => e.eventType === 'trend_change')
+      .sort((a, b) => b.timestamp - a.timestamp);
+    const trendOutcome = statusUpdates.length > 0
+      ? statusUpdates[0].trend || 'N/A'
+      : 'N/A';
+
+    // Task 1.9: Build RegionFlareHistory object
+    regionFlares.push({
+      flareId: flare.id,
+      startDate: flare.startDate,
+      endDate: flare.endDate || null,
+      duration,
+      peakSeverity,
+      trendOutcome,
+      status: flare.status
+    });
+  }
+
+  return regionFlares;
+}
+
+/**
+ * Calculates aggregate statistics for a specific body region.
+ *
+ * Story 3.2 - Task 2: AC3.2.4
+ * - Total flare count
+ * - Average duration (resolved flares only)
+ * - Average severity (all flares)
+ * - Recurrence rate (flares per 90 days)
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param regionId - Body region ID to analyze
+ * @returns Promise resolving to RegionStatistics object
+ */
+export async function getRegionStatistics(
+  userId: string,
+  regionId: string
+): Promise<RegionStatistics> {
+  // Task 2.3: Fetch all flares for region using getFlaresByRegion
+  const flares = await getFlaresByRegion(userId, regionId);
+
+  // Handle empty state
+  if (flares.length === 0) {
+    return {
+      totalCount: 0,
+      averageDuration: null,
+      averageSeverity: null,
+      recurrenceRate: 'No data'
+    };
+  }
+
+  // Task 2.4: Total count
+  const totalCount = flares.length;
+
+  // Task 2.5: Average duration (resolved flares only)
+  const resolvedFlares = flares.filter(f => f.status === 'resolved');
+  const averageDuration = resolvedFlares.length > 0
+    ? resolvedFlares.reduce((sum, f) => sum + f.duration, 0) / resolvedFlares.length
+    : null;
+
+  // Task 2.6: Average severity
+  const averageSeverity = flares.reduce((sum, f) => sum + f.peakSeverity, 0) / totalCount;
+
+  // Task 2.7: Recurrence rate (flares per 90 days)
+  let recurrenceRate: number | string;
+  if (flares.length >= 2) {
+    const earliestFlare = flares[flares.length - 1]; // already sorted descending
+    const daysSinceFirst = (Date.now() - earliestFlare.startDate) / (24 * 60 * 60 * 1000);
+    recurrenceRate = (totalCount / daysSinceFirst) * 90;
+  } else {
+    recurrenceRate = 'Insufficient data';
+  }
+
+  // Task 2.8: Return RegionStatistics object
+  return {
+    totalCount,
+    averageDuration: averageDuration !== null ? Math.round(averageDuration * 10) / 10 : null,
+    averageSeverity: Math.round(averageSeverity * 10) / 10,
+    recurrenceRate: typeof recurrenceRate === 'number'
+      ? Math.round(recurrenceRate * 10) / 10
+      : recurrenceRate
+  };
+}
+
+/**
  * Repository object exposing analytics data access methods.
  */
 export const analyticsRepository = {
   getProblemAreas,
+  getFlaresByRegion,
+  getRegionStatistics,
 };
