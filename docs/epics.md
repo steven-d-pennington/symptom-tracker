@@ -123,6 +123,55 @@ So that I can confirm the revamp improved usability before resuming flare implem
 
 ---
 
+## Epic 0.5: Pre-Launch Stabilization _(CRITICAL)_
+
+### Expanded Goal
+
+Address critical bugs discovered during pre-launch testing that block stable user onboarding and core flare management workflows. Ensure production readiness before resuming analytics feature development.
+
+### Value Proposition
+
+- Enables users to complete onboarding successfully and reach the dashboard
+- Restores core flare update and resolve functionality
+- Completes repository migration started in Epic 2
+- Removes pre-launch blockers preventing user testing
+
+### Story Breakdown
+
+**Story 0.5.1: Fix Onboarding Completion Routing**
+
+As a user completing onboarding,
+I want to be taken to the dashboard when I click "Go to dashboard",
+So that I can immediately start using the app as intended.
+
+**Acceptance Criteria:**
+1. "Go to dashboard" button in CompletionStep routes to `/dashboard` instead of `/`
+2. Users land on dashboard page after completing onboarding
+3. Dashboard displays correctly for new users
+4. Onboarding completion flow tested end-to-end
+
+**Prerequisites:** Epic 0 complete.
+
+---
+
+**Story 0.5.2: Fix Flare Update/Resolve Workflows**
+
+As a user managing active flares,
+I want my status updates and resolutions to save correctly,
+So that I can track flare progression accurately.
+
+**Acceptance Criteria:**
+1. EventDetailModal migrates from deprecated `updateSeverity()`/`update()` methods to new `updateFlare()`/`addFlareEvent()` API
+2. Flare severity updates save correctly and persist to IndexedDB
+3. Flare status changes create proper FlareEvent records (append-only pattern)
+4. Console deprecation warnings eliminated
+5. EventDetailModal follows same patterns as FlareUpdateModal and FlareResolveModal
+6. Update and resolve workflows tested end-to-end with data verification
+
+**Prerequisites:** Epic 2 complete (repository infrastructure exists).
+
+---
+
 ## Epic 1: Enhanced Body Map with Precision Location Tracking
 
 ### Expanded Goal

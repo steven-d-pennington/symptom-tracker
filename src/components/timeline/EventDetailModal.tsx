@@ -190,19 +190,36 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
         case 'flare-created':
         case 'flare-updated':
         case 'flare-resolved':
-          // For flares, update the flare record
+          // For flares, update the flare record using new repository API
           const flareId = event.eventRef.id;
-          await flareRepository.updateSeverity(
-            flareId,
-            severity,
-            event.eventRef.status || 'active'
-          );
 
-          // Update notes and photo IDs if changed
-          await flareRepository.update(flareId, {
-            notes: notes || undefined,
-            photoIds: attachedPhotoIds.length > 0 ? attachedPhotoIds : undefined
-          });
+          // Detect what changed
+          const severityChanged = severity !== event.eventRef.severity;
+
+          // Create FlareEvent record for the status update (append-only pattern)
+          if (severityChanged) {
+            await flareRepository.addFlareEvent(userId, flareId, {
+              eventType: "severity_update",
+              timestamp: Date.now(),
+              severity: severity,
+              notes: notes.trim() || undefined,
+            });
+
+            // Update FlareRecord current severity
+            await flareRepository.updateFlare(userId, flareId, {
+              currentSeverity: severity,
+            });
+          } else if (notes.trim()) {
+            // If only notes changed, create a trend_change event
+            await flareRepository.addFlareEvent(userId, flareId, {
+              eventType: "trend_change",
+              timestamp: Date.now(),
+              notes: notes.trim(),
+            });
+          }
+
+          // Note: photoIds are not part of FlareRecord schema in Epic 2 design
+          // Photo linking is handled separately via photoRepository with eventId
           break;
 
         case 'food':

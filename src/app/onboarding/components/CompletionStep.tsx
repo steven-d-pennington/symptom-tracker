@@ -94,7 +94,7 @@ export const CompletionStep = ({ data, onContinue, reset }: OnboardingStepCompon
           Restart onboarding
         </button>
         <Link
-          href="/"
+          href="/dashboard"
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           onClick={handleFinish}
         >
