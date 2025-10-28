@@ -1,13 +1,14 @@
 /**
- * Analytics Repository Tests (Story 3.1 - Task 10)
+ * Analytics Repository Tests (Story 3.1 - Task 10, Story 3.2 - Task 11)
  *
  * Test suite for analytics repository data aggregation methods.
  * Tests problem areas calculation, time range filtering, sorting, and thresholds.
+ * Tests per-region flare queries and statistics calculation (Story 3.2).
  */
 
 import { db } from '@/lib/db/client';
-import { getProblemAreas } from '@/lib/repositories/analyticsRepository';
-import { FlareRecord } from '@/lib/db/schema';
+import { analyticsRepository } from '@/lib/repositories/analyticsRepository';
+import { FlareRecord, FlareEventRecord } from '@/lib/db/schema';
 
 describe('analyticsRepository', () => {
   const testUserId = 'test-user-analytics';
@@ -64,7 +65,7 @@ describe('analyticsRepository', () => {
       await createTestFlare('lower-back', 32);
       await createTestFlare('lower-back', 42);
 
-      const problemAreas = await getProblemAreas(testUserId, 'allTime');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'allTime');
 
       // AC3.1.2: Sorted by flare count descending
       expect(problemAreas).toHaveLength(3);
@@ -84,7 +85,7 @@ describe('analyticsRepository', () => {
       await createTestFlare('left-shoulder', 40); // 40 days ago - outside 30d
       await createTestFlare('left-shoulder', 50); // 50 days ago - outside 30d
 
-      const problemAreas = await getProblemAreas(testUserId, 'last30d');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'last30d');
 
       expect(problemAreas).toHaveLength(1);
       expect(problemAreas[0].flareCount).toBe(3); // Only 3 flares within last 30 days
@@ -96,7 +97,7 @@ describe('analyticsRepository', () => {
       await createTestFlare('right-knee', 85); // within 90d
       await createTestFlare('right-knee', 100); // outside 90d
 
-      const problemAreas = await getProblemAreas(testUserId, 'last90d');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'last90d');
 
       expect(problemAreas).toHaveLength(1);
       expect(problemAreas[0].flareCount).toBe(3); // Only 3 flares within last 90 days
@@ -108,7 +109,7 @@ describe('analyticsRepository', () => {
       await createTestFlare('lower-back', 300); // within 1 year
       await createTestFlare('lower-back', 400); // outside 1 year
 
-      const problemAreas = await getProblemAreas(testUserId, 'lastYear');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'lastYear');
 
       expect(problemAreas).toHaveLength(1);
       expect(problemAreas[0].flareCount).toBe(3); // Only 3 flares within last year
@@ -119,7 +120,7 @@ describe('analyticsRepository', () => {
       await createTestFlare('neck', 100);
       await createTestFlare('neck', 500);
 
-      const problemAreas = await getProblemAreas(testUserId, 'allTime');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'allTime');
 
       expect(problemAreas).toHaveLength(1);
       expect(problemAreas[0].flareCount).toBe(3); // All 3 flares included
@@ -138,7 +139,7 @@ describe('analyticsRepository', () => {
       // Create 1 flare in lower-back (below threshold)
       await createTestFlare('lower-back', 12);
 
-      const problemAreas = await getProblemAreas(testUserId, 'allTime');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'allTime');
 
       // AC3.1.2: Only regions with 3+ flares included
       expect(problemAreas).toHaveLength(1);
@@ -155,7 +156,7 @@ describe('analyticsRepository', () => {
       await createTestFlare('right-knee', 15);
       await createTestFlare('right-knee', 25);
 
-      const problemAreas = await getProblemAreas(testUserId, 'allTime');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'allTime');
 
       // Only left-shoulder included (right-knee has < 3 flares)
       expect(problemAreas).toHaveLength(1);
@@ -166,13 +167,13 @@ describe('analyticsRepository', () => {
       // Create flares outside the time range
       await createTestFlare('left-shoulder', 100); // outside last30d
 
-      const problemAreas = await getProblemAreas(testUserId, 'last30d');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'last30d');
 
       expect(problemAreas).toEqual([]);
     });
 
     it('should return empty array when no flares exist', async () => {
-      const problemAreas = await getProblemAreas(testUserId, 'allTime');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'allTime');
 
       expect(problemAreas).toEqual([]);
     });
@@ -188,7 +189,7 @@ describe('analyticsRepository', () => {
       await createTestFlare('left-shoulder', 25, otherUserId);
       await createTestFlare('left-shoulder', 35, otherUserId);
 
-      const problemAreas = await getProblemAreas(testUserId, 'allTime');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'allTime');
 
       expect(problemAreas).toHaveLength(1);
       expect(problemAreas[0].flareCount).toBe(3); // Only test user's flares
@@ -214,10 +215,299 @@ describe('analyticsRepository', () => {
       };
       await db.flares.add(resolvedFlare);
 
-      const problemAreas = await getProblemAreas(testUserId, 'allTime');
+      const problemAreas = await analyticsRepository.getProblemAreas(testUserId, 'allTime');
 
       expect(problemAreas).toHaveLength(1);
       expect(problemAreas[0].flareCount).toBe(3); // Active + resolved = 3
+    });
+  });
+
+  // Story 3.2 - Task 11: Tests for per-region analytics
+  describe('getFlaresByRegion', () => {
+    const testRegion = 'left-shoulder';
+    const otherRegion = 'right-knee';
+
+    // Helper to create flare with events
+    const createFlareWithEvents = async (
+      bodyRegionId: string,
+      daysAgo: number,
+      status: string = 'active',
+      severity: number = 5
+    ) => {
+      const startDate = Date.now() - daysAgo * 24 * 60 * 60 * 1000;
+      const flareId = `flare-${bodyRegionId}-${daysAgo}`;
+
+      const flare: FlareRecord = {
+        id: flareId,
+        userId: testUserId,
+        startDate,
+        status: status as any,
+        bodyRegionId,
+        initialSeverity: severity,
+        currentSeverity: severity,
+        endDate: status === 'resolved' ? Date.now() - (daysAgo - 5) * 24 * 60 * 60 * 1000 : undefined,
+        createdAt: startDate,
+        updatedAt: startDate,
+      };
+      await db.flares.add(flare);
+
+      // Add severity event
+      const event: FlareEventRecord = {
+        id: `event-${flareId}-1`,
+        flareId,
+        userId: testUserId,
+        eventType: 'severity_update',
+        timestamp: startDate + 1000,
+        severity,
+      };
+      await db.flareEvents.add(event);
+
+      // Add trend event
+      const trendEvent: FlareEventRecord = {
+        id: `event-${flareId}-2`,
+        flareId,
+        userId: testUserId,
+        eventType: 'trend_change',
+        timestamp: startDate + 2000,
+        trend: 'improving',
+      };
+      await db.flareEvents.add(trendEvent);
+
+      return flare;
+    };
+
+    it('should return flares sorted by startDate descending', async () => {
+      await createFlareWithEvents(testRegion, 10);
+      await createFlareWithEvents(testRegion, 20);
+      await createFlareWithEvents(testRegion, 5);
+
+      const flares = await analyticsRepository.getFlaresByRegion(testUserId, testRegion);
+
+      expect(flares).toHaveLength(3);
+      expect(flares[0].duration).toBeLessThan(flares[1].duration); // Most recent first
+    });
+
+    it('should filter by userId and regionId correctly', async () => {
+      await createFlareWithEvents(testRegion, 10);
+      await createFlareWithEvents(otherRegion, 10);
+
+      const flare: FlareRecord = {
+        id: 'other-user-flare',
+        userId: otherUserId,
+        startDate: Date.now() - 10 * 24 * 60 * 60 * 1000,
+        status: 'active',
+        bodyRegionId: testRegion,
+        initialSeverity: 5,
+        currentSeverity: 5,
+        createdAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
+        updatedAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
+      };
+      await db.flares.add(flare);
+
+      const flares = await analyticsRepository.getFlaresByRegion(testUserId, testRegion);
+
+      expect(flares).toHaveLength(1);
+      expect(flares[0].flareId).toContain(testRegion);
+    });
+
+    it('should calculate duration correctly', async () => {
+      await createFlareWithEvents(testRegion, 10, 'resolved');
+
+      const flares = await analyticsRepository.getFlaresByRegion(testUserId, testRegion);
+
+      expect(flares[0].duration).toBeGreaterThan(0);
+      expect(flares[0].duration).toBeLessThanOrEqual(10);
+    });
+
+    it('should extract peak severity from flare events', async () => {
+      const startDate = Date.now() - 10 * 24 * 60 * 60 * 1000;
+      const flareId = 'test-severity-flare';
+
+      const flare: FlareRecord = {
+        id: flareId,
+        userId: testUserId,
+        startDate,
+        status: 'active',
+        bodyRegionId: testRegion,
+        initialSeverity: 3,
+        currentSeverity: 5,
+        createdAt: startDate,
+        updatedAt: startDate,
+      };
+      await db.flares.add(flare);
+
+      // Add events with different severities
+      await db.flareEvents.add({
+        id: 'event-1',
+        flareId,
+        userId: testUserId,
+        eventType: 'severity_update',
+        timestamp: startDate + 1000,
+        severity: 5,
+      });
+      await db.flareEvents.add({
+        id: 'event-2',
+        flareId,
+        userId: testUserId,
+        eventType: 'severity_update',
+        timestamp: startDate + 2000,
+        severity: 8,
+      });
+      await db.flareEvents.add({
+        id: 'event-3',
+        flareId,
+        userId: testUserId,
+        eventType: 'severity_update',
+        timestamp: startDate + 3000,
+        severity: 6,
+      });
+
+      const flares = await analyticsRepository.getFlaresByRegion(testUserId, testRegion);
+
+      expect(flares[0].peakSeverity).toBe(8);
+    });
+
+    it('should extract trend outcome from most recent trend event', async () => {
+      const startDate = Date.now() - 10 * 24 * 60 * 60 * 1000;
+      const flareId = 'test-trend-flare';
+
+      const flare: FlareRecord = {
+        id: flareId,
+        userId: testUserId,
+        startDate,
+        status: 'active',
+        bodyRegionId: testRegion,
+        initialSeverity: 5,
+        currentSeverity: 5,
+        createdAt: startDate,
+        updatedAt: startDate,
+      };
+      await db.flares.add(flare);
+
+      // Add trend events
+      await db.flareEvents.add({
+        id: 'trend-1',
+        flareId,
+        userId: testUserId,
+        eventType: 'trend_change',
+        timestamp: startDate + 1000,
+        trend: 'worsening',
+      });
+      await db.flareEvents.add({
+        id: 'trend-2',
+        flareId,
+        userId: testUserId,
+        eventType: 'trend_change',
+        timestamp: startDate + 2000,
+        trend: 'improving',
+      });
+
+      const flares = await analyticsRepository.getFlaresByRegion(testUserId, testRegion);
+
+      expect(flares[0].trendOutcome).toBe('improving'); // Most recent
+    });
+  });
+
+  describe('getRegionStatistics', () => {
+    const testRegion = 'left-shoulder';
+
+    it('should calculate all four metrics correctly', async () => {
+      // Create 3 flares: 2 resolved, 1 active
+      const createFlareForStats = async (daysAgo: number, duration: number, severity: number, resolved: boolean) => {
+        const startDate = Date.now() - daysAgo * 24 * 60 * 60 * 1000;
+        const endDate = resolved ? startDate + duration * 24 * 60 * 60 * 1000 : undefined;
+        const flareId = `stats-flare-${daysAgo}`;
+
+        const flare: FlareRecord = {
+          id: flareId,
+          userId: testUserId,
+          startDate,
+          endDate,
+          status: resolved ? 'resolved' : 'active',
+          bodyRegionId: testRegion,
+          initialSeverity: severity,
+          currentSeverity: severity,
+          createdAt: startDate,
+          updatedAt: startDate,
+        };
+        await db.flares.add(flare);
+
+        await db.flareEvents.add({
+          id: `${flareId}-event`,
+          flareId,
+          userId: testUserId,
+          eventType: 'severity_update',
+          timestamp: startDate + 1000,
+          severity,
+        });
+      };
+
+      await createFlareForStats(50, 10, 6, true);  // Resolved, 10 days
+      await createFlareForStats(30, 5, 8, true);   // Resolved, 5 days
+      await createFlareForStats(10, 0, 4, false);  // Active
+
+      const stats = await analyticsRepository.getRegionStatistics(testUserId, testRegion);
+
+      expect(stats.totalCount).toBe(3);
+      expect(stats.averageDuration).toBeCloseTo(7.5, 1); // (10 + 5) / 2
+      expect(stats.averageSeverity).toBeCloseTo(6, 1); // (6 + 8 + 4) / 3
+      expect(typeof stats.recurrenceRate).toBe('number');
+    });
+
+    it('should return null for averageDuration when no resolved flares', async () => {
+      const flare: FlareRecord = {
+        id: 'active-only',
+        userId: testUserId,
+        startDate: Date.now() - 10 * 24 * 60 * 60 * 1000,
+        status: 'active',
+        bodyRegionId: testRegion,
+        initialSeverity: 5,
+        currentSeverity: 5,
+        createdAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
+        updatedAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
+      };
+      await db.flares.add(flare);
+
+      await db.flareEvents.add({
+        id: 'event-1',
+        flareId: 'active-only',
+        userId: testUserId,
+        eventType: 'severity_update',
+        timestamp: Date.now(),
+        severity: 5,
+      });
+
+      const stats = await analyticsRepository.getRegionStatistics(testUserId, testRegion);
+
+      expect(stats.averageDuration).toBeNull();
+    });
+
+    it('should return "Insufficient data" for recurrenceRate when < 2 flares', async () => {
+      const flare: FlareRecord = {
+        id: 'single-flare',
+        userId: testUserId,
+        startDate: Date.now() - 10 * 24 * 60 * 60 * 1000,
+        status: 'active',
+        bodyRegionId: testRegion,
+        initialSeverity: 5,
+        currentSeverity: 5,
+        createdAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
+        updatedAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
+      };
+      await db.flares.add(flare);
+
+      await db.flareEvents.add({
+        id: 'event-1',
+        flareId: 'single-flare',
+        userId: testUserId,
+        eventType: 'severity_update',
+        timestamp: Date.now(),
+        severity: 5,
+      });
+
+      const stats = await analyticsRepository.getRegionStatistics(testUserId, testRegion);
+
+      expect(stats.recurrenceRate).toBe('Insufficient data');
     });
   });
 });

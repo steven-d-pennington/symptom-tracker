@@ -46,3 +46,48 @@ export interface FlareMetrics {
   /** Time range for these metrics */
   timeRange: TimeRange;
 }
+
+/**
+ * Region flare history interface (Story 3.2 - Task 1.2)
+ * Represents a single flare with computed metrics for region detail view.
+ */
+export interface RegionFlareHistory {
+  /** Flare ID (foreign key to flares table) */
+  flareId: string;
+
+  /** Start date timestamp (epoch ms) */
+  startDate: number;
+
+  /** End date timestamp (epoch ms) - null if active */
+  endDate: number | null;
+
+  /** Duration in days (calculated from startDate to endDate or now) */
+  duration: number;
+
+  /** Peak severity (highest severity from flare events, 1-10 scale) */
+  peakSeverity: number;
+
+  /** Trend outcome (final trend from most recent status_update event) */
+  trendOutcome: string;
+
+  /** Flare status (active or resolved) */
+  status: string;
+}
+
+/**
+ * Region statistics interface (Story 3.2 - Task 2.2)
+ * Aggregate metrics for a specific body region.
+ */
+export interface RegionStatistics {
+  /** Total flare count for region (all-time) */
+  totalCount: number;
+
+  /** Average duration in days (resolved flares only) - null if no resolved flares */
+  averageDuration: number | null;
+
+  /** Average severity (mean of all peak severity values) - null if no flares */
+  averageSeverity: number | null;
+
+  /** Recurrence rate (flares per 90 days) - string for "Insufficient data" case */
+  recurrenceRate: number | string;
+}
