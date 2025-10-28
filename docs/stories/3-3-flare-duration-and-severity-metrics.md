@@ -1,6 +1,6 @@
 # Story 3.3: Flare Duration and Severity Metrics
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -649,7 +649,7 @@ export function ProgressionMetricsSection({
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/3-3-flare-duration-and-severity-metrics.context.xml (generated 2025-10-28)
 
 ### Agent Model Used
 

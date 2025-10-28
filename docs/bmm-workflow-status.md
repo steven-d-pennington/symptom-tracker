@@ -14,7 +14,7 @@
 - **Current Phase:** 4-Implementation (In Progress)
 - **Current Workflow:** Resume Epic 3 Development
 - **Overall Progress:** 100% (23 of 23 stories complete)
-- **Next Action:** Begin Story 3.3 (Flare Duration and Severity Metrics)
+- **Next Action:** Implement Story 3.3 (Flare Duration and Severity Metrics) — context generated and status ready-for-dev
 - **Command to Run:** Draft and implement Story 3.3
 - **Agent to Load:** DEV agent - bmad/bmm/agents/dev.md
 - **Note:** Epic 0.5 (Pre-Launch Stabilization) and Story 3.2 (Per-Region Flare History) completed on 2025-10-28. All planned stories for current sprint complete. Ready to continue with remaining Epic 3 stories (3.3-3.5).
@@ -45,7 +45,6 @@
 | Epic | Story | ID | Title | File |
 |------|-------|-----|-------|------|
 | 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md |
-| 3 | 3 | 3.3 | Flare Duration and Severity Metrics | story-3.3.md |
 | 3 | 4 | 3.4 | Flare Trend Analysis Visualization | story-3.4.md |
 | 3 | 5 | 3.5 | Intervention Effectiveness Analysis | story-3.5.md |
 | 4 | 1 | 4.1 | Attach Photos to Flare Entities | story-4.1.md |
@@ -59,7 +58,7 @@
 
 #### IN PROGRESS (Approved for Development / Review)
 
-_No stories currently in progress. Ready to begin Story 3.3._
+- Story 3.3: Flare Duration and Severity Metrics — ready-for-dev (context generated 2025-10-28, awaiting development).
 
 ---
 
@@ -165,7 +164,7 @@ All 23 planned stories for the current sprint have been completed (100% progress
 **🟡 Epic 3: Flare Analytics and Problem Areas** (40% Complete - 2/5 stories)
 - 3.1: Calculate and Display Problem Areas ✅
 - 3.2: Per-Region Flare History ✅
-- 3.3: Flare Duration and Severity Metrics 📋 (backlog)
+- 3.3: Flare Duration and Severity Metrics 🟢 (ready-for-dev context assembled)
 - 3.4: Flare Trend Analysis Visualization 📋 (backlog)
 - 3.5: Intervention Effectiveness Analysis 📋 (backlog)
 
@@ -225,6 +224,8 @@ All 23 planned stories for the current sprint have been completed (100% progress
 ---
 
 ## Decision Log
+
+- **2025-10-28:** Generated Story 3.3 context (`docs/stories/3-3-flare-duration-and-severity-metrics.context.xml`) and updated status to ready-for-dev. Story document now references the context file and sprint-status.yaml reflects the new state.
 
 - **2025-10-28:** Approved Story 3.2 (Per-Region Flare History). All 7 acceptance criteria met. Implementation includes: analyticsRepository extensions (getFlaresByRegion, getRegionStatistics), useRegionAnalytics hook with 10-second polling, 6 new components (RegionFlareCard, RegionStatisticsCard, RegionFlareTimeline, FlareStatusFilter, RegionDetailView, RegionEmptyState), region detail page route fully implemented, 8 comprehensive repository tests. Build successful. Epic 3 now 40% complete (2/5 stories). All planned sprint stories now complete (23/23 = 100%).
 - **2025-10-28:** Completed Epic 0.5 (Pre-Launch Stabilization) implementation. Fixed onboarding routing bug in CompletionStep.tsx (href changed from "/" to "/dashboard"). Migrated EventDetailModal.tsx from deprecated flareRepository methods (updateSeverity/update) to new append-only API (addFlareEvent/updateFlare) following Epic 2 patterns. All console deprecation warnings eliminated. Both stories completed in ~2 hours as estimated. All acceptance criteria met. Ready for user testing.
