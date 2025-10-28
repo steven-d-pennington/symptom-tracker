@@ -10,7 +10,7 @@
 
 import { db } from '@/lib/db/client';
 import { FlareRecord } from '@/lib/db/schema';
-import { ProblemArea, TimeRange, RegionFlareHistory, RegionStatistics } from '@/types/analytics';
+import { ProblemArea, TimeRange, RegionFlareHistory, RegionStatistics, DurationMetrics, SeverityMetrics } from '@/types/analytics';
 import { withinTimeRange } from '@/lib/utils/timeRange';
 
 /**
@@ -206,10 +206,177 @@ export async function getRegionStatistics(
 }
 
 /**
+ * Calculates duration metrics from resolved flares within a time range.
+ * Returns statistical summaries: average, median, shortest, longest durations.
+ *
+ * Story 3.3 - Task 1: AC3.3.2
+ * - Fetches only resolved flares (status === 'resolved')
+ * - Filters by time range using withinTimeRange utility
+ * - Calculates duration in days for each flare
+ * - Computes average (mean), median (50th percentile), min, max
+ * - Returns null for metrics if no resolved flares exist
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param timeRange - Time range to filter flares
+ * @returns Promise resolving to DurationMetrics object
+ */
+export async function getDurationMetrics(
+  userId: string,
+  timeRange: TimeRange
+): Promise<DurationMetrics> {
+  // Fetch only resolved flares (Task 1.5)
+  const allFlares = await db.flares.where({ userId, status: 'resolved' }).toArray();
+
+  // Filter by time range
+  const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
+
+  // Handle empty state - no resolved flares
+  if (flaresInRange.length === 0) {
+    return {
+      averageDuration: null,
+      medianDuration: null,
+      shortestDuration: null,
+      longestDuration: null,
+      resolvedFlareCount: 0
+    };
+  }
+
+  // Task 1.6: Calculate duration in days for each resolved flare
+  const durations = flaresInRange.map(flare => {
+    const durationMs = (flare.endDate! - flare.startDate);
+    return Math.round(durationMs / (24 * 60 * 60 * 1000));
+  });
+
+  // Task 1.7: Calculate average duration (mean)
+  const averageDuration = durations.reduce((sum, d) => sum + d, 0) / durations.length;
+
+  // Task 1.8: Calculate median duration
+  const sortedDurations = [...durations].sort((a, b) => a - b);
+  const midIndex = Math.floor(sortedDurations.length / 2);
+  const medianDuration = sortedDurations.length % 2 === 0
+    ? (sortedDurations[midIndex - 1] + sortedDurations[midIndex]) / 2
+    : sortedDurations[midIndex];
+
+  // Task 1.9: Calculate shortest duration (minimum)
+  const shortestDuration = Math.min(...durations);
+
+  // Task 1.10: Calculate longest duration (maximum)
+  const longestDuration = Math.max(...durations);
+
+  // Task 1.11: Return DurationMetrics object with rounded values
+  return {
+    averageDuration: Math.round(averageDuration * 10) / 10,
+    medianDuration: Math.round(medianDuration * 10) / 10,
+    shortestDuration,
+    longestDuration,
+    resolvedFlareCount: flaresInRange.length
+  };
+}
+
+/**
+ * Calculates severity metrics from all flares within a time range.
+ * Returns average peak severity and trend distribution percentages.
+ *
+ * Story 3.3 - Task 1: AC3.3.3
+ * - Fetches all flares (active and resolved)
+ * - Filters by time range using withinTimeRange utility
+ * - Extracts peak severity from flareEvents (max severity value)
+ * - Extracts most recent trend from flareEvents (eventType === 'trend_change')
+ * - Calculates average peak severity and trend distribution percentages
+ * - Returns null for metrics if no flares exist
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param timeRange - Time range to filter flares
+ * @returns Promise resolving to SeverityMetrics object
+ */
+export async function getSeverityMetrics(
+  userId: string,
+  timeRange: TimeRange
+): Promise<SeverityMetrics> {
+  // Task 1.13: Fetch all flares (active and resolved)
+  const allFlares = await db.flares.where({ userId }).toArray();
+
+  // Filter by time range
+  const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
+
+  // Handle empty state - no flares
+  if (flaresInRange.length === 0) {
+    return {
+      averagePeakSeverity: null,
+      trendDistribution: {
+        improving: 0,
+        stable: 0,
+        worsening: 0,
+        noData: 0
+      },
+      totalFlareCount: 0
+    };
+  }
+
+  // Calculate peak severity and trend for each flare
+  const peakSeverities: number[] = [];
+  const trends: string[] = [];
+
+  for (const flare of flaresInRange) {
+    // Task 1.14: Get peak severity from flareEvents table
+    const events = await db.flareEvents
+      .where({ flareId: flare.id })
+      .toArray();
+
+    const severityValues = events
+      .filter(e => e.severity !== undefined)
+      .map(e => e.severity!);
+    const peakSeverity = severityValues.length > 0
+      ? Math.max(...severityValues)
+      : flare.initialSeverity || 0;
+
+    peakSeverities.push(peakSeverity);
+
+    // Task 1.16: Get most recent trend from flareEvents (eventType === 'trend_change')
+    const trendEvents = events
+      .filter(e => e.eventType === 'trend_change')
+      .sort((a, b) => b.timestamp - a.timestamp);
+    const trend = trendEvents.length > 0
+      ? trendEvents[0].trend || 'N/A'
+      : 'N/A';
+
+    trends.push(trend);
+  }
+
+  // Task 1.15: Calculate average peak severity
+  const averagePeakSeverity = peakSeverities.reduce((sum, s) => sum + s, 0) / peakSeverities.length;
+
+  // Task 1.17: Calculate trend distribution (count by category, convert to percentages)
+  const trendCounts = {
+    improving: trends.filter(t => t === 'improving').length,
+    stable: trends.filter(t => t === 'stable').length,
+    worsening: trends.filter(t => t === 'worsening').length,
+    noData: trends.filter(t => t === 'N/A').length
+  };
+
+  const totalFlares = flaresInRange.length;
+  const trendDistribution = {
+    improving: Math.round((trendCounts.improving / totalFlares) * 1000) / 10,
+    stable: Math.round((trendCounts.stable / totalFlares) * 1000) / 10,
+    worsening: Math.round((trendCounts.worsening / totalFlares) * 1000) / 10,
+    noData: Math.round((trendCounts.noData / totalFlares) * 1000) / 10
+  };
+
+  // Task 1.18: Return SeverityMetrics object
+  return {
+    averagePeakSeverity: Math.round(averagePeakSeverity * 10) / 10,
+    trendDistribution,
+    totalFlareCount: totalFlares
+  };
+}
+
+/**
  * Repository object exposing analytics data access methods.
  */
 export const analyticsRepository = {
   getProblemAreas,
   getFlaresByRegion,
   getRegionStatistics,
+  getDurationMetrics,
+  getSeverityMetrics,
 };
