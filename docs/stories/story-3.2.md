@@ -1,6 +1,6 @@
 # Story 3.2: Per-Region Flare History
 
-Status: review
+Status: done
 
 ## Story
 
