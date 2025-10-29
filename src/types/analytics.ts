@@ -174,3 +174,60 @@ export interface TrendAnalysis {
   /** Overall trend direction assessment */
   trendDirection: 'improving' | 'stable' | 'declining' | 'insufficient-data';
 }
+
+/**
+ * Intervention type enum (Story 3.5 - Task 1.1)
+ * Categorizes different intervention methods for flare treatment.
+ */
+export type InterventionType = 'Ice' | 'Heat' | 'Medication' | 'Rest' | 'Drainage' | 'Other';
+
+/**
+ * Intervention instance interface (Story 3.5 - Task 1.2)
+ * Represents a single intervention event with before/after severity tracking.
+ */
+export interface InterventionInstance {
+  /** Event ID (foreign key to flareEvents.id) */
+  id: string;
+
+  /** Flare ID (foreign key to flares.id) */
+  flareId: string;
+
+  /** Type of intervention applied */
+  interventionType: InterventionType;
+
+  /** Unix timestamp when intervention was applied (epoch ms) */
+  timestamp: number;
+
+  /** Severity level at time of intervention (1-10 scale) */
+  severityAtIntervention: number;
+
+  /** Severity level 48 hours after intervention (1-10 scale) - null if no data available */
+  severityAfter48h: number | null;
+
+  /** Change in severity (severityAtIntervention - severityAfter48h) - positive = improvement, null if no 48h data */
+  severityChange: number | null;
+}
+
+/**
+ * Intervention effectiveness metrics interface (Story 3.5 - Task 1.3)
+ * Statistical analysis of intervention efficacy for a specific intervention type.
+ */
+export interface InterventionEffectiveness {
+  /** Type of intervention being analyzed */
+  interventionType: InterventionType;
+
+  /** Total number of times this intervention was used in time range */
+  usageCount: number;
+
+  /** Average severity change across all instances with 48h follow-up data - null if no follow-up data */
+  averageSeverityChange: number | null;
+
+  /** Percentage of instances where severity decreased within 48h - null if no follow-up data */
+  successRate: number | null;
+
+  /** Whether minimum threshold (>= 5 uses) is met for reliable statistics */
+  hasSufficientData: boolean;
+
+  /** Array of all intervention instances for this type */
+  instances: InterventionInstance[];
+}

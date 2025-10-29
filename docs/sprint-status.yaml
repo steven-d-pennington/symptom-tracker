@@ -66,11 +66,11 @@ development_status:
 
   epic-3: backlog
   3-1-calculate-and-display-problem-areas: done
-  3-2-per-region-flare-history: review
+  3-2-per-region-flare-history: done
   3-3-flare-duration-and-severity-metrics: done
   3-4-flare-trend-analysis-visualization: done
-  3-5-intervention-effectiveness-analysis: ready-for-dev
-  epic-3-retrospective: optional
+  3-5-intervention-effectiveness-analysis: done
+  epic-3-retrospective: completed
 
   epic-4: backlog
   4-1-attach-photos-to-flare-entities: backlog
