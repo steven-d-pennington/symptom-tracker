@@ -7,6 +7,9 @@
  * identified in the brainstorming session on 2025-10-29.
  */
 
+// Session-level lock to prevent concurrent initialization
+const initializationLocks = new Map<string, Promise<InitializationResult>>();
+
 import { symptomRepository } from '../repositories/symptomRepository';
 import { foodRepository } from '../repositories/foodRepository';
 import { triggerRepository } from '../repositories/triggerRepository';
@@ -43,15 +46,65 @@ export interface InitializationResult {
 export async function initializeUserDefaults(
   userId: string
 ): Promise<InitializationResult> {
+  // Prevent initialization for the fallback user ID (ghost user from useCurrentUser hook)
+  if (userId === 'default-user-id') {
+    console.warn(`[initializeUserDefaults] Skipping initialization for fallback user ID: ${userId}`);
+    return {
+      success: true,
+      details: {
+        symptomsCreated: 0,
+        foodsCreated: 0,
+        triggersCreated: 0,
+        medicationsCreated: 0,
+      },
+    };
+  }
+
+  // Check if initialization is already in progress for this user
+  const existingLock = initializationLocks.get(userId);
+  if (existingLock) {
+    console.log(`[initializeUserDefaults] Initialization already in progress for user: ${userId}, waiting...`);
+    return existingLock;
+  }
+
+  // Create a new initialization promise and store it in the lock map
+  const initPromise = performInitialization(userId);
+  initializationLocks.set(userId, initPromise);
+
+  // Clean up the lock when done
+  initPromise.finally(() => {
+    initializationLocks.delete(userId);
+  });
+
+  return initPromise;
+}
+
+async function performInitialization(
+  userId: string
+): Promise<InitializationResult> {
   try {
-    console.log(`[initializeUserDefaults] Starting initialization for user: ${userId}`);
+    console.log(`[performInitialization] Starting initialization for user: ${userId}`);
 
     // Check if defaults already exist (idempotency)
-    const existingSymptoms = await symptomRepository.getAll(userId);
-    const hasDefaults = existingSymptoms.some((s) => s.isDefault);
+    // Must check ALL four data types, not just symptoms
+    const [existingSymptoms, existingFoods, existingTriggers, existingMedications] =
+      await Promise.all([
+        symptomRepository.getAll(userId),
+        foodRepository.getAll(userId),
+        triggerRepository.getAll(userId),
+        medicationRepository.getAll(userId),
+      ]);
 
-    if (hasDefaults) {
-      console.log(`[initializeUserDefaults] Defaults already initialized for user: ${userId}`);
+    const hasSymptomDefaults = existingSymptoms.some((s) => s.isDefault);
+    const hasFoodDefaults = existingFoods.some((f) => f.isDefault);
+    const hasTriggerDefaults = existingTriggers.some((t) => t.isDefault);
+    const hasMedicationDefaults = existingMedications.some((m) => m.isDefault);
+
+    const allDefaultsExist = hasSymptomDefaults && hasFoodDefaults &&
+                              hasTriggerDefaults && hasMedicationDefaults;
+
+    if (allDefaultsExist) {
+      console.log(`[performInitialization] All defaults already initialized for user: ${userId}`);
       return {
         success: true,
         details: {
@@ -61,6 +114,17 @@ export async function initializeUserDefaults(
           medicationsCreated: 0,
         },
       };
+    }
+
+    // Partial initialization detected - log warning
+    if (hasSymptomDefaults || hasFoodDefaults || hasTriggerDefaults || hasMedicationDefaults) {
+      console.warn(`[performInitialization] Partial defaults detected for user ${userId}:`, {
+        symptoms: hasSymptomDefaults,
+        foods: hasFoodDefaults,
+        triggers: hasTriggerDefaults,
+        medications: hasMedicationDefaults,
+      });
+      console.warn('[performInitialization] Will create only missing defaults...');
     }
 
     // Prepare default symptoms for bulk creation
@@ -116,19 +180,41 @@ export async function initializeUserDefaults(
       }));
 
     // Create all defaults using bulk operations for performance
-    console.log(`[initializeUserDefaults] Creating ${symptomsToCreate.length} default symptoms...`);
-    const symptomIds = await symptomRepository.bulkCreate(symptomsToCreate);
+    // Only create what's missing (for partial initialization recovery)
+    let symptomIds: string[] = [];
+    let foodIds: string[] = [];
+    let triggerIds: string[] = [];
+    let medicationIds: string[] = [];
 
-    console.log(`[initializeUserDefaults] Creating ${foodsToCreate.length} default foods...`);
-    const foodIds = await foodRepository.bulkCreate(foodsToCreate);
+    if (!hasSymptomDefaults) {
+      console.log(`[performInitialization] Creating ${symptomsToCreate.length} default symptoms...`);
+      symptomIds = await symptomRepository.bulkCreate(symptomsToCreate);
+    } else {
+      console.log(`[performInitialization] Skipping symptoms - defaults already exist`);
+    }
 
-    console.log(`[initializeUserDefaults] Creating ${triggersToCreate.length} default triggers...`);
-    const triggerIds = await triggerRepository.bulkCreate(triggersToCreate);
+    if (!hasFoodDefaults) {
+      console.log(`[performInitialization] Creating ${foodsToCreate.length} default foods...`);
+      foodIds = await foodRepository.bulkCreate(foodsToCreate);
+    } else {
+      console.log(`[performInitialization] Skipping foods - defaults already exist`);
+    }
 
-    console.log(`[initializeUserDefaults] Creating ${medicationsToCreate.length} default medications...`);
-    const medicationIds = await medicationRepository.bulkCreate(medicationsToCreate);
+    if (!hasTriggerDefaults) {
+      console.log(`[performInitialization] Creating ${triggersToCreate.length} default triggers...`);
+      triggerIds = await triggerRepository.bulkCreate(triggersToCreate);
+    } else {
+      console.log(`[performInitialization] Skipping triggers - defaults already exist`);
+    }
 
-    console.log(`[initializeUserDefaults] Successfully initialized defaults for user: ${userId}`);
+    if (!hasMedicationDefaults) {
+      console.log(`[performInitialization] Creating ${medicationsToCreate.length} default medications...`);
+      medicationIds = await medicationRepository.bulkCreate(medicationsToCreate);
+    } else {
+      console.log(`[performInitialization] Skipping medications - defaults already exist`);
+    }
+
+    console.log(`[performInitialization] Successfully initialized defaults for user: ${userId}`);
     console.log(`  - Symptoms: ${symptomIds.length}`);
     console.log(`  - Foods: ${foodIds.length}`);
     console.log(`  - Triggers: ${triggerIds.length}`);
@@ -144,7 +230,7 @@ export async function initializeUserDefaults(
       },
     };
   } catch (error) {
-    console.error('[initializeUserDefaults] Failed to initialize user defaults:', error);
+    console.error('[performInitialization] Failed to initialize user defaults:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

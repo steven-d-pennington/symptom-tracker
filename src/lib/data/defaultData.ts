@@ -223,15 +223,16 @@ export const DEFAULT_FOODS: DefaultFood[] = [
   { name: 'Cheese', category: 'Dairy', allergenTags: ['dairy'] },
   { name: 'Yogurt', category: 'Dairy', allergenTags: ['dairy'] },
 
-  // Grains category (3 items)
-  { name: 'Wheat', category: 'Grains', allergenTags: ['gluten', 'wheat'] },
-  { name: 'Bread', category: 'Grains', allergenTags: ['gluten', 'wheat'] },
-  { name: 'Pasta', category: 'Grains', allergenTags: ['gluten', 'wheat'] },
+  // Grains category (4 items)
+  { name: 'Wheat', category: 'Grains', allergenTags: ['gluten'] },
+  { name: 'Bread', category: 'Grains', allergenTags: ['gluten'] },
+  { name: 'Pasta', category: 'Grains', allergenTags: ['gluten'] },
+  { name: 'Rice', category: 'Grains', allergenTags: [] },
 
   // Nightshades category (3 items)
-  { name: 'Tomatoes', category: 'Nightshades', allergenTags: [] },
-  { name: 'Peppers', category: 'Nightshades', allergenTags: [] },
-  { name: 'Potatoes', category: 'Nightshades', allergenTags: [] },
+  { name: 'Tomatoes', category: 'Nightshades', allergenTags: ['nightshades'] },
+  { name: 'Peppers', category: 'Nightshades', allergenTags: ['nightshades'] },
+  { name: 'Potatoes', category: 'Nightshades', allergenTags: ['nightshades'] },
 
   // Processed Foods category (2 items)
   { name: 'Processed Foods', category: 'Processed', allergenTags: [] },
@@ -242,13 +243,14 @@ export const DEFAULT_FOODS: DefaultFood[] = [
   { name: 'Sweets', category: 'Sugar', allergenTags: [] },
   { name: 'Soda', category: 'Sugar', allergenTags: [] },
 
-  // Proteins category (6 items)
+  // Proteins category (7 items)
   { name: 'Red Meat', category: 'Proteins', allergenTags: [] },
   { name: 'Chicken', category: 'Proteins', allergenTags: [] },
   { name: 'Fish', category: 'Proteins', allergenTags: ['fish'] },
+  { name: 'Shellfish', category: 'Proteins', allergenTags: ['shellfish'] },
   { name: 'Eggs', category: 'Proteins', allergenTags: ['eggs'] },
-  { name: 'Legumes', category: 'Proteins', allergenTags: [] },
-  { name: 'Nuts', category: 'Proteins', allergenTags: ['nuts', 'tree nuts'] }
+  { name: 'Soy', category: 'Proteins', allergenTags: ['soy'] },
+  { name: 'Nuts', category: 'Proteins', allergenTags: ['nuts'] }
 ];
 
 /**

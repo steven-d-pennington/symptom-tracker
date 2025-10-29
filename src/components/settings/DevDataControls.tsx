@@ -56,6 +56,250 @@ export function DevDataControls() {
     }
   };
 
+  const handleCheckDefaults = async () => {
+    if (!userId) {
+      setError("No user found. Please complete onboarding first.");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const { symptomRepository } = await import("@/lib/repositories/symptomRepository");
+      const { foodRepository } = await import("@/lib/repositories/foodRepository");
+      const { triggerRepository } = await import("@/lib/repositories/triggerRepository");
+      const { medicationRepository } = await import("@/lib/repositories/medicationRepository");
+      const { db } = await import("@/lib/db/client");
+
+      const [symptoms, foods, triggers, medications] = await Promise.all([
+        symptomRepository.getAll(userId),
+        foodRepository.getAll(userId),
+        triggerRepository.getAll(userId),
+        medicationRepository.getAll(userId),
+      ]);
+
+      // Also check total counts across ALL users to detect duplicate user creation
+      const [allFoods, allSymptoms, allTriggers, allMedications, allUsers] = await Promise.all([
+        db.foods.toArray(),
+        db.symptoms.toArray(),
+        db.triggers.toArray(),
+        db.medications.toArray(),
+        db.users.toArray(),
+      ]);
+
+      const defaultSymptoms = symptoms.filter(s => s.isDefault);
+      const enabledDefaults = defaultSymptoms.filter(s => s.isEnabled);
+
+      // Get unique user IDs from foods
+      const uniqueFoodUserIds = new Set(allFoods.map(f => f.userId));
+
+      setMessage(
+        `📊 **Database Status for Current User (${userId}):**\\n\\n` +
+        `**Symptoms:**\\n` +
+        `• Total: ${symptoms.length}\\n` +
+        `• Defaults: ${defaultSymptoms.length}\\n` +
+        `• Enabled defaults: ${enabledDefaults.length}\\n` +
+        `• Sample: ${symptoms.slice(0, 3).map(s => `${s.name} (default:${s.isDefault}, enabled:${s.isEnabled})`).join(', ')}\\n\\n` +
+        `**Foods:** ${foods.length} total, ${foods.filter(f => f.isDefault).length} defaults\\n` +
+        `**Triggers:** ${triggers.length} total, ${triggers.filter(t => t.isDefault).length} defaults\\n` +
+        `**Medications:** ${medications.length} total, ${medications.filter(m => m.isDefault).length} defaults\\n\\n` +
+        `⚠️ **GLOBAL DATABASE STATS:**\\n` +
+        `• Total users: ${allUsers.length}\\n` +
+        `• Total foods (all users): ${allFoods.length}\\n` +
+        `• Total symptoms (all users): ${allSymptoms.length}\\n` +
+        `• Total triggers (all users): ${allTriggers.length}\\n` +
+        `• Total medications (all users): ${allMedications.length}\\n` +
+        `• Unique user IDs with foods: ${uniqueFoodUserIds.size}\\n` +
+        `• User IDs: ${Array.from(uniqueFoodUserIds).join(', ')}`
+      );
+    } catch (err) {
+      console.error("Failed to check defaults", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while checking defaults."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInitializeDefaults = async () => {
+    if (!userId) {
+      setError("No user found. Please complete onboarding first.");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const { initializeUserDefaults } = await import("@/lib/services/userInitialization");
+      const result = await initializeUserDefaults(userId);
+
+      if (result.success) {
+        setMessage(
+          `✅ Default data initialized successfully!\\n\\n` +
+          `📊 **Items Created:**\\n` +
+          `• ${result.details?.symptomsCreated || 0} symptoms\\n` +
+          `• ${result.details?.foodsCreated || 0} foods\\n` +
+          `• ${result.details?.triggersCreated || 0} triggers\\n` +
+          `• ${result.details?.medicationsCreated || 0} medications\\n\\n` +
+          `**Refresh the page to see your defaults!**`
+        );
+      } else {
+        setError(`Failed to initialize defaults: ${result.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Failed to initialize defaults", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while initializing defaults."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetDefaults = async () => {
+    if (!userId) {
+      setError("No user found. Please complete onboarding first.");
+      return;
+    }
+
+    const confirmed = confirm(
+      "⚠️ This will delete ALL default items (symptoms, foods, triggers, medications) and recreate them from scratch.\\n\\n" +
+      "Your custom items and event data will NOT be affected.\\n\\n" +
+      "Continue?"
+    );
+
+    if (!confirmed) return;
+
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const { db } = await import("@/lib/db/client");
+      const { symptomRepository } = await import("@/lib/repositories/symptomRepository");
+      const { foodRepository } = await import("@/lib/repositories/foodRepository");
+      const { triggerRepository } = await import("@/lib/repositories/triggerRepository");
+      const { medicationRepository } = await import("@/lib/repositories/medicationRepository");
+
+      // Get all items with isDefault flag
+      const [symptoms, foods, triggers, medications] = await Promise.all([
+        symptomRepository.getAll(userId),
+        foodRepository.getAll(userId),
+        triggerRepository.getAll(userId),
+        medicationRepository.getAll(userId),
+      ]);
+
+      // Filter to defaults and get IDs
+      const defaultSymptomIds = symptoms.filter(s => s.isDefault).map(s => s.id);
+      const defaultFoodIds = foods.filter(f => f.isDefault).map(f => f.id);
+      const defaultTriggerIds = triggers.filter(t => t.isDefault).map(t => t.id);
+      const defaultMedicationIds = medications.filter(m => m.isDefault).map(m => m.id);
+
+      console.log('[Reset Defaults] Deleting defaults:', {
+        symptoms: defaultSymptomIds.length,
+        foods: defaultFoodIds.length,
+        triggers: defaultTriggerIds.length,
+        medications: defaultMedicationIds.length,
+      });
+
+      // Delete by IDs (more reliable than filter().delete())
+      await Promise.all([
+        db.symptoms.bulkDelete(defaultSymptomIds),
+        db.foods.bulkDelete(defaultFoodIds),
+        db.triggers.bulkDelete(defaultTriggerIds),
+        db.medications.bulkDelete(defaultMedicationIds),
+      ]);
+
+      console.log('[Reset Defaults] Deleted all default items');
+
+      // Re-initialize defaults
+      const { initializeUserDefaults } = await import("@/lib/services/userInitialization");
+      const result = await initializeUserDefaults(userId);
+
+      if (result.success) {
+        setMessage(
+          `✅ Defaults reset successfully!\\n\\n` +
+          `📊 **Items Recreated:**\\n` +
+          `• ${result.details?.symptomsCreated || 0} symptoms\\n` +
+          `• ${result.details?.foodsCreated || 0} foods\\n` +
+          `• ${result.details?.triggersCreated || 0} triggers\\n` +
+          `• ${result.details?.medicationsCreated || 0} medications\\n\\n` +
+          `**Refresh the page to see your defaults!**`
+        );
+      } else {
+        setError(`Failed to re-initialize defaults: ${result.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Failed to reset defaults", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while resetting defaults."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCleanupGhostUser = async () => {
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const { db } = await import("@/lib/db/client");
+
+      // Delete all data for the ghost "default-user-id"
+      const ghostUserId = 'default-user-id';
+
+      console.log('[Cleanup Ghost User] Deleting data for:', ghostUserId);
+
+      await Promise.all([
+        // Event stream data
+        db.medicationEvents?.where({ userId: ghostUserId }).delete(),
+        db.triggerEvents?.where({ userId: ghostUserId }).delete(),
+        db.symptomInstances?.where({ userId: ghostUserId }).delete(),
+        db.flares?.where({ userId: ghostUserId }).delete(),
+        db.flareEvents?.where({ userId: ghostUserId }).delete(),
+        // Food data
+        db.foodEvents?.where({ userId: ghostUserId }).delete(),
+        db.foods?.where({ userId: ghostUserId }).delete(),
+        db.foodCombinations?.where({ userId: ghostUserId }).delete(),
+        // Legacy data
+        db.dailyEntries.where({ userId: ghostUserId }).delete(),
+        db.analysisResults.where({ userId: ghostUserId }).delete(),
+        // Definitions
+        db.symptoms.where({ userId: ghostUserId }).delete(),
+        db.medications.where({ userId: ghostUserId }).delete(),
+        db.triggers.where({ userId: ghostUserId }).delete(),
+        // Other data
+        db.bodyMapLocations?.where({ userId: ghostUserId }).delete(),
+        db.photoAttachments?.where({ userId: ghostUserId }).delete(),
+        db.uxEvents?.where({ userId: ghostUserId }).delete(),
+      ]);
+
+      setMessage(`✅ Ghost user data cleaned up successfully!\\n\\nDeleted all data for user ID: ${ghostUserId}`);
+    } catch (err) {
+      console.error("Failed to cleanup ghost user", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while cleaning up ghost user."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleClearAllData = async () => {
     if (!userId) {
       setError("No user found. Please complete onboarding first.");
@@ -228,6 +472,42 @@ export function DevDataControls() {
                 Generate {scenarios.find(s => s.id === selectedScenario)?.name}
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCheckDefaults}
+            disabled={isLoading}
+            className="inline-flex items-center rounded-md bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? "Checking…" : "Check Database"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleInitializeDefaults}
+            disabled={isLoading}
+            className="inline-flex items-center rounded-md bg-green-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? "Initializing…" : "Initialize Defaults"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleResetDefaults}
+            disabled={isLoading}
+            className="inline-flex items-center rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? "Resetting…" : "Reset Defaults"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCleanupGhostUser}
+            disabled={isLoading}
+            className="inline-flex items-center rounded-md bg-yellow-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-yellow-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? "Cleaning…" : "Cleanup Ghost User"}
           </button>
 
           <button

@@ -117,11 +117,11 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
           setAllFoodsByCategory(new Map());
           setFoods([]);
         } else {
-          // No favorites, show default foods
-          const results = await foodRepository.getDefault(userId);
-          setFoods(results);
+          // No favorites, show default foods grouped by category
+          const grouped = await foodRepository.getAllByCategory(userId);
+          setAllFoodsByCategory(grouped);
           setFavoritesByCategory(new Map());
-          setAllFoodsByCategory(new Map());
+          setFoods([]);
         }
 
         const endTime = performance.now();
@@ -356,7 +356,7 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
   const refreshFoods = async () => {
     const user = await userRepository.getOrCreateCurrentUser();
     const favs = await userRepository.getFoodFavorites(user.id);
-    
+
     if (searchQuery) {
       const results = await foodRepository.search(userId, searchQuery);
       const ranked = [...results].sort((a, b) => {
@@ -367,14 +367,18 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
       });
       setFoods(ranked);
       setFavoritesByCategory(new Map());
+      setAllFoodsByCategory(new Map());
     } else if (favs.length > 0) {
       const grouped = await foodRepository.getFavoritesByCategory(userId, favs);
       setFavoritesByCategory(grouped);
+      setAllFoodsByCategory(new Map());
       setFoods([]);
     } else {
-      const results = await foodRepository.getDefault(userId);
-      setFoods(results);
+      // No favorites, show default foods grouped by category
+      const grouped = await foodRepository.getAllByCategory(userId);
+      setAllFoodsByCategory(grouped);
       setFavoritesByCategory(new Map());
+      setFoods([]);
     }
   };
 

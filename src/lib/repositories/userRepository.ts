@@ -97,6 +97,14 @@ export class UserRepository {
   async getOrCreateCurrentUser(): Promise<UserRecord> {
     const currentUser = await this.getCurrentUser();
     if (currentUser) {
+      // Ensure the current user ID is stored in localStorage
+      if (typeof window !== 'undefined') {
+        const storedId = window.localStorage.getItem('pocket:currentUserId');
+        if (storedId !== currentUser.id) {
+          console.log(`[getOrCreateCurrentUser] Updating localStorage with current user ID: ${currentUser.id}`);
+          window.localStorage.setItem('pocket:currentUserId', currentUser.id);
+        }
+      }
       return currentUser;
     }
 
@@ -123,6 +131,12 @@ export class UserRepository {
     const user = await this.getById(id);
     if (!user) {
       throw new Error("Failed to create user");
+    }
+
+    // Store the new user ID in localStorage immediately
+    if (typeof window !== 'undefined') {
+      console.log(`[getOrCreateCurrentUser] Storing new user ID in localStorage: ${id}`);
+      window.localStorage.setItem('pocket:currentUserId', id);
     }
 
     // Story 3.5.1: Initialize default data for new user
