@@ -1,0 +1,244 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>1</storyId>
+    <title>Fix Empty State Crisis & Pre-populate Defaults</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-5-1-fix-empty-state-crisis-and-pre-populate-defaults.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a first-time user trying to log my symptoms</asA>
+    <iWant>to see available options when I click quick action buttons</iWant>
+    <soThat>I can successfully log data on my first attempt</soThat>
+    <tasks>
+      - Task 1: Define default data sets (AC: #3.5.1.1-4)
+      - Task 2: Update database schemas with isDefault flag (AC: #3.5.1.1-4, #3.5.1.8)
+      - Task 3: Create user initialization service (AC: #3.5.1.1-4)
+      - Task 4: Integrate user initialization into signup flow (AC: #3.5.1.1-4)
+      - Task 5: Create EmptyState components (AC: #3.5.1.5)
+      - Task 6: Update logging interfaces to show defaults (AC: #3.5.1.6)
+      - Task 7: Create guided setup wizard (AC: #3.5.1.7)
+      - Task 8: Update import/export for schema changes (AC: #3.5.1.8)
+      - Task 9: Implement default item management in Settings (AC: #3.5.1.9)
+      - Task 10: Add comprehensive tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC3.5.1.1 — Pre-populate default symptoms at user creation: System creates sensible default symptoms when new user account is created, defaults include common HS symptoms: Pain, Swelling, Drainage, Redness, Itching, Tenderness, defaults stored in symptoms table with userId and isDefault: true flag, minimum 8-10 default symptoms provided, defaults use medically relevant terminology per brainstorming session medical expert review.
+
+    2. AC3.5.1.2 — Pre-populate default foods at user creation: System creates default food categories and common items when new user account is created, defaults include common trigger foods: Dairy (milk, cheese, yogurt), Grains (wheat, bread, pasta), Nightshades (tomatoes, peppers), Processed Foods, Sugar/Sweets, defaults organized by category with isDefault: true flag, minimum 15-20 default food items across 5-6 categories.
+
+    3. AC3.5.1.3 — Pre-populate default triggers at user creation: System creates default triggers when new user account is created, defaults include common HS triggers: Stress, Heat/Humidity, Friction, Hormonal Changes, Lack of Sleep, Exercise, defaults stored in triggers table with isDefault: true flag, minimum 8-10 default triggers.
+
+    4. AC3.5.1.4 — Pre-populate default medications at user creation: System creates default medications/treatments when new user account is created, defaults include common HS treatments: Ibuprofen, Warm Compress, Ice Pack, Antibiotic (prescribed), Topical Treatment, Rest, defaults stored in medications table with isDefault: true flag, minimum 8-10 default treatment options.
+
+    5. AC3.5.1.5 — Empty state components with contextual guidance: Create EmptyState components for each data type (symptoms, foods, triggers, medications), empty states display when user has no custom items (defaults still available), message format: "No custom [type] yet. Add your own in Settings > Manage Data", empty states include icon, heading, description, and link to management page, follows semantic HTML structure from existing empty state patterns.
+
+    6. AC3.5.1.6 — Quick action buttons show defaults on first use: Dashboard quick action buttons (Food, Symptom, Trigger, Medication) display at least default items when clicked by new user, logging modals/pages show defaults mixed with any custom items user has added, defaults clearly labeled with subtle visual indicator (e.g., light gray "default" badge), user can successfully complete first logging workflow without hitting empty states.
+
+    7. AC3.5.1.7 — Guided setup flow for first custom items: Create optional guided setup flow that offers to help users add their first custom items, trigger setup flow if user clicks empty state link or "Add Custom" button, setup wizard walks through: "Add your first custom symptom", "Add your first custom food", etc., wizard is dismissible and doesn't block core functionality, completion state persisted to localStorage per user.
+
+    8. AC3.5.1.8 — Import/export compatibility maintained: Update import/export functionality to handle isDefault flag in schema, when importing data, preserve isDefault flags from imported records, when exporting data, include isDefault flags so defaults are identifiable, DevDataControls updated to support pre-populated defaults (can clear all data including defaults, can restore defaults).
+
+    9. AC3.5.1.9 — Settings allow hiding/disabling default items: Users can disable default items they don't use from Settings > Manage Data page, disabled defaults don't appear in logging interfaces but remain in database (soft delete pattern), users can re-enable disabled defaults at any time, custom items cannot be marked as defaults (isDefault flag immutable after creation).
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-3.5-production-ux.md</path>
+        <title>Epic 3.5: Production-Ready UI/UX Enhancement</title>
+        <section>Story 3.5.1 Definition</section>
+        <snippet>Fix Empty State Crisis by pre-populating default symptoms, foods, triggers, and medications at user creation. Includes: contextual empty state components, guided setup wizard, import/export compatibility, and Settings management for disabling defaults. This is CRITICAL priority story addressing unanimous #1 issue from brainstorming session.</snippet>
+      </doc>
+      <doc>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>UI/UX Brainstorming Session Results</title>
+        <section>Empty State Crisis Discovery</section>
+        <snippet>Role-playing exercise revealed first-time users clicking quick action buttons hit empty states with no data - critical drop-off moment blocking core functionality. Unanimous #1 priority from expert panel. Pre-populated defaults eliminate this onboarding blocker.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Repository Pattern & Offline-First Architecture</section>
+        <snippet>Brownfield enhancement leveraging existing Next.js/React/Dexie infrastructure. Repository pattern encapsulates data access with IndexedDB persistence. Offline-first architecture ensures zero data loss (NFR002). All writes use immediate IndexedDB transactions with no network dependencies.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR002: Offline-First Persistence</section>
+        <snippet>All data must persist to local IndexedDB immediately with offline-first architecture, ensuring zero data loss even without network connectivity. No network dependency for core features.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1: Flare Data Model and IndexedDB Schema</title>
+        <section>Repository Pattern Implementation</section>
+        <snippet>Established repository pattern with flareRepository implementing CRUD operations, all accepting userId parameter for multi-user future-proofing. Uses Dexie transactions for atomic writes with proper error handling. Includes isDefault/isActive pattern precedent.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>SymptomRecord, TriggerRecord, FoodRecord, MedicationRecord</symbol>
+        <lines>69-82, 119-130, 377-388, 106-117</lines>
+        <reason>Schema definitions show existing isDefault/isEnabled pattern for symptoms and triggers (v8), isDefault/isActive for foods (v11). MedicationRecord needs isDefault field added to match pattern.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase.version</symbol>
+        <lines>319-398</lines>
+        <reason>Current Dexie version is 18. Need to increment to v19 for adding medications.isDefault field and creating default data initialization migration.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/symptomRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>SymptomRepository</symbol>
+        <lines>1-147</lines>
+        <reason>Repository pattern example to follow: getAll, getActive, create, update, bulkCreate methods with userId isolation. Shows soft delete pattern with isActive flag.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/services/importService.ts</path>
+        <kind>service</kind>
+        <symbol>ImportService.importSymptoms, ImportService.importFoods</symbol>
+        <lines>474-524, 994-1034</lines>
+        <reason>Import service already preserves isDefault fields during data import. Shows pattern for handling schema fields during import/export cycle that must be maintained.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/settings/DevDataControls.tsx</path>
+        <kind>component</kind>
+        <symbol>DevDataControls</symbol>
+        <lines>all</lines>
+        <reason>Development controls component that needs updating to support clearing and restoring default data. Must add "Restore Defaults" button.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>dexie</package>
+        <version>4.2.0</version>
+        <reason>IndexedDB wrapper for schema management, migrations, and offline-first persistence</reason>
+      </node>
+      <node>
+        <package>uuid</package>
+        <version>13.0.0</version>
+        <reason>Generate unique IDs for default data records</reason>
+      </node>
+      <node>
+        <package>zod</package>
+        <version>latest</version>
+        <reason>Runtime type validation for default data structures and schema validation</reason>
+      </node>
+      <node>
+        <package>next</package>
+        <version>15.5.4</version>
+        <reason>Framework for React app with routing for Settings and guided wizard pages</reason>
+      </node>
+      <node>
+        <package>react</package>
+        <version>19.1.0</version>
+        <reason>UI components for EmptyState and GuidedSetupWizard</reason>
+      </node>
+      <node>
+        <package>tailwindcss</package>
+        <version>4.x</version>
+        <reason>Styling for EmptyState components and visual indicators</reason>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>0.544.0</version>
+        <reason>Icons for EmptyState components</reason>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. CRITICAL: Maintain import/export feature compatibility when making schema changes. Update devdatacontrols accordingly. [Source: docs/brainstorming-session-results-2025-10-29.md#Action-Planning]
+    2. Follow existing repository pattern from flareRepository (Story 2.1) with userId isolation and error handling. [Source: docs/solution-architecture.md#Repository-Pattern]
+    3. Use immediate IndexedDB transactions (offline-first) - no network dependencies (NFR002). [Source: docs/PRD.md#NFR002]
+    4. isDefault flag must be immutable after record creation - users cannot convert custom items to defaults or vice versa.
+    5. Soft delete pattern (isActive field) allows users to hide defaults without data loss.
+    6. Default data uses patient-friendly medical terminology validated against HS community resources.
+    7. All schema changes require Dexie version increment and migration with existing data preservation.
+    8. TypeScript strict typing required with Zod validation schemas for runtime type checking.
+    9. IMPORTANT: SymptomRecord and TriggerRecord already have isDefault/isEnabled fields (v8). FoodRecord has isDefault/isActive (v11). Only MedicationRecord needs isDefault added.
+    10. Current Dexie version is 18. Increment to v19 for medications.isDefault field addition and default data initialization.
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>SymptomRepository API</name>
+      <kind>repository</kind>
+      <signature>
+        getAll(userId: string): Promise&lt;SymptomRecord[]&gt;
+        getActive(userId: string): Promise&lt;SymptomRecord[]&gt;
+        create(data: Omit&lt;SymptomRecord, "id" | "createdAt" | "updatedAt"&gt;): Promise&lt;string&gt;
+        bulkCreate(data[]): Promise&lt;string[]&gt;
+      </signature>
+      <path>src/lib/repositories/symptomRepository.ts</path>
+    </interface>
+    <interface>
+      <name>FoodRepository API</name>
+      <kind>repository</kind>
+      <signature>Similar pattern to SymptomRepository with getAll, create, bulkCreate methods</signature>
+      <path>src/lib/repositories/foodRepository.ts</path>
+    </interface>
+    <interface>
+      <name>TriggerRepository API</name>
+      <kind>repository</kind>
+      <signature>Similar pattern to SymptomRepository with getAll, create, bulkCreate methods</signature>
+      <path>src/lib/repositories/triggerRepository.ts</path>
+    </interface>
+    <interface>
+      <name>MedicationRepository API</name>
+      <kind>repository</kind>
+      <signature>Similar pattern to SymptomRepository - will need bulkCreate method added</signature>
+      <path>src/lib/repositories/medicationRepository.ts</path>
+    </interface>
+    <interface>
+      <name>initializeUserDefaults</name>
+      <kind>function</kind>
+      <signature>async function initializeUserDefaults(userId: string): Promise&lt;{success: boolean; error?: string}&gt;</signature>
+      <path>src/lib/services/userInitialization.ts (NEW)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing framework: Jest + React Testing Library + fake-indexeddb (existing pattern from Story 2.1).
+      Unit tests for services/repositories using fake-indexeddb mocking.
+      Integration tests for complete flows (signup → defaults created → first log).
+      Component tests for EmptyState and GuidedSetupWizard using React Testing Library.
+      Accessibility tests with @testing-library/jest-dom for semantic HTML and keyboard navigation.
+      Migration tests to verify Dexie v19 upgrade preserves existing data.
+      Coverage target: 80% for service/repository layers, 100% for schema migrations.
+    </standards>
+    <locations>
+      src/lib/services/__tests__/userInitialization.test.ts (NEW)
+      src/lib/repositories/__tests__/symptomRepository.test.ts (extend)
+      src/lib/repositories/__tests__/foodRepository.test.ts (extend)
+      src/lib/repositories/__tests__/medicationRepository.test.ts (extend)
+      src/lib/repositories/__tests__/triggerRepository.test.ts (extend)
+      src/components/empty-states/__tests__/SymptomEmptyState.test.tsx (NEW)
+      src/components/setup/__tests__/GuidedSetupWizard.test.tsx (NEW)
+      src/lib/services/__tests__/importService.test.ts (extend for isDefault)
+      src/lib/db/__tests__/migrations.test.ts (NEW for v19 migration)
+    </locations>
+    <ideas>
+      TEST: defaultData.ts validates all arrays have correct structure, counts match ACs (10 symptoms, 20 foods, 10 triggers, 10 medications)
+      TEST: initializeUserDefaults creates all 4 data types with isDefault: true, isActive: true flags
+      TEST: Idempotency - calling initializeUserDefaults twice doesn't create duplicates
+      TEST: Dexie v19 migration adds isDefault field to medications with default false for existing records
+      TEST: EmptyState components render with correct messaging, links to Settings page, semantic HTML
+      TEST: GuidedSetupWizard displays 4 steps, allows skipping, persists completion to localStorage
+      TEST: Logging interfaces query and display defaults alongside customs, visual indicators render
+      TEST: Settings page disable/enable defaults updates isActive flag, filters work in queries
+      TEST: Import/export preserves isDefault flags through export → import cycle
+      TEST: First-time user end-to-end: signup → defaults created automatically → log first symptom successfully
+      TEST: Repository bulkCreate methods work for all 4 data types with error handling
+      TEST: DevDataControls "Restore Defaults" button re-runs initializeUserDefaults successfully
+    </ideas>
+  </tests>
+</story-context>

@@ -587,6 +587,187 @@ So that I can identify effective treatments.
 
 ---
 
+## Epic 3.5: Production-Ready UI/UX Enhancement _(CRITICAL)_
+
+### Expanded Goal
+
+Transform the symptom-tracker from development build to production-ready application by fixing critical UX issues, implementing essential missing features (mood/sleep tracking), and redesigning core logging workflows for improved usability. This epic addresses critical production-readiness issues identified through comprehensive UI/UX brainstorming (role-playing and expert panel review on 2025-10-29).
+
+### Value Proposition
+
+- **Eliminates critical onboarding drop-off** by fixing empty state crisis where new users cannot log anything
+- **Improves daily user experience** by replacing clunky modal-based logging with dedicated pages
+- **Adds clinically essential features** (mood & sleep) required for correlation analytics
+- **Fixes broken functionality** blocking production readiness (dark mode, calendar, navigation)
+- **Enables user launch** by resolving all critical production blockers
+
+**Note:** This epic MUST be completed BEFORE Epic 4 (Photo Documentation) to ensure core application is production-ready.
+
+### Story Breakdown
+
+**Story 3.5.1: Fix Empty State Crisis & Pre-populate Defaults**
+
+As a first-time user trying to log my symptoms,
+I want to see available options when I click quick action buttons,
+So that I can successfully log data on my first attempt.
+
+**Acceptance Criteria:**
+1. System pre-populates default symptoms, foods, triggers, and medications at user creation
+2. Default data sets are sensible and medically relevant (common HS symptoms, treatments, foods)
+3. Empty state components display contextual guidance: "No custom symptoms yet. Add in Settings > Manage Data"
+4. Quick action buttons (Food, Symptom, Trigger, Medication) show at least defaults when clicked
+5. Guided setup flow offers to help users add their first custom items
+6. Empty states include clear links to Settings/Manage Data pages
+7. First-time user can complete full logging workflow without hitting dead ends
+8. Import/export functionality maintains compatibility with new defaults schema
+9. DevDataControls updated to support pre-populated defaults
+
+**Prerequisites:** None (critical foundational story)
+
+---
+
+**Story 3.5.2: Mood & Sleep Basic Logging**
+
+As a user tracking my health patterns,
+I want to log my daily mood and sleep quality,
+So that I can later analyze correlations with symptoms and flares.
+
+**Acceptance Criteria:**
+1. Mood logging interface captures: mood scale (1-10 or emotion picker), optional notes, timestamp
+2. Sleep logging interface captures: hours slept, sleep quality rating (1-10), optional notes, timestamp
+3. Database schema includes `moodEntries` table: id, userId, mood, notes, timestamp
+4. Database schema includes `sleepEntries` table: id, userId, hours, quality, notes, timestamp
+5. Mood & Sleep logging accessible from dashboard or dedicated navigation item
+6. Basic history view displays logged mood and sleep entries in chronological order
+7. Data persists to IndexedDB with offline-first pattern
+8. Import/export functionality supports mood and sleep data
+9. DevDataControls updated for mood and sleep entries
+
+**Prerequisites:** None (parallel with Story 3.5.1)
+
+---
+
+**Story 3.5.3: Redesign Symptom Logging (Modal → Dedicated Page)**
+
+As a user logging symptoms daily,
+I want a dedicated symptom logging page instead of a modal,
+So that I can log symptoms more comfortably without UI constraints.
+
+**Acceptance Criteria:**
+1. Symptom logging opens as dedicated page route (not modal)
+2. "Quick Log" mode captures essential fields: symptom selection, severity, timestamp
+3. "Add Details" button expands to show optional fields: notes, tags, related data
+4. Page layout allows scrolling without nested scrollable boxes
+5. Navigation updates to link dashboard buttons to symptom logging page
+6. Toast messages use absolute positioning (no layout shift)
+7. Symptom selection interface redesigned for full-page context
+8. Mobile responsive design optimized for touch
+
+**Prerequisites:** Story 3.5.1 (defaults exist so symptom options populated)
+
+---
+
+**Story 3.5.4: Redesign Food Logging (Modal → Dedicated Page)**
+
+As a user logging meals and tracking food triggers,
+I want a dedicated food logging page with organized categories,
+So that I can find and log foods quickly without scrolling through massive lists.
+
+**Acceptance Criteria:**
+1. Food logging opens as dedicated page route (not modal)
+2. Foods organized in collapsible categories (Dairy, Grains, Proteins, etc.)
+3. Smart defaults: Favorites section expanded at top, then Recents, then collapsed categories
+4. Custom foods display at top of list prominently
+5. Quick search/filter functionality for finding foods quickly
+6. "Quick Log" mode for frequently logged foods
+7. "Add Details" button for portion size, notes, timing
+8. Page scrolls naturally without nested scroll containers
+9. Mobile-optimized category expansion/collapse
+
+**Prerequisites:** Story 3.5.1 (defaults exist), parallel with Story 3.5.3
+
+---
+
+**Story 3.5.5: Redesign Trigger & Medication Logging (Modals → Pages)**
+
+As a user tracking triggers and medications,
+I want dedicated pages for each logging type,
+So that I can use the same improved patterns as symptom and food logging.
+
+**Acceptance Criteria:**
+1. Trigger logging opens as dedicated page (following Food pattern)
+2. Medication logging opens as dedicated page (following Symptom pattern)
+3. Both implement collapsible categories with smart defaults (Favorites/Recents/Categories)
+4. Both support Quick Log and Add Details modes
+5. Navigation routing updated for both pages
+6. Settings allow users to disable default triggers/medications they don't use
+7. Mobile-responsive layouts optimized for each logging type
+
+**Prerequisites:** Story 3.5.3 and 3.5.4 patterns established
+
+---
+
+**Story 3.5.6: Critical UI Fixes Bundle**
+
+As a user experiencing broken UI elements,
+I want all critical visual and functional bugs fixed,
+So that I can use the app reliably in production.
+
+**Acceptance Criteria:**
+1. **Dark Mode:** All text visible (light text on dark backgrounds) via CSS variable updates
+2. **Onboarding:** Remove Step 5 "learning modules" section (modules don't exist)
+3. **Flares Page:** Remove "Explore map view" and "Show split layout" buttons
+4. **About Page:** Update with current project information
+5. **Dashboard Buttons:** Visual consistency with app design (cohesive styling)
+6. **Toast Messages:** Fix layout shift issue (absolute positioning)
+7. **Info Boxes:** Replace closable boxes with persistent "i" icons
+8. All fixes tested across light/dark mode and mobile/desktop
+9. WCAG AA contrast ratios verified for dark mode fixes
+
+**Prerequisites:** Can run parallel with other stories
+
+---
+
+**Story 3.5.7: Fix Calendar Data Wiring**
+
+As a user reviewing my health history,
+I want the calendar to display my logged data,
+So that I can see my activity patterns over time.
+
+**Acceptance Criteria:**
+1. Calendar component wired to IndexedDB data sources
+2. Historical mode displays: symptoms, foods, triggers, medications, mood, sleep, flares
+3. Each logged entry appears on appropriate calendar date
+4. Calendar day view shows count badges for multiple entries
+5. Clicking a date shows summary of logged data for that day
+6. Calendar updates when new data is logged
+7. Empty dates display appropriately without errors
+8. Performance optimized for loading month view efficiently
+
+**Prerequisites:** Story 3.5.2 (mood/sleep data exists for complete calendar)
+
+---
+
+**Story 3.5.8: Add Keyboard Navigation (Accessibility)**
+
+As a user relying on keyboard navigation,
+I want full keyboard access to all interactive elements,
+So that I can use the app without a mouse.
+
+**Acceptance Criteria:**
+1. Tab key navigates through all interactive elements in logical order
+2. Enter/Space activates buttons and links
+3. Arrow keys navigate within list boxes and dropdowns
+4. Escape key closes modals and dropdowns
+5. Disable f/b/l/r keyboard shortcuts when typing in text fields (no interference)
+6. Focus indicators clearly visible on all focusable elements
+7. Screen reader announcements for state changes
+8. Keyboard shortcuts documented in help/accessibility section
+
+**Prerequisites:** Stories 3.5.3-3.5.5 (new pages need keyboard support)
+
+---
+
 ## Epic 4: Photo Documentation Integration _(Lower Priority)_
 
 ### Expanded Goal

@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** Epic 3 Complete - Retrospective Done
-- **Overall Progress:** Epic 3 at 100% (5/5 stories complete)
-- **Next Action:** Execute Epic 4 Preparation Sprint (25 hours, 11 tasks)
-- **Command to Run:** Begin Epic 4 prep work or load PM agent for epic planning
-- **Agent to Load:** DEV agent - bmad/bmm/agents/dev.md
-- **Note:** Epic 3 retrospective completed on 2025-10-29. All 5 stories done (50 points delivered in 2 days). Comprehensive retrospective document generated with 4 action items and 11-task preparation sprint for Epic 4. Ready to begin Epic 4 preparation or user testing.
+- **Current Workflow:** Epic 3.5 Stories Drafted - Ready for Story Context Generation
+- **Overall Progress:** Epic 3 at 100%, Epic 3.5 at 100% (8/8 stories drafted)
+- **Next Action:** Generate story context XML files for Epic 3.5 stories using story-context workflow
+- **Command to Run:** /bmad:bmm:workflows:story-context for each story OR use SM agent with *story-context
+- **Agent to Load:** SM agent - bmad/bmm/agents/sm.md OR DEV agent - bmad/bmm/agents/dev.md
+- **Note:** Epic 3.5 story drafting COMPLETE (2025-10-29). All 8 stories created from comprehensive UI/UX brainstorming session. Story files in docs/stories/3-5-*.md. Next step: Generate story context XML to mark stories ready-for-dev. Epic document: docs/epic-3.5-production-ux.md. Brainstorming results: docs/brainstorming-session-results-2025-10-29.md. 8 stories, 47 points estimated, 2-3 weeks duration.
 
 ---
 
@@ -30,29 +30,51 @@
 
 ---
 
-## Current Epic: Flare Tracking & Body Map Enhancements
+## Current Epic: Production-Ready UI/UX Enhancement (Epic 3.5)
 
 ### Focus Areas
-1. **Active Flare Dashboard** - Real-time flare monitoring and management ✅
-2. **Body Map System** - Interactive symptom location tracking ✅
-3. **Flare Pattern Analysis** - Predictive analytics and pattern recognition (in progress)
-4. **Pre-Launch Stabilization** - Critical bug fixes before user testing (new, in progress)
+1. **Empty State Resolution** - Pre-populate defaults, fix critical onboarding drop-off
+2. **Modal → Page Redesign** - Convert logging from modals to dedicated pages
+3. **Essential Feature Addition** - Mood & sleep tracking (clinically essential)
+4. **Critical UI Fixes** - Dark mode, calendar, navigation, accessibility
+
+### Epic Background
+Created from comprehensive UI/UX brainstorming session (2025-10-29). Identified through role-playing (first-time/daily/power user perspectives) and expert panel review (UX designer, mobile dev, accessibility expert, product manager, medical expert). This epic represents Phase 0 (Critical Fixes) and must complete BEFORE Epic 4 to ensure production readiness.
 
 ### Implementation Progress (Phase 4 Only)
 
+#### DRAFTED (Story Created, Awaiting Context Generation)
+
+| Epic | Story | ID | Title | File | Points | Priority |
+|------|-------|-----|-------|------|--------|----------|
+| 3.5 | 1 | 3.5.1 | Fix Empty State Crisis & Pre-populate Defaults | 3-5-1-fix-empty-state-crisis-and-pre-populate-defaults.md | 8 | CRITICAL |
+| 3.5 | 2 | 3.5.2 | Mood & Sleep Basic Logging | 3-5-2-mood-and-sleep-basic-logging.md | 8 | HIGH |
+| 3.5 | 3 | 3.5.3 | Redesign Symptom Logging (Modal → Page) | 3-5-3-redesign-symptom-logging-modal-to-page.md | 5 | HIGH |
+| 3.5 | 4 | 3.5.4 | Redesign Food Logging (Modal → Page) | 3-5-4-redesign-food-logging-modal-to-page.md | 8 | HIGH |
+| 3.5 | 5 | 3.5.5 | Redesign Trigger & Medication Logging (→ Pages) | 3-5-5-redesign-trigger-and-medication-logging-to-pages.md | 5 | HIGH |
+| 3.5 | 6 | 3.5.6 | Critical UI Fixes Bundle | 3-5-6-critical-ui-fixes-bundle.md | 5 | HIGH |
+| 3.5 | 7 | 3.5.7 | Fix Calendar Data Wiring | 3-5-7-fix-calendar-data-wiring.md | 3 | MEDIUM |
+| 3.5 | 8 | 3.5.8 | Add Keyboard Navigation (Accessibility) | 3-5-8-add-keyboard-navigation-accessibility.md | 5 | MEDIUM |
+
+**Total drafted:** 8 stories (Epic 3.5) - 47 points
+
+**Note:** All Epic 3.5 stories drafted 2025-10-29. Next step: Generate story context XML files using story-context workflow to mark stories ready-for-dev.
+
+---
+
 #### BACKLOG (Not Yet Drafted)
 
-| Epic | Story | ID | Title | File |
-|------|-------|-----|-------|------|
-| 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md |
-| 4 | 1 | 4.1 | Attach Photos to Flare Entities | story-4.1.md |
-| 4 | 2 | 4.2 | Flare Photo Timeline View | story-4.2.md |
-| 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md |
-| 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md |
+| Epic | Story | ID | Title | File | Points | Priority |
+|------|-------|-----|-------|------|--------|----------|
+| 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md | 5 | LOW |
+| 4 | 1 | 4.1 | Attach Photos to Flare Entities | story-4.1.md | 8 | DEFERRED |
+| 4 | 2 | 4.2 | Flare Photo Timeline View | story-4.2.md | 8 | DEFERRED |
+| 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md | 5 | DEFERRED |
+| 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md | 5 | DEFERRED |
 
-**Total in backlog:** 5 stories
+**Total in backlog:** 5 stories (1 Epic 2, 4 Epic 4)
 
-**Note:** Story 2.8 deferred until after Epic 0.5 completion. Epic 2 can be completed later - Epic 3 analytics features take priority for user launch.
+**Note:** Epic 4 stories deferred until Epic 3.5 complete (production readiness first).
 
 #### IN PROGRESS (Approved for Development / Review)
 
@@ -96,49 +118,54 @@
 - ✅ **Epic 1 (Enhanced Body Map):** 6/6 stories complete (100%)
 - 🟡 **Epic 2 (Flare Lifecycle):** 7/8 stories complete (87.5%) - Story 2.8 deferred
 - ✅ **Epic 3 (Analytics):** 5/5 stories complete (100%) - Retrospective done
+- 📝 **Epic 3.5 (Production-Ready UX):** 8/8 stories drafted (100%) - Awaiting context generation
+- ⏸️ **Epic 4 (Photo Documentation):** 0/4 stories drafted - Deferred until Epic 3.5 complete
 
 **Total completed:** 27 stories
-**Total points completed:** 174 points (added 8 points from Story 3.2)
+**Total points completed:** 174 points
 **In progress/review:** 0 stories
-**Overall progress:** 100% (27/27 non-deferred stories)
+**Drafted (awaiting context):** 8 stories (Epic 3.5) - 47 points
+**Backlog:** 5 stories (1 Epic 2, 4 Epic 4)
+**Overall progress:** Epic 3.5 story drafting complete (8/8), ready for context generation
 
 ---
 
 ### Next Action Required
 
-**🎉 Epic 3 Complete - Retrospective Done!**
+**🎯 Epic 3.5: All Stories Drafted - Ready for Context Generation**
 
-Epic 3 (Flare Analytics and Problem Areas) is now 100% complete:
-- ✅ Story 3.1: Calculate and Display Problem Areas - **done**
-- ✅ Story 3.2: Per-Region Flare History - **done** (approved 2025-10-29)
-- ✅ Story 3.3: Flare Duration and Severity Metrics - **done**
-- ✅ Story 3.4: Flare Trend Analysis Visualization - **done**
-- ✅ Story 3.5: Intervention Effectiveness Analysis - **done**
-- ✅ Epic 3 Retrospective - **completed** (2025-10-29)
+Epic 3.5 story drafting COMPLETE (2025-10-29). All 8 stories created with full acceptance criteria, tasks, and dev notes. Story files located in `docs/stories/3-5-*.md`.
 
-**Retrospective Summary:**
-- **Delivery:** 50 story points in 2 days (25 points/day velocity)
-- **Quality:** Zero defects, comprehensive test coverage (142+ tests)
-- **Action Items:** 4 process improvements identified
-- **Preparation Sprint:** 11 tasks (25 hours) defined for Epic 4
-- **Document:** docs/retrospectives/epic-3-retro-2025-10-29.md
+**Epic 3.5 Status:** Stories drafted, awaiting context generation (8/8 stories drafted)
+- ✅ Story 3.5.1: Fix Empty State Crisis & Pre-populate Defaults (8 pts) - CRITICAL
+- ✅ Story 3.5.2: Mood & Sleep Basic Logging (8 pts) - HIGH
+- ✅ Story 3.5.3: Redesign Symptom Logging Modal → Page (5 pts) - HIGH
+- ✅ Story 3.5.4: Redesign Food Logging Modal → Page (8 pts) - HIGH
+- ✅ Story 3.5.5: Redesign Trigger & Medication Logging → Pages (5 pts) - HIGH
+- ✅ Story 3.5.6: Critical UI Fixes Bundle (5 pts) - HIGH
+- ✅ Story 3.5.7: Fix Calendar Data Wiring (3 pts) - MEDIUM
+- ✅ Story 3.5.8: Add Keyboard Navigation (5 pts) - MEDIUM
 
-**Application Status:** Feature-complete analytics dashboard
-- Comprehensive flare analytics suite operational
-- Problem area identification with time range filtering
-- Per-region detailed analysis with statistics and timeline
-- Duration and severity metrics with visualizations
-- Trend analysis with linear regression and export
-- Intervention effectiveness tracking with 48h analysis
-- All features integrated into /flares/analytics route
+**Total:** 8 stories drafted, 47 points estimated, 2-3 weeks duration
+
+**Story Files Created:**
+- 3-5-1-fix-empty-state-crisis-and-pre-populate-defaults.md
+- 3-5-2-mood-and-sleep-basic-logging.md
+- 3-5-3-redesign-symptom-logging-modal-to-page.md
+- 3-5-4-redesign-food-logging-modal-to-page.md
+- 3-5-5-redesign-trigger-and-medication-logging-to-pages.md
+- 3-5-6-critical-ui-fixes-bundle.md
+- 3-5-7-fix-calendar-data-wiring.md
+- 3-5-8-add-keyboard-navigation-accessibility.md
 
 **Next Steps:**
-1. **Epic 4 Preparation Sprint:** Execute 11 preparation tasks (25 hours, 3-4 days)
-   - Critical Path: Image compression spike → Storage research → PhotoRepository interface
-   - Technical: EXIF stripping, Lighthouse CI, FileUpload component
-   - Research: User interviews, accessibility patterns
-2. **User Testing:** Analytics features ready for validation
-3. **Epic 4 Planning:** Begin Photo Documentation Integration after prep sprint complete
+1. **Generate Story Context XML:** Run story-context workflow for each story to create developer-ready context files
+2. **Command Options:**
+   - `/bmad:bmm:workflows:story-context` for individual stories
+   - Load SM agent and use `*story-context` menu item
+3. **After Context Generation:** Stories will be marked as ready-for-dev and can begin implementation
+4. **Implementation Order:** Begin with Story 3.5.1 (Empty State Crisis) - CRITICAL priority
+5. **Timeline:** 2-3 weeks to complete all 8 stories (47 points at ~25 pts/day velocity)
 
 ---
 
@@ -181,9 +208,19 @@ Epic 3 (Flare Analytics and Problem Areas) is now 100% complete:
 - 3.5: Intervention Effectiveness Analysis ✅
 - Epic 3 Retrospective ✅ (completed 2025-10-29)
 
-**Epic 4: Photo Documentation Integration** (Lower Priority - 0/4 stories)
+**📝 Epic 3.5: Production-Ready UI/UX Enhancement** (8/8 stories drafted - Awaiting context generation)
+- 3.5.1: Fix Empty State Crisis & Pre-populate Defaults ✅ DRAFTED (CRITICAL)
+- 3.5.2: Mood & Sleep Basic Logging ✅ DRAFTED (HIGH)
+- 3.5.3: Redesign Symptom Logging Modal → Page ✅ DRAFTED (HIGH)
+- 3.5.4: Redesign Food Logging Modal → Page ✅ DRAFTED (HIGH)
+- 3.5.5: Redesign Trigger & Medication Logging → Pages ✅ DRAFTED (HIGH)
+- 3.5.6: Critical UI Fixes Bundle ✅ DRAFTED (HIGH)
+- 3.5.7: Fix Calendar Data Wiring ✅ DRAFTED (MEDIUM)
+- 3.5.8: Add Keyboard Navigation ✅ DRAFTED (MEDIUM)
+
+**⏸️ Epic 4: Photo Documentation Integration** (Deferred - 0/4 stories drafted)
 - All stories remain in backlog
-- Will be scheduled after Epic 3 completion
+- Deferred until Epic 3.5 completion (production readiness first)
 
 ---
 
@@ -242,6 +279,10 @@ Epic 3 (Flare Analytics and Problem Areas) is now 100% complete:
 ---
 
 ## Decision Log
+
+- **2025-10-29:** Epic 3.5 Story Drafting COMPLETE. All 8 stories drafted in non-interactive mode using SM agent with comprehensive specifications. Story files created in docs/stories/3-5-*.md with full acceptance criteria (7-10 ACs per story), tasks/subtasks (8-11 tasks per story), dev notes with architecture patterns, implementation guidance, schema considerations, and testing strategy. All stories include critical reminders for import/export compatibility and devdatacontrols updates where applicable. Story breakdown: (1) Fix Empty State Crisis - 8pts CRITICAL, (2) Mood & Sleep Basic Logging - 8pts HIGH, (3) Redesign Symptom Logging - 5pts HIGH, (4) Redesign Food Logging - 8pts HIGH, (5) Redesign Trigger/Medication Logging - 5pts HIGH, (6) Critical UI Fixes Bundle - 5pts HIGH, (7) Fix Calendar Data Wiring - 3pts MEDIUM, (8) Add Keyboard Navigation - 5pts MEDIUM. Total: 47 points. Updated sprint-status.yaml: marked epic-3.5 as "contexted" and all 8 stories as "drafted". Updated bmm-workflow-status.md: Current state shows Epic 3.5 at 100% drafting complete, next action is story context XML generation. Epic 3.5 sourced from brainstorming session (docs/brainstorming-session-results-2025-10-29.md) with role-playing, assumption reversal, SCAMPER method, and expert panel review. Story drafting utilized epics.md (full story breakdown), PRD.md (requirements), and epic-3.5-production-ux.md (detailed epic document). Next step: Run story-context workflow for each story to generate developer-ready XML context files and mark stories as ready-for-dev.
+
+- **2025-10-29:** Created Epic 3.5 (Production-Ready UI/UX Enhancement) from comprehensive UI/UX brainstorming session. Session used Role Playing (first-time/daily/power user perspectives), Assumption Reversal (challenging design assumptions), SCAMPER Method (systematic improvement), and Expert Panel Review (5 domain experts: UX designer, mobile dev, accessibility expert, product manager, medical expert). Identified critical production-readiness issues: (1) Empty State Crisis - new users can't log anything (unanimous #1), (2) Modal Cascade Failure - modals causing multiple UX problems, (3) Missing Essential Features - mood/sleep clinically essential, (4) Broken Functionality - dark mode, calendar, outdated content. Epic 3.5 defines Phase 0 (Critical Fixes): 8 stories, 47 points estimated, 2-3 weeks duration. MUST complete before Epic 4 (Photo Documentation). Epic 4 stories deferred. Documents created: docs/epic-3.5-production-ux.md (epic definition with 8 story outlines), docs/brainstorming-session-results-2025-10-29.md (full brainstorming session with 50+ ideas across 4 phases). Updated bmm-workflow-status.md: inserted Epic 3.5 into backlog, marked Epic 4 as deferred, updated current state to "Epic 3.5 Ready". Next action: Begin Story 3.5.1 (Empty State Crisis) via story-context workflow.
 
 - **2025-10-29:** Completed Epic 3 Retrospective workflow. Generated comprehensive retrospective document (docs/retrospectives/epic-3-retro-2025-10-29.md) with full team discussion. Epic 3 delivered 50 story points in 2 days with 100% completion rate, zero defects, and 142+ test cases. Key findings: architectural consistency across all 5 stories, test-driven quality baseline, parallel data fetching for performance. Identified 4 action items for process improvements (pre-commit type checking, context files requirement, ethical/safety review, Chart.js documentation). Defined 11-task Epic 4 preparation sprint (25 hours estimated): image compression spike, PhotoRepository interface, EXIF stripping, Lighthouse CI integration, FileUpload component, user research. Critical path: compression spike → storage research → interface design. Updated sprint-status.yaml: epic-3-retrospective marked as completed. Epic 3 now 100% complete with retrospective done. Ready for Epic 4 preparation sprint.
 
