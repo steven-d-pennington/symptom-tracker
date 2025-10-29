@@ -1,0 +1,402 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>5</storyId>
+    <title>Redesign Trigger & Medication Logging (Modals → Pages)</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-5-5-redesign-trigger-and-medication-logging-to-pages.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user tracking triggers and medications</asA>
+    <iWant>dedicated pages for each logging type</iWant>
+    <soThat>I can use the same improved patterns as symptom and food logging</soThat>
+    <tasks>
+      <task id="1" ac="3.5.5.1, 3.5.5.3, 3.5.5.5">
+        <title>Create trigger logging page</title>
+        <subtasks>
+          <subtask id="1.1">Create src/app/(protected)/log/trigger/page.tsx</subtask>
+          <subtask id="1.2">Implement page structure following food logging pattern (Story 3.5.4)</subtask>
+          <subtask id="1.3">Create trigger categories: Environmental, Physical, Emotional, Lifestyle</subtask>
+          <subtask id="1.4">Implement collapsible category components</subtask>
+          <subtask id="1.5">Add custom triggers section at top</subtask>
+          <subtask id="1.6">Build quick log form with add details expansion</subtask>
+          <subtask id="1.7">Update dashboard button navigation</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="3.5.5.2, 3.5.5.4, 3.5.5.5">
+        <title>Create medication logging page</title>
+        <subtasks>
+          <subtask id="2.1">Create src/app/(protected)/log/medication/page.tsx</subtask>
+          <subtask id="2.2">Implement page structure following established patterns</subtask>
+          <subtask id="2.3">Create medication categories: Pain Relief, Anti-inflammatory, Antibiotics, Topical, Self-Care</subtask>
+          <subtask id="2.4">Implement collapsible categories</subtask>
+          <subtask id="2.5">Add custom medications/treatments section</subtask>
+          <subtask id="2.6">Build quick log form with medication-specific fields (dosage, effectiveness)</subtask>
+          <subtask id="2.7">Update dashboard button navigation</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3.5.5.6">
+        <title>Implement Settings integration</title>
+        <subtasks>
+          <subtask id="3.1">Update Settings > Manage Data page to show triggers section</subtask>
+          <subtask id="3.2">Add disable/enable buttons for default triggers</subtask>
+          <subtask id="3.3">Update trigger queries to filter where({ isActive: true })</subtask>
+          <subtask id="3.4">Update Settings > Manage Data page to show medications section</subtask>
+          <subtask id="3.5">Add disable/enable buttons for default medications</subtask>
+          <subtask id="3.6">Update medication queries to filter by isActive</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="3.5.5.7">
+        <title>Mobile optimization</title>
+        <subtasks>
+          <subtask id="4.1">Test both pages on 320px width</subtask>
+          <subtask id="4.2">Verify touch targets meet 44x44px minimum</subtask>
+          <subtask id="4.3">Test category interactions on touch devices</subtask>
+          <subtask id="4.4">Test keyboard behavior</subtask>
+          <subtask id="4.5">Test on iOS and Android</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="All">
+        <title>Add comprehensive tests</title>
+        <subtasks>
+          <subtask id="5.1">Test trigger logging page: categories, quick log, details</subtask>
+          <subtask id="5.2">Test medication logging page: categories, quick log, details</subtask>
+          <subtask id="5.3">Test Settings disable/enable functionality</subtask>
+          <subtask id="5.4">Test mobile responsive layouts</subtask>
+          <subtask id="5.5">Integration tests for full logging flows</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="3.5.5.1">
+      <title>Trigger logging opens as dedicated page</title>
+      <description>Create trigger logging page at /log/trigger route following patterns from Stories 3.5.3 and 3.5.4, dashboard "Log Trigger" button navigates to page, full-screen layout with natural scrolling, mobile-first responsive design, implements collapsible categories with smart defaults (if triggers have categories), follows same quick log + add details pattern.</description>
+    </criterion>
+    <criterion id="3.5.5.2">
+      <title>Medication logging opens as dedicated page</title>
+      <description>Create medication logging page at /log/medication route following established patterns, dashboard "Log Medication" button navigates to page, supports both medications and treatments (warm compress, ice pack, etc.), groups by type if applicable (medications, treatments, self-care), same quick log + add details pattern as other logging types.</description>
+    </criterion>
+    <criterion id="3.5.5.3">
+      <title>Collapsible categories for triggers</title>
+      <description>Trigger categories: Environmental (heat, humidity, weather), Physical (friction, exercise, sweat), Emotional (stress, anxiety), Lifestyle (sleep, diet), custom triggers prominently displayed at top, favorites and recents sections if user has usage history, remaining categories collapsed by default, expansion state persisted to localStorage.</description>
+    </criterion>
+    <criterion id="3.5.5.4">
+      <title>Collapsible categories for medications</title>
+      <description>Medication/treatment categories: Pain Relief, Anti-inflammatory, Antibiotics, Topical Treatments, Self-Care (compress, rest, drainage), custom medications/treatments at top, favorites and recents if applicable, categories collapsed by default with smart expansion.</description>
+    </criterion>
+    <criterion id="3.5.5.5">
+      <title>Quick log mode for both types</title>
+      <description>Trigger quick log captures: trigger selection, severity/intensity (optional), timestamp, "Add Details" expands to show notes and related data links. Medication quick log captures: medication/treatment selection, dosage/duration (optional), timestamp, "Add Details" expands to show notes, effectiveness rating, side effects.</description>
+    </criterion>
+    <criterion id="3.5.5.6">
+      <title>Settings allow disabling defaults</title>
+      <description>Users can disable default triggers and medications they don't use from Settings > Manage Data page, disabled defaults excluded from logging interfaces via where({ isActive: true }) query filter, disabled items can be re-enabled at any time, custom items can be edited or deleted normally.</description>
+    </criterion>
+    <criterion id="3.5.5.7">
+      <title>Mobile responsive for both pages</title>
+      <description>Both pages optimized for 320px width minimum, 44x44px minimum touch targets for all interactive elements, category headers and item selections touch-friendly, keyboard opens without breaking layout, natural scrolling without nested containers, tested on iOS Safari and Android Chrome.</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-3.5-production-ux.md</path>
+        <title>Epic 3.5: Production-Ready UI/UX Enhancement</title>
+        <section>Story 3.5.5 Definition</section>
+        <snippet>Redesign Trigger & Medication Logging Modals → Pages. Follows patterns established in Stories 3.5.3 (symptom) and 3.5.4 (food). Completes modal-to-page migration for all logging types. Implements collapsible categories with smart defaults for both triggers and medications.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 3.5.5 - Trigger & Medication Logging Pages</section>
+        <snippet>Convert trigger and medication logging from modals to dedicated pages following patterns from 3.5.3 and 3.5.4. Both implement collapsible categories with smart defaults (Favorites/Recents/Categories). Both support Quick Log and Add Details modes. Settings allow users to disable default triggers/medications they don't use. Mobile-responsive layouts optimized for each logging type.</snippet>
+      </doc>
+      <doc>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>UI/UX Brainstorming Session Results</title>
+        <section>Modal Pattern Cascade Failure</section>
+        <snippet>Brainstorming session identified modal pattern as causing cascading UX problems. Nested scroll containers, toast layout shifts, and constrained lists create friction. Dedicated pages with quick log + details expansion pattern solve these issues. Different logging types need different UX patterns based on complexity.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-5-3-redesign-symptom-logging-modal-to-page.context.xml</path>
+        <title>Story 3.5.3 Context (Symptom Pattern)</title>
+        <section>Quick Log + Add Details Pattern</section>
+        <snippet>Establishes page-based logging pattern: dedicated page route, quick log mode for essential fields, "Add Details" expansion for optional fields, natural scrolling without nested containers, toast notifications with absolute positioning, mobile-first responsive design.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-5-4-redesign-food-logging-modal-to-page.md</path>
+        <title>Story 3.5.4 (Food Category Pattern)</title>
+        <section>Collapsible Categories with Smart Defaults</section>
+        <snippet>Food logging pattern: collapsible category accordions, smart defaults (Favorites → Recents → Collapsed categories), custom items prominently at top, search/filter functionality, localStorage persistence for expansion state, mobile-optimized touch targets.</snippet>
+      </doc>
+      <doc>
+        <path>ARCHITECTURE.md</path>
+        <title>Architecture Documentation</title>
+        <section>Component Architecture & Data Flow</section>
+        <snippet>Next.js App Router with client components for interactive forms. Repository pattern for data access. State management: local component state + React hooks. Form submission flow: Component → Repository → Dexie → IndexedDB. Optimistic UI updates for immediate feedback. Offline-first pattern with immediate IndexedDB persistence.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR001: Performance & Touch Targets</section>
+        <snippet>Interactions respond within 100ms. Touch targets minimum 44x44px for mobile. No horizontal scrolling. Keyboard behavior doesn't break layout. Follows iOS and Android platform conventions. Mobile-first responsive design for 320px minimum width.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/triggers/TriggerLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>TriggerLogModal</symbol>
+        <lines>all</lines>
+        <reason>Existing trigger modal component that will be deprecated and replaced by new page-based approach at /log/trigger. Contains form logic, trigger categorization, common triggers, intensity selection, and progressive disclosure pattern that must be migrated to new page component.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/medications/MedicationLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>MedicationLogModal</symbol>
+        <lines>all</lines>
+        <reason>Existing medication modal component that will be deprecated and replaced by new page-based approach at /log/medication. Contains form logic, medication scheduling, timing warnings, dosage tracking, notes, and checkbox quick-log pattern that must be migrated to new page component.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/dashboard/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DashboardPage</symbol>
+        <lines>all</lines>
+        <reason>Dashboard contains "Log Trigger" and "Log Medication" buttons that currently open modals. Needs update to navigate to /log/trigger and /log/medication page routes. Remove modal state management.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/triggerRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>triggerRepository</symbol>
+        <lines>all</lines>
+        <reason>Repository for trigger data access. New page component will use this same repository pattern - no changes to data layer, only UI presentation layer changes. Query method getActive() filters for isEnabled: true per Story 3.5.1.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/triggerEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>triggerEventRepository</symbol>
+        <lines>all</lines>
+        <reason>Repository for trigger event logging (instances of triggers being encountered). New page will use getMostCommonTriggers() and getRecentNotes() for smart defaults and progressive disclosure.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/medicationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>medicationRepository</symbol>
+        <lines>all</lines>
+        <reason>Repository for medication data access. New page component will use this same repository pattern. Query method filters for isEnabled: true per Story 3.5.1.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/medicationEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>medicationEventRepository</symbol>
+        <lines>all</lines>
+        <reason>Repository for medication event logging (medication doses taken). New page will use getRecentNotes() for smart suggestions and progressive disclosure.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/manage/page.tsx</path>
+        <kind>page</kind>
+        <symbol>ManagePage</symbol>
+        <lines>all</lines>
+        <reason>Settings > Manage Data page where users can disable/enable default triggers and medications per AC3.5.5.6. Will need to add disable/enable functionality for defaults if not already present.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/food-logging/FoodCategory.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodCategory</symbol>
+        <lines>all</lines>
+        <reason>Example collapsible category component from Story 3.5.4 food logging. Reusable pattern for trigger and medication category accordions with expand/collapse functionality.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/symptom-logging/SymptomQuickLogForm.tsx</path>
+        <kind>component</kind>
+        <symbol>SymptomQuickLogForm</symbol>
+        <lines>all</lines>
+        <reason>Example quick log form from Story 3.5.3 symptom logging. Pattern for trigger and medication quick log with "Add Details" expansion.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>next</package>
+        <version>15.5.4</version>
+        <reason>App Router for /log/trigger and /log/medication page routes and navigation</reason>
+      </node>
+      <node>
+        <package>react</package>
+        <version>19.1.0</version>
+        <reason>UI components for TriggerQuickLogForm, MedicationQuickLogForm, and page layouts</reason>
+      </node>
+      <node>
+        <package>tailwindcss</package>
+        <version>4.x</version>
+        <reason>Responsive styling, mobile-first design, touch target sizing, collapsible animations</reason>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>0.544.0</version>
+        <reason>Icons for back button, save button, chevron up/down for categories, and visual indicators</reason>
+      </node>
+      <node>
+        <package>dexie</package>
+        <version>4.2.0</version>
+        <reason>IndexedDB persistence for trigger and medication logging (no changes, existing pattern)</reason>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. NO changes to data layer or repository pattern - only UI presentation layer changes. [Source: docs/brainstorming-session-results-2025-10-29.md]
+    2. Follow offline-first architecture (NFR002) - all writes use immediate IndexedDB persistence. [Source: ARCHITECTURE.md]
+    3. Touch targets minimum 44x44px for WCAG AAA mobile accessibility (NFR001). [Source: docs/PRD.md#NFR001]
+    4. Page scrolls naturally without nested scroll containers - no overflow:hidden constraints on main content area.
+    5. Toast notifications positioned fixed with high z-index (9999+), absolutely positioned, never affect document flow.
+    6. Category expansion state persisted to localStorage per user (key format: trigger-categories-expanded-${userId}, medication-categories-expanded-${userId}).
+    7. Success flow: Save → Show toast → Return to previous page (router.back() or router.push('/dashboard')).
+    8. Deprecated modal components kept temporarily with deprecation comments - remove after confirming new pages work.
+    9. Pattern follows Stories 3.5.3 (symptom quick log pattern) and 3.5.4 (food category pattern).
+    10. Minimum viewport width: 320px (iPhone SE). No horizontal scrolling at any breakpoint (320px, 375px, 414px, 768px, 1024px).
+    11. Back button using Next.js router: router.back() returns to previous page, preserving navigation history.
+    12. Settings integration: Users can disable default triggers/medications via isActive/isEnabled field. Logging queries filter where({ isActive: true }) or where({ isEnabled: true }). [Source: Story 3.5.1]
+    13. Custom triggers/medications displayed prominently at top of lists, before defaults. Visual badge distinguishes custom from default items.
+    14. Trigger categories: Environmental, Physical, Emotional, Lifestyle. Medication categories: Pain Relief, Anti-inflammatory, Antibiotics, Topical Treatments, Self-Care.
+    15. Favorites and Recents sections if user has usage history, expanded by default at top of list.
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>TriggerQuickLogForm Component</name>
+      <kind>component</kind>
+      <signature>
+        function TriggerQuickLogForm(): JSX.Element
+        Props: { onSuccess?: () => void }
+        State: triggerId, intensity, timestamp, showDetails, notes
+        Methods: handleSubmit, toggleDetails
+      </signature>
+      <path>src/components/trigger-logging/TriggerQuickLogForm.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>MedicationQuickLogForm Component</name>
+      <kind>component</kind>
+      <signature>
+        function MedicationQuickLogForm(): JSX.Element
+        Props: { onSuccess?: () => void }
+        State: medicationId, dosage, timestamp, showDetails, notes, effectiveness, sideEffects
+        Methods: handleSubmit, toggleDetails
+      </signature>
+      <path>src/components/medication-logging/MedicationQuickLogForm.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>TriggerCategory Component</name>
+      <kind>component</kind>
+      <signature>
+        function TriggerCategory({ name, triggers, isExpanded, onToggle, onSelectTrigger }): JSX.Element
+        Features: collapsible accordion, category header with count, smooth CSS transitions
+      </signature>
+      <path>src/components/trigger-logging/TriggerCategory.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>MedicationCategory Component</name>
+      <kind>component</kind>
+      <signature>
+        function MedicationCategory({ name, medications, isExpanded, onToggle, onSelectMedication }): JSX.Element
+        Features: collapsible accordion, category header with count, smooth CSS transitions
+      </signature>
+      <path>src/components/medication-logging/MedicationCategory.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>Log Trigger Page Route</name>
+      <kind>page</kind>
+      <signature>
+        export default function LogTriggerPage(): JSX.Element
+        Route: /log/trigger (Next.js App Router)
+      </signature>
+      <path>src/app/(protected)/log/trigger/page.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>Log Medication Page Route</name>
+      <kind>page</kind>
+      <signature>
+        export default function LogMedicationPage(): JSX.Element
+        Route: /log/medication (Next.js App Router)
+      </signature>
+      <path>src/app/(protected)/log/medication/page.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>Toast Notification System (Reuse from Story 3.5.3)</name>
+      <kind>component</kind>
+      <signature>
+        function Toast({ title, description, variant, onClose }): JSX.Element
+        function useToast(): { toast: (options) => void }
+        Variants: 'default' | 'success' | 'destructive'
+      </signature>
+      <path>src/components/ui/Toast.tsx, src/components/ui/use-toast.tsx (EXISTING)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing framework: Jest + React Testing Library (existing pattern).
+      Component tests for TriggerQuickLogForm and MedicationQuickLogForm: render, validate, submit, expand/collapse details.
+      Integration tests for complete flows: Dashboard → Navigate → Select category → Fill form → Submit → Toast → Back.
+      Accessibility tests: keyboard navigation (Tab, Enter), ARIA labels, screen reader announcements.
+      Responsive tests: layout adapts 320px-1920px, touch targets >= 44x44px, no horizontal scroll.
+      Mobile device tests: iOS Safari, Android Chrome - keyboard behavior, scrolling performance, back button.
+      Category tests: expand/collapse functionality, localStorage persistence, smart defaults (Favorites, Recents).
+      Settings integration tests: disable/enable defaults, verify logging queries filter correctly.
+      Toast tests: appears, doesn't shift content, auto-dismisses, manual close works.
+      Coverage target: 80% for new components, 100% for navigation flow.
+    </standards>
+    <locations>
+      src/app/(protected)/log/trigger/__tests__/page.test.tsx (NEW)
+      src/app/(protected)/log/medication/__tests__/page.test.tsx (NEW)
+      src/components/trigger-logging/__tests__/TriggerQuickLogForm.test.tsx (NEW)
+      src/components/trigger-logging/__tests__/TriggerCategory.test.tsx (NEW)
+      src/components/medication-logging/__tests__/MedicationQuickLogForm.test.tsx (NEW)
+      src/components/medication-logging/__tests__/MedicationCategory.test.tsx (NEW)
+    </locations>
+    <ideas>
+      TEST: Trigger page renders with header, back button, and TriggerQuickLogForm component
+      TEST: Trigger categories displayed: Environmental, Physical, Emotional, Lifestyle
+      TEST: Custom triggers section at top, always expanded, before default categories
+      TEST: Favorites section at top if user has favorites, expanded by default
+      TEST: Recents section showing last 10 logged triggers if user has history
+      TEST: Category accordion expands/collapses with smooth transition
+      TEST: Category header shows trigger count: "Environmental (8 triggers)"
+      TEST: Category expansion state persists to localStorage
+      TEST: Category expansion state loads from localStorage on mount
+      TEST: Quick Log form displays trigger selector, intensity (low/medium/high), timestamp
+      TEST: Add Details button toggles expanded form section
+      TEST: Expanded form shows notes textarea
+      TEST: Form validation requires trigger selection and intensity
+      TEST: Submit button calls triggerEventRepository.create() with form data
+      TEST: Success toast appears after save, positioned fixed, doesn't shift content
+      TEST: After successful save, navigation goes back to dashboard
+      TEST: Dashboard "Log Trigger" button navigates to /log/trigger using router.push()
+      TEST: Back button in page header navigates to previous page using router.back()
+      TEST: Touch targets for category headers are minimum 44x44px
+      TEST: Touch targets for trigger selection are minimum 44x44px
+      TEST: Mobile responsive: 320px width renders correctly, no horizontal scroll
+      TEST: Keyboard opens without breaking layout on iOS/Android
+      TEST: Accessibility: keyboard Tab navigation works, Enter submits
+      TEST: Screen reader announces category names, expansion state, form labels
+      TEST: Medication page renders with header, back button, and MedicationQuickLogForm
+      TEST: Medication categories: Pain Relief, Anti-inflammatory, Antibiotics, Topical, Self-Care
+      TEST: Custom medications section at top, always expanded
+      TEST: Medication quick log captures: medication selection, dosage, timestamp
+      TEST: Add Details expands to show: notes, effectiveness rating, side effects
+      TEST: Form validation requires medication selection
+      TEST: Submit calls medicationEventRepository.create() with form data
+      TEST: Dashboard "Log Medication" button navigates to /log/medication
+      TEST: Settings page shows triggers section with disable/enable buttons
+      TEST: Settings page shows medications section with disable/enable buttons
+      TEST: Disabling default trigger sets isActive: false
+      TEST: Trigger logging queries filter where({ isActive: true })
+      TEST: Disabled triggers excluded from logging interface
+      TEST: Re-enabling trigger sets isActive: true and appears in logging again
+      TEST: Same disable/enable flow for medications using isEnabled field
+    </ideas>
+  </tests>
+</story-context>

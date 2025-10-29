@@ -1,6 +1,6 @@
 # Story 3.5.6: Critical UI Fixes Bundle
 
-Status: drafted
+Status: ready-for-dev
 
 **Priority:** HIGH
 **Points:** 5

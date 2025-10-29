@@ -1,0 +1,377 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>4</storyId>
+    <title>Redesign Food Logging (Modal → Dedicated Page)</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\3-5-4-redesign-food-logging-modal-to-page.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user logging meals and tracking food triggers</asA>
+    <iWant>a dedicated food logging page with organized categories</iWant>
+    <soThat>I can find and log foods quickly without scrolling through massive lists</soThat>
+    <tasks>
+      <task id="1" acs="3.5.4.1,3.5.4.7">
+        <description>Create food logging page</description>
+        <subtasks>
+          <subtask id="1.1">Create src/app/(protected)/log/food/page.tsx following pattern from Story 3.5.3</subtask>
+          <subtask id="1.2">Add header with back button and "Log Food" title</subtask>
+          <subtask id="1.3">Container with natural page scrolling (no nested scroll containers)</subtask>
+          <subtask id="1.4">Update dashboard button to navigate to /log/food</subtask>
+          <subtask id="1.5">Remove old food modal component</subtask>
+        </subtasks>
+      </task>
+      <task id="2" acs="3.5.4.2">
+        <description>Create collapsible category component</description>
+        <subtasks>
+          <subtask id="2.1">Create src/components/food-logging/FoodCategory.tsx component</subtask>
+          <subtask id="2.2">Accordion-style expand/collapse with chevron icon</subtask>
+          <subtask id="2.3">Category header shows: name, item count, expand state</subtask>
+          <subtask id="2.4">Smooth CSS transition for content expansion</subtask>
+          <subtask id="2.5">Minimum 44x44px touch target for header</subtask>
+        </subtasks>
+      </task>
+      <task id="3" acs="3.5.4.3">
+        <description>Implement smart category defaults</description>
+        <subtasks>
+          <subtask id="3.1">Create "Favorites" section at top if user has favorites</subtask>
+          <subtask id="3.2">Create "Recents" section showing last 10 logged foods</subtask>
+          <subtask id="3.3">Query frequently logged foods for priority display</subtask>
+          <subtask id="3.4">Collapse remaining categories by default</subtask>
+          <subtask id="3.5">Persist expansion state to localStorage: food-categories-expanded-${userId}</subtask>
+          <subtask id="3.6">Load expansion state on page mount</subtask>
+        </subtasks>
+      </task>
+      <task id="4" acs="3.5.4.4">
+        <description>Build food search functionality</description>
+        <subtasks>
+          <subtask id="4.1">Add search input at top of page</subtask>
+          <subtask id="4.2">Implement debounced search (300ms delay)</subtask>
+          <subtask id="4.3">Filter foods across all categories in real-time</subtask>
+          <subtask id="4.4">Auto-expand categories with matching foods</subtask>
+          <subtask id="4.5">Highlight matching text in food names</subtask>
+          <subtask id="4.6">Show empty state when no matches</subtask>
+          <subtask id="4.7">Add clear button (X icon) to reset search</subtask>
+        </subtasks>
+      </task>
+      <task id="5" acs="3.5.4.5">
+        <description>Create quick log form</description>
+        <subtasks>
+          <subtask id="5.1">Create src/components/food-logging/FoodQuickLogForm.tsx component</subtask>
+          <subtask id="5.2">Food selection (from categorized list)</subtask>
+          <subtask id="5.3">Optional portion size input</subtask>
+          <subtask id="5.4">Timestamp input (defaults to now)</subtask>
+          <subtask id="5.5">"Add Details" button expands to show: meal type, notes, tags</subtask>
+          <subtask id="5.6">Save button calls foodRepository.create()</subtask>
+          <subtask id="5.7">Success toast and navigate back</subtask>
+        </subtasks>
+      </task>
+      <task id="6" acs="3.5.4.6">
+        <description>Implement custom foods section</description>
+        <subtasks>
+          <subtask id="6.1">Create "My Foods" section at top of list</subtask>
+          <subtask id="6.2">Query custom foods: where({ userId, isDefault: false })</subtask>
+          <subtask id="6.3">Always expanded by default</subtask>
+          <subtask id="6.4">Add "Create New Food" button</subtask>
+          <subtask id="6.5">Visual badge for custom foods</subtask>
+          <subtask id="6.6">Inline edit/delete actions for custom foods</subtask>
+        </subtasks>
+      </task>
+      <task id="7" acs="3.5.4.8">
+        <description>Mobile optimization</description>
+        <subtasks>
+          <subtask id="7.1">Test on 320px width screens</subtask>
+          <subtask id="7.2">Verify 44x44px touch targets for all interactive elements</subtask>
+          <subtask id="7.3">Test category expansion on touch devices</subtask>
+          <subtask id="7.4">Test keyboard behavior</subtask>
+          <subtask id="7.5">Test on iOS Safari and Android Chrome</subtask>
+        </subtasks>
+      </task>
+      <task id="8" acs="ALL">
+        <description>Add comprehensive tests</description>
+        <subtasks>
+          <subtask id="8.1">Test category expand/collapse functionality</subtask>
+          <subtask id="8.2">Test smart defaults: Favorites, Recents, collapsed categories</subtask>
+          <subtask id="8.3">Test search: filters, highlights, empty state</subtask>
+          <subtask id="8.4">Test quick log form submission</subtask>
+          <subtask id="8.5">Test custom foods section display and actions</subtask>
+          <subtask id="8.6">Test mobile responsive layout</subtask>
+          <subtask id="8.7">Integration test: full food logging flow</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="3.5.4.1">
+      <title>Food logging opens as dedicated page route</title>
+      <description>Create food logging page at /log/food route (not modal), dashboard "Log Food" button navigates to /log/food using Next.js router.push(), follows same page-based pattern established in Story 3.5.3, full-screen layout with natural scrolling, mobile-first responsive design.</description>
+    </criterion>
+    <criterion id="3.5.4.2">
+      <title>Foods organized in collapsible categories</title>
+      <description>Foods grouped by category: Dairy, Grains, Proteins, Nightshades, Processed, Sugar, Vegetables, Fruits, etc., each category is collapsible accordion section with expand/collapse controls, category headers show item count in parentheses: "Dairy (8 items)", clicking category header toggles expansion state, smooth CSS transitions for expand/collapse animations.</description>
+    </criterion>
+    <criterion id="3.5.4.3">
+      <title>Smart defaults for category display</title>
+      <description>Favorites section expanded at top if user has favorites, Recents section showing last 10 logged foods, then frequently logged foods, remaining categories collapsed by default, user can manually expand any category, expansion state persisted to localStorage per user, custom foods displayed prominently at top of list before categories.</description>
+    </criterion>
+    <criterion id="3.5.4.4">
+      <title>Quick search/filter functionality</title>
+      <description>Search input at top of page filters foods across all categories in real-time, search is debounced (300ms) to avoid performance issues, matching foods highlighted or categories auto-expand to show matches, search is case-insensitive and matches partial names, empty state when search returns no results: "No foods found. Try different keywords.", clear search button (X icon) resets filter.</description>
+    </criterion>
+    <criterion id="3.5.4.5">
+      <title>Quick Log mode for frequent foods</title>
+      <description>Default view shows quick log interface: select food, optional portion size, timestamp, "Add Details" button expands to show: meal type (breakfast/lunch/dinner/snack), notes, tags, related data links, follows same quick log pattern from Story 3.5.3, submit button saves and returns to dashboard.</description>
+    </criterion>
+    <criterion id="3.5.4.6">
+      <title>Custom foods displayed prominently</title>
+      <description>Custom foods (user-created, not defaults) shown in dedicated "My Foods" section at top, "My Foods" section always expanded by default, add new custom food button prominently placed in "My Foods" section, custom foods can be favorited or edited inline, visual badge distinguishes custom from default foods.</description>
+    </criterion>
+    <criterion id="3.5.4.7">
+      <title>Page scrolls naturally without nested containers</title>
+      <description>Page uses native scrolling from top to bottom, no nested scrollable divs (avoid scrollable category boxes), category content part of main document flow, mobile touch scrolling works smoothly, no scroll conflicts or janky rendering.</description>
+    </criterion>
+    <criterion id="3.5.4.8">
+      <title>Mobile-optimized category interaction</title>
+      <description>Category headers minimum 44x44px touch targets, expand/collapse icons clearly visible (chevron up/down), food item selection uses radio buttons or large touch-friendly cards, works well on 320px width screens, keyboard opens without breaking layout, follows iOS and Android platform conventions.</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/epic-3.5-production-ux.md</path>
+        <title>Epic 3.5: Production-Ready UI/UX Enhancement</title>
+        <section>Story 3.5.4: Redesign Food Logging (Modal → Dedicated Page)</section>
+        <snippet>Convert food logging to dedicated page. Implement collapsible categories with smart defaults (favorites → recents → collapsed categories).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>symptom-tracker - Epic Breakdown</title>
+        <section>Epic 3.5 - Story 3.5.4</section>
+        <snippet>As a user logging meals and tracking food triggers, I want a dedicated food logging page with organized categories, So that I can find and log foods quickly without scrolling through massive lists. Foods organized in collapsible categories (Dairy, Grains, Proteins, etc.), smart defaults: Favorites expanded at top, then Recents, custom foods at top.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>Brainstorming Session Results</title>
+        <section>Daily Active User - Log Food/Trigger Modal Issues</section>
+        <snippet>Without favorites, seeing ALL items makes modal unusable. Need collapsible categories with smart defaults: Favorites expanded → Recents → Collapsed categories. Custom items should appear at top. Settings should allow disabling default items.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>Brainstorming Session Results</title>
+        <section>Modal Pattern Cascade Failure</section>
+        <snippet>The modal approach is causing cascading UX problems: clunky interactions, scrollable boxes, toast layout shifts, overwhelming lists. Different logging types need different UX patterns matched to their complexity. Dedicated pages solve modal cascade issues.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>Brainstorming Session Results</title>
+        <section>Phase 2: Growth Features - Dedicated Logging Pages</section>
+        <snippet>Replace modals with full pages for symptoms, food, triggers, medications (solves modal cascade failures). Quick Log Mode: Capture essentials with "Add Details" option to expand to full form. Collapsible Food/Trigger Categories with smart defaults.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/3-5-3-redesign-symptom-logging-modal-to-page.md</path>
+        <title>Story 3.5.3: Redesign Symptom Logging (Modal → Dedicated Page)</title>
+        <section>Full Story</section>
+        <snippet>Establishes page-based logging pattern that will be replicated for food (3.5.4). Quick log mode with "Add Details" expansion pattern. Dedicated page route instead of modal, natural page scrolling, mobile-first responsive design.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - Flare Tracking & Body Map Enhancements</title>
+        <section>Repository Pattern</section>
+        <snippet>Follow existing repository pattern with IndexedDB persistence using Dexie. Offline-first architecture with immediate persistence (NFR002). Service layer for business logic, repository layer for data access.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/food/FoodLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodLogModal</symbol>
+        <lines>1-1078</lines>
+        <reason>Existing modal component that needs to be deprecated and replaced with dedicated page. Contains collapsible category logic (lines 557-804), favorite handling, search functionality, and meal composer pattern to replicate in new page design.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>FoodRepository</symbol>
+        <lines>1-289</lines>
+        <reason>Food data access layer. Key methods: getActive(), getAllByCategory(), getFavoritesByCategory(), search(), getCustom(). Provides category grouping, favorite filtering, and search capabilities needed for page implementation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>FoodEventRepository</symbol>
+        <lines>1-177</lines>
+        <reason>Food event logging repository. create() method (lines 9-42) handles validation and persistence. Used for saving logged food events with meal type, portion map, and notes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/log/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DailyReflectionPage</symbol>
+        <lines>1-224</lines>
+        <reason>Example of Next.js page-based form pattern. Shows full-page layout structure, useCurrentUser hook, form state management, and save flow that can be adapted for food logging page.</reason>
+      </artifact>
+      <artifact>
+        <path>src/stories/3-5-3-redesign-symptom-logging-modal-to-page.md</path>
+        <kind>documentation</kind>
+        <symbol>Story 3.5.3</symbol>
+        <lines>1-479</lines>
+        <reason>Establishes page-based logging pattern to replicate. Quick log mode + Add Details expansion, navigation routing, toast positioning patterns, and mobile-first responsive design principles.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <framework>
+        <name>Next.js</name>
+        <version>15.5.4</version>
+        <purpose>App Router framework with file-based routing for /log/food page</purpose>
+      </framework>
+      <framework>
+        <name>React</name>
+        <version>19.1.0</version>
+        <purpose>Client component state management and UI rendering</purpose>
+      </framework>
+      <framework>
+        <name>TypeScript</name>
+        <version>5.x</version>
+        <purpose>Type-safe development</purpose>
+      </framework>
+      <library>
+        <name>Tailwind CSS</name>
+        <version>4.x</version>
+        <purpose>Utility-first styling with dark mode support</purpose>
+      </library>
+      <library>
+        <name>Dexie</name>
+        <version>4.2.0</version>
+        <purpose>IndexedDB wrapper for offline-first data persistence</purpose>
+      </library>
+      <library>
+        <name>Lucide React</name>
+        <version>0.544.0</version>
+        <purpose>Icon components (ChevronDown, ChevronUp, Search, X)</purpose>
+      </library>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Pattern Consistency</type>
+      <description>Must follow page-based logging pattern established in Story 3.5.3. Dedicated page route at /log/food (not modal), quick log + Add Details expansion, natural page scrolling without nested containers.</description>
+    </constraint>
+    <constraint>
+      <type>Repository Usage</type>
+      <description>Use existing foodRepository and foodEventRepository. Do not modify repository interfaces. Call foodRepository.getAllByCategory() for category grouping, foodRepository.search() for filtering, foodEventRepository.create() for saving.</description>
+    </constraint>
+    <constraint>
+      <type>Performance</type>
+      <description>Search must complete in under 250ms (NFR001). Category expansion/collapse must respond within 100ms. Debounce search input at 300ms to avoid excessive re-renders.</description>
+    </constraint>
+    <constraint>
+      <type>Mobile-First</type>
+      <description>Test on 320px width minimum (iPhone SE). All interactive elements minimum 44x44px touch targets. Keyboard opening must not break layout. Native mobile scrolling without nested scrollable divs.</description>
+    </constraint>
+    <constraint>
+      <type>Data Persistence</type>
+      <description>Offline-first pattern with IndexedDB (NFR002). All saves persist immediately to IndexedDB. No network dependency for core logging functionality.</description>
+    </constraint>
+    <constraint>
+      <type>Accessibility</type>
+      <description>Full keyboard navigation support. Tab through categories and food items. Enter/Space to select. Escape to close modals. ARIA labels on all interactive elements. Minimum WCAG AA contrast ratios.</description>
+    </constraint>
+    <constraint>
+      <type>Backwards Compatibility</type>
+      <description>Maintain import/export feature compatibility when making changes. Update devdatacontrols if schema changes. Keep existing FoodRecord and FoodEventRecord interfaces unchanged.</description>
+    </constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>foodRepository.getAllByCategory</name>
+      <kind>function</kind>
+      <signature>async getAllByCategory(userId: string): Promise&lt;Map&lt;string, FoodRecord[]&gt;&gt;</signature>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <description>Returns all active foods grouped by category. Each category maps to sorted array of foods. Use for displaying categorized food lists.</description>
+    </interface>
+    <interface>
+      <name>foodRepository.getFavoritesByCategory</name>
+      <kind>function</kind>
+      <signature>async getFavoritesByCategory(userId: string, favoriteIds: string[]): Promise&lt;Map&lt;string, FoodRecord[]&gt;&gt;</signature>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <description>Returns favorite foods grouped by category. Use for Favorites section display with category organization.</description>
+    </interface>
+    <interface>
+      <name>foodRepository.search</name>
+      <kind>function</kind>
+      <signature>async search(userId: string, query: string, filters?: FoodFilters): Promise&lt;FoodRecord[]&gt;</signature>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <description>Searches foods by name (case-insensitive partial match). Returns filtered array. Use with debouncing (300ms) for real-time search.</description>
+    </interface>
+    <interface>
+      <name>foodRepository.getCustom</name>
+      <kind>function</kind>
+      <signature>async getCustom(userId: string): Promise&lt;FoodRecord[]&gt;</signature>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <description>Returns user-created custom foods (isDefault: false). Use for "My Foods" section display.</description>
+    </interface>
+    <interface>
+      <name>foodEventRepository.create</name>
+      <kind>function</kind>
+      <signature>async create(eventData: Omit&lt;FoodEventRecord, "id" | "createdAt" | "updatedAt"&gt;): Promise&lt;string&gt;</signature>
+      <path>src/lib/repositories/foodEventRepository.ts</path>
+      <description>Creates new food event. Requires: userId, mealId, foodIds (JSON stringified array), timestamp, mealType, portionMap (JSON stringified object). Optional: notes. Validates meal type and food count.</description>
+    </interface>
+    <interface>
+      <name>userRepository.getFoodFavorites</name>
+      <kind>function</kind>
+      <signature>async getFoodFavorites(userId: string): Promise&lt;string[]&gt;</signature>
+      <path>src/lib/repositories/userRepository.ts</path>
+      <description>Returns array of favorite food IDs for user. Use to check which foods are favorited and display favorites section.</description>
+    </interface>
+    <interface>
+      <name>FoodRecord</name>
+      <kind>interface</kind>
+      <signature>interface FoodRecord { id: string; userId: string; name: string; category: string; allergenTags: string; isDefault: boolean; isActive: boolean; preparationMethod?: string; createdAt: number; updatedAt: number; }</signature>
+      <path>src/lib/db/schema.ts</path>
+      <description>Food entity schema. category used for grouping. isDefault distinguishes defaults from custom. allergenTags is JSON stringified array. isActive for soft deletes.</description>
+    </interface>
+    <interface>
+      <name>MealType</name>
+      <kind>type</kind>
+      <signature>type MealType = "breakfast" | "lunch" | "dinner" | "snack"</signature>
+      <path>src/lib/db/schema.ts</path>
+      <description>Valid meal type values for food events. Used in meal type selector.</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Project uses Jest + React Testing Library for component tests. Testing standards:
+      - Unit tests for components isolate behavior with mocked repositories
+      - Integration tests verify complete flows using fake-indexeddb
+      - All interactive elements tested for keyboard navigation and accessibility
+      - Mobile responsive layouts tested at 320px, 375px, 414px breakpoints
+      - Performance tests verify search completes under 250ms, saves under 500ms
+      - Tests follow Arrange-Act-Assert pattern
+      - Coverage target: 80% for component logic
+    </standards>
+    <locations>
+      - src/app/(protected)/log/food/__tests__/page.test.tsx - Page component tests
+      - src/components/food-logging/__tests__/FoodCategory.test.tsx - Category component tests
+      - src/components/food-logging/__tests__/FoodQuickLogForm.test.tsx - Form tests
+      - src/components/food-logging/__tests__/FoodSearchInput.test.tsx - Search tests
+      - Integration test in page.test.tsx for complete logging flow
+    </locations>
+    <ideas>
+      <test ac="3.5.4.1">Test /log/food route renders correctly. Test back button navigates to previous page. Test mobile responsive layout at 320px width.</test>
+      <test ac="3.5.4.2">Test category header shows item count. Test clicking header toggles expansion. Test chevron icon changes on expand/collapse. Test smooth CSS transition.</test>
+      <test ac="3.5.4.3">Test Favorites section appears at top when user has favorites. Test Recents section shows last 10 logged foods. Test remaining categories collapsed by default. Test expansion state persists to localStorage.</test>
+      <test ac="3.5.4.4">Test search input filters foods in real-time. Test debouncing at 300ms. Test case-insensitive partial matching. Test empty state when no results. Test clear button resets search.</test>
+      <test ac="3.5.4.5">Test quick log form captures food, portion, timestamp. Test Add Details button expands optional fields. Test save calls foodEventRepository.create(). Test success toast and navigation back.</test>
+      <test ac="3.5.4.6">Test My Foods section displays custom foods at top. Test section always expanded. Test visual badge distinguishes custom foods. Test add/edit/delete actions for custom foods.</test>
+      <test ac="3.5.4.7">Test page scrolls naturally without nested containers. Test mobile touch scrolling works smoothly. Test no scroll conflicts.</test>
+      <test ac="3.5.4.8">Test category headers are 44x44px minimum. Test food item buttons are 44x44px minimum. Test works on 320px width screens. Test keyboard doesn't break layout.</test>
+      <test ac="ALL">Integration test: Navigate to page, search for food, select food, set portion, add details, save, verify navigation back and data persisted to IndexedDB.</test>
+    </ideas>
+  </tests>
+</story-context>

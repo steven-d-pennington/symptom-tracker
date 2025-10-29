@@ -46,6 +46,8 @@ describe('MedicationLogModal', () => {
       ],
       sideEffects: [],
       isActive: true,
+      isDefault: false, // Story 3.5.1: Add new field
+      isEnabled: true,  // Story 3.5.1: Add new field
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -63,6 +65,8 @@ describe('MedicationLogModal', () => {
       ],
       sideEffects: [],
       isActive: true,
+      isDefault: false, // Story 3.5.1: Add new field
+      isEnabled: true,  // Story 3.5.1: Add new field
       createdAt: new Date(),
       updatedAt: new Date(),
     },

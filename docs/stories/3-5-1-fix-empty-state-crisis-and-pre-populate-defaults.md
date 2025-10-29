@@ -1,6 +1,6 @@
 # Story 3.5.1: Fix Empty State Crisis & Pre-populate Defaults
 
-Status: ready-for-dev
+Status: review
 
 **Priority:** CRITICAL
 **Points:** 8
@@ -432,3 +432,120 @@ export function SymptomEmptyState() {
 - Documented critical reminder about import/export compatibility
 - Set status to "drafted" pending implementation
 - Points estimate: 8 (reflects complexity of schema changes and user initialization)
+
+**Implementation Complete (2025-10-29):**
+
+✅ **Task 1 — Define Default Data Sets (AC 3.5.1.1-4)**
+- Created `src/lib/data/defaultData.ts` with complete default data
+- 10 symptoms: Pain, Swelling, Drainage, Redness, Itching, Tenderness, Heat, Hardness, Sensitivity, Discomfort
+- 20 foods across 6 categories: Dairy (3), Grains (4), Nightshades (3), Processed (3), Sugar (3), Proteins (4)
+- 10 triggers: Stress, Heat/Humidity, Friction, Hormonal Changes, Sleep, Exercise, Tight Clothing, Sweat, Weather, Diet
+- 10 medications: Ibuprofen, Warm Compress, Ice Pack, Antibiotic, Topical, Rest, Drainage, Bandaging, Pain Relief, Anti-inflammatory
+- All counts exceed AC minimums (≥8 symptoms, ≥15 foods, ≥8 triggers, ≥8 medications)
+
+✅ **Task 2 — Update Database Schemas (AC 3.5.1.1-4, 3.5.1.8)**
+- Updated MedicationRecord schema with `isDefault` and `isEnabled` fields
+- Created Dexie migration to v19 with proper upgrade logic for existing records
+- Symptoms, Triggers, Foods already had isDefault/isEnabled fields from earlier versions (v8, v11)
+- Migration sets sensible defaults: isDefault=false, isEnabled=true for existing records
+
+✅ **Task 3 — User Initialization Service (AC 3.5.1.1-4)**
+- Created `src/lib/services/userInitialization.ts` with initializeUserDefaults()
+- Idempotent: checks for existing defaults before creating to prevent duplicates
+- Uses bulk operations for performance (bulkCreate for all data types)
+- Returns detailed result with counts of items created per type
+- Comprehensive error handling with informative logging
+
+✅ **Task 4 — Signup Flow Integration (AC 3.5.1.1-4)**
+- Integrated into `userRepository.getOrCreateCurrentUser()` method
+- Runs asynchronously after user creation to avoid blocking
+- Proper error handling: logs errors but doesn't fail user creation
+- Tested with fresh user account creation
+
+✅ **Task 5 — EmptyState Components (AC 3.5.1.5)**
+- Created 4 components in `src/components/empty-states/`:
+  - SymptomEmptyState.tsx, FoodEmptyState.tsx, TriggerEmptyState.tsx, MedicationEmptyState.tsx
+- Each includes: icon (lucide-react), heading, description with guidance, link to Settings > Manage Data
+- Styled with Tailwind: bg-gray-50, rounded-lg, p-6, text-center, border-2 border-dashed border-gray-300
+- Follows semantic HTML: section, h3, p tags with proper accessibility
+
+✅ **Task 6 — Update Logging Interfaces (AC 3.5.1.6)**
+- Updated all 4 logging modals to show defaults with visual indicators:
+  - `SymptomLogModal.tsx` (lines 87-88: filtering, 127-140: sorting, 204-210: badge)
+  - `MedicationLogModal.tsx` (lines 58-60: filtering, 111: tracking, 301-305: badge)
+  - `TriggerLogModal.tsx` (lines 78-79: filtering, 127-142: sorting, 203-209: badge)
+  - `FoodLogModal.tsx` (lines 612-620, 736-744, 829-836: badges in 3 locations)
+- All modals filter to only show isEnabled items (allows hiding via Settings)
+- Sorting prioritizes: favorites/common → customs → defaults → alphabetical
+- Visual indicator: subtle gray "default" badge with muted styling
+- Tested: new users can successfully log using only defaults
+
+✅ **Task 7 — Guided Setup Wizard (AC 3.5.1.7)**
+- **DEFERRED:** Marked as optional per AC3.5.1.7 ("optional guided setup flow")
+- Can be implemented in future story if user feedback indicates need
+- Core functionality works without wizard (users can add customs via Settings)
+
+✅ **Task 8 — Import/Export Compatibility (AC 3.5.1.8)**
+- Updated `importService.ts` with backward-compatible field normalization:
+  - importSymptoms(): lines 485-491 (handles missing isDefault/isEnabled)
+  - importMedications(): lines 540-547 (handles missing isDefault/isEnabled)
+  - importTriggers(): lines 605-611 (handles missing isDefault/isEnabled)
+  - importFoods(): lines 1030-1040 (handles missing isDefault/isActive)
+- Old exports (pre-3.5.1): missing fields default to false (custom) and true (enabled)
+- New exports (post-3.5.1): fields preserved exactly as exported
+- DevDataControls: No changes needed, works correctly with new schema
+- Created documentation: `docs/stories/3-5-1-import-export-changes.md`
+
+✅ **Task 9 — Default Item Management in Settings (AC 3.5.1.9)**
+- Created `src/components/settings/ManageDataSettings.tsx` component
+- Added "Manage Data" section to Settings page (first section, Database icon)
+- Features:
+  - Shows all default items across 4 types with filter tabs
+  - Toggle visibility with Eye/EyeOff icons (changes isEnabled/isActive)
+  - Disabled defaults excluded from logging interfaces via repository filters
+  - Clear info banner explaining default management
+  - Real-time updates to database on toggle
+- Integrated into `src/app/(protected)/settings/page.tsx`
+
+✅ **Task 10 — TypeScript Compilation & Testing**
+- Fixed all TypeScript errors related to new schema fields:
+  - Updated test mocks in TrendAnalysisService.test.ts, MedicationLogModal.test.tsx
+  - Updated dev generators in generateEventStreamData.ts, orchestrator.ts, populateDemoData.ts
+  - Updated useMedicationManagement.ts to include new fields on create
+- All Story 3.5.1 related TypeScript errors resolved
+- No compilation errors for isDefault, isEnabled, or ManageDataSettings
+
+**Files Created:**
+- `src/lib/data/defaultData.ts` (189 lines)
+- `src/lib/services/userInitialization.ts` (143 lines)
+- `src/components/empty-states/SymptomEmptyState.tsx` (27 lines)
+- `src/components/empty-states/FoodEmptyState.tsx` (27 lines)
+- `src/components/empty-states/TriggerEmptyState.tsx` (27 lines)
+- `src/components/empty-states/MedicationEmptyState.tsx` (27 lines)
+- `src/components/settings/ManageDataSettings.tsx` (286 lines)
+- `docs/stories/3-5-1-import-export-changes.md` (documentation)
+
+**Files Modified:**
+- `src/lib/db/client.ts` - v19 migration for medications
+- `src/lib/db/schema.ts` - MedicationRecord interface
+- `src/lib/repositories/userRepository.ts` - User initialization integration
+- `src/lib/services/importService.ts` - Backward compatibility
+- `src/components/symptoms/SymptomLogModal.tsx` - Default indicators
+- `src/components/medications/MedicationLogModal.tsx` - Default indicators
+- `src/components/triggers/TriggerLogModal.tsx` - Default indicators
+- `src/components/food/FoodLogModal.tsx` - Default indicators
+- `src/app/(protected)/settings/page.tsx` - Settings integration
+- Multiple test files and dev generators for schema compatibility
+
+**Acceptance Criteria Status:**
+- ✅ AC3.5.1.1: Pre-populate default symptoms at user creation
+- ✅ AC3.5.1.2: Pre-populate default foods at user creation
+- ✅ AC3.5.1.3: Pre-populate default triggers at user creation
+- ✅ AC3.5.1.4: Pre-populate default medications at user creation
+- ✅ AC3.5.1.5: Empty state components with contextual guidance
+- ✅ AC3.5.1.6: Quick action buttons show defaults on first use
+- ⏭️ AC3.5.1.7: Guided setup wizard (DEFERRED - optional feature)
+- ✅ AC3.5.1.8: Import/export compatibility maintained
+- ✅ AC3.5.1.9: Settings allow hiding/disabling default items
+
+**Ready for:** QA Testing, Code Review, User Acceptance Testing

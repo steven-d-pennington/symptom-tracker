@@ -46,8 +46,12 @@ export function TriggerLogModal({
         setLoading(true);
         setError(null);
 
-        // Get all active triggers
-        const activeTriggers = await triggerRepository.getActive(userId);
+        // Get all active triggers (Story 3.5.1: includes both customs and enabled defaults)
+        const allActiveTriggers = await triggerRepository.getActive(userId);
+
+        // Filter to only show enabled triggers (isEnabled: true) - Story 3.5.1
+        // This allows users to hide defaults they don't use via Settings
+        const activeTriggers = allActiveTriggers.filter(trigger => trigger.isEnabled);
 
         // Get most common triggers
         const commonTriggers = await triggerEventRepository.getMostCommonTriggers(
@@ -78,13 +82,21 @@ export function TriggerLogModal({
           })
         );
 
-        // Sort: common triggers first (by usage count), then alphabetically
+        // Sort: common first (by usage count), then customs, then defaults, then alphabetically
+        // Story 3.5.1 AC3.5.1.6: Custom items first, then defaults
         triggersWithUsage.sort((a, b) => {
+          // Common always first
           if (a.isCommon && !b.isCommon) return -1;
           if (!a.isCommon && b.isCommon) return 1;
           if (a.isCommon && b.isCommon) {
             return b.usageCount - a.usageCount;
           }
+
+          // Among non-common: customs before defaults
+          if (!a.isDefault && b.isDefault) return -1;
+          if (a.isDefault && !b.isDefault) return 1;
+
+          // Within same group: alphabetically
           return a.name.localeCompare(b.name);
         });
 
@@ -251,8 +263,16 @@ export function TriggerLogModal({
                           onClick={() => handleTriggerTap(trigger)}
                           className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted transition-colors"
                         >
-                          <div className="font-medium text-foreground">
-                            {trigger.name}
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium text-foreground">
+                              {trigger.name}
+                            </div>
+                            {/* Story 3.5.1 AC3.5.1.6: Visual indicator for defaults */}
+                            {trigger.isDefault && (
+                              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                default
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {trigger.category}
@@ -372,8 +392,16 @@ export function TriggerLogModal({
                             onClick={() => handleTriggerTap(trigger)}
                             className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted transition-colors"
                           >
-                            <div className="font-medium text-foreground">
-                              {trigger.name}
+                            <div className="flex items-center justify-between">
+                              <div className="font-medium text-foreground">
+                                {trigger.name}
+                              </div>
+                              {/* Story 3.5.1 AC3.5.1.6: Visual indicator for defaults */}
+                              {trigger.isDefault && (
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                  default
+                                </span>
+                              )}
                             </div>
                           </button>
 

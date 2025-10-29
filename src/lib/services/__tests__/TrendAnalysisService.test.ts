@@ -42,6 +42,8 @@ describe('TrendAnalysisService', () => {
         schedule: overrides.schedule ?? [{ time: '08:00', daysOfWeek: [0, 1, 2, 3, 4, 5, 6] }],
         sideEffects: overrides.sideEffects,
         isActive: overrides.isActive ?? true,
+        isDefault: overrides.isDefault ?? false, // Story 3.5.1: Add new field
+        isEnabled: overrides.isEnabled ?? true,  // Story 3.5.1: Add new field
         createdAt: overrides.createdAt ?? new Date('2025-01-01T00:00:00Z'),
         updatedAt: overrides.updatedAt ?? new Date('2025-01-01T00:00:00Z'),
     });

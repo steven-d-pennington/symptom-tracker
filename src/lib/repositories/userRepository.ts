@@ -1,6 +1,7 @@
 import { db } from "../db/client";
 import { UserRecord, UserPreferences, SymptomCategoryRecord, EntryTemplateRecord } from "../db/schema";
 import { generateId } from "../utils/idGenerator";
+import { initializeUserDefaults } from "../services/userInitialization";
 
 export class UserRepository {
   /**
@@ -91,10 +92,19 @@ export class UserRepository {
 
   /**
    * Create or get current user
+   * Story 3.5.1: Now initializes default data for new users
    */
   async getOrCreateCurrentUser(): Promise<UserRecord> {
     const currentUser = await this.getCurrentUser();
     if (currentUser) {
+      // Ensure the current user ID is stored in localStorage
+      if (typeof window !== 'undefined') {
+        const storedId = window.localStorage.getItem('pocket:currentUserId');
+        if (storedId !== currentUser.id) {
+          console.log(`[getOrCreateCurrentUser] Updating localStorage with current user ID: ${currentUser.id}`);
+          window.localStorage.setItem('pocket:currentUserId', currentUser.id);
+        }
+      }
       return currentUser;
     }
 
@@ -122,6 +132,26 @@ export class UserRepository {
     if (!user) {
       throw new Error("Failed to create user");
     }
+
+    // Store the new user ID in localStorage immediately
+    if (typeof window !== 'undefined') {
+      console.log(`[getOrCreateCurrentUser] Storing new user ID in localStorage: ${id}`);
+      window.localStorage.setItem('pocket:currentUserId', id);
+    }
+
+    // Story 3.5.1: Initialize default data for new user
+    // Run asynchronously to avoid blocking user creation, but log any errors
+    initializeUserDefaults(id)
+      .then((result) => {
+        if (result.success) {
+          console.log(`[getOrCreateCurrentUser] User defaults initialized successfully for ${id}`);
+        } else {
+          console.error(`[getOrCreateCurrentUser] Failed to initialize defaults: ${result.error}`);
+        }
+      })
+      .catch((error) => {
+        console.error(`[getOrCreateCurrentUser] Error initializing defaults:`, error);
+      });
 
     return user;
   }

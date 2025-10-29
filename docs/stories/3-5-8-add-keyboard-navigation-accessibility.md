@@ -1,6 +1,6 @@
 # Story 3.5.8: Add Keyboard Navigation (Accessibility)
 
-Status: drafted
+Status: ready-for-dev
 
 **Priority:** MEDIUM
 **Points:** 5
@@ -290,8 +290,14 @@ export function Listbox({ items, onSelect }) {
 - [Source: docs/brainstorming-session-results-2025-10-29.md#Expert-Panel-Review] - Voice logging accessibility priority
 - [Source: ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/) - Patterns for keyboard navigation
 
+## Dev Agent Record
+
+### Context Reference
+- `docs/stories/3.5-8-add-keyboard-navigation-accessibility.context.xml` - Story context file generated 2025-10-29
+
 ## Change Log
 
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-10-29 | Initial story creation from Epic 3.5 breakdown | Dev Agent (claude-sonnet-4-5) |
+| 2025-10-29 | Story context generated, status → ready-for-dev | Dev Agent (claude-sonnet-4-5) |

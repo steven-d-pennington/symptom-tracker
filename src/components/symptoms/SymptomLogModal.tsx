@@ -47,8 +47,12 @@ export function SymptomLogModal({
         setLoading(true);
         setError(null);
 
-        // Get all active symptoms
-        const activeSymptoms = await symptomRepository.getActive(userId);
+        // Get all active symptoms (Story 3.5.1: includes both customs and enabled defaults)
+        const allActiveSymptoms = await symptomRepository.getActive(userId);
+
+        // Filter to only show enabled symptoms (isEnabled: true) - Story 3.5.1
+        // This allows users to hide defaults they don't use via Settings
+        const activeSymptoms = allActiveSymptoms.filter(symptom => symptom.isEnabled);
 
         // Get recent symptom instances (last 30 days)
         const thirtyDaysAgo = new Date();
@@ -85,13 +89,21 @@ export function SymptomLogModal({
           })
         );
 
-        // Sort: favorites first (by last logged), then alphabetically
+        // Sort: favorites first (by last logged), then customs, then defaults, then alphabetically
+        // Story 3.5.1 AC3.5.1.6: Custom items first, then defaults
         symptomsWithUsage.sort((a, b) => {
+          // Favorites always first
           if (a.isFavorite && !b.isFavorite) return -1;
           if (!a.isFavorite && b.isFavorite) return 1;
           if (a.isFavorite && b.isFavorite) {
             return (b.lastLogged?.getTime() || 0) - (a.lastLogged?.getTime() || 0);
           }
+
+          // Among non-favorites: customs before defaults
+          if (!a.isDefault && b.isDefault) return -1;
+          if (a.isDefault && !b.isDefault) return 1;
+
+          // Within same group: alphabetically
           return a.name.localeCompare(b.name);
         });
 
@@ -287,8 +299,16 @@ export function SymptomLogModal({
                           onClick={() => handleSymptomTap(symptom)}
                           className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted transition-colors"
                         >
-                          <div className="font-medium text-foreground">
-                            {symptom.name}
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium text-foreground">
+                              {symptom.name}
+                            </div>
+                            {/* Story 3.5.1 AC3.5.1.6: Visual indicator for defaults */}
+                            {symptom.isDefault && (
+                              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                default
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {symptom.category}
@@ -404,8 +424,16 @@ export function SymptomLogModal({
                             onClick={() => handleSymptomTap(symptom)}
                             className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted transition-colors"
                           >
-                            <div className="font-medium text-foreground">
-                              {symptom.name}
+                            <div className="flex items-center justify-between">
+                              <div className="font-medium text-foreground">
+                                {symptom.name}
+                              </div>
+                              {/* Story 3.5.1 AC3.5.1.6: Visual indicator for defaults */}
+                              {symptom.isDefault && (
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                  default
+                                </span>
+                              )}
                             </div>
                           </button>
 

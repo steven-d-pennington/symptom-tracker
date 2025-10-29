@@ -395,6 +395,43 @@ export class SymptomTrackerDatabase extends Dexie {
         console.log("No existing flares to migrate - fresh v18 schema ready");
       }
     });
+
+    // Version 19: Add isDefault and isEnabled fields for medications (Story 3.5.1)
+    this.version(19).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      // Refactored flares table with new schema (simpler structure, events separated)
+      flares: "id, [userId+status], [userId+bodyRegionId], [userId+startDate], userId",
+      // New flareEvents table for append-only history tracking (ADR-003)
+      flareEvents: "id, [flareId+timestamp], [userId+timestamp], flareId, userId",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+    }).upgrade(async (trans) => {
+      console.log("Migrating to v19: Adding isDefault and isEnabled fields to medications (Story 3.5.1)");
+
+      // Migrate existing medications: mark all as custom (not default)
+      await trans.table("medications").toCollection().modify((medication) => {
+        if (medication.isDefault === undefined) {
+          medication.isDefault = false;
+          medication.isEnabled = true;
+        }
+      });
+
+      console.log("Successfully migrated medications to v19 schema");
+    });
   }
 }
 

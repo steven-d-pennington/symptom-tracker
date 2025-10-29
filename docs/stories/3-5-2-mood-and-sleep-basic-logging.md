@@ -1,6 +1,6 @@
 # Story 3.5.2: Mood & Sleep Basic Logging
 
-Status: drafted
+Status: ready-for-dev
 
 **Priority:** HIGH (Clinically Essential)
 **Points:** 8
@@ -617,6 +617,7 @@ export function SleepLoggingForm({ onSuccess }: { onSuccess?: () => void }) {
 - Epic 3.5 document: `docs/epic-3.5-production-ux.md`
 - Brainstorming session: `docs/brainstorming-session-results-2025-10-29.md`
 - Epic breakdown: `docs/epics.md#Story-3.5.2`
+- Story context: `docs/stories/3-5-2-mood-and-sleep-basic-logging.context.xml`
 
 ### Agent Model Used
 

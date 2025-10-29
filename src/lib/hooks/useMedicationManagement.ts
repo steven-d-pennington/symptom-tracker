@@ -52,6 +52,8 @@ export const useMedicationManagement = () => {
         schedule: data.schedule,
         sideEffects: [],
         isActive: data.isActive,
+        isDefault: false, // Story 3.5.1: Add new fields
+        isEnabled: true, // Story 3.5.1: Add new fields
       });
 
       await loadMedications();

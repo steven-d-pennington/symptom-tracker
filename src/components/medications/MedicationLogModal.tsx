@@ -22,6 +22,7 @@ interface MedicationQuickLogItem {
   hoursDifference?: number;
   lastNoteChips: string[];
   taken: boolean;
+  isDefault: boolean; // Story 3.5.1: Track if medication is a default
 }
 
 export function MedicationLogModal({
@@ -48,11 +49,15 @@ export function MedicationLogModal({
         const today = new Date();
         const dayOfWeek = today.getDay();
 
-        // Get medications scheduled for today
-        const scheduled = await medicationRepository.getScheduledForDay(
+        // Get medications scheduled for today (Story 3.5.1: includes both customs and enabled defaults)
+        const allScheduled = await medicationRepository.getScheduledForDay(
           userId,
           dayOfWeek
         );
+
+        // Filter to only show enabled medications (isEnabled: true) - Story 3.5.1
+        // This allows users to hide defaults they don't use via Settings
+        const scheduled = allScheduled.filter(med => med.isEnabled);
 
         // Get today's events to check what's already taken
         const todayEvents = await medicationEventRepository.getTodayEvents(userId);
@@ -103,6 +108,7 @@ export function MedicationLogModal({
               hoursDifference,
               lastNoteChips: recentNotes,
               taken: takenMedicationIds.has(med.id),
+              isDefault: med.isDefault, // Story 3.5.1: Track default status
             };
           })
         );
@@ -287,10 +293,16 @@ export function MedicationLogModal({
                       htmlFor={`med-${medication.medicationId}`}
                       className="flex-1 cursor-pointer"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between gap-2">
                         <span className="font-medium text-foreground">
                           {medication.name}
                         </span>
+                        {/* Story 3.5.1 AC3.5.1.6: Visual indicator for defaults */}
+                        {medication.isDefault && (
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                            default
+                          </span>
+                        )}
                       </div>
                       {medication.dosage && (
                         <div className="text-sm text-muted-foreground">

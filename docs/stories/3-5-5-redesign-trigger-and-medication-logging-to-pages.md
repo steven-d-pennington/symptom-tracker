@@ -1,6 +1,6 @@
 # Story 3.5.5: Redesign Trigger & Medication Logging (Modals → Pages)
 
-Status: drafted
+Status: ready-for-dev
 
 **Priority:** HIGH
 **Points:** 5

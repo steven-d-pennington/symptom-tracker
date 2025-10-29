@@ -1,6 +1,11 @@
 # Story 3.5.7: Fix Calendar Data Wiring
 
-Status: drafted
+Status: ready-for-dev
+
+## Dev Agent Record
+
+### Context Reference
+- Context file: docs/stories/3-5-7-fix-calendar-data-wiring.context.xml (generated 2025-10-29)
 
 **Priority:** MEDIUM
 **Points:** 3
