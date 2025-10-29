@@ -1,0 +1,388 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>4</storyId>
+    <title>Flare Trend Analysis Visualization</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-4-flare-trend-analysis-visualization.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user reviewing my overall flare management</asA>
+    <iWant>to see how my flares are trending over time</iWant>
+    <soThat>I can assess if my condition is improving or declining</soThat>
+    <tasks>
+- Task 1: Extend analyticsRepository with trend calculation methods (AC: #3.4.2, #3.4.3, #3.4.4)
+  - 1.1: Define TrendDataPoint interface in src/types/analytics.ts
+  - 1.2: Define TrendAnalysis interface
+  - 1.3: Implement getMonthlyTrendData(userId, timeRange): Promise&lt;TrendAnalysis&gt;
+  - 1.4: Query all flares (active and resolved) within time range from db.flares
+  - 1.5: Group flares by month using startDate (format: YYYY-MM)
+  - 1.6: For each month bucket, calculate: flare count, average peak severity
+  - 1.7: Sort month buckets chronologically (oldest to newest)
+  - 1.8: Calculate linear regression trend line using least squares method
+  - 1.9: Determine trend direction: improving (slope &lt; -0.3), declining (slope &gt; 0.3), stable (between -0.3 and 0.3)
+  - 1.10: Return TrendAnalysis object with data points and trend metadata
+  - 1.11: Add TypeScript return type annotations and JSDoc comments
+  - 1.12: Export getMonthlyTrendData from analyticsRepository
+
+- Task 2: Create linear regression utility (AC: #3.4.4)
+  - 2.1: Create src/lib/utils/linearRegression.ts file
+  - 2.2: Define RegressionResult interface: { slope, intercept, r2 }
+  - 2.3: Implement calculateLinearRegression(dataPoints: {x, y}[]): RegressionResult
+  - 2.4: Calculate means of x and y values
+  - 2.5: Calculate slope using least squares formula
+  - 2.6: Calculate intercept: ȳ - slope * x̄
+  - 2.7: Calculate R² (coefficient of determination)
+  - 2.8: Handle edge cases: empty array, single point, vertical line
+  - 2.9: Return RegressionResult with rounded values
+  - 2.10: Export calculateLinearRegression function
+
+- Task 3: Extend useAnalytics hook for trend data (AC: #3.4.5)
+  - 3.1: Open src/lib/hooks/useAnalytics.ts
+  - 3.2: Add trendAnalysis state
+  - 3.3: Update fetchAnalyticsData to call analyticsRepository.getMonthlyTrendData in parallel
+  - 3.4: Use Promise.all to fetch all four data sets concurrently
+  - 3.5: Update trendAnalysis state when data fetched
+  - 3.6: Return trendAnalysis in hook result object
+  - 3.7: Maintain existing polling pattern (10 seconds) and window focus refetch
+  - 3.8: Handle errors for trend data gracefully
+
+- Task 4: Create FlareTrendChart component (AC: #3.4.2, #3.4.3, #3.4.4, #3.4.6)
+  - 4.1: Create src/components/analytics/FlareTrendChart.tsx
+  - 4.2: Accept props: trendAnalysis, isLoading, timeRange
+  - 4.3: Import Chart.js components: Line chart, TimeScale, LinearScale, PointElement, LineElement, Tooltip, Legend
+  - 4.4: Import chartjs-plugin-annotation for trend line overlay
+  - 4.5: Register Chart.js components and plugins
+  - 4.6: Handle loading state: show skeleton loader
+  - 4.7: Handle insufficient data: show empty state if trendDirection === 'insufficient-data'
+  - 4.8: Configure Chart.js with type 'line' and dual y-axes
+  - 4.9: Dataset 1 (Flare Frequency): blue line, left y-axis, tension: 0.4
+  - 4.10: Dataset 2 (Average Severity): orange/red line, right y-axis, tension: 0.4
+  - 4.11: Configure x-axis: type: 'time', time.unit: 'month', format: 'MMM YYYY'
+  - 4.12: Configure y-axes: left (frequency, integers), right (severity, 1-10 scale)
+  - 4.13: Add trend line annotation using chartjs-plugin-annotation
+  - 4.14: Configure tooltip with proper formatting
+  - 4.15: Configure legend at bottom
+  - 4.16: Add responsive configuration
+  - 4.17: Add ARIA label for accessibility
+  - 4.18: Render in container div with h-96 height
+
+- Task 5: Create chart export utility (AC: #3.4.7)
+  - 5.1: Create src/lib/utils/chartExport.ts
+  - 5.2: Implement exportChartAsImage(chartRef, filename): Promise&lt;void&gt;
+  - 5.3: Get chart instance from ref.current
+  - 5.4: Use chart.toBase64Image() for PNG generation
+  - 5.5: Create temporary anchor element with download attribute
+  - 5.6: Set href to data URL and download to filename
+  - 5.7: Trigger click to initiate download
+  - 5.8: Clean up temporary element
+  - 5.9: Handle errors with console.error and toast notification
+  - 5.10: Export exportChartAsImage function
+
+- Task 6: Create TrendAnalysisSection component (AC: #3.4.1, #3.4.5, #3.4.7)
+  - 6.1: Create src/components/analytics/TrendAnalysisSection.tsx
+  - 6.2: Accept props: trendAnalysis, isLoading, timeRange
+  - 6.3: Import FlareTrendChart component
+  - 6.4: Create chart ref using useRef for export functionality
+  - 6.5: Handle loading state
+  - 6.6: Render section header "Flare Trends"
+  - 6.7: Display trend direction indicator badge
+  - 6.8: Render FlareTrendChart with ref and props
+  - 6.9: Render "Export Chart" button below chart
+  - 6.10: Handle export button click
+  - 6.11: Show loading spinner during export
+  - 6.12: Add responsive container styling
+  - 6.13: Follow component patterns from ProgressionMetricsSection
+
+- Task 7: Update analytics page to include Flare Trends (AC: #3.4.1)
+  - 7.1: Open src/app/(protected)/flares/analytics/page.tsx
+  - 7.2: Import TrendAnalysisSection component
+  - 7.3: Extract trendAnalysis from useAnalytics hook result
+  - 7.4: Add new section below ProgressionMetricsSection
+  - 7.5: Render TrendAnalysisSection with trendAnalysis, isLoading, timeRange props
+  - 7.6: Maintain space-y-8 between sections
+  - 7.7: Update placeholder section: remove Story 3.4, keep Story 3.5
+  - 7.8: Ensure shared timeRange state flows to all sections
+
+- Task 8: Add comprehensive tests (AC: All)
+  - 8.1: Create src/lib/repositories/__tests__/analyticsRepository.trend.test.ts
+  - 8.2: Test getMonthlyTrendData: empty data, single month, multiple months, trend calculations
+  - 8.3: Create src/lib/utils/__tests__/linearRegression.test.ts
+  - 8.4: Test calculateLinearRegression: various slopes, edge cases, R² calculations
+  - 8.5: Create src/components/analytics/__tests__/FlareTrendChart.test.tsx
+  - 8.6: Test chart rendering: loading state, empty state, data rendering, trend line
+  - 8.7: Create src/components/analytics/__tests__/TrendAnalysisSection.test.tsx
+  - 8.8: Test section rendering: trend indicator, export button, chart integration
+  - 8.9: Test export functionality: button click, filename generation
+  - 8.10: Verify all tests pass with npm test
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC3.4.1: Analytics page displays Flare Trends visualization below Progression Metrics section with responsive layout (grid on desktop, stack on mobile)
+
+AC3.4.2: Line chart displays flare frequency over time using Chart.js with monthly buckets, smooth curves (tension: 0.4), and responsive configuration
+
+AC3.4.3: Overlay shows average severity per month on secondary y-axis (right side, scale 1-10) with different color from frequency line
+
+AC3.4.4: Trend line indicates overall trajectory using linear regression and chartjs-plugin-annotation, with direction label (Improving/Stable/Declining) and color coding
+
+AC3.4.5: Time range selector includes Last 6 months, Last Year, Last 2 Years, All Time options with shared state management and localStorage persistence
+
+AC3.4.6: Interactive chart with hover tooltips showing exact values, ARIA labels for accessibility, and touch events support on mobile
+
+AC3.4.7: Export Chart button generates PNG image with filename format "flare-trends-{YYYY-MM-DD}.png", suitable resolution for printing (min 1200px wide)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 3.4</title>
+        <section>Story 3.4: Flare Trend Analysis Visualization</section>
+        <snippet>Provides complete story requirements with acceptance criteria for trend visualization showing flare frequency over time with monthly buckets, average severity overlay, linear regression trend line, and chart export functionality for medical consultations.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements - FR010-FR012</section>
+        <snippet>FR012: System shall calculate and display flare progression metrics including average duration, severity trends, and resolution patterns. NFR001: Interactions shall respond within 100ms for smooth user experience.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Technology Stack - Chart.js Configuration</section>
+        <snippet>Chart.js 4.5.0 with chartjs-plugin-annotation 3.1.0 for timeline annotations and trend lines. Existing setup includes TimeScale, chartjs-adapter-date-fns, responsive configuration patterns with maintainAspectRatio.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Repository Pattern - ADR-004</section>
+        <snippet>Analytics calculated on-demand (no caching). Extend analyticsRepository with getMonthlyTrendData method following on-demand calculation strategy. Dexie indexes make queries fast (less than 10ms for typical data sets).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Testing Standards</section>
+        <snippet>Unit tests for repository methods and utilities. Component tests with @testing-library/react. Mock IndexedDB with fake-indexeddb. Mock Chart.js canvas with jest-canvas-mock. Coverage targets: 80% branches, 90% functions.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/3-3-flare-duration-and-severity-metrics.md</path>
+        <title>Story 3.3 - Lessons Learned</title>
+        <section>Completion Notes and Patterns</section>
+        <snippet>Parallel data fetching with Promise.all improved performance. Chart.js with responsive configuration handled all screen sizes. Empty state handling (less than 3 data points) prevented confusing displays. ARIA labels and keyboard navigation met accessibility requirements. Maintain component structure consistency.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/app/(protected)/flares/analytics/page.tsx</path>
+        <kind>page</kind>
+        <symbol>AnalyticsPage</symbol>
+        <lines>1-96</lines>
+        <reason>Main analytics page that needs to be extended with TrendAnalysisSection. Shows pattern for time range sharing, section spacing (space-y-8), and integration with useAnalytics hook.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/analyticsRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getProblemAreas, getDurationMetrics, getSeverityMetrics</symbol>
+        <lines>1-383</lines>
+        <reason>Repository needs getMonthlyTrendData method. Shows pattern for time range filtering, monthly aggregation, and on-demand calculation strategy. Uses withinTimeRange utility and db.flares queries.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/hooks/useAnalytics.ts</path>
+        <kind>hook</kind>
+        <symbol>useAnalytics</symbol>
+        <lines>1-144</lines>
+        <reason>Hook needs trendAnalysis state and fetching. Shows pattern for parallel data fetching with Promise.all, 10-second polling, window focus refetch, and error handling.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/ProgressionMetricsSection.tsx</path>
+        <kind>component</kind>
+        <symbol>ProgressionMetricsSection</symbol>
+        <lines>1-110</lines>
+        <reason>Reference pattern for section component structure. Shows empty state handling (less than 3 flares), loading states, subsection spacing, and responsive grid layout for charts.</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/analytics.ts</path>
+        <kind>types</kind>
+        <symbol>TimeRange, DurationMetrics, SeverityMetrics</symbol>
+        <lines>1-139</lines>
+        <reason>File needs TrendDataPoint and TrendAnalysis interfaces. Shows pattern for analytics type definitions with null handling for empty states and comprehensive JSDoc comments.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FlareRecord, FlareEventRecord</symbol>
+        <lines>N/A</lines>
+        <reason>Database schema for flares and flareEvents tables. FlareRecord has startDate, endDate, status, bodyRegionId. FlareEventRecord has severity values for peak calculation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/DurationHistogramChart.tsx</path>
+        <kind>component</kind>
+        <symbol>DurationHistogramChart</symbol>
+        <lines>N/A</lines>
+        <reason>Reference for Chart.js component pattern with loading state, empty state, responsive configuration, and ARIA labels. Shows Bar chart setup with similar patterns to required Line chart.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/timeRange.ts</path>
+        <kind>utility</kind>
+        <symbol>withinTimeRange</symbol>
+        <lines>N/A</lines>
+        <reason>Utility function for filtering records by time range (last30d, last90d, lastYear, allTime). Used by all analytics repository methods for consistent time filtering.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="chart.js" version="^4.5.0" />
+        <package name="react-chartjs-2" version="^5.3.0" />
+        <package name="chartjs-adapter-date-fns" version="^3.0.0" />
+        <package name="chartjs-plugin-annotation" version="^3.1.0" />
+        <package name="date-fns" version="^4.1.0" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="lucide-react" version="^0.544.0" />
+        <package name="next" version="15.5.4" />
+        <package name="react" version="19.1.0" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="zod" version="^4.1.12" />
+      </node>
+      <testing>
+        <package name="jest" version="^30.2.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+        <package name="fake-indexeddb" version="^6.2.4" />
+        <package name="jest-environment-jsdom" version="^30.2.0" />
+        <package name="ts-jest" version="^29.4.4" />
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- Repository Pattern (ADR-004): Extend analyticsRepository with getMonthlyTrendData method following on-demand calculation strategy
+- No pre-aggregation or caching - calculate trends on page load from IndexedDB queries
+- All repository methods must use withinTimeRange utility for consistent time filtering
+- Follow existing pattern: fetch with Promise.all for parallel data loading
+- Chart.js Integration: Reuse existing Chart.js setup with registered components and chartjs-adapter-date-fns
+- Use Line chart with TimeScale for temporal data and dual y-axes pattern for frequency and severity
+- chartjs-plugin-annotation for trend line overlay (already installed and used in existing charts)
+- State Management: Extend useAnalytics hook with trendAnalysis state (no global state - React Query + local state only)
+- 10-second polling for reactive updates and window focus refetch pattern
+- Export Functionality: Use Chart.js toBase64Image() API for client-side PNG generation (no server-side rendering)
+- File naming convention: flare-trends-{YYYY-MM-DD}.png
+- Accessibility: ARIA labels on all interactive elements, keyboard navigation support, screen reader announcements
+- Color-blind safe palette for trend indicators (green/gray/red with icons)
+- Responsive Design: Mobile-first with desktop enhancements, responsive grid for charts
+- Empty State: Minimum 3 months of data required to show trend line (prevent misleading single-point trends)
+- Testing: Unit tests for repository methods with fake-indexeddb, component tests with @testing-library/react
+- Coverage targets: 80% branches, 90% functions
+- TypeScript: All new code must have proper type annotations and JSDoc comments
+- Error Handling: Log errors but don't break UI, graceful degradation for missing data
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>TrendDataPoint</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface TrendDataPoint {
+  month: string;              // Format: "YYYY-MM"
+  monthTimestamp: number;     // Epoch ms for first day of month
+  flareCount: number;         // Count of flares in this month
+  averageSeverity: number | null; // Average peak severity (null if no flares)
+}
+      </signature>
+      <path>src/types/analytics.ts</path>
+    </interface>
+    <interface>
+      <name>TrendAnalysis</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface TrendAnalysis {
+  dataPoints: TrendDataPoint[];
+  trendLine: {
+    slope: number;
+    intercept: number;
+  };
+  trendDirection: 'improving' | 'stable' | 'declining' | 'insufficient-data';
+}
+      </signature>
+      <path>src/types/analytics.ts</path>
+    </interface>
+    <interface>
+      <name>RegressionResult</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface RegressionResult {
+  slope: number;       // Trend line slope (negative = improving)
+  intercept: number;   // Y-intercept
+  r2: number;          // Coefficient of determination (0-1, quality metric)
+}
+      </signature>
+      <path>src/lib/utils/linearRegression.ts</path>
+    </interface>
+    <interface>
+      <name>getMonthlyTrendData</name>
+      <kind>Repository method</kind>
+      <signature>
+async function getMonthlyTrendData(
+  userId: string,
+  timeRange: TimeRange
+): Promise&lt;TrendAnalysis&gt;
+      </signature>
+      <path>src/lib/repositories/analyticsRepository.ts</path>
+    </interface>
+    <interface>
+      <name>calculateLinearRegression</name>
+      <kind>Utility function</kind>
+      <signature>
+function calculateLinearRegression(
+  dataPoints: { x: number; y: number }[]
+): RegressionResult
+      </signature>
+      <path>src/lib/utils/linearRegression.ts</path>
+    </interface>
+    <interface>
+      <name>exportChartAsImage</name>
+      <kind>Utility function</kind>
+      <signature>
+async function exportChartAsImage(
+  chartRef: React.RefObject&lt;any&gt;,
+  filename: string
+): Promise&lt;void&gt;
+      </signature>
+      <path>src/lib/utils/chartExport.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Unit tests for repository methods using Jest and fake-indexeddb to mock IndexedDB. Unit tests for utility functions (linearRegression, chartExport) with edge case coverage. Component tests with @testing-library/react for FlareTrendChart and TrendAnalysisSection. Mock Chart.js canvas with jest-canvas-mock for chart rendering tests. Test loading states, empty states, data rendering, user interactions. Coverage targets: 80% branches, 90% functions. All tests must pass before marking story complete.
+    </standards>
+    <locations>
+src/lib/repositories/__tests__/analyticsRepository.trend.test.ts
+src/lib/utils/__tests__/linearRegression.test.ts
+src/lib/utils/__tests__/chartExport.test.ts
+src/components/analytics/__tests__/FlareTrendChart.test.tsx
+src/components/analytics/__tests__/TrendAnalysisSection.test.tsx
+    </locations>
+    <ideas>
+Test getMonthlyTrendData with empty data set (AC3.4.2) - should return insufficient-data trendDirection
+Test monthly bucketing logic (AC3.4.2) - flares grouped correctly by YYYY-MM format
+Test average severity calculation per month (AC3.4.3) - handles null values when no severity data
+Test linear regression calculation (AC3.4.4) - slope correctly indicates improving/stable/declining trajectory
+Test trend direction thresholds (AC3.4.4) - slope less than -0.3 = improving, greater than 0.3 = declining
+Test insufficient data handling (AC3.4.4) - less than 3 months shows "insufficient-data" label
+Test time range filtering (AC3.4.5) - correctly filters flares for last6m, lastYear, last2Years, allTime
+Test chart rendering with dual y-axes (AC3.4.2, AC3.4.3) - frequency on left, severity on right
+Test chart interactivity (AC3.4.6) - tooltip shows month, flare count, average severity on hover
+Test chart export functionality (AC3.4.7) - generates PNG with correct filename format
+Test empty state display - chart shows helpful message when no data available
+Test loading state - skeleton loader displays while data fetching
+Test responsive behavior - chart adapts to mobile and desktop screen sizes
+Test accessibility - ARIA labels present, screen reader announcements for trend direction
+Test error handling - graceful degradation when trend calculation fails
+    </ideas>
+  </tests>
+</story-context>
