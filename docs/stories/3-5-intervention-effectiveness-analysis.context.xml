@@ -1,0 +1,221 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>5</storyId>
+    <title>Intervention Effectiveness Analysis</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-5-intervention-effectiveness-analysis.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user trying different treatments</asA>
+    <iWant>to see which interventions correlate with flare improvement</iWant>
+    <soThat>I can identify effective treatments</soThat>
+    <tasks>
+      <task id="1">Extend analyticsRepository with intervention effectiveness calculations</task>
+      <task id="2">Extend useAnalytics hook for intervention data</task>
+      <task id="3">Create InterventionEffectivenessCard component</task>
+      <task id="4">Create InsufficientDataCard component</task>
+      <task id="5">Create InterventionDetailModal component</task>
+      <task id="6">Create MedicalDisclaimerBanner component</task>
+      <task id="7">Create InterventionEffectivenessSection component</task>
+      <task id="8">Update analytics page to include Intervention Effectiveness</task>
+      <task id="9">Add comprehensive tests</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="3.5.1">Analytics page displays Intervention Effectiveness section below Flare Trends section with medical disclaimer</criterion>
+    <criterion id="3.5.2">Intervention metrics display for each type (Ice, Heat, Medication, Rest, Drainage, Other) showing usage count, average severity change (48h), and success rate</criterion>
+    <criterion id="3.5.3">Interventions ranked by effectiveness (success rate descending) with visual rank badges</criterion>
+    <criterion id="3.5.4">Medical disclaimer displayed prominently: "Correlation not causation - discuss with your healthcare provider"</criterion>
+    <criterion id="3.5.5">Time range selector integration shares state with all other analytics sections</criterion>
+    <criterion id="3.5.6">Minimum data threshold of 5 instances enforced with insufficient data section</criterion>
+    <criterion id="3.5.7">Drill-down to intervention instances with modal showing before/after chart and flare links</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 3.5</title>
+        <section>Story 3.5: Intervention Effectiveness Analysis</section>
+        <snippet>Enables intervention effectiveness analysis with correlation analysis and medical disclaimer. Completes Epic 3 by analyzing which interventions (Ice, Heat, Medication, Rest, Drainage, Other) correlate with flare improvement measured by severity change 48 hours after intervention.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR012 - Flare Analytics</section>
+        <snippet>System shall calculate and display flare progression metrics including intervention effectiveness. NFR001 specifies WCAG 2.1 AA accessibility. NFR002 requires offline-first IndexedDB persistence.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Epic 3: Analytics Architecture</section>
+        <snippet>Analytics Extension: Extends analyticsRepository from Stories 3.1-3.4 with intervention analysis. Uses Chart.js for visualizations. Follows ADR-004 on-demand calculation strategy. All metrics calculated client-side from IndexedDB.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-3-flare-duration-and-severity-metrics.md</path>
+        <title>Story 3.3 - Progression Metrics</title>
+        <section>Implementation Patterns</section>
+        <snippet>Extends analyticsRepository with metrics methods. Uses MetricCard components for display. Shares time range state via useAnalytics hook. Parallel Promise.all fetching pattern. Empty state threshold patterns.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-4-flare-trend-analysis-visualization.md</path>
+        <title>Story 3.4 - Trend Analysis</title>
+        <section>Implementation Patterns</section>
+        <snippet>Trend analysis with Chart.js visualizations. Modal patterns for drill-down. Export functionality using Chart.js toBase64Image. Time range selector integration across all analytics sections.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/repositories/analyticsRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getProblemAreas, getFlaresByRegion, getDurationMetrics, getSeverityMetrics, getMonthlyTrendData</symbol>
+        <lines>1-300</lines>
+        <reason>Existing analytics repository to extend with getInterventionEffectiveness method. Follows established patterns for data aggregation and filtering.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/hooks/useAnalytics.ts</path>
+        <kind>hook</kind>
+        <symbol>useAnalytics</symbol>
+        <lines>1-100</lines>
+        <reason>Main analytics hook extended in Stories 3.1, 3.3, 3.4. Needs extension to fetch intervention effectiveness data in parallel with existing metrics.</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/analytics.ts</path>
+        <kind>types</kind>
+        <symbol>TimeRange, ProblemArea, DurationMetrics, SeverityMetrics, TrendAnalysis</symbol>
+        <lines>1-177</lines>
+        <reason>Analytics type definitions. Needs new types: InterventionType enum, InterventionInstance, InterventionEffectiveness interfaces.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FlareRecord, FlareEventRecord</symbol>
+        <lines>1-200</lines>
+        <reason>Dexie schema defining FlareRecord and FlareEventRecord with intervention events (eventType='intervention'). Source data for effectiveness analysis.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/MetricCard.tsx</path>
+        <kind>component</kind>
+        <symbol>MetricCard</symbol>
+        <lines>1-50</lines>
+        <reason>Reusable metric card component from Story 3.3. Pattern for displaying intervention metrics (usage count, avg change, success rate).</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/InterventionLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>InterventionLogModal</symbol>
+        <lines>1-150</lines>
+        <reason>Existing intervention logging modal from Story 2.5. Shows intervention types and structure. Reference for intervention data model.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/analytics/page.tsx</path>
+        <kind>page</kind>
+        <symbol>AnalyticsPage</symbol>
+        <lines>1-100</lines>
+        <reason>Analytics dashboard page from Stories 3.1, 3.3, 3.4. Needs InterventionEffectivenessSection added below TrendAnalysisSection.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <chart.js>^4.5.0</chart.js>
+        <chartjs-adapter-date-fns>^3.0.0</chartjs-adapter-date-fns>
+        <chartjs-plugin-annotation>^3.1.0</chartjs-plugin-annotation>
+        <react-chartjs-2>^5.3.0</react-chartjs-2>
+        <dexie>^4.2.0</dexie>
+        <date-fns>^4.1.0</date-fns>
+        <lucide-react>^0.544.0</lucide-react>
+        <next>15.5.4</next>
+        <react>19.1.0</react>
+        <zod>^4.1.12</zod>
+      </node>
+      <test>
+        <jest>^30.2.0</jest>
+        <testing-library/react>^16.3.0</testing-library/react>
+        <testing-library/jest-dom>^6.9.1</testing-library/jest-dom>
+        <fake-indexeddb>^6.2.4</fake-indexeddb>
+      </test>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Extend analyticsRepository following existing pattern from Stories 3.1-3.4. Use on-demand calculation (ADR-004), no caching.</constraint>
+    <constraint>48-hour analysis window: Compare severity at intervention time to severity 24-72 hours later. Use closest status_update event in window.</constraint>
+    <constraint>Minimum threshold: 5 intervention instances required for effectiveness metrics. Display insufficient interventions separately.</constraint>
+    <constraint>Intervention type parsing: Parse from FlareEvent.details field using keyword matching (ice, heat, medication, rest, drainage, other).</constraint>
+    <constraint>Success rate definition: Percentage where severityChange > 0 (any improvement). Only count interventions with 48h follow-up data.</constraint>
+    <constraint>Ranking logic: Sort by successRate descending, then usageCount descending. Null success rates sorted to end.</constraint>
+    <constraint>Medical disclaimer: Prominent warning banner required by AC3.5.4. Use AlertTriangle icon, yellow/amber background, clear typography.</constraint>
+    <constraint>Shared time range state: Integration with all analytics sections (Problem Areas, Progression Metrics, Flare Trends) via useAnalytics hook.</constraint>
+    <constraint>Modal accessibility: Escape key closes, Tab traps focus, ARIA labels, role="dialog", prevent body scroll when open.</constraint>
+    <constraint>Color coding: Success rate > 60% green, 40-60% yellow, < 40% red. Match severity color scheme from Story 3.3.</constraint>
+    <constraint>Offline-first: All calculations use Dexie queries on IndexedDB (NFR002). No network dependency.</constraint>
+    <constraint>Testing: Unit tests for repository (effectiveness calculation, 48h window, ranking), component tests (cards, modal, section), accessibility tests.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>getInterventionEffectiveness</name>
+      <kind>repository-method</kind>
+      <signature>async function getInterventionEffectiveness(userId: string, timeRange: TimeRange): Promise&lt;InterventionEffectiveness[]&gt;</signature>
+      <path>src/lib/repositories/analyticsRepository.ts</path>
+    </interface>
+    <interface>
+      <name>InterventionType</name>
+      <kind>enum</kind>
+      <signature>type InterventionType = 'Ice' | 'Heat' | 'Medication' | 'Rest' | 'Drainage' | 'Other'</signature>
+      <path>src/types/analytics.ts</path>
+    </interface>
+    <interface>
+      <name>InterventionInstance</name>
+      <kind>interface</kind>
+      <signature>interface InterventionInstance { id: string; flareId: string; interventionType: InterventionType; timestamp: number; severityAtIntervention: number; severityAfter48h: number | null; severityChange: number | null; }</signature>
+      <path>src/types/analytics.ts</path>
+    </interface>
+    <interface>
+      <name>InterventionEffectiveness</name>
+      <kind>interface</kind>
+      <signature>interface InterventionEffectiveness { interventionType: InterventionType; usageCount: number; averageSeverityChange: number | null; successRate: number | null; hasSufficientData: boolean; instances: InterventionInstance[]; }</signature>
+      <path>src/types/analytics.ts</path>
+    </interface>
+    <interface>
+      <name>useAnalytics</name>
+      <kind>hook</kind>
+      <signature>function useAnalytics({ timeRange }: { timeRange: TimeRange }): { problemAreas, durationMetrics, severityMetrics, trendAnalysis, interventionEffectiveness, isLoading, error }</signature>
+      <path>src/lib/hooks/useAnalytics.ts</path>
+    </interface>
+    <interface>
+      <name>FlareEventRecord.intervention</name>
+      <kind>data-model</kind>
+      <signature>FlareEventRecord { eventType: 'intervention', details: string, timestamp: number, ... }</signature>
+      <path>src/lib/db/schema.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing with Jest 30.2.0, @testing-library/react 16.3.0, fake-indexeddb 6.2.4 for IndexedDB mocking. Unit tests for repository methods (80% coverage target). Component tests with RTL. Accessibility tests for keyboard navigation, ARIA labels, screen reader compatibility. Integration tests for shared time range state and modal interactions.
+    </standards>
+    <locations>
+      - src/lib/repositories/__tests__/analyticsRepository.intervention.test.ts
+      - src/components/analytics/__tests__/InterventionEffectivenessCard.test.tsx
+      - src/components/analytics/__tests__/InterventionDetailModal.test.tsx
+      - src/components/analytics/__tests__/InterventionEffectivenessSection.test.tsx
+    </locations>
+    <ideas>
+      <idea ac="3.5.2">Test getInterventionEffectiveness: empty data, single intervention type, multiple types, severity change calculation (improvement, worsening, no change), 48h window logic (within/outside 24-72h), missing follow-up data handling</idea>
+      <idea ac="3.5.3">Test intervention ranking: by success rate descending, by usage count secondary sort, null success rates sorted to end</idea>
+      <idea ac="3.5.6">Test minimum threshold: exactly 5 instances, less than 5 (insufficient), more than 5 (sufficient)</idea>
+      <idea ac="3.5.2">Test InterventionEffectivenessCard: renders intervention data, metrics display (usage count, avg change, success rate), rank badge display (1st/2nd/3rd), color coding by success rate (green/yellow/red)</idea>
+      <idea ac="3.5.7">Test InterventionDetailModal: open/close, instance list rendering, before/after chart, flare links navigation, keyboard controls (Escape, Tab trapping), ARIA attributes</idea>
+      <idea ac="3.5.1">Test InterventionEffectivenessSection: empty state (no interventions), loading state, ranked list display, insufficient data section, medical disclaimer banner, modal interaction (open on card click)</idea>
+      <idea ac="3.5.5">Test time range integration: shared state with other analytics sections, metrics update when time range changes</idea>
+      <idea ac="3.5.4">Test MedicalDisclaimerBanner: renders with warning icon, displays disclaimer text, role="alert" for screen readers</idea>
+      <idea ac="3.5.7">Test accessibility: keyboard navigation through cards (Tab, Enter), focus indicators, ARIA labels on interactive elements, screen reader announcements</idea>
+    </ideas>
+  </tests>
+</story-context>
