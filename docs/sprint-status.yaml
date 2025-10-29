@@ -76,11 +76,11 @@ development_status:
   3.5-1-fix-empty-state-crisis-and-pre-populate-defaults: done
   3.5-2-mood-and-sleep-basic-logging: ready-for-dev
   3.5-3-redesign-symptom-logging-modal-to-page: ready-for-dev
-  3.5-4-redesign-food-logging-modal-to-page: drafted
-  3.5-5-redesign-trigger-and-medication-logging-to-pages: drafted
-  3.5-6-critical-ui-fixes-bundle: drafted
-  3.5-7-fix-calendar-data-wiring: drafted
-  3.5-8-add-keyboard-navigation-accessibility: drafted
+  3.5-4-redesign-food-logging-modal-to-page: ready-for-dev
+  3.5-5-redesign-trigger-and-medication-logging-to-pages: ready-for-dev
+  3.5-6-critical-ui-fixes-bundle: ready-for-dev
+  3.5-7-fix-calendar-data-wiring: ready-for-dev
+  3.5-8-add-keyboard-navigation-accessibility: ready-for-dev
   epic-3.5-retrospective: optional
 
   epic-4: backlog

@@ -1,0 +1,260 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>6</storyId>
+    <title>Critical UI Fixes Bundle</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-5-6-critical-ui-fixes-bundle.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user experiencing broken UI elements</asA>
+    <iWant>all critical visual and functional bugs fixed</iWant>
+    <soThat>I can use the app reliably in production</soThat>
+    <tasks>
+      <task id="1" acs="3.5.6.1,3.5.6.8">Fix dark mode text visibility
+        <subtask id="1.1">Audit all pages in dark mode, screenshot areas with poor contrast</subtask>
+        <subtask id="1.2">Update CSS variables in theme configuration (globals.css)</subtask>
+        <subtask id="1.3">Set dark mode text colors: text-gray-100 or text-white on dark backgrounds</subtask>
+        <subtask id="1.4">Update component-specific overrides if needed</subtask>
+        <subtask id="1.5">Test contrast ratios with WebAIM Contrast Checker (4.5:1 minimum)</subtask>
+        <subtask id="1.6">Verify all pages: dashboard, logging, settings, analytics, flares, about</subtask>
+        <subtask id="1.7">Fix any remaining dark mode issues discovered during testing</subtask>
+        <subtask id="1.8">Document dark mode color choices for future reference</subtask>
+      </task>
+      <task id="2" acs="3.5.6.2">Remove onboarding Step 5
+        <subtask id="2.1">Locate onboarding component (src/app/onboarding/)</subtask>
+        <subtask id="2.2">Remove Step 5 "education" from ONBOARDING_STEPS config</subtask>
+        <subtask id="2.3">Update step numbering logic: current Step 6 becomes Step 5</subtask>
+        <subtask id="2.4">Update progress indicators to show "5 steps" instead of "6 steps"</subtask>
+        <subtask id="2.5">Update step navigation to skip removed step</subtask>
+        <subtask id="2.6">Test onboarding flow end-to-end: all 5 steps complete successfully</subtask>
+        <subtask id="2.7">Verify completion redirects to dashboard correctly</subtask>
+      </task>
+      <task id="3" acs="3.5.6.3">Remove flares page buttons
+        <subtask id="3.1">Locate flares page component (src/app/(protected)/flares/page.tsx)</subtask>
+        <subtask id="3.2">Find and remove "Explore map view" button from cards-only CTA section</subtask>
+        <subtask id="3.3">Find and remove "Show split layout" button from cards-only CTA section</subtask>
+        <subtask id="3.4">Keep view mode toggle buttons (cards, map, split view) - they are functional</subtask>
+        <subtask id="3.5">Test flares page: verify core functionality still works</subtask>
+        <subtask id="3.6">Verify page layout looks clean without CTA buttons</subtask>
+      </task>
+      <task id="4" acs="3.5.6.4">Update About page
+        <subtask id="4.1">Locate About page (src/app/(protected)/about/page.tsx)</subtask>
+        <subtask id="4.2">Update app version number from package.json (currently 0.2.0)</subtask>
+        <subtask id="4.3">Update feature list to match currently implemented features</subtask>
+        <subtask id="4.4">Remove references to unimplemented features</subtask>
+        <subtask id="4.5">Add Epic 3 analytics completion to feature list</subtask>
+        <subtask id="4.6">Verify all information accurate for production launch</subtask>
+        <subtask id="4.7">Test About page renders correctly in light and dark mode</subtask>
+      </task>
+      <task id="5" acs="3.5.6.5,3.5.6.8">Fix dashboard button styling
+        <subtask id="5.1">Locate dashboard quick action buttons (QuickLogButtons component)</subtask>
+        <subtask id="5.2">Audit current button styles: colors, sizes, spacing, typography</subtask>
+        <subtask id="5.3">Update button styles to match design system theme</subtask>
+        <subtask id="5.4">Use consistent color palette from theme configuration</subtask>
+        <subtask id="5.5">Ensure uniform sizing (e.g., h-12 or h-16 consistently)</subtask>
+        <subtask id="5.6">Set consistent spacing between buttons (e.g., gap-4)</subtask>
+        <subtask id="5.7">Use consistent typography (e.g., text-base, font-medium)</subtask>
+        <subtask id="5.8">Test in light mode: buttons look cohesive</subtask>
+        <subtask id="5.9">Test in dark mode: buttons adapt properly</subtask>
+        <subtask id="5.10">Screenshot before/after for visual comparison</subtask>
+      </task>
+      <task id="6" acs="3.5.6.6,3.5.6.8">Fix toast layout shift
+        <subtask id="6.1">Locate toast notification component usage in modals</subtask>
+        <subtask id="6.2">Update toast positioning to fixed: position: fixed; top: 20px; right: 20px;</subtask>
+        <subtask id="6.3">Set z-index high enough to appear above content: z-index: 9999;</subtask>
+        <subtask id="6.4">Ensure toast does not affect document flow (use fixed or absolute)</subtask>
+        <subtask id="6.5">Test toast appearance on all pages: verify no layout shift</subtask>
+        <subtask id="6.6">Test toast dismissal: content doesn't jump when toast disappears</subtask>
+        <subtask id="6.7">Verify toast stacking if multiple toasts appear simultaneously</subtask>
+      </task>
+      <task id="7" acs="3.5.6.7">Replace info boxes with icons
+        <subtask id="7.1">Locate all info box components throughout app</subtask>
+        <subtask id="7.2">Create reusable InfoIcon component with Radix UI Tooltip</subtask>
+        <subtask id="7.3">Replace each info box with InfoIcon positioned near relevant feature</subtask>
+        <subtask id="7.4">Implement tooltip with help text (use @radix-ui/react-tooltip)</subtask>
+        <subtask id="7.5">Tooltip opens on icon hover/click, dismisses on outside click</subtask>
+        <subtask id="7.6">Icon always visible (doesn't disappear after interaction)</subtask>
+        <subtask id="7.7">Style icon subtly: small "i" in circle, gray color, hover state</subtask>
+        <subtask id="7.8">Test tooltip behavior: opens, dismisses, positioning correct</subtask>
+        <subtask id="7.9">Verify accessibility: keyboard accessible, aria-labels</subtask>
+      </task>
+      <task id="8" acs="3.5.6.8">Comprehensive testing
+        <subtask id="8.1">Test all fixes in light mode: Chrome, Firefox, Safari desktop</subtask>
+        <subtask id="8.2">Test all fixes in dark mode: Chrome, Firefox, Safari desktop</subtask>
+        <subtask id="8.3">Test on mobile iOS Safari: verify all fixes work</subtask>
+        <subtask id="8.4">Test on mobile Android Chrome: verify all fixes work</subtask>
+        <subtask id="8.5">Regression testing: ensure no existing features broken</subtask>
+        <subtask id="8.6">Verify dark mode contrast ratios with WCAG checker</subtask>
+        <subtask id="8.7">Screenshot comparisons before/after for all visual changes</subtask>
+        <subtask id="8.8">Create checklist of all fixes for final QA verification</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="3.5.6.1" priority="HIGH">
+      <title>Fix dark mode text visibility</title>
+      <description>Update CSS variables for dark mode to ensure all text is readable, light text (white/gray-100) on dark backgrounds throughout app, verify contrast ratios meet WCAG AA standards (4.5:1 minimum for normal text), test all pages in dark mode: dashboard, logging pages, settings, analytics, flares, fix any missed dark mode issues discovered during testing</description>
+      <testScenarios>
+        <scenario>Open app in dark mode and navigate to each page - all text should be clearly readable</scenario>
+        <scenario>Use WebAIM Contrast Checker to verify all text meets 4.5:1 ratio minimum</scenario>
+        <scenario>Test in both Chrome and Firefox to ensure consistency</scenario>
+      </testScenarios>
+    </criterion>
+    <criterion id="3.5.6.2" priority="HIGH">
+      <title>Remove onboarding Step 5</title>
+      <description>Delete Step 5 "Quick learning modules" section from onboarding flow, update step numbers: current Step 6 becomes Step 5, update progress indicators to show correct step count (1 of 5 instead of 1 of 6), update onboarding navigation logic to skip removed step, remove any references to learning modules until they exist</description>
+      <testScenarios>
+        <scenario>Complete onboarding flow from start to finish - should go through exactly 5 steps</scenario>
+        <scenario>Progress indicator should show "Step X of 5" throughout flow</scenario>
+        <scenario>No references to education/learning modules should appear</scenario>
+      </testScenarios>
+    </criterion>
+    <criterion id="3.5.6.3" priority="MEDIUM">
+      <title>Remove flares page buttons</title>
+      <description>Remove "Explore map view" button from flares page header, remove "Show split layout" button from flares page header, buttons are non-functional and confusing to users, keep only functional UI elements on flares page, verify flares page functionality still works after button removal</description>
+      <testScenarios>
+        <scenario>Visit flares page - CTA buttons for "Explore map view" and "Show split layout" should not appear</scenario>
+        <scenario>View mode toggle tabs (Cards Only, Map Only, Split View) should still be present and functional</scenario>
+        <scenario>All flare management functionality works correctly</scenario>
+      </testScenarios>
+    </criterion>
+    <criterion id="3.5.6.4" priority="MEDIUM">
+      <title>Update About page</title>
+      <description>Replace outdated information with current project details, update app version number to match package.json, update feature list to reflect currently implemented features, add links to documentation or support resources if available, ensure About page content accurate for production launch</description>
+      <testScenarios>
+        <scenario>Visit About page - version number matches package.json (0.2.0)</scenario>
+        <scenario>All listed features are actually implemented in the app</scenario>
+        <scenario>No references to unimplemented features appear</scenario>
+      </testScenarios>
+    </criterion>
+    <criterion id="3.5.6.5" priority="MEDIUM">
+      <title>Fix dashboard button visual consistency</title>
+      <description>Dashboard quick action buttons styled cohesively with app design system, consistent colors, sizes, spacing, and typography, buttons follow design tokens from theme configuration, remove any clashing colors or mismatched styles, ensure buttons look intentional and professionally designed, test light and dark mode appearance</description>
+      <testScenarios>
+        <scenario>View dashboard - all quick action buttons use consistent sizing, spacing, colors</scenario>
+        <scenario>Buttons follow color palette defined in globals.css theme</scenario>
+        <scenario>Test in both light and dark mode - buttons adapt properly</scenario>
+      </testScenarios>
+    </criterion>
+    <criterion id="3.5.6.6" priority="HIGH">
+      <title>Fix toast layout shift</title>
+      <description>Toast notifications positioned absolutely/fixed (not inline), toasts do not push or shift page content when appearing, use fixed positioning at top or bottom of viewport, z-index high enough to appear above all content, toast appearance/dismissal does not affect document flow, verify no layout shift across all pages</description>
+      <testScenarios>
+        <scenario>Trigger toast notification on any page - page content should not shift when toast appears</scenario>
+        <scenario>Toast should appear in consistent position (top-right or similar)</scenario>
+        <scenario>When toast dismisses, page content should not jump or shift</scenario>
+      </testScenarios>
+    </criterion>
+    <criterion id="3.5.6.7" priority="MEDIUM">
+      <title>Replace info boxes with persistent icons</title>
+      <description>Convert closable info boxes to persistent "i" information icons, clicking "i" icon opens popover or tooltip with help text, popover/tooltip dismisses when user clicks outside, "i" icon always visible (doesn't disappear after first close), help text remains accessible without annoying users with repeated prompts, position icons near relevant features (e.g., next to section headers)</description>
+      <testScenarios>
+        <scenario>Find info boxes throughout app - replaced with small "i" icons</scenario>
+        <scenario>Click/hover icon - tooltip/popover with help text appears</scenario>
+        <scenario>Click outside tooltip - it dismisses but icon remains visible</scenario>
+        <scenario>Icon is keyboard accessible with proper ARIA labels</scenario>
+      </testScenarios>
+    </criterion>
+    <criterion id="3.5.6.8" priority="HIGH">
+      <title>All fixes tested across modes and devices</title>
+      <description>Every fix verified in both light and dark mode, all fixes tested on desktop (Chrome, Firefox, Safari), all fixes tested on mobile (iOS Safari, Android Chrome), regression testing: ensure fixes don't break existing functionality, screenshot comparisons before/after for visual changes, WCAG AA contrast ratios verified for dark mode changes</description>
+      <testScenarios>
+        <scenario>Test matrix completed for all 7 fixes across light/dark modes</scenario>
+        <scenario>Browser testing completed: Chrome, Firefox, Safari</scenario>
+        <scenario>Mobile testing completed: iOS and Android</scenario>
+        <scenario>Screenshots captured showing before/after states</scenario>
+      </testScenarios>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 3.5.6">
+        Complete story specification with all 8 acceptance criteria. Part of Epic 3.5: Production-Ready UI/UX Enhancement, bundling critical fixes blocking production launch.
+      </doc>
+      <doc path="docs/epic-3.5-production-ux.md" title="Epic 3.5 Overview" section="Story 3.5.6">
+        High-level epic context explaining this is Phase 0 critical fixes. Medical expert noted dark mode as 30-minute fix that's highly visible improvement.
+      </doc>
+      <doc path="docs/brainstorming-session-results-2025-10-29.md" title="Brainstorming Session Results" section="Phase 0, Role-Playing Exercises">
+        User-reported issues from first-time, daily, and power user perspectives. All fixes identified during role-playing exercises.
+      </doc>
+      <doc path="docs/stories/3-5-6-critical-ui-fixes-bundle.md" title="Story File" section="Dev Notes">
+        Implementation guidance with dark mode CSS variable examples, InfoIcon component example using Radix UI, project structure notes.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/app/globals.css" kind="stylesheet" symbol="CSS variables, dark mode theme" lines="1-48" reason="Current theme configuration with dark mode CSS variables that need updating for text visibility" />
+      <artifact path="src/app/onboarding/utils/onboardingConfig.ts" kind="config" symbol="ONBOARDING_STEPS" lines="3-47" reason="Onboarding step definitions including education step (Step 5) that needs removal" />
+      <artifact path="src/app/onboarding/components/OnboardingFlow.tsx" kind="component" symbol="OnboardingFlow" lines="1-146" reason="Main onboarding flow component that renders steps and manages progression" />
+      <artifact path="src/app/(protected)/flares/page.tsx" kind="page" symbol="FlaresPage" lines="230-255" reason="Flares page with CTA buttons for map/split view that need removal (lines 230-255)" />
+      <artifact path="src/app/(protected)/about/page.tsx" kind="page" symbol="AboutPage" lines="1-186" reason="About page with version 0.2.0 and feature lists that need updating" />
+      <artifact path="src/app/(protected)/dashboard/page.tsx" kind="page" symbol="DashboardContent" lines="1-277" reason="Dashboard with QuickLogButtons that need style consistency fixes" />
+      <artifact path="src/components/analytics/InsufficientDataCard.tsx" kind="component" symbol="InsufficientDataCard, Info icon example" lines="1-79" reason="Example of Info icon usage with lucide-react Info component and tooltip-like behavior" />
+    </code>
+    <dependencies>
+      <node>
+        <dependency name="next" version="15.5.4" />
+        <dependency name="react" version="19.1.0" />
+        <dependency name="react-dom" version="19.1.0" />
+        <dependency name="@radix-ui/react-tooltip" version="^1.2.8" />
+        <dependency name="lucide-react" version="^0.544.0" />
+        <dependency name="tailwindcss" version="^4" />
+        <dependency name="typescript" version="^5" />
+        <dependency name="@testing-library/react" version="^16.3.0" />
+        <dependency name="@testing-library/jest-dom" version="^6.9.1" />
+        <dependency name="jest" version="^30.2.0" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">All fixes are UI/presentation layer only - no data layer changes, no schema changes, no repository changes</constraint>
+    <constraint type="compatibility">Must maintain compatibility with existing features - no breaking changes to flare tracking, onboarding completion, or navigation</constraint>
+    <constraint type="design-system">Use Tailwind CSS utility classes with design tokens from globals.css - no inline styles, follow existing color palette</constraint>
+    <constraint type="accessibility">WCAG AA compliance required for dark mode text (4.5:1 contrast ratio minimum), keyboard navigation support, proper ARIA labels</constraint>
+    <constraint type="testing">Cross-browser testing required (Chrome, Firefox, Safari), mobile testing required (iOS, Android), light/dark mode testing for all fixes</constraint>
+    <constraint type="no-new-dependencies">Use existing dependencies - Radix UI Tooltip already installed, Lucide React icons already in use</constraint>
+    <constraint type="pattern">Follow existing component patterns - see InsufficientDataCard for Info icon example, follow existing modal/page structure</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CSS Variables (Dark Mode)" kind="theme" signature=".dark { --background, --foreground, --card, --muted, --border, --primary }" path="src/app/globals.css">
+      Dark mode CSS custom properties that control text and background colors throughout app. Primary interface for fixing text visibility.
+    </interface>
+    <interface name="OnboardingStepDefinition" kind="type" signature="{ id: string, title: string, description: string, optional?: boolean }" path="src/app/onboarding/types/onboarding">
+      TypeScript interface defining onboarding step structure. Used by ONBOARDING_STEPS config array.
+    </interface>
+    <interface name="Radix UI Tooltip" kind="component-library" signature="Tooltip.Root, Tooltip.Trigger, Tooltip.Content, Tooltip.Portal, Tooltip.Arrow" path="@radix-ui/react-tooltip">
+      Tooltip component from Radix UI for implementing InfoIcon popover/tooltip. Already installed dependency.
+    </interface>
+    <interface name="Lucide React Icons" kind="icon-library" signature="Info, HelpCircle, and other icon components" path="lucide-react">
+      Icon library for implementing "i" information icons. Info component is the primary icon to use.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses Jest with React Testing Library for unit and integration tests. Tests located in __tests__ directories co-located with components. Testing philosophy: test user behavior, not implementation details. Accessibility testing included with jest-dom matchers. Visual regression testing via screenshot comparisons for UI changes.
+    </standards>
+    <locations>
+      <location>src/app/(protected)/**/__tests__/</location>
+      <location>src/components/**/__tests__/</location>
+      <location>src/app/onboarding/**/__tests__/</location>
+    </locations>
+    <ideas>
+      <idea ac="3.5.6.1">Dark mode text visibility: Visual regression test comparing dark mode screenshots before/after. Automated contrast ratio checking using accessibility testing tools. Test each major page (dashboard, flares, about, settings, analytics) in dark mode.</idea>
+      <idea ac="3.5.6.2">Onboarding step removal: Integration test ensuring onboarding completes in exactly 5 steps. Test progress indicator shows "X of 5" at each step. Verify education step is not rendered.</idea>
+      <idea ac="3.5.6.3">Flares page buttons: Component test verifying CTA buttons are not rendered. Verify view mode toggle tabs still present. Test flare creation workflow still functional.</idea>
+      <idea ac="3.5.6.4">About page: Snapshot test to catch unintended content changes. Test version number matches package.json. Verify feature list accuracy.</idea>
+      <idea ac="3.5.6.5">Dashboard button styling: Visual regression test for button consistency. Test button rendering in light and dark modes. Measure spacing and sizing consistency programmatically.</idea>
+      <idea ac="3.5.6.6">Toast layout shift: Test toast positioning is fixed/absolute. Measure page layout before/after toast appearance (should be identical). Test toast z-index layering.</idea>
+      <idea ac="3.5.6.7">Info icon component: Unit test for InfoIcon component. Test tooltip open/close behavior. Test keyboard accessibility. Verify ARIA attributes present.</idea>
+      <idea ac="3.5.6.8">Comprehensive testing: Cross-browser E2E test suite. Mobile responsive testing. Accessibility audit with axe-core. Screenshot comparison matrix (light/dark, desktop/mobile).</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,6 +1,6 @@
 # Story 3.5.4: Redesign Food Logging (Modal → Dedicated Page)
 
-Status: drafted
+Status: ready-for-dev
 
 **Priority:** HIGH
 **Points:** 8

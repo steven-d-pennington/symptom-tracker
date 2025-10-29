@@ -1,0 +1,405 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>8</storyId>
+    <title>Add Keyboard Navigation (Accessibility)</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\3-5-8-add-keyboard-navigation-accessibility.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user relying on keyboard navigation</asA>
+    <iWant>full keyboard access to all interactive elements</iWant>
+    <soThat>I can use the app without a mouse</soThat>
+    <tasks>
+      <task id="1" ac="3.5.8.1">
+        <title>Audit current keyboard navigation</title>
+        <subtasks>
+          <subtask id="1.1">Test Tab key navigation through all pages</subtask>
+          <subtask id="1.2">Document focus order issues (illogical order, skipped elements, traps)</subtask>
+          <subtask id="1.3">Identify interactive elements missing from tab order (missing tabindex)</subtask>
+          <subtask id="1.4">Test modal/dropdown tab trapping (should stay within modal, escape to close)</subtask>
+          <subtask id="1.5">Add skip link to main content</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="3.5.8.2">
+        <title>Implement Enter/Space activation</title>
+        <subtasks>
+          <subtask id="2.1">Audit custom button components (div/span with onClick)</subtask>
+          <subtask id="2.2">Add onKeyDown handler to custom buttons</subtask>
+          <subtask id="2.3">Ensure custom buttons have role="button" and tabIndex={0}</subtask>
+          <subtask id="2.4">Test Enter key form submission in text inputs</subtask>
+          <subtask id="2.5">Test Space key activation for buttons (not links)</subtask>
+          <subtask id="2.6">Test dropdown/select open via Enter/Space</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3.5.8.3">
+        <title>Implement arrow key navigation</title>
+        <subtasks>
+          <subtask id="3.1">Add arrow key handlers to listbox components</subtask>
+          <subtask id="3.2">Up/down arrows move focus through items</subtask>
+          <subtask id="3.3">Home key focuses first item, End key focuses last item</subtask>
+          <subtask id="3.4">Update collapsible categories from Stories 3.5.4-5 to support arrow navigation</subtask>
+          <subtask id="3.5">Follow ARIA Authoring Practices Guide for listbox pattern</subtask>
+          <subtask id="3.6">Test arrow navigation in all dropdown/menu components</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="3.5.8.4">
+        <title>Implement Escape key behavior</title>
+        <subtasks>
+          <subtask id="4.1">Add global Escape key listener</subtask>
+          <subtask id="4.2">Escape closes topmost modal and returns focus to trigger</subtask>
+          <subtask id="4.3">Escape closes dropdowns and popovers</subtask>
+          <subtask id="4.4">Escape dismisses tooltips</subtask>
+          <subtask id="4.5">Track focus history for returning focus after modal close</subtask>
+          <subtask id="4.6">Test nested components (modal with dropdown): Escape closes innermost first</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="3.5.8.5">
+        <title>Disable shortcuts when typing</title>
+        <subtasks>
+          <subtask id="5.1">Locate keyboard shortcut implementation (if f/b/l/r shortcuts exist)</subtask>
+          <subtask id="5.2">Check if active element is input/textarea</subtask>
+          <subtask id="5.3">If input focused, ignore shortcut key presses</subtask>
+          <subtask id="5.4">Test typing in text fields: shortcuts don't interfere</subtask>
+          <subtask id="5.5">Also check contenteditable elements</subtask>
+          <subtask id="5.6">Re-enable shortcuts when focus leaves text field</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="3.5.8.6">
+        <title>Implement consistent focus indicators</title>
+        <subtasks>
+          <subtask id="6.1">Audit existing focus styles across app</subtask>
+          <subtask id="6.2">Update global CSS to use Tailwind focus-visible utilities</subtask>
+          <subtask id="6.3">Add focus-visible:ring-2 focus-visible:ring-blue-500 to interactive elements</subtask>
+          <subtask id="6.4">Ensure 2px outline minimum (WCAG 2.2)</subtask>
+          <subtask id="6.5">Test focus indicators in light and dark mode</subtask>
+          <subtask id="6.6">Verify focus contrast ratios meet WCAG requirements</subtask>
+          <subtask id="6.7">Custom focus styles for branded components (if needed)</subtask>
+          <subtask id="6.8">Never remove focus outlines without replacement</subtask>
+        </subtasks>
+      </task>
+      <task id="7" ac="3.5.8.7">
+        <title>Add screen reader announcements</title>
+        <subtasks>
+          <subtask id="7.1">Add aria-live regions for dynamic content</subtask>
+          <subtask id="7.2">Toast notifications use aria-live="polite"</subtask>
+          <subtask id="7.3">Form errors announced when validation fails</subtask>
+          <subtask id="7.4">Loading states announced</subtask>
+          <subtask id="7.5">Success messages announced after actions complete</subtask>
+          <subtask id="7.6">Modal open/close announced</subtask>
+          <subtask id="7.7">Icon buttons have aria-label</subtask>
+          <subtask id="7.8">Test with screen reader (NVDA, JAWS, or VoiceOver)</subtask>
+        </subtasks>
+      </task>
+      <task id="8" ac="3.5.8.8">
+        <title>Document keyboard shortcuts</title>
+        <subtasks>
+          <subtask id="8.1">Create help/accessibility page at /help/keyboard-shortcuts</subtask>
+          <subtask id="8.2">List all keyboard shortcuts with descriptions</subtask>
+          <subtask id="8.3">Group shortcuts by category: Navigation, Actions, Dialogs, Forms</subtask>
+          <subtask id="8.4">Include visual keyboard icons for clarity</subtask>
+          <subtask id="8.5">Add link to accessibility page in footer</subtask>
+          <subtask id="8.6">Add link to accessibility page in settings menu</subtask>
+          <subtask id="8.7">Consider adding keyboard shortcuts modal (triggered by "?" key)</subtask>
+        </subtasks>
+      </task>
+      <task id="9" ac="all">
+        <title>Add comprehensive tests</title>
+        <subtasks>
+          <subtask id="9.1">Test Tab navigation through all pages (automated with testing-library)</subtask>
+          <subtask id="9.2">Test Enter/Space activation for buttons and links</subtask>
+          <subtask id="9.3">Test arrow key navigation in menus and lists</subtask>
+          <subtask id="9.4">Test Escape key closes modals and dropdowns</subtask>
+          <subtask id="9.5">Test shortcuts disabled when typing in text fields</subtask>
+          <subtask id="9.6">Test focus indicators visible on all interactive elements</subtask>
+          <subtask id="9.7">Test screen reader announcements (manual testing with NVDA/VoiceOver)</subtask>
+          <subtask id="9.8">Run automated accessibility audits (axe-core, Lighthouse)</subtask>
+          <subtask id="9.9">Manual testing: navigate app using only keyboard</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC3.5.8.1">
+      <title>Tab key navigates through interactive elements</title>
+      <description>Tab key moves focus through all interactive elements in logical order: navigation links, buttons, form inputs, cards, following document flow (top to bottom, left to right), skip links provided to jump to main content from header, focus order matches visual layout, no focus traps (can tab out of all components), custom components (modals, dropdowns) support tab navigation.</description>
+    </criterion>
+    <criterion id="AC3.5.8.2">
+      <title>Enter/Space activates buttons and links</title>
+      <description>Enter key activates buttons and links (triggers onClick), Space key activates buttons (not links, per HTML standard), custom buttons (div/span with onClick) support Enter and Space, form submission via Enter key in text inputs, dropdown/select components open via Enter or Space, all clickable cards/items support Enter activation.</description>
+    </criterion>
+    <criterion id="AC3.5.8.3">
+      <title>Arrow keys navigate within components</title>
+      <description>Arrow keys navigate within listboxes and dropdown menus, up/down arrows move through menu items, left/right arrows can be used for horizontal navigation (e.g., tabs), Home key jumps to first item, End key jumps to last item, follows ARIA Authoring Practices Guide patterns, works in collapsible categories from Stories 3.5.4-5.</description>
+    </criterion>
+    <criterion id="AC3.5.8.4">
+      <title>Escape key closes modals and dropdowns</title>
+      <description>Escape key closes open modals and returns focus to trigger element, Escape closes dropdowns and select menus, Escape dismisses popovers and tooltips, Escape cancels in-progress actions (if applicable), focus management: returns to element that triggered modal/dropdown, no nested Escape (single press closes deepest open component).</description>
+    </criterion>
+    <criterion id="AC3.5.8.5">
+      <title>Disable f/b/l/r shortcuts when typing</title>
+      <description>Keyboard shortcuts (f, b, l, r for logging actions if they exist) disabled when user is typing in text field, check document.activeElement: if input/textarea has focus, ignore shortcuts, shortcuts re-enabled when focus leaves text field, prevent interference with natural typing, document shortcuts in help/accessibility section.</description>
+    </criterion>
+    <criterion id="AC3.5.8.6">
+      <title>Focus indicators clearly visible</title>
+      <description>All focusable elements have visible focus indicators (outline or ring), focus indicators meet WCAG 2.2 requirements (minimum 2px outline, sufficient contrast), consistent focus styling across app (use Tailwind focus-visible utilities), focus indicators work in light and dark mode, custom focus styles for branded components, don't remove default focus outlines without replacement.</description>
+    </criterion>
+    <criterion id="AC3.5.8.7">
+      <title>Screen reader announcements for state changes</title>
+      <description>Dynamic content changes announced via aria-live regions, form errors announced when validation fails, toast notifications use aria-live="polite", loading states announced: "Loading data...", success messages announced after actions complete, modal open/close announced to screen readers, buttons include aria-label when text alone is insufficient (icon buttons).</description>
+    </criterion>
+    <criterion id="AC3.5.8.8">
+      <title>Keyboard shortcuts documented</title>
+      <description>Create help/accessibility page documenting all keyboard shortcuts, shortcuts listed: Tab (navigate), Enter (activate), Space (activate button), Escape (close), arrows (navigate menus), shortcuts for logging actions if implemented (f/b/l/r), link to accessibility docs from settings or footer, shortcuts discoverable by users who need them.</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 3.5.8</title>
+        <section>Epic 3.5 Story 3.5.8</section>
+        <snippet>As a user relying on keyboard navigation, I want full keyboard access to all interactive elements, So that I can use the app without a mouse. Implements Tab navigation, Enter/Space activation, arrow key navigation within components, Escape key closes modals/dropdowns, disables f/b/l/r shortcuts when typing in text fields. WCAG 2.1 AA compliance baseline.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epic-3.5-production-ux.md</path>
+        <title>Epic 3.5 Context</title>
+        <section>Story 3.5.8: Add Keyboard Navigation (Accessibility)</section>
+        <snippet>Priority: MEDIUM, 5 points. Implement full keyboard navigation throughout app. Disable f/b/l/r shortcuts when typing in text fields. Foundation for WCAG 2.1 Level AA compliance. Prerequisite for future accessibility enhancements including voice logging.</snippet>
+      </doc>
+      <doc>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>Brainstorming Session - Accessibility Priorities</title>
+        <section>Expert Panel Review + Daily Active User + Flare Modal Issues</section>
+        <snippet>Voice logging identified as accessibility necessity (moved from moonshots). Keyboard shortcuts (f,b,l,r) conflict with text input in flare modal description field - need to disable when typing. Keyboard navigation is prerequisite for full accessibility story. Expert panel elevated accessibility as production requirement.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - Accessibility</title>
+        <section>Cross-Cutting Concerns: Accessibility</section>
+        <snippet>ARIA labels on all body map regions. Keyboard navigation for zoom (+/- keys). Screen reader announcements for flare status changes. Focus management in modals. Color-blind safe palette for severity indicators. Accessibility considerations built into architecture.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.6.md</path>
+        <title>Related Story: Body Map Accessibility and Keyboard Navigation</title>
+        <section>Story 1.6</section>
+        <snippet>Tab key navigates between body regions in logical order. Enter/Space key selects a region. Arrow keys allow fine-tuned positioning within a zoomed region. Screen readers announce region names and flare counts. ARIA labels provide context for all interactive elements. Keyboard shortcuts for zoom (+/- keys) and pan (arrow keys when zoomed). Focus indicators clearly show current keyboard position.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/navigation/Sidebar.tsx</path>
+        <kind>component</kind>
+        <symbol>Sidebar</symbol>
+        <reason>Main navigation component requiring keyboard navigation support</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/BottomTabs.tsx</path>
+        <kind>component</kind>
+        <symbol>BottomTabs</symbol>
+        <reason>Mobile navigation requiring Tab key navigation and focus indicators</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/TopBar.tsx</path>
+        <kind>component</kind>
+        <symbol>TopBar</symbol>
+        <reason>Top navigation bar needing keyboard accessibility</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/food/FoodLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodLogModal</symbol>
+        <reason>Modal component requiring Escape key handling and keyboard shortcuts management (f key conflicts with text input)</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/symptoms/SymptomLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>SymptomLogModal</symbol>
+        <reason>Modal requiring keyboard navigation and Escape key handling</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/triggers/TriggerLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>TriggerLogModal</symbol>
+        <reason>Modal requiring keyboard navigation (b key for body map may conflict)</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/medications/MedicationLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>MedicationLogModal</symbol>
+        <reason>Modal component needing Escape key and keyboard accessibility</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/FlareCreationModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareCreationModal</symbol>
+        <reason>Complex modal with body map interaction requiring comprehensive keyboard support</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/FlareUpdateModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareUpdateModal</symbol>
+        <reason>Modal for flare updates requiring keyboard accessibility</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/manage/ConfirmDialog.tsx</path>
+        <kind>component</kind>
+        <symbol>ConfirmDialog</symbol>
+        <reason>Dialog component requiring Enter/Escape key handling and focus management</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/manage/SymptomForm.tsx</path>
+        <kind>component</kind>
+        <symbol>SymptomForm</symbol>
+        <reason>Form component requiring Enter key submission and Tab navigation</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/manage/MedicationForm.tsx</path>
+        <kind>component</kind>
+        <symbol>MedicationForm</symbol>
+        <reason>Form requiring keyboard navigation through inputs</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/data-management/ExportDialog.tsx</path>
+        <kind>component</kind>
+        <symbol>ExportDialog</symbol>
+        <reason>Dialog with existing keyboard support patterns to reference</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyRegionSelector.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyRegionSelector</symbol>
+        <reason>Interactive component for body region selection requiring arrow key navigation support</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/ZoomPanControls.tsx</path>
+        <kind>component</kind>
+        <symbol>ZoomPanControls</symbol>
+        <reason>Zoom/pan controls requiring keyboard shortcuts (+/- keys) from Story 1.6</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/settings/DevDataControls.tsx</path>
+        <kind>component</kind>
+        <symbol>DevDataControls</symbol>
+        <reason>Settings component with existing keyboard event handlers to reference</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="next" version="15.5.4" />
+        <package name="typescript" version="^5" />
+        <package name="lucide-react" version="^0.544.0" note="Icon library for UI elements" />
+        <package name="@radix-ui/react-tooltip" version="^1.2.8" note="Accessible tooltip component" />
+      </ecosystem>
+      <ecosystem name="testing">
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+        <package name="@testing-library/user-event" version="^14.6.1" note="For keyboard interaction testing" />
+        <package name="jest" version="^30.2.0" />
+        <package name="jest-environment-jsdom" version="^30.2.0" />
+      </ecosystem>
+      <framework>
+        <name>Next.js 15 App Router</name>
+        <note>Server and client components, protected routes under (protected) directory</note>
+      </framework>
+      <framework>
+        <name>Tailwind CSS 4</name>
+        <note>Utility-first styling with focus-visible utilities for focus indicators</note>
+      </framework>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Follow existing component patterns: use 'use client' directive for interactive components</constraint>
+    <constraint>Accessibility: WCAG 2.1 Level AA compliance minimum, targeting WCAG 2.2</constraint>
+    <constraint>Focus indicators must have minimum 2px outline and meet WCAG contrast requirements</constraint>
+    <constraint>Use Tailwind focus-visible utilities: focus-visible:ring-2 focus-visible:ring-blue-500</constraint>
+    <constraint>Global keyboard shortcuts must check document.activeElement to avoid interference with text input</constraint>
+    <constraint>All custom button components (div/span with onClick) must have role="button" and tabIndex={0}</constraint>
+    <constraint>Follow ARIA Authoring Practices Guide for keyboard patterns (listbox, dialog, etc.)</constraint>
+    <constraint>Modal focus trap: Tab key must stay within modal, Escape must close and return focus to trigger element</constraint>
+    <constraint>Screen reader announcements: use aria-live="polite" for non-critical updates</constraint>
+    <constraint>Never remove default focus outlines without providing accessible replacements</constraint>
+    <constraint>Test with actual screen readers (NVDA on Windows, VoiceOver on Mac)</constraint>
+    <constraint>Maintain existing DevDataControls functionality when adding keyboard support</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>useKeyboardShortcuts</name>
+      <kind>React Hook</kind>
+      <signature>function useKeyboardShortcuts(): void</signature>
+      <path>src/lib/hooks/useKeyboardShortcuts.ts (NEW)</path>
+      <description>Global keyboard shortcut handler that checks if typing in input/textarea before handling shortcuts. Disables f/b/l/r shortcuts when document.activeElement is INPUT, TEXTAREA, or contenteditable.</description>
+    </interface>
+    <interface>
+      <name>Listbox keyboard pattern</name>
+      <kind>Component Interface</kind>
+      <signature>onKeyDown={(e) => handleArrowKeys(e)}</signature>
+      <description>Arrow keys (Up/Down) navigate items, Home/End jump to first/last, Enter/Space select. Follows ARIA Authoring Practices Guide listbox pattern.</description>
+    </interface>
+    <interface>
+      <name>Modal keyboard pattern</name>
+      <kind>Component Interface</kind>
+      <signature>onKeyDown={(e) => e.key === 'Escape' && onClose()}</signature>
+      <description>Escape key closes modal and returns focus to trigger element. Focus trapped within modal during open state (Tab cycles through modal elements only).</description>
+    </interface>
+    <interface>
+      <name>Form keyboard pattern</name>
+      <kind>Component Interface</kind>
+      <signature>onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}</signature>
+      <description>Enter key in text inputs submits form. Tab key moves through form fields in logical order.</description>
+    </interface>
+    <interface>
+      <name>Button keyboard pattern</name>
+      <kind>Component Interface</kind>
+      <signature>onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}</signature>
+      <description>Custom buttons support both Enter and Space key activation. Native buttons automatically support this.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Jest 30.2.0 with @testing-library/react 16.3.0 and @testing-library/user-event 14.6.1 for keyboard interaction testing. Tests located in __tests__ directories alongside components. Use fake-indexeddb 6.2.4 for IndexedDB mocking. Follow existing test patterns from components/analytics/__tests__/, components/food/__tests__/, and components/flares/__tests__/. Use userEvent.tab() for Tab navigation testing, userEvent.keyboard('{Enter}') for key activation. Check focus with document.activeElement. Verify ARIA attributes with screen queries (getByRole, getByLabelText). Run automated accessibility audits with axe-core (via jest-axe if added). Manual testing required: navigate entire app with keyboard only, test with NVDA (Windows) or VoiceOver (Mac) screen readers.
+    </standards>
+    <locations>
+      <location>src/components/**/__tests__/*.test.tsx</location>
+      <location>src/lib/hooks/__tests__/*.test.ts (NEW for useKeyboardShortcuts)</location>
+      <location>src/app/(protected)/**/page.test.tsx (integration tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC3.5.8.1">Test Tab key navigation through all pages: userEvent.tab() moves focus to next interactive element in document order. Verify focus order matches visual layout (top to bottom, left to right).</idea>
+      <idea ac="AC3.5.8.1">Test skip link: pressing Tab from page load focuses skip link, Enter jumps to main content.</idea>
+      <idea ac="AC3.5.8.1">Test modal focus trap: Tab within modal cycles through modal elements only, does not escape to page elements.</idea>
+      <idea ac="AC3.5.8.2">Test Enter key activates buttons: userEvent.keyboard('{Enter}') on button triggers onClick handler.</idea>
+      <idea ac="AC3.5.8.2">Test Space key activates buttons: userEvent.keyboard(' ') on button triggers onClick.</idea>
+      <idea ac="AC3.5.8.2">Test custom button components: div/span with onClick, role="button", tabIndex={0} support Enter and Space.</idea>
+      <idea ac="AC3.5.8.3">Test arrow key navigation in listbox: ArrowDown moves focus to next item, ArrowUp to previous, Home to first, End to last.</idea>
+      <idea ac="AC3.5.8.3">Test arrow navigation in collapsible categories (from Stories 3.5.4-5): up/down through category items.</idea>
+      <idea ac="AC3.5.8.4">Test Escape closes modal: userEvent.keyboard('{Escape}') closes modal and returns focus to trigger button.</idea>
+      <idea ac="AC3.5.8.4">Test Escape closes dropdown: Escape dismisses select menus and popovers.</idea>
+      <idea ac="AC3.5.8.5">Test shortcuts disabled when typing: focus input, type 'f', verify food logging shortcut does NOT trigger.</idea>
+      <idea ac="AC3.5.8.5">Test shortcuts enabled when not typing: focus button, press 'f', verify food logging shortcut DOES trigger.</idea>
+      <idea ac="AC3.5.8.5">Test contenteditable: check document.activeElement.isContentEditable property.</idea>
+      <idea ac="AC3.5.8.6">Test focus indicators visible: check computed styles for outline or ring on focus-visible state.</idea>
+      <idea ac="AC3.5.8.6">Test focus contrast: verify focus indicator contrast ratio meets WCAG 2.2 (minimum 3:1 against background).</idea>
+      <idea ac="AC3.5.8.6">Test dark mode focus: ensure focus indicators visible in both light and dark themes.</idea>
+      <idea ac="AC3.5.8.7">Test aria-live announcements: render component with aria-live region, update content, verify screen reader announcement.</idea>
+      <idea ac="AC3.5.8.7">Test toast announcements: toast notification includes aria-live="polite".</idea>
+      <idea ac="AC3.5.8.7">Test form error announcements: validation error triggers aria-live announcement.</idea>
+      <idea ac="AC3.5.8.7">Test icon button labels: icon-only buttons have aria-label attribute.</idea>
+      <idea ac="AC3.5.8.8">Test keyboard shortcuts documentation: verify /help/keyboard-shortcuts page exists and renders all shortcuts.</idea>
+      <idea ac="all">Manual test: navigate entire app using only keyboard (no mouse), verify all functionality accessible.</idea>
+      <idea ac="all">Manual test: use NVDA (Windows) or VoiceOver (Mac) to verify screen reader announcements.</idea>
+      <idea ac="all">Automated audit: run Lighthouse accessibility audit, target 100 score.</idea>
+      <idea ac="all">Automated audit: run axe DevTools extension on all pages.</idea>
+    </ideas>
+  </tests>
+</story-context>
