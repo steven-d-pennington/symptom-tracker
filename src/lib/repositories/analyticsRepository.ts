@@ -10,7 +10,7 @@
 
 import { db } from '@/lib/db/client';
 import { FlareRecord } from '@/lib/db/schema';
-import { ProblemArea, TimeRange, RegionFlareHistory, RegionStatistics, DurationMetrics, SeverityMetrics, TrendAnalysis, TrendDataPoint } from '@/types/analytics';
+import { ProblemArea, TimeRange, RegionFlareHistory, RegionStatistics, DurationMetrics, SeverityMetrics, TrendAnalysis, TrendDataPoint, InterventionType, InterventionInstance, InterventionEffectiveness } from '@/types/analytics';
 import { withinTimeRange } from '@/lib/utils/timeRange';
 import { calculateLinearRegression } from '@/lib/utils/linearRegression';
 
@@ -509,6 +509,177 @@ export async function getMonthlyTrendData(
 }
 
 /**
+ * Parses intervention type from FlareEventRecord interventionType field.
+ * Maps lowercase values to capitalized InterventionType enum.
+ *
+ * Story 3.5 - Helper function for intervention parsing
+ * @param interventionType - Raw intervention type from database (lowercase)
+ * @returns Capitalized InterventionType enum value
+ */
+function parseInterventionType(interventionType?: string): InterventionType {
+  if (!interventionType) return 'Other';
+
+  const lowerType = interventionType.toLowerCase();
+  switch (lowerType) {
+    case 'ice': return 'Ice';
+    case 'heat': return 'Heat';
+    case 'medication': return 'Medication';
+    case 'rest': return 'Rest';
+    case 'drainage': return 'Drainage';
+    default: return 'Other';
+  }
+}
+
+/**
+ * Calculates intervention effectiveness metrics by analyzing correlation
+ * between interventions and flare improvement (severity decrease within 48 hours).
+ * Returns interventions ranked by success rate with minimum 5-instance threshold.
+ *
+ * Story 3.5 - Task 1: AC3.5.2, AC3.5.3, AC3.5.6
+ * - Queries all intervention events within time range
+ * - Finds severity at intervention time (from nearest prior status_update)
+ * - Finds severity 48 hours after intervention (24-72h window)
+ * - Calculates severity change (positive = improvement)
+ * - Groups by intervention type
+ * - Calculates usage count, average severity change, success rate
+ * - Marks interventions with >= 5 uses as having sufficient data
+ * - Sorts by success rate descending, then usage count
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param timeRange - Time range to filter interventions
+ * @returns Promise resolving to array of InterventionEffectiveness objects sorted by success rate
+ */
+export async function getInterventionEffectiveness(
+  userId: string,
+  timeRange: TimeRange
+): Promise<InterventionEffectiveness[]> {
+  // Task 1.5: Fetch all flares within time range
+  const allFlares = await db.flares.where({ userId }).toArray();
+  const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
+
+  // Map to collect intervention instances by type
+  const interventionMap = new Map<InterventionType, InterventionInstance[]>();
+
+  // Task 1.6-1.13: Process each flare to find interventions and calculate effectiveness
+  for (const flare of flaresInRange) {
+    // Get all events for this flare, sorted by timestamp
+    const events = await db.flareEvents
+      .where({ flareId: flare.id })
+      .sortBy('timestamp');
+
+    // Task 1.6: Find intervention events
+    const interventionEvents = events.filter(e => e.eventType === 'intervention');
+
+    for (const interventionEvent of interventionEvents) {
+      // Task 1.10: Parse intervention type
+      const interventionType = parseInterventionType(interventionEvent.interventionType);
+
+      // Task 1.7: Find severity at intervention time (most recent status_update or severity_update before or at intervention)
+      const priorUpdates = events.filter(
+        e => (e.eventType === 'status_update' || e.eventType === 'severity_update') &&
+             e.timestamp <= interventionEvent.timestamp &&
+             e.severity !== undefined
+      );
+      const severityAtIntervention = priorUpdates.length > 0
+        ? priorUpdates[priorUpdates.length - 1].severity!
+        : flare.initialSeverity || 0;
+
+      // Task 1.8: Find severity 48 hours after intervention (24-72h window)
+      const windowStart = interventionEvent.timestamp + (24 * 60 * 60 * 1000);
+      const windowEnd = interventionEvent.timestamp + (72 * 60 * 60 * 1000);
+      const after48hTarget = interventionEvent.timestamp + (48 * 60 * 60 * 1000);
+
+      const followUpUpdates = events.filter(
+        e => (e.eventType === 'status_update' || e.eventType === 'severity_update') &&
+             e.timestamp >= windowStart &&
+             e.timestamp <= windowEnd &&
+             e.severity !== undefined
+      ).sort((a, b) =>
+        Math.abs(a.timestamp - after48hTarget) - Math.abs(b.timestamp - after48hTarget)
+      );
+
+      const severityAfter48h = followUpUpdates.length > 0
+        ? followUpUpdates[0].severity!
+        : null;
+
+      // Task 1.9: Calculate severity change (positive = improvement)
+      const severityChange = severityAfter48h !== null
+        ? severityAtIntervention - severityAfter48h
+        : null;
+
+      // Create intervention instance
+      const instance: InterventionInstance = {
+        id: interventionEvent.id,
+        flareId: flare.id,
+        interventionType,
+        timestamp: interventionEvent.timestamp,
+        severityAtIntervention,
+        severityAfter48h,
+        severityChange
+      };
+
+      // Add to map
+      if (!interventionMap.has(interventionType)) {
+        interventionMap.set(interventionType, []);
+      }
+      interventionMap.get(interventionType)!.push(instance);
+    }
+  }
+
+  // Task 1.11-1.13: Calculate effectiveness metrics for each intervention type
+  const effectivenessResults: InterventionEffectiveness[] = [];
+
+  for (const [interventionType, instances] of interventionMap.entries()) {
+    const usageCount = instances.length;
+
+    // Calculate average severity change (only instances with 48h data)
+    const instancesWithFollowup = instances.filter(i => i.severityChange !== null);
+    const averageSeverityChange = instancesWithFollowup.length > 0
+      ? instancesWithFollowup.reduce((sum, i) => sum + i.severityChange!, 0) / instancesWithFollowup.length
+      : null;
+
+    // Calculate success rate (% with positive severity change = improvement)
+    const successCount = instancesWithFollowup.filter(i => i.severityChange! > 0).length;
+    const successRate = instancesWithFollowup.length > 0
+      ? (successCount / instancesWithFollowup.length) * 100
+      : null;
+
+    effectivenessResults.push({
+      interventionType,
+      usageCount,
+      averageSeverityChange: averageSeverityChange !== null
+        ? Math.round(averageSeverityChange * 10) / 10
+        : null,
+      successRate: successRate !== null
+        ? Math.round(successRate * 10) / 10
+        : null,
+      hasSufficientData: usageCount >= 5,
+      instances
+    });
+  }
+
+  // Task 1.13: Sort by success rate descending, then usage count
+  effectivenessResults.sort((a, b) => {
+    // Null success rates go to end
+    if (a.successRate === null && b.successRate === null) {
+      return b.usageCount - a.usageCount;
+    }
+    if (a.successRate === null) return 1;
+    if (b.successRate === null) return -1;
+
+    // Sort by success rate first
+    if (Math.abs(a.successRate - b.successRate) > 0.1) {
+      return b.successRate - a.successRate;
+    }
+
+    // Secondary sort by usage count
+    return b.usageCount - a.usageCount;
+  });
+
+  return effectivenessResults;
+}
+
+/**
  * Repository object exposing analytics data access methods.
  */
 export const analyticsRepository = {
@@ -518,4 +689,5 @@ export const analyticsRepository = {
   getDurationMetrics,
   getSeverityMetrics,
   getMonthlyTrendData,
+  getInterventionEffectiveness,
 };

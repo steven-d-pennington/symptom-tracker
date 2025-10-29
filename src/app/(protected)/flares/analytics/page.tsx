@@ -1,12 +1,14 @@
 /**
- * Flare Analytics Page (Story 3.1 - Task 8, extended in Story 3.3 - Task 12, Story 3.4 - Task 7)
+ * Flare Analytics Page (Story 3.1 - Task 8, extended in Story 3.3 - Task 12, Story 3.4 - Task 7, Story 3.5 - Task 8)
  *
  * Analytics dashboard for flare insights and patterns.
- * Features: Problem Areas section (Story 3.1), Progression Metrics section (Story 3.3), Flare Trends section (Story 3.4)
+ * Features: Problem Areas section (Story 3.1), Progression Metrics section (Story 3.3),
+ * Flare Trends section (Story 3.4), Intervention Effectiveness section (Story 3.5)
  *
  * AC3.1.1: Analytics page displays Problem Areas section
  * AC3.3.1: Analytics page displays Progression Metrics section
  * AC3.4.1: Analytics page displays Flare Trends visualization
+ * AC3.5.1: Analytics page displays Intervention Effectiveness section
  * Route: /flares/analytics
  */
 
@@ -16,6 +18,7 @@ import { useMemo } from 'react';
 import { ProblemAreasView } from '@/components/analytics/ProblemAreasView';
 import { ProgressionMetricsSection } from '@/components/analytics/ProgressionMetricsSection';
 import { TrendAnalysisSection } from '@/components/analytics/TrendAnalysisSection';
+import { InterventionEffectivenessSection } from '@/components/analytics/InterventionEffectivenessSection';
 import { useAnalytics } from '@/lib/hooks/useAnalytics';
 
 /**
@@ -28,9 +31,9 @@ export default function AnalyticsPage() {
   // For now, ProgressionMetricsSection will use the same default time range.
   // Future improvement: Lift timeRange state to this page level for perfect sync.
 
-  // Story 3.4 - Task 7.3: Extract trendAnalysis from useAnalytics hook result
+  // Story 3.5 - Task 8.3: Extract interventionEffectiveness from useAnalytics hook result
   // Using default time range that matches ProblemAreasView default
-  const { durationMetrics, severityMetrics, trendAnalysis, isLoading } = useAnalytics({
+  const { durationMetrics, severityMetrics, trendAnalysis, interventionEffectiveness, isLoading } = useAnalytics({
     timeRange: 'last90d'
   });
 
@@ -93,12 +96,13 @@ export default function AnalyticsPage() {
           />
         </section>
 
-        {/* Task 7.7: Updated placeholder - remove Story 3.4, keep Story 3.5 */}
-        <section className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center text-gray-500">
-          <p className="font-medium mb-2">Additional analytics features coming soon:</p>
-          <ul className="text-sm space-y-1">
-            <li>• Intervention Effectiveness Analysis (Story 3.5)</li>
-          </ul>
+        {/* Story 3.5 - Task 8.4-8.6: Intervention Effectiveness section (AC3.5.1) */}
+        {/* Task 8.6: Maintain space-y-8 between sections for consistent spacing */}
+        <section>
+          <InterventionEffectivenessSection
+            interventionEffectiveness={interventionEffectiveness}
+            isLoading={isLoading}
+          />
         </section>
       </div>
     </div>
