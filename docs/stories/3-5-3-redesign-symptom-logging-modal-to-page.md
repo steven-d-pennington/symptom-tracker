@@ -1,6 +1,6 @@
 # Story 3.5.3: Redesign Symptom Logging (Modal → Dedicated Page)
 
-Status: drafted
+Status: ready-for-dev
 
 **Priority:** HIGH
 **Points:** 5
@@ -459,6 +459,7 @@ export function Toast({ title, description, variant = 'default', onClose }: Toas
 - Epic 3.5 document: `docs/epic-3.5-production-ux.md`
 - Brainstorming session: `docs/brainstorming-session-results-2025-10-29.md`
 - Epic breakdown: `docs/epics.md#Story-3.5.3`
+- Story context: `docs/stories/3-5-3-redesign-symptom-logging-modal-to-page.context.xml`
 
 ### Agent Model Used
 
