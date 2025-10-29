@@ -574,9 +574,9 @@ export async function getInterventionEffectiveness(
       // Task 1.10: Parse intervention type
       const interventionType = parseInterventionType(interventionEvent.interventionType);
 
-      // Task 1.7: Find severity at intervention time (most recent status_update or severity_update before or at intervention)
+      // Task 1.7: Find severity at intervention time (most recent severity_update before or at intervention)
       const priorUpdates = events.filter(
-        e => (e.eventType === 'status_update' || e.eventType === 'severity_update') &&
+        e => e.eventType === 'severity_update' &&
              e.timestamp <= interventionEvent.timestamp &&
              e.severity !== undefined
       );
@@ -590,7 +590,7 @@ export async function getInterventionEffectiveness(
       const after48hTarget = interventionEvent.timestamp + (48 * 60 * 60 * 1000);
 
       const followUpUpdates = events.filter(
-        e => (e.eventType === 'status_update' || e.eventType === 'severity_update') &&
+        e => e.eventType === 'severity_update' &&
              e.timestamp >= windowStart &&
              e.timestamp <= windowEnd &&
              e.severity !== undefined
