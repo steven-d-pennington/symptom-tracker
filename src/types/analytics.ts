@@ -136,3 +136,41 @@ export interface SeverityMetrics {
   /** Total count of flares (active and resolved) used for calculations */
   totalFlareCount: number;
 }
+
+/**
+ * Trend data point interface (Story 3.4 - Task 1.1)
+ * Represents flare metrics for a single month bucket in trend analysis.
+ */
+export interface TrendDataPoint {
+  /** Month in YYYY-MM format (e.g., "2024-01") */
+  month: string;
+
+  /** Timestamp (epoch ms) for first day of month at midnight UTC */
+  monthTimestamp: number;
+
+  /** Count of flares that started in this month */
+  flareCount: number;
+
+  /** Average peak severity across all flares in this month - null if no flares */
+  averageSeverity: number | null;
+}
+
+/**
+ * Trend analysis interface (Story 3.4 - Task 1.2)
+ * Contains monthly trend data with linear regression analysis.
+ */
+export interface TrendAnalysis {
+  /** Array of monthly data points sorted chronologically (oldest to newest) */
+  dataPoints: TrendDataPoint[];
+
+  /** Linear regression trend line parameters */
+  trendLine: {
+    /** Slope of trend line (negative = improving, positive = declining) */
+    slope: number;
+    /** Y-intercept of trend line */
+    intercept: number;
+  };
+
+  /** Overall trend direction assessment */
+  trendDirection: 'improving' | 'stable' | 'declining' | 'insufficient-data';
+}

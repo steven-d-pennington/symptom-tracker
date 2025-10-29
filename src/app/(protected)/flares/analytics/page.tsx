@@ -1,11 +1,12 @@
 /**
- * Flare Analytics Page (Story 3.1 - Task 8, extended in Story 3.3 - Task 12)
+ * Flare Analytics Page (Story 3.1 - Task 8, extended in Story 3.3 - Task 12, Story 3.4 - Task 7)
  *
  * Analytics dashboard for flare insights and patterns.
- * Features: Problem Areas section (Story 3.1), Progression Metrics section (Story 3.3)
+ * Features: Problem Areas section (Story 3.1), Progression Metrics section (Story 3.3), Flare Trends section (Story 3.4)
  *
  * AC3.1.1: Analytics page displays Problem Areas section
  * AC3.3.1: Analytics page displays Progression Metrics section
+ * AC3.4.1: Analytics page displays Flare Trends visualization
  * Route: /flares/analytics
  */
 
@@ -14,6 +15,7 @@
 import { useMemo } from 'react';
 import { ProblemAreasView } from '@/components/analytics/ProblemAreasView';
 import { ProgressionMetricsSection } from '@/components/analytics/ProgressionMetricsSection';
+import { TrendAnalysisSection } from '@/components/analytics/TrendAnalysisSection';
 import { useAnalytics } from '@/lib/hooks/useAnalytics';
 
 /**
@@ -26,9 +28,9 @@ export default function AnalyticsPage() {
   // For now, ProgressionMetricsSection will use the same default time range.
   // Future improvement: Lift timeRange state to this page level for perfect sync.
 
-  // Task 12.3: Use extended hook data for Progression Metrics
+  // Story 3.4 - Task 7.3: Extract trendAnalysis from useAnalytics hook result
   // Using default time range that matches ProblemAreasView default
-  const { durationMetrics, severityMetrics, isLoading } = useAnalytics({
+  const { durationMetrics, severityMetrics, trendAnalysis, isLoading } = useAnalytics({
     timeRange: 'last90d'
   });
 
@@ -81,11 +83,20 @@ export default function AnalyticsPage() {
           />
         </section>
 
-        {/* Task 12.10: Updated placeholder (Story 3.3 now implemented) */}
+        {/* Story 3.4 - Task 7.4-7.5: Flare Trends section (AC3.4.1) */}
+        {/* Task 7.6: Maintain space-y-8 between sections for consistent spacing */}
+        <section>
+          <TrendAnalysisSection
+            trendAnalysis={trendAnalysis}
+            isLoading={isLoading}
+            timeRange="last90d"
+          />
+        </section>
+
+        {/* Task 7.7: Updated placeholder - remove Story 3.4, keep Story 3.5 */}
         <section className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center text-gray-500">
           <p className="font-medium mb-2">Additional analytics features coming soon:</p>
           <ul className="text-sm space-y-1">
-            <li>• Flare Trend Analysis Visualization (Story 3.4)</li>
             <li>• Intervention Effectiveness Analysis (Story 3.5)</li>
           </ul>
         </section>
