@@ -1,11 +1,12 @@
 /**
- * useAnalytics Hook (Story 3.1 - Task 3, extended in Story 3.3 - Task 3)
+ * useAnalytics Hook (Story 3.1 - Task 3, extended in Story 3.3 - Task 3, Story 3.4 - Task 3)
  *
  * Hook for analytics data fetching with polling for real-time updates.
- * Provides reactive problem areas, duration metrics, and severity metrics.
+ * Provides reactive problem areas, duration metrics, severity metrics, and trend analysis.
  *
  * AC3.1.6: Real-time updates when flares change
  * AC3.3.5: Metrics update with time range changes
+ * AC3.4.5: Trend analysis updates with time range changes
  * - Polls every 10 seconds for reactive updates
  * - Refetches on window focus
  * - Returns loading and error states
@@ -16,7 +17,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { analyticsRepository } from '@/lib/repositories/analyticsRepository';
-import { TimeRange, ProblemArea, DurationMetrics, SeverityMetrics } from '@/types/analytics';
+import { TimeRange, ProblemArea, DurationMetrics, SeverityMetrics, TrendAnalysis } from '@/types/analytics';
 import { useCurrentUser } from './useCurrentUser';
 
 /**
@@ -28,7 +29,7 @@ export interface UseAnalyticsOptions {
 }
 
 /**
- * Result from useAnalytics hook (extended in Story 3.3)
+ * Result from useAnalytics hook (extended in Story 3.3, Story 3.4)
  */
 export interface UseAnalyticsResult {
   /** Problem areas data sorted by frequency */
@@ -37,6 +38,8 @@ export interface UseAnalyticsResult {
   durationMetrics: DurationMetrics | null;
   /** Severity metrics data (Story 3.3 - Task 3.3) */
   severityMetrics: SeverityMetrics | null;
+  /** Trend analysis data (Story 3.4 - Task 3.2) */
+  trendAnalysis: TrendAnalysis | null;
   /** Loading state */
   isLoading: boolean;
   /** Error state */
@@ -48,7 +51,7 @@ export interface UseAnalyticsResult {
 /**
  * Hook for fetching analytics data with polling.
  * Automatically refetches when flares change or window regains focus.
- * Fetches problem areas, duration metrics, and severity metrics in parallel.
+ * Fetches problem areas, duration metrics, severity metrics, and trend analysis in parallel.
  * Follows existing hook patterns from useFlares.
  *
  * @param options - Configuration object with timeRange
@@ -61,6 +64,8 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
   const [durationMetrics, setDurationMetrics] = useState<DurationMetrics | null>(null);
   // Task 3.3: Add severityMetrics state
   const [severityMetrics, setSeverityMetrics] = useState<SeverityMetrics | null>(null);
+  // Story 3.4 - Task 3.2: Add trendAnalysis state
+  const [trendAnalysis, setTrendAnalysis] = useState<TrendAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -72,7 +77,7 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
   useEffect(() => {
     let mounted = true;
 
-    // Task 3.4-3.5: Update fetchData to call all three methods in parallel
+    // Story 3.4 - Task 3.3-3.4: Update fetchData to call all four methods in parallel
     const fetchAnalyticsData = async () => {
       if (!userId) {
         setIsLoading(false);
@@ -83,22 +88,24 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
         setIsLoading(true);
         setError(null);
 
-        // Fetch all metrics in parallel using Promise.all (Task 3.5)
-        const [problemAreasData, durationMetricsData, severityMetricsData] = await Promise.all([
+        // Story 3.4 - Task 3.4: Fetch all four data sets concurrently using Promise.all
+        const [problemAreasData, durationMetricsData, severityMetricsData, trendData] = await Promise.all([
           analyticsRepository.getProblemAreas(userId, timeRange),
           analyticsRepository.getDurationMetrics(userId, timeRange),
           analyticsRepository.getSeverityMetrics(userId, timeRange),
+          analyticsRepository.getMonthlyTrendData(userId, timeRange),
         ]);
 
-        // Task 3.6: Update states when data fetched
+        // Story 3.4 - Task 3.5: Update trendAnalysis state when data fetched
         if (mounted) {
           setProblemAreas(problemAreasData);
           setDurationMetrics(durationMetricsData);
           setSeverityMetrics(severityMetricsData);
+          setTrendAnalysis(trendData);
           setIsLoading(false);
         }
       } catch (err) {
-        // Task 3.9: Handle errors gracefully (log but don't break UI)
+        // Story 3.4 - Task 3.8: Handle errors for trend data gracefully (log but don't break UI)
         if (mounted) {
           console.error('Failed to fetch analytics data:', err);
           setError(err instanceof Error ? err : new Error('Failed to fetch analytics data'));
@@ -131,11 +138,12 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
     };
   }, [userId, timeRange, refreshTrigger]);
 
-  // Task 3.7: Return durationMetrics and severityMetrics in hook result object
+  // Story 3.4 - Task 3.6: Return trendAnalysis in hook result object
   return {
     problemAreas,
     durationMetrics,
     severityMetrics,
+    trendAnalysis,
     isLoading,
     error,
     refetch,

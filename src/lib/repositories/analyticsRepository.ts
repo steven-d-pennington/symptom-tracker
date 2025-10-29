@@ -10,8 +10,9 @@
 
 import { db } from '@/lib/db/client';
 import { FlareRecord } from '@/lib/db/schema';
-import { ProblemArea, TimeRange, RegionFlareHistory, RegionStatistics, DurationMetrics, SeverityMetrics } from '@/types/analytics';
+import { ProblemArea, TimeRange, RegionFlareHistory, RegionStatistics, DurationMetrics, SeverityMetrics, TrendAnalysis, TrendDataPoint } from '@/types/analytics';
 import { withinTimeRange } from '@/lib/utils/timeRange';
+import { calculateLinearRegression } from '@/lib/utils/linearRegression';
 
 /**
  * Calculates problem areas by analyzing flare frequency across body regions.
@@ -371,6 +372,143 @@ export async function getSeverityMetrics(
 }
 
 /**
+ * Calculates monthly trend data with linear regression analysis.
+ * Returns flare frequency and average severity grouped by month.
+ *
+ * Story 3.4 - Task 1: AC3.4.2, AC3.4.3, AC3.4.4
+ * - Fetches all flares (active and resolved)
+ * - Filters by time range using withinTimeRange utility
+ * - Groups flares by month using startDate (format: YYYY-MM)
+ * - Calculates flare count and average peak severity per month
+ * - Performs linear regression on monthly flare counts
+ * - Determines trend direction based on slope thresholds
+ * - Returns null for metrics if insufficient data (< 3 months)
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param timeRange - Time range to filter flares
+ * @returns Promise resolving to TrendAnalysis object
+ */
+export async function getMonthlyTrendData(
+  userId: string,
+  timeRange: TimeRange
+): Promise<TrendAnalysis> {
+  // Task 1.4: Query all flares (active and resolved) within time range
+  const allFlares = await db.flares.where({ userId }).toArray();
+  const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
+
+  // Handle empty state - no flares
+  if (flaresInRange.length === 0) {
+    return {
+      dataPoints: [],
+      trendLine: { slope: 0, intercept: 0 },
+      trendDirection: 'insufficient-data'
+    };
+  }
+
+  // Task 1.5: Group flares by month using startDate (format: YYYY-MM)
+  const monthlyBuckets = new Map<string, FlareRecord[]>();
+
+  for (const flare of flaresInRange) {
+    const date = new Date(flare.startDate);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+    if (!monthlyBuckets.has(monthKey)) {
+      monthlyBuckets.set(monthKey, []);
+    }
+    monthlyBuckets.get(monthKey)!.push(flare);
+  }
+
+  // Task 1.6: For each month bucket, calculate flare count and average peak severity
+  const dataPoints: TrendDataPoint[] = [];
+
+  for (const [monthKey, flares] of monthlyBuckets.entries()) {
+    const flareCount = flares.length;
+
+    // Calculate average peak severity from flareEvents table
+    const severities: number[] = [];
+
+    for (const flare of flares) {
+      const events = await db.flareEvents
+        .where({ flareId: flare.id })
+        .toArray();
+
+      const severityValues = events
+        .filter(e => e.severity !== undefined)
+        .map(e => e.severity!);
+
+      const peakSeverity = severityValues.length > 0
+        ? Math.max(...severityValues)
+        : flare.initialSeverity || 0;
+
+      if (peakSeverity > 0) {
+        severities.push(peakSeverity);
+      }
+    }
+
+    const averageSeverity = severities.length > 0
+      ? severities.reduce((sum, s) => sum + s, 0) / severities.length
+      : null;
+
+    // Create timestamp for first day of month at midnight UTC
+    const [year, month] = monthKey.split('-').map(Number);
+    const monthTimestamp = Date.UTC(year, month - 1, 1);
+
+    dataPoints.push({
+      month: monthKey,
+      monthTimestamp,
+      flareCount,
+      averageSeverity: averageSeverity !== null
+        ? Math.round(averageSeverity * 10) / 10
+        : null
+    });
+  }
+
+  // Task 1.7: Sort month buckets chronologically (oldest to newest)
+  dataPoints.sort((a, b) => a.monthTimestamp - b.monthTimestamp);
+
+  // Task 1.9: Determine trend direction - check for minimum 3 months
+  if (dataPoints.length < 3) {
+    return {
+      dataPoints,
+      trendLine: { slope: 0, intercept: 0 },
+      trendDirection: 'insufficient-data'
+    };
+  }
+
+  // Task 1.8: Calculate linear regression trend line using least squares method
+  const regressionPoints = dataPoints.map((dp, index) => ({
+    x: index, // Use index as x-coordinate (0, 1, 2, ...)
+    y: dp.flareCount
+  }));
+
+  const regression = calculateLinearRegression(regressionPoints);
+
+  // Task 1.9: Determine trend direction based on slope thresholds
+  // improving: slope < -0.3 (flare count decreasing)
+  // declining: slope > 0.3 (flare count increasing)
+  // stable: between -0.3 and 0.3
+  let trendDirection: 'improving' | 'stable' | 'declining' | 'insufficient-data';
+
+  if (regression.slope < -0.3) {
+    trendDirection = 'improving';
+  } else if (regression.slope > 0.3) {
+    trendDirection = 'declining';
+  } else {
+    trendDirection = 'stable';
+  }
+
+  // Task 1.10: Return TrendAnalysis object with data points and trend metadata
+  return {
+    dataPoints,
+    trendLine: {
+      slope: regression.slope,
+      intercept: regression.intercept
+    },
+    trendDirection
+  };
+}
+
+/**
  * Repository object exposing analytics data access methods.
  */
 export const analyticsRepository = {
@@ -379,4 +517,5 @@ export const analyticsRepository = {
   getRegionStatistics,
   getDurationMetrics,
   getSeverityMetrics,
+  getMonthlyTrendData,
 };
