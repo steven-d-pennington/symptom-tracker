@@ -1,6 +1,6 @@
 # Story 3.4: Flare Trend Analysis Visualization
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -227,7 +227,7 @@ So that I can assess if my condition is improving or declining.
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/3-4-flare-trend-analysis-visualization.context.xml (generated 2025-10-29)
 
 ### Agent Model Used
 
