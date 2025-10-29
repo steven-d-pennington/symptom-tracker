@@ -1,6 +1,6 @@
 # Story 3.5: Intervention Effectiveness Analysis
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -534,7 +534,7 @@ export function MedicalDisclaimerBanner() {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/3-5-intervention-effectiveness-analysis.context.xml (generated 2025-10-29)
 
 ### Agent Model Used
 
