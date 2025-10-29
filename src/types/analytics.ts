@@ -91,3 +91,48 @@ export interface RegionStatistics {
   /** Recurrence rate (flares per 90 days) - string for "Insufficient data" case */
   recurrenceRate: number | string;
 }
+
+/**
+ * Duration metrics interface (Story 3.3 - Task 1.2)
+ * Statistical summaries of flare duration across resolved flares.
+ */
+export interface DurationMetrics {
+  /** Average duration in days (mean of all resolved flares) - null if no resolved flares */
+  averageDuration: number | null;
+
+  /** Median duration in days (50th percentile) - null if no resolved flares */
+  medianDuration: number | null;
+
+  /** Shortest duration in days (minimum from resolved flares) - null if no resolved flares */
+  shortestDuration: number | null;
+
+  /** Longest duration in days (maximum from resolved flares) - null if no resolved flares */
+  longestDuration: number | null;
+
+  /** Total count of resolved flares used for calculations */
+  resolvedFlareCount: number;
+}
+
+/**
+ * Severity metrics interface (Story 3.3 - Task 1.3)
+ * Statistical summaries of flare severity and trend outcomes.
+ */
+export interface SeverityMetrics {
+  /** Average peak severity (mean of all peak severity values) - null if no flares */
+  averagePeakSeverity: number | null;
+
+  /** Trend distribution showing percentage breakdown by trend category */
+  trendDistribution: {
+    /** Percentage of flares with improving trend */
+    improving: number;
+    /** Percentage of flares with stable trend */
+    stable: number;
+    /** Percentage of flares with worsening trend */
+    worsening: number;
+    /** Percentage of flares with no trend data */
+    noData: number;
+  };
+
+  /** Total count of flares (active and resolved) used for calculations */
+  totalFlareCount: number;
+}
