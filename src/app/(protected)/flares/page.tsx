@@ -16,7 +16,8 @@ import { ActiveFlare } from "@/lib/types/flare";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useFlares } from "@/lib/hooks/useFlares";
 import { cn } from "@/lib/utils/cn";
-import { LayoutGrid, MapPin, Layers, Plus, TrendingUp, TrendingDown, Activity, ArrowUpDown } from "lucide-react";
+import { LayoutGrid, MapPin, Layers, Plus, TrendingUp, TrendingDown, Activity, ArrowUpDown, BarChart3 } from "lucide-react";
+import Link from "next/link";
 
 type ViewMode = "cards" | "map" | "both";
 
@@ -194,14 +195,24 @@ export default function FlaresPage() {
               }
             </p>
           </div>
-          <button
-            onClick={() => setIsFlareCreationModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            aria-label="Create new flare"
-          >
-            <Plus className="h-5 w-5" />
-            New Flare
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/flares/analytics"
+              className="inline-flex items-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              aria-label="View advanced analytics"
+            >
+              <BarChart3 className="h-5 w-5" />
+              Advanced Analytics
+            </Link>
+            <button
+              onClick={() => setIsFlareCreationModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              aria-label="Create new flare"
+            >
+              <Plus className="h-5 w-5" />
+              New Flare
+            </button>
+          </div>
         </div>
 
         {/* Story 0.3 Task 3: Collapsible summary panel */}
