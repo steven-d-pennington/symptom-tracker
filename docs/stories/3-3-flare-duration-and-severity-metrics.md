@@ -1,6 +1,6 @@
 # Story 3.3: Flare Duration and Severity Metrics
 
-Status: review
+Status: done
 
 ## Story
 
@@ -671,6 +671,10 @@ claude-sonnet-4-5-20250929
   - **Progression Metrics Section**: Created ProgressionMetricsSection as main container component integrating all metric views and charts. Handles insufficient data check (< 3 flares) and renders MetricsEmptyState or full metrics layout accordingly.
   - **Analytics Page Integration**: Updated analytics page to import and render ProgressionMetricsSection below ProblemAreasView. Uses useAnalytics hook to fetch metrics and passes data to section. Both sections use 'last90d' time range default for consistency.
   - All acceptance criteria satisfied (AC3.3.1-AC3.3.7): Progression Metrics section displayed, duration/severity metrics shown, visual charts rendered, time range updates supported, empty state implemented, accessibility features included.
+
+### Completion Notes
+**Completed:** 2025-10-28
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing
 
 ### File List
 
