@@ -70,7 +70,7 @@ development_status:
   3-3-flare-duration-and-severity-metrics: done
   3-4-flare-trend-analysis-visualization: done
   3-5-intervention-effectiveness-analysis: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: completed
 
   epic-4: backlog
   4-1-attach-photos-to-flare-entities: backlog
