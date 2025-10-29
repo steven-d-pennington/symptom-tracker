@@ -239,6 +239,8 @@ function createMedications(userId: string): MedicationRecord[] {
       ],
       sideEffects: ["Injection site reactions", "Headache"],
       isActive: true,
+      isDefault: false, // Story 3.5.1: Add new fields
+      isEnabled: true, // Story 3.5.1: Add new fields
       createdAt: now,
       updatedAt: now,
     },
@@ -254,6 +256,8 @@ function createMedications(userId: string): MedicationRecord[] {
       ],
       sideEffects: ["Nausea", "Sun sensitivity"],
       isActive: true,
+      isDefault: false, // Story 3.5.1: Add new fields
+      isEnabled: true, // Story 3.5.1: Add new fields
       createdAt: now,
       updatedAt: now,
     },
@@ -268,6 +272,8 @@ function createMedications(userId: string): MedicationRecord[] {
       ],
       sideEffects: ["Stomach upset"],
       isActive: true,
+      isDefault: false, // Story 3.5.1: Add new fields
+      isEnabled: true, // Story 3.5.1: Add new fields
       createdAt: now,
       updatedAt: now,
     },
@@ -281,6 +287,8 @@ function createMedications(userId: string): MedicationRecord[] {
         { time: "09:00", daysOfWeek: [0, 1, 2, 3, 4, 5, 6] },
       ],
       isActive: true,
+      isDefault: false, // Story 3.5.1: Add new fields
+      isEnabled: true, // Story 3.5.1: Add new fields
       createdAt: now,
       updatedAt: now,
     },
@@ -295,6 +303,8 @@ function createMedications(userId: string): MedicationRecord[] {
         { time: "19:00", daysOfWeek: [0, 1, 2, 3, 4, 5, 6] },
       ],
       isActive: true,
+      isDefault: false, // Story 3.5.1: Add new fields
+      isEnabled: true, // Story 3.5.1: Add new fields
       createdAt: now,
       updatedAt: now,
     },

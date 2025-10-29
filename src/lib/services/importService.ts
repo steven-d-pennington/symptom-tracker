@@ -470,6 +470,7 @@ export class ImportService {
 
   /**
    * Import symptoms
+   * Story 3.5.1: Handle isDefault and isEnabled fields for backward compatibility
    */
   private async importSymptoms(
     symptoms: SymptomRecord[],
@@ -481,6 +482,14 @@ export class ImportService {
 
     for (const symptom of symptoms) {
       try {
+        // Story 3.5.1: Ensure isDefault and isEnabled fields exist for backward compatibility
+        const normalizedSymptom = {
+          ...symptom,
+          userId,
+          isDefault: symptom.isDefault ?? false, // Imported customs are not defaults
+          isEnabled: symptom.isEnabled ?? true,  // Imported items are enabled by default
+        };
+
         if (options.mergeStrategy === "replace") {
           // Check if symptom exists
           const existing = await symptomRepository.searchByName(
@@ -488,13 +497,10 @@ export class ImportService {
             symptom.name
           );
           if (existing.length > 0) {
-            await symptomRepository.update(existing[0].id, {
-              ...symptom,
-              userId,
-            });
+            await symptomRepository.update(existing[0].id, normalizedSymptom);
             count++;
           } else {
-            await symptomRepository.create({ ...symptom, userId });
+            await symptomRepository.create(normalizedSymptom);
             count++;
           }
         } else if (options.mergeStrategy === "skip") {
@@ -504,14 +510,14 @@ export class ImportService {
             symptom.name
           );
           if (existing.length === 0) {
-            await symptomRepository.create({ ...symptom, userId });
+            await symptomRepository.create(normalizedSymptom);
             count++;
           } else {
             skipped++;
           }
         } else {
           // merge - always create
-          await symptomRepository.create({ ...symptom, userId });
+          await symptomRepository.create(normalizedSymptom);
           count++;
         }
       } catch (error) {
@@ -525,6 +531,7 @@ export class ImportService {
 
   /**
    * Import medications
+   * Story 3.5.1: Handle isDefault and isEnabled fields for backward compatibility
    */
   private async importMedications(
     medications: MedicationRecord[],
@@ -536,19 +543,25 @@ export class ImportService {
 
     for (const medication of medications) {
       try {
+        // Story 3.5.1: Ensure isDefault and isEnabled fields exist for backward compatibility
+        // Old exports won't have these fields, so set safe defaults
+        const normalizedMedication = {
+          ...medication,
+          userId,
+          isDefault: medication.isDefault ?? false, // Imported customs are not defaults
+          isEnabled: medication.isEnabled ?? true,  // Imported items are enabled by default
+        };
+
         if (options.mergeStrategy === "replace") {
           const existing = await medicationRepository.searchByName(
             userId,
             medication.name
           );
           if (existing.length > 0) {
-            await medicationRepository.update(existing[0].id, {
-              ...medication,
-              userId,
-            } as any);
+            await medicationRepository.update(existing[0].id, normalizedMedication as any);
             count++;
           } else {
-            await medicationRepository.create({ ...medication, userId } as any);
+            await medicationRepository.create(normalizedMedication as any);
             count++;
           }
         } else if (options.mergeStrategy === "skip") {
@@ -557,13 +570,13 @@ export class ImportService {
             medication.name
           );
           if (existing.length === 0) {
-            await medicationRepository.create({ ...medication, userId } as any);
+            await medicationRepository.create(normalizedMedication as any);
             count++;
           } else {
             skipped++;
           }
         } else {
-          await medicationRepository.create({ ...medication, userId } as any);
+          await medicationRepository.create(normalizedMedication as any);
           count++;
         }
       } catch (error) {
@@ -577,6 +590,7 @@ export class ImportService {
 
   /**
    * Import triggers
+   * Story 3.5.1: Handle isDefault and isEnabled fields for backward compatibility
    */
   private async importTriggers(
     triggers: TriggerRecord[],
@@ -588,19 +602,24 @@ export class ImportService {
 
     for (const trigger of triggers) {
       try {
+        // Story 3.5.1: Ensure isDefault and isEnabled fields exist for backward compatibility
+        const normalizedTrigger = {
+          ...trigger,
+          userId,
+          isDefault: trigger.isDefault ?? false, // Imported customs are not defaults
+          isEnabled: trigger.isEnabled ?? true,  // Imported items are enabled by default
+        };
+
         if (options.mergeStrategy === "replace") {
           const existing = await triggerRepository.searchByName(
             userId,
             trigger.name
           );
           if (existing.length > 0) {
-            await triggerRepository.update(existing[0].id, {
-              ...trigger,
-              userId,
-            } as any);
+            await triggerRepository.update(existing[0].id, normalizedTrigger as any);
             count++;
           } else {
-            await triggerRepository.create({ ...trigger, userId } as any);
+            await triggerRepository.create(normalizedTrigger as any);
             count++;
           }
         } else if (options.mergeStrategy === "skip") {
@@ -609,13 +628,13 @@ export class ImportService {
             trigger.name
           );
           if (existing.length === 0) {
-            await triggerRepository.create({ ...trigger, userId } as any);
+            await triggerRepository.create(normalizedTrigger as any);
             count++;
           } else {
             skipped++;
           }
         } else {
-          await triggerRepository.create({ ...trigger, userId } as any);
+          await triggerRepository.create(normalizedTrigger as any);
           count++;
         }
       } catch (error) {
@@ -990,6 +1009,7 @@ export class ImportService {
 
   /**
    * Import foods
+   * Story 3.5.1: Handle isDefault and isActive fields for backward compatibility
    */
   private async importFoods(
     foods: FoodRecord[],
@@ -1007,6 +1027,7 @@ export class ImportService {
         const updatedAt =
           typeof food.updatedAt === "number" ? food.updatedAt : createdAt;
 
+        // Story 3.5.1: Ensure isDefault and isActive fields exist for backward compatibility
         const normalized: FoodRecord = {
           ...food,
           id,
@@ -1014,6 +1035,8 @@ export class ImportService {
           createdAt,
           updatedAt,
           allergenTags: food.allergenTags ?? JSON.stringify([]),
+          isDefault: food.isDefault ?? false, // Imported customs are not defaults
+          isActive: food.isActive ?? true,    // Imported items are active by default
         };
 
         const existing = await db.foods.get(id);

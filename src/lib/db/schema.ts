@@ -112,6 +112,8 @@ export interface MedicationRecord {
   schedule: MedicationSchedule[];
   sideEffects?: string[];
   isActive: boolean;
+  isDefault: boolean; // True for preset medications, false for custom (Story 3.5.1)
+  isEnabled: boolean; // For toggling default medications visibility (Story 3.5.1)
   createdAt: Date;
   updatedAt: Date;
 }

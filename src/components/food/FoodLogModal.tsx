@@ -609,9 +609,15 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1 min-w-0">
-                                      <div className="font-medium text-foreground text-sm flex items-center gap-1">
+                                      <div className="font-medium text-foreground text-sm flex items-center gap-1 flex-wrap">
                                         {food.name}
                                         {isFavorite && <span className="text-yellow-600">★</span>}
+                                        {/* Story 3.5.1 AC3.5.1.6: Visual indicator for defaults */}
+                                        {food.isDefault && (
+                                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded ml-1">
+                                            default
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                     {isCustomFood && (
@@ -727,8 +733,14 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1 min-w-0">
-                                      <div className="font-medium text-foreground text-sm">
+                                      <div className="font-medium text-foreground text-sm flex items-center gap-1 flex-wrap">
                                         {food.name}
+                                        {/* Story 3.5.1 AC3.5.1.6: Visual indicator for defaults */}
+                                        {food.isDefault && (
+                                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                            default
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                     {isCustomFood && (
@@ -814,8 +826,14 @@ export function FoodLogModal({ userId }: FoodLogModalProps) {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-foreground text-sm">
+                            <div className="font-medium text-foreground text-sm flex items-center gap-1 flex-wrap">
                               {food.name}
+                              {/* Story 3.5.1 AC3.5.1.6: Visual indicator for defaults */}
+                              {food.isDefault && (
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                  default
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-muted-foreground mt-0.5">
                               {food.category}
