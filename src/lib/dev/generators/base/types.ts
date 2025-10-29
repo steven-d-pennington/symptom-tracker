@@ -64,6 +64,8 @@ export interface GeneratedDataResult {
   uxEventsCreated: number;
   bodyMapLocationsCreated: number;
   photoAttachmentsCreated: number;
+  moodEntriesCreated: number;
+  sleepEntriesCreated: number;
   symptomsCreated: number;
   medicationsCreated: number;
   triggersCreated: number;

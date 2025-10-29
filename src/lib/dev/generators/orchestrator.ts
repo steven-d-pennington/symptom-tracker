@@ -199,6 +199,22 @@ export async function generateComprehensiveData(
     }
   }
 
+  // Step 11: Generate mood entries (Story 3.5.2)
+  console.log("[Orchestrator] Step 11: Generating mood entries");
+  const moodEntries = generateMoodEntries(context);
+  if (moodEntries.length > 0) {
+    await db.moodEntries!.bulkAdd(moodEntries);
+    console.log(`[Orchestrator] Generated ${moodEntries.length} mood entries`);
+  }
+
+  // Step 12: Generate sleep entries (Story 3.5.2)
+  console.log("[Orchestrator] Step 12: Generating sleep entries");
+  const sleepEntries = generateSleepEntries(context);
+  if (sleepEntries.length > 0) {
+    await db.sleepEntries!.bulkAdd(sleepEntries);
+    console.log(`[Orchestrator] Generated ${sleepEntries.length} sleep entries`);
+  }
+
   const result: GeneratedDataResult = {
     medicationEventsCreated: medicationEvents.length,
     triggerEventsCreated: triggerEvents.length,
@@ -210,6 +226,8 @@ export async function generateComprehensiveData(
     uxEventsCreated: uxEvents.length,
     bodyMapLocationsCreated: bodyMapLocations.length,
     photoAttachmentsCreated: photoAttachments.length,
+    moodEntriesCreated: moodEntries.length,
+    sleepEntriesCreated: sleepEntries.length,
     symptomsCreated: symptoms.length,
     medicationsCreated: medications.length,
     triggersCreated: triggers.length,
@@ -237,6 +255,8 @@ async function clearAllEventData(userId: string): Promise<void> {
     db.bodyMapLocations?.where({ userId }).delete(),
     db.uxEvents?.where({ userId }).delete(),
     db.photoAttachments?.where({ userId }).delete(),
+    db.moodEntries?.where({ userId }).delete(),
+    db.sleepEntries?.where({ userId }).delete(),
   ]);
   console.log("[Orchestrator] Cleared existing event data");
 }
@@ -726,4 +746,84 @@ async function generateFlaresWithClustering(
   await db.flares!.bulkAdd(flares);
 
   return flares;
+}
+
+/**
+ * Generate mood entries (Story 3.5.2)
+ * Creates 15-20 mood entries distributed across the time range
+ */
+function generateMoodEntries(context: GenerationContext) {
+  const { userId, startDate, endDate } = context;
+  const entries: any[] = [];
+  const count = Math.floor(Math.random() * 6) + 15; // 15-20 entries
+
+  const moodTypes = ['happy', 'neutral', 'sad', 'anxious', 'stressed'];
+
+  for (let i = 0; i < count; i++) {
+    // Distribute entries across the time range
+    const dayOffset = Math.floor((i / count) * context.daysToGenerate);
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + dayOffset);
+    date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+
+    const mood = Math.floor(Math.random() * 10) + 1; // 1-10
+    const moodType = Math.random() > 0.3 ? moodTypes[Math.floor(Math.random() * moodTypes.length)] : undefined;
+    const hasNotes = Math.random() > 0.6;
+
+    entries.push({
+      id: generateId(),
+      userId,
+      mood,
+      moodType,
+      notes: hasNotes ? `Sample mood note ${i + 1}` : undefined,
+      timestamp: date.getTime(),
+      createdAt: date.getTime(),
+      updatedAt: date.getTime(),
+    });
+  }
+
+  return entries;
+}
+
+/**
+ * Generate sleep entries (Story 3.5.2)
+ * Creates 15-20 sleep entries distributed across the time range
+ */
+function generateSleepEntries(context: GenerationContext) {
+  const { userId, startDate, endDate } = context;
+  const entries: any[] = [];
+  const count = Math.floor(Math.random() * 6) + 15; // 15-20 entries
+
+  for (let i = 0; i < count; i++) {
+    // Distribute entries across the time range
+    const dayOffset = Math.floor((i / count) * context.daysToGenerate);
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + dayOffset);
+    // Set to morning time (6-10 AM) when users typically log sleep
+    date.setHours(Math.floor(Math.random() * 4) + 6, Math.floor(Math.random() * 60));
+
+    // Generate realistic sleep data
+    const baseHours = 7.5;
+    const variation = (Math.random() - 0.5) * 3; // ±1.5 hours
+    const hours = Math.max(4, Math.min(12, baseHours + variation));
+
+    // Quality correlates somewhat with hours (but not perfectly)
+    const qualityBase = hours >= 7 ? 7 : 5;
+    const quality = Math.max(1, Math.min(10, qualityBase + Math.floor(Math.random() * 4) - 1));
+
+    const hasNotes = Math.random() > 0.7;
+
+    entries.push({
+      id: generateId(),
+      userId,
+      hours: Math.round(hours * 2) / 2, // Round to nearest 0.5
+      quality,
+      notes: hasNotes ? `Sample sleep note ${i + 1}` : undefined,
+      timestamp: date.getTime() - (12 * 60 * 60 * 1000), // Previous night
+      createdAt: date.getTime(),
+      updatedAt: date.getTime(),
+    });
+  }
+
+  return entries;
 }

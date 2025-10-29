@@ -11,8 +11,10 @@ import {
   FoodRecord,
   MedicationEventRecord, // New
   MedicationRecord,
+  MoodEntryRecord, // Story 3.5.2
   PhotoAttachmentRecord,
   PhotoComparisonRecord,
+  SleepEntryRecord, // Story 3.5.2
   SymptomRecord,
   SymptomInstanceRecord,
   UxEventRecord,
@@ -41,6 +43,8 @@ export class SymptomTrackerDatabase extends Dexie {
   foods!: Table<FoodRecord, string>;
   foodEvents!: Table<FoodEventRecord, string>;
   foodCombinations!: Table<FoodCombinationRecord, string>;
+  moodEntries!: Table<MoodEntryRecord, string>; // Story 3.5.2
+  sleepEntries!: Table<SleepEntryRecord, string>; // Story 3.5.2
 
   constructor() {
     super("symptom-tracker");
@@ -431,6 +435,31 @@ export class SymptomTrackerDatabase extends Dexie {
       });
 
       console.log("Successfully migrated medications to v19 schema");
+    });
+
+    // Version 20: Add mood and sleep tracking tables (Story 3.5.2)
+    this.version(20).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, [userId+status], [userId+bodyRegionId], [userId+startDate], userId",
+      flareEvents: "id, [flareId+timestamp], [userId+timestamp], flareId, userId",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+      moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt", // New - Story 3.5.2
+      sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt", // New - Story 3.5.2
     });
   }
 }
