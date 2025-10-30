@@ -351,33 +351,51 @@ export const CalendarGrid = ({
                   {isToday ? <span className="rounded bg-primary px-1 py-0.5 text-[10px] text-primary-foreground">Today</span> : null}
                 </div>
                 <div className="space-y-1 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${
-                        matchesFilters ? "bg-rose-500/20 text-rose-700" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {entry?.symptomCount ?? 0} sx
-                    </span>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${
-                        matchesFilters ? "bg-sky-500/20 text-sky-700" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {entry?.medicationCount ?? 0} meds
-                    </span>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {/* Story 3.5.7: symptom badges (red) */}
+                    {(entry?.symptomCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 text-red-700 px-1.5 py-0.5 text-[10px]">
+                        {entry?.symptomCount}
+                      </span>
+                    )}
+                    {/* Story 3.5.7: food badges (green) */}
+                    {(entry?.foodCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 text-green-700 px-1.5 py-0.5 text-[10px]">
+                        🍽️
+                      </span>
+                    )}
+                    {/* Story 3.5.7: trigger badges (orange) */}
+                    {(entry?.triggerCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/20 text-orange-700 px-1.5 py-0.5 text-[10px]">
+                        {entry?.triggerCount}
+                      </span>
+                    )}
+                    {/* Story 3.5.7: medication badges (blue) */}
+                    {(entry?.medicationCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 text-blue-700 px-1.5 py-0.5 text-[10px]">
+                        💊
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${
-                        matchesFilters ? "bg-amber-500/20 text-amber-700" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {entry?.triggerCount ?? 0} triggers
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-muted/70 px-2 py-0.5 text-[11px] text-foreground">
-                      {cell.events.length} events
-                    </span>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {/* Story 3.5.7: mood badges (purple) */}
+                    {(entry?.moodCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 text-purple-700 px-1.5 py-0.5 text-[10px]">
+                        😊
+                      </span>
+                    )}
+                    {/* Story 3.5.7: sleep badges (indigo) */}
+                    {(entry?.sleepCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/20 text-indigo-700 px-1.5 py-0.5 text-[10px]">
+                        😴
+                      </span>
+                    )}
+                    {/* Story 3.5.7: flare badges (pink) */}
+                    {(entry?.flareCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-pink-500/20 text-pink-700 px-1.5 py-0.5 text-[10px]">
+                        🔥
+                      </span>
+                    )}
                   </div>
                 </div>
               </button>
