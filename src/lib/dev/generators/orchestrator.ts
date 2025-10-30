@@ -690,9 +690,14 @@ async function generateFlaresWithClustering(
   for (let i = 0; i < flareCount; i++) {
     const flareSymptom = flareSymptoms[Math.floor(Math.random() * flareSymptoms.length)];
 
-    const minDaysAgo = Math.max(0, context.daysToGenerate - (i + 1) * daysPerFlare);
-    const maxDaysAgo = Math.max(0, context.daysToGenerate - i * daysPerFlare);
-    const daysAgo = Math.floor(Math.random() * (maxDaysAgo - minDaysAgo + 1)) + minDaysAgo;
+    // Reverse the distribution so first flares are most recent
+    const reverseIndex = flareCount - 1 - i;
+    const minDaysAgo = Math.max(0, reverseIndex * daysPerFlare);
+    const maxDaysAgo = Math.max(0, (reverseIndex + 1) * daysPerFlare);
+    // Clamp to available time range
+    const clampedMaxDaysAgo = Math.min(maxDaysAgo, context.daysToGenerate);
+    const clampedMinDaysAgo = Math.min(minDaysAgo, context.daysToGenerate);
+    const daysAgo = Math.floor(Math.random() * (clampedMaxDaysAgo - clampedMinDaysAgo + 1)) + clampedMinDaysAgo;
 
     const startDate = new Date(now);
     startDate.setDate(startDate.getDate() - daysAgo);

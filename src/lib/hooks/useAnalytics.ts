@@ -123,12 +123,12 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
 
     fetchAnalyticsData();
 
-    // Task 3.8: Maintain existing polling pattern (10 seconds) and window focus refetch
-    const pollInterval = setInterval(() => {
-      if (mounted) {
-        fetchAnalyticsData();
-      }
-    }, 10000); // Poll every 10 seconds
+    // Task 3.8: Maintain existing polling pattern (10 seconds) and window focus refetch (POLLING DISABLED)
+    // const pollInterval = setInterval(() => {
+    //   if (mounted) {
+    //     fetchAnalyticsData();
+    //   }
+    // }, 10000); // Poll every 10 seconds
 
     // Refetch when window regains focus
     const handleFocus = () => {
@@ -140,7 +140,7 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
 
     return () => {
       mounted = false;
-      clearInterval(pollInterval);
+      // clearInterval(pollInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, [userId, timeRange, refreshTrigger]);

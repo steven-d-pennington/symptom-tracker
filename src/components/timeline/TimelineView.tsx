@@ -220,51 +220,66 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       });
 
       // Flare events (creation, updates, resolution)
+      // Filter flares to only those with events in the current date range
       activeFlares.forEach(flare => {
         const location = flare.bodyRegions.length > 0 ? flare.bodyRegions[0] : 'Unknown location';
 
-        // Flare created event
-        timelineEvents.push({
-          id: `${flare.id}-created`,
-          type: 'flare-created',
-          timestamp: flare.startDate.getTime(),
-          summary: `🔥 ${location} flare started, severity ${flare.severity}/10`,
-          details: flare.notes,
-          eventRef: flare,
-          hasDetails: !!flare.notes
-        });
+        // Track if this flare has any events in the current date range
+        let hasEventsInRange = false;
 
-        // If flare has severity history, add update events
-        const severityHistory = (flare as any).severityHistory || [];
-        if (severityHistory.length > 1) {
-          severityHistory.slice(1).forEach((update: any, index: number) => {
-            const prevSeverity = severityHistory[index].severity;
-            const change = update.severity - prevSeverity;
-            const changeText = change > 0 ? `(+${change})` : change < 0 ? `(${change})` : '';
-            timelineEvents.push({
-              id: `${flare.id}-update-${index}`,
-              type: 'flare-updated',
-              timestamp: update.timestamp,
-              summary: `🔥 ${location} updated: ${update.severity}/10 ${changeText}`,
-              details: update.notes,
-              eventRef: { flare, update },
-              hasDetails: !!update.notes
-            });
+        // Flare created event (only if within date range)
+        const flareStartTime = flare.startDate.getTime();
+        if (flareStartTime >= startOfDay.getTime() && flareStartTime <= endOfDay.getTime()) {
+          hasEventsInRange = true;
+          timelineEvents.push({
+            id: `${flare.id}-created`,
+            type: 'flare-created',
+            timestamp: flareStartTime,
+            summary: `🔥 ${location} flare started, severity ${flare.severity}/10`,
+            details: flare.notes,
+            eventRef: flare,
+            hasDetails: !!flare.notes
           });
         }
 
-        // If flare is resolved, add resolution event
-        if (flare.endDate) {
-          const resolutionNotes = (flare as any).resolutionNotes;
-          timelineEvents.push({
-            id: `${flare.id}-resolved`,
-            type: 'flare-resolved',
-            timestamp: flare.endDate.getTime(),
-            summary: `🔥 ${location} flare resolved`,
-            details: resolutionNotes,
-            eventRef: flare,
-            hasDetails: !!resolutionNotes
+        // If flare has severity history, add update events (only those within date range)
+        const severityHistory = (flare as any).severityHistory || [];
+        if (severityHistory.length > 1) {
+          severityHistory.slice(1).forEach((update: any, index: number) => {
+            if (update.timestamp >= startOfDay.getTime() && update.timestamp <= endOfDay.getTime()) {
+              hasEventsInRange = true;
+              const prevSeverity = severityHistory[index].severity;
+              const change = update.severity - prevSeverity;
+              const changeText = change > 0 ? `(+${change})` : change < 0 ? `(${change})` : '';
+              timelineEvents.push({
+                id: `${flare.id}-update-${index}`,
+                type: 'flare-updated',
+                timestamp: update.timestamp,
+                summary: `🔥 ${location} updated: ${update.severity}/10 ${changeText}`,
+                details: update.notes,
+                eventRef: { flare, update },
+                hasDetails: !!update.notes
+              });
+            }
           });
+        }
+
+        // If flare is resolved, add resolution event (only if within date range)
+        if (flare.endDate) {
+          const flareEndTime = flare.endDate.getTime();
+          if (flareEndTime >= startOfDay.getTime() && flareEndTime <= endOfDay.getTime()) {
+            hasEventsInRange = true;
+            const resolutionNotes = (flare as any).resolutionNotes;
+            timelineEvents.push({
+              id: `${flare.id}-resolved`,
+              type: 'flare-resolved',
+              timestamp: flareEndTime,
+              summary: `🔥 ${location} flare resolved`,
+              details: resolutionNotes,
+              eventRef: flare,
+              hasDetails: !!resolutionNotes
+            });
+          }
         }
       });
 
@@ -334,7 +349,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
-  // Initial load - load last 7 days instead of just today
+  // Initial load - load only today
   useEffect(() => {
     const loadInitialEvents = async () => {
       if (!userId) {
@@ -344,23 +359,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       setLoading(true);
       setError(null);
 
-      // Load last 7 days of events for better initial view
-      const dates = [];
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(currentDate);
-        date.setDate(date.getDate() - i);
-        dates.push(date);
-      }
-
-      // Load all days in parallel
-      for (const date of dates) {
-        await loadEvents(date, dates.indexOf(date) > 0);
-      }
-
-      // Update currentDate to 7 days ago so "Load More" continues correctly
-      const weekAgo = new Date(currentDate);
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      setCurrentDate(weekAgo);
+      // Load only today's events
+      await loadEvents(new Date());
 
       setLoading(false);
     };

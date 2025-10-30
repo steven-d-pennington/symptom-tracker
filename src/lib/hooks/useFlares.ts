@@ -140,12 +140,12 @@ export function useFlares(options: UseFlaresOptions) {
     // Initial fetch
     fetchFlares();
 
-    // Poll for updates every 5 seconds
-    const interval = setInterval(fetchFlares, 5000);
+    // Poll for updates every 5 seconds (DISABLED)
+    // const interval = setInterval(fetchFlares, 5000);
 
     return () => {
       mounted = false;
-      clearInterval(interval);
+      // clearInterval(interval);
     };
   }, [userId, includeResolved, status, bodyRegionId, refreshTrigger]);
 

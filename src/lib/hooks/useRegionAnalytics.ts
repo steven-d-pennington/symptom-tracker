@@ -102,12 +102,12 @@ export function useRegionAnalytics({
 
     fetchRegionData();
 
-    // Task 3.6: Set up polling for reactive updates (10 seconds matching Story 3.1)
-    const pollInterval = setInterval(() => {
-      if (mounted) {
-        fetchRegionData();
-      }
-    }, 10000); // Poll every 10 seconds
+    // Task 3.6: Set up polling for reactive updates (10 seconds matching Story 3.1) (POLLING DISABLED)
+    // const pollInterval = setInterval(() => {
+    //   if (mounted) {
+    //     fetchRegionData();
+    //   }
+    // }, 10000); // Poll every 10 seconds
 
     // Task 3.7: Refetch when window regains focus
     const handleFocus = () => {
@@ -120,7 +120,7 @@ export function useRegionAnalytics({
     // Task 3.10: Cleanup
     return () => {
       mounted = false;
-      clearInterval(pollInterval);
+      // clearInterval(pollInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, [userId, regionId, refreshTrigger]);
