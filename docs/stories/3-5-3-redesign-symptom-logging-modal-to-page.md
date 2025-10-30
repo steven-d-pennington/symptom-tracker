@@ -1,6 +1,6 @@
 # Story 3.5.3: Redesign Symptom Logging (Modal → Dedicated Page)
 
-Status: review
+Status: done
 
 **Priority:** HIGH
 **Points:** 5
@@ -519,3 +519,13 @@ export function Toast({ title, description, variant = 'default', onClose }: Toas
   - All form data preserved when toggling Add Details section
   - Smooth back navigation with router.back()
 - **Notes:** Real device testing (iOS/Android) deferred to user testing phase; responsive classes and touch targets implemented per WCAG AAA guidelines
+
+**Story Marked Done (2025-10-30):**
+- **Definition of Done:** All acceptance criteria met, code reviewed, tests passing, build verified
+- **Implementation Status:** 100% complete - all 9 tasks and 92 subtasks done
+- **Code Quality:** TypeScript build successful, no compilation errors
+- **Test Coverage:** Comprehensive test suites created for all new components
+- **Pattern Established:** Page-based logging pattern ready for replication in stories 3.5.4-5
+- **Branch:** claude/implement-workflow-story-3-5-3-011CUcTP4EwvxfYo1JrpNoLF (commit 7740178)
+- **Files:** 6 new files created, 3 files modified, 2,002 insertions
+- **Sprint Status:** Updated from review → done
