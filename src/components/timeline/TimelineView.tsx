@@ -312,7 +312,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
-  // Initial load
+  // Initial load - load last 7 days instead of just today
   useEffect(() => {
     const loadInitialEvents = async () => {
       if (!userId) {
@@ -321,12 +321,30 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       }
       setLoading(true);
       setError(null);
-      await loadEvents(currentDate);
+
+      // Load last 7 days of events for better initial view
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(currentDate);
+        date.setDate(date.getDate() - i);
+        dates.push(date);
+      }
+
+      // Load all days in parallel
+      for (const date of dates) {
+        await loadEvents(date, dates.indexOf(date) > 0);
+      }
+
+      // Update currentDate to 7 days ago so "Load More" continues correctly
+      const weekAgo = new Date(currentDate);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      setCurrentDate(weekAgo);
+
       setLoading(false);
     };
 
     loadInitialEvents();
-  }, [currentDate, userId]);
+  }, [userId]); // Only run on mount or when userId changes
 
   // Group events by day
   const groupedEvents = useMemo((): DayGroup[] => {
