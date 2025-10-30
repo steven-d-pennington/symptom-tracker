@@ -74,7 +74,7 @@ development_status:
 
   epic-3.5: contexted
   3.5-1-fix-empty-state-crisis-and-pre-populate-defaults: done
-  3.5-2-mood-and-sleep-basic-logging: ready-for-dev
+  3.5-2-mood-and-sleep-basic-logging: review
   3.5-3-redesign-symptom-logging-modal-to-page: ready-for-dev
   3.5-4-redesign-food-logging-modal-to-page: ready-for-dev
   3.5-5-redesign-trigger-and-medication-logging-to-pages: ready-for-dev

@@ -38,6 +38,8 @@ export function DevDataControls() {
         `• ${result.flaresCreated} flares\\n` +
         `• ${result.flareEventsCreated} flare events\\n` +
         `• ${result.foodEventsCreated} food events\\n` +
+        (result.moodEntriesCreated > 0 ? `• ${result.moodEntriesCreated} mood entries\\n` : '') +
+        (result.sleepEntriesCreated > 0 ? `• ${result.sleepEntriesCreated} sleep entries\\n` : '') +
         (result.uxEventsCreated > 0 ? `• ${result.uxEventsCreated} UX events\\n` : '') +
         (result.bodyMapLocationsCreated > 0 ? `• ${result.bodyMapLocationsCreated} body map locations\\n` : '') +
         (result.photoAttachmentsCreated > 0 ? `• ${result.photoAttachmentsCreated} photos\\n` : '') +

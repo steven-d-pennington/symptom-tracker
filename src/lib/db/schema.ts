@@ -426,3 +426,27 @@ export interface FoodCombinationRecord {
   createdAt: number;
   updatedAt: number;
 }
+
+// Mood & Sleep Tracking (Story 3.5.2)
+
+export interface MoodEntryRecord {
+  id: string;
+  userId: string;
+  mood: number; // 1-10 scale
+  moodType?: 'happy' | 'neutral' | 'sad' | 'anxious' | 'stressed'; // Optional emotion picker
+  notes?: string;
+  timestamp: number; // epoch ms - when mood was logged
+  createdAt: number; // epoch ms
+  updatedAt: number; // epoch ms
+}
+
+export interface SleepEntryRecord {
+  id: string;
+  userId: string;
+  hours: number; // Supports fractional hours (7.5, 8.25)
+  quality: number; // 1-10 scale
+  notes?: string;
+  timestamp: number; // epoch ms - date of sleep (typically previous night)
+  createdAt: number; // epoch ms
+  updatedAt: number; // epoch ms
+}

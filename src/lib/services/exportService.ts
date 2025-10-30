@@ -29,6 +29,8 @@ import type {
   BodyMapLocationRecord,
   PhotoComparisonRecord,
   AnalysisResultRecord,
+  MoodEntryRecord,
+  SleepEntryRecord,
 } from "../db/schema";
 import type { Symptom } from "../types/symptoms";
 import type { PhotoAttachment } from "../types/photo";
@@ -116,6 +118,9 @@ export interface ExportData {
   photoComparisons?: PhotoComparisonRecord[];
   // Raw analysis results
   analysisResults?: AnalysisResultRecord[];
+  // Mood & Sleep tracking (Story 3.5.2)
+  moodEntries?: MoodEntryRecord[];
+  sleepEntries?: SleepEntryRecord[];
 }
 
 export interface FoodJournalRow {
@@ -450,6 +455,34 @@ export class ExportService {
         .toArray();
     }
 
+    // Mood & Sleep tracking (Story 3.5.2)
+    if (options.dateRange) {
+      const startTimestamp = new Date(options.dateRange.start).getTime();
+      const endTimestamp = new Date(options.dateRange.end).getTime();
+
+      data.moodEntries = await db.moodEntries
+        .where("userId")
+        .equals(userId)
+        .and((entry) => entry.timestamp >= startTimestamp && entry.timestamp <= endTimestamp)
+        .toArray();
+
+      data.sleepEntries = await db.sleepEntries
+        .where("userId")
+        .equals(userId)
+        .and((entry) => entry.timestamp >= startTimestamp && entry.timestamp <= endTimestamp)
+        .toArray();
+    } else {
+      data.moodEntries = await db.moodEntries
+        .where("userId")
+        .equals(userId)
+        .toArray();
+
+      data.sleepEntries = await db.sleepEntries
+        .where("userId")
+        .equals(userId)
+        .toArray();
+    }
+
     return data;
   }
 
@@ -632,6 +665,38 @@ export class ExportService {
         ].filter(Boolean).join(", ");
         csvParts.push(
           `photo-comparison,${timestamp},${escapeCSV(name)},${escapeCSV(details)}`
+        );
+      });
+    }
+
+    // Export mood entries (Story 3.5.2)
+    if (data.moodEntries && data.moodEntries.length > 0) {
+      data.moodEntries.forEach((entry) => {
+        const timestamp = new Date(entry.timestamp).toISOString();
+        const name = `Mood ${entry.mood}/10`;
+        const detailParts = [
+          `mood: ${entry.mood}`,
+          entry.moodType ? `type: ${entry.moodType}` : undefined,
+          entry.notes ? `notes: ${entry.notes}` : undefined,
+        ].filter(Boolean) as string[];
+        csvParts.push(
+          `mood,${timestamp},${escapeCSV(name)},${escapeCSV(detailParts.join(", "))}`
+        );
+      });
+    }
+
+    // Export sleep entries (Story 3.5.2)
+    if (data.sleepEntries && data.sleepEntries.length > 0) {
+      data.sleepEntries.forEach((entry) => {
+        const timestamp = new Date(entry.timestamp).toISOString();
+        const name = `Sleep ${entry.hours.toFixed(1)}h`;
+        const detailParts = [
+          `hours: ${entry.hours.toFixed(1)}`,
+          `quality: ${entry.quality}/10`,
+          entry.notes ? `notes: ${entry.notes}` : undefined,
+        ].filter(Boolean) as string[];
+        csvParts.push(
+          `sleep,${timestamp},${escapeCSV(name)},${escapeCSV(detailParts.join(", "))}`
         );
       });
     }

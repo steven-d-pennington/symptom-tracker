@@ -35,7 +35,7 @@ So that I can later analyze correlations with symptoms and flares.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create mood and sleep TypeScript interfaces (AC: #3.5.2.3-4)
+- [x] Task 1: Create mood and sleep TypeScript interfaces (AC: #3.5.2.3-4)
   - [ ] 1.1: Create `src/types/mood.ts` file
   - [ ] 1.2: Define MoodEntry interface: { id: string, userId: string, mood: number, moodType?: string, notes?: string, timestamp: number, createdAt: number, updatedAt: number }
   - [ ] 1.3: Define MoodType enum if using emotion picker: 'happy' | 'neutral' | 'sad' | 'anxious' | 'stressed'
@@ -43,7 +43,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 1.5: Define SleepEntry interface: { id: string, userId: string, hours: number, quality: number, notes?: string, timestamp: number, createdAt: number, updatedAt: number }
   - [ ] 1.6: Add JSDoc comments documenting field purposes and constraints
 
-- [ ] Task 2: Update Dexie schema with mood and sleep tables (AC: #3.5.2.3-4)
+- [x] Task 2: Update Dexie schema with mood and sleep tables (AC: #3.5.2.3-4)
   - [ ] 2.1: Update Dexie schema version (increment from current version)
   - [ ] 2.2: Add moodEntries table: '++id, userId, timestamp, [userId+timestamp], createdAt'
   - [ ] 2.3: Add sleepEntries table: '++id, userId, timestamp, [userId+timestamp], createdAt'
@@ -51,7 +51,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 2.5: Test schema upgrade with existing database
   - [ ] 2.6: ⚠️ CRITICAL: Verify existing tables and data remain intact after migration
 
-- [ ] Task 3: Create mood repository (AC: #3.5.2.5)
+- [x] Task 3: Create mood repository (AC: #3.5.2.5)
   - [ ] 3.1: Create `src/lib/repositories/moodRepository.ts` file
   - [ ] 3.2: Implement create(entry: Partial<MoodEntry>): Promise<string> - returns new entry ID
   - [ ] 3.3: Implement getByUserId(userId: string, options?: QueryOptions): Promise<MoodEntry[]>
@@ -62,7 +62,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 3.8: Add error handling and logging for all operations
   - [ ] 3.9: Follow existing repository patterns from flareRepository and symptomsRepository
 
-- [ ] Task 4: Create sleep repository (AC: #3.5.2.6)
+- [x] Task 4: Create sleep repository (AC: #3.5.2.6)
   - [ ] 4.1: Create `src/lib/repositories/sleepRepository.ts` file
   - [ ] 4.2: Implement create(entry: Partial<SleepEntry>): Promise<string> - returns new entry ID
   - [ ] 4.3: Implement getByUserId(userId: string, options?: QueryOptions): Promise<SleepEntry[]>
@@ -73,7 +73,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 4.8: Add error handling and logging for all operations
   - [ ] 4.9: Support fractional hours (7.5, 8.25, etc.) in calculations
 
-- [ ] Task 5: Create mood logging component (AC: #3.5.2.1)
+- [x] Task 5: Create mood logging component (AC: #3.5.2.1)
   - [ ] 5.1: Create `src/components/mood/MoodLoggingForm.tsx` component
   - [ ] 5.2: Add mood scale input: 1-10 slider with visual markers
   - [ ] 5.3: Add optional emotion picker: happy, neutral, sad, anxious, stressed (emoji icons)
@@ -85,7 +85,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 5.9: Reset form after successful save
   - [ ] 5.10: Style with Tailwind: responsive, mobile-first, accessible form controls
 
-- [ ] Task 6: Create sleep logging component (AC: #3.5.2.2)
+- [x] Task 6: Create sleep logging component (AC: #3.5.2.2)
   - [ ] 6.1: Create `src/components/sleep/SleepLoggingForm.tsx` component
   - [ ] 6.2: Add hours slept input: number input with step=0.5 (supports 7.5, 8.0, etc.)
   - [ ] 6.3: Add quality rating slider: 1-10 scale with color coding (red/yellow/green)
@@ -97,7 +97,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 6.9: Reset form after successful save
   - [ ] 6.10: Color code quality slider: 1-3 red, 4-7 yellow, 8-10 green
 
-- [ ] Task 7: Create mood history page (AC: #3.5.2.7)
+- [x] Task 7: Create mood history page (AC: #3.5.2.7)
   - [ ] 7.1: Create `src/app/(protected)/mood/page.tsx` file
   - [ ] 7.2: Import MoodLoggingForm component at top of page
   - [ ] 7.3: Fetch mood entries using moodRepository.getByUserId()
@@ -109,7 +109,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 7.9: Add empty state: "No mood entries yet. Start tracking above!"
   - [ ] 7.10: Add page header: "Mood Tracking"
 
-- [ ] Task 8: Create sleep history page (AC: #3.5.2.8)
+- [x] Task 8: Create sleep history page (AC: #3.5.2.8)
   - [ ] 8.1: Create `src/app/(protected)/sleep/page.tsx` file
   - [ ] 8.2: Import SleepLoggingForm component at top of page
   - [ ] 8.3: Fetch sleep entries using sleepRepository.getByUserId()
@@ -121,7 +121,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 8.9: Add empty state: "No sleep entries yet. Start tracking above!"
   - [ ] 8.10: Add page header: "Sleep Tracking"
 
-- [ ] Task 9: Update import/export for mood and sleep (AC: #3.5.2.9)
+- [x] Task 9: Update import/export for mood and sleep (AC: #3.5.2.9)
   - [ ] 9.1: Locate existing export functionality (likely in `src/lib/services/exportService.ts` or similar)
   - [ ] 9.2: Add moodRepository.getByUserId() to export data collection
   - [ ] 9.3: Add sleepRepository.getByUserId() to export data collection
@@ -134,7 +134,7 @@ So that I can later analyze correlations with symptoms and flares.
   - [ ] 9.10: Update DevDataControls to generate 10-20 sample sleep entries
   - [ ] 9.11: ⚠️ CRITICAL: Test export → import cycle preserves mood and sleep data
 
-- [ ] Task 10: Add dashboard/navigation integration (AC: #3.5.2.10)
+- [x] Task 10: Add dashboard/navigation integration (AC: #3.5.2.10)
   - [ ] 10.1: Add "Log Mood" quick action button to dashboard (if using dashboard pattern)
   - [ ] 10.2: Add "Log Sleep" quick action button to dashboard (if using dashboard pattern)
   - [ ] 10.3: Alternatively, add "Mood" navigation item to sidebar/bottom nav
