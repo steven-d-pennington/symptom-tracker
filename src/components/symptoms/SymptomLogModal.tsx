@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * @deprecated This modal component is deprecated as of Story 3.5.3
+ * Symptom logging now uses a dedicated page at /log/symptom
+ * See: src/app/(protected)/log/symptom/page.tsx
+ * See: src/components/symptom-logging/SymptomQuickLogForm.tsx
+ *
+ * This file is kept temporarily for reference and will be removed in a future cleanup.
+ * Do not use this component in new code.
+ */
+
 import { useState, useEffect, useMemo } from "react";
 import { X, Search } from "lucide-react";
 import { symptomRepository } from "@/lib/repositories/symptomRepository";

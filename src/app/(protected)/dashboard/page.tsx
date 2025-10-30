@@ -6,7 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { QuickLogButtons } from "@/components/quick-log/QuickLogButtons";
 import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
 import { MedicationLogModal } from "@/components/medications/MedicationLogModal";
-import { SymptomLogModal } from "@/components/symptoms/SymptomLogModal";
+// Story 3.5.3: SymptomLogModal deprecated, symptom logging now uses dedicated page at /log/symptom
 import { TriggerLogModal } from "@/components/triggers/TriggerLogModal";
 import { FoodLogModal } from "@/components/food/FoodLogModal";
 import TimelineView from "@/components/timeline/TimelineView";
@@ -124,7 +124,8 @@ function DashboardContent() {
     void recordUxEvent("quickAction.symptom", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
-    router.push("/dashboard?quickAction=symptom");
+    // Story 3.5.3: Navigate to dedicated symptom logging page
+    router.push("/log/symptom");
   }, [recordUxEvent, router]);
 
   const handleLogTrigger = useCallback(() => {
@@ -244,14 +245,7 @@ function DashboardContent() {
         />
       )}
 
-      {userId && quickAction === "symptom" && (
-        <SymptomLogModal
-          isOpen={true}
-          onClose={handleCloseQuickAction}
-          onLogged={handleEventLogged}
-          userId={userId}
-        />
-      )}
+      {/* Story 3.5.3: Symptom logging moved to dedicated page at /log/symptom */}
 
       {userId && quickAction === "trigger" && (
         <TriggerLogModal
