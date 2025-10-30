@@ -3,23 +3,25 @@
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
-import { SymptomQuickLogForm } from "@/components/symptom-logging/SymptomQuickLogForm";
+import { TriggerQuickLogForm } from "@/components/trigger-logging/TriggerQuickLogForm";
 
 /**
- * Symptom Logging Page (Story 3.5.3)
+ * Trigger Logging Page (Story 3.5.5)
  *
- * Dedicated page for symptom logging, replacing the previous modal interface.
+ * Dedicated page for trigger logging, replacing the previous modal interface.
  * Features:
  * - Full-page layout with natural scrolling
+ * - Collapsible categories with smart defaults (Common, Environmental, Physical, Emotional, Lifestyle)
  * - Quick log mode for essential fields
- * - Expandable details section for optional fields
+ * - Expandable details section for optional fields (notes, intensity)
  * - Mobile-optimized with proper touch targets
  *
- * AC3.5.3.1: Dedicated page route at /log/symptom
- * AC3.5.3.4: Natural page scrolling without nested containers
- * AC3.5.3.8: Mobile-responsive design
+ * AC3.5.5.1: Dedicated page route at /log/trigger
+ * AC3.5.5.3: Collapsible categories for triggers
+ * AC3.5.5.5: Quick log mode with Add Details expansion
+ * AC3.5.5.7: Mobile-responsive design
  */
-export default function LogSymptomPage() {
+export default function LogTriggerPage() {
   const router = useRouter();
   const { userId, isLoading } = useCurrentUser();
 
@@ -54,15 +56,15 @@ export default function LogSymptomPage() {
       <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3 flex items-center gap-4 shadow-sm">
         <button
           onClick={() => router.back()}
-          className="p-2 hover:bg-muted rounded-lg transition-colors"
+          className="p-2 hover:bg-muted rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Go back to previous page"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
-        <h1 className="text-xl font-semibold text-foreground">Log Symptom</h1>
+        <h1 className="text-xl font-semibold text-foreground">Log Trigger</h1>
       </header>
 
-      {/* Breadcrumb navigation - AC3.5.3.5 */}
+      {/* Breadcrumb navigation */}
       <nav aria-label="Breadcrumb" className="container mx-auto max-w-2xl px-4 py-3">
         <ol className="flex items-center gap-2 text-sm text-muted-foreground">
           <li>
@@ -74,13 +76,13 @@ export default function LogSymptomPage() {
             </button>
           </li>
           <li aria-hidden="true">/</li>
-          <li className="text-foreground font-medium">Log Symptom</li>
+          <li className="text-foreground font-medium">Log Trigger</li>
         </ol>
       </nav>
 
-      {/* Content area with natural scrolling - AC3.5.3.4 */}
+      {/* Content area with natural scrolling - AC3.5.5.1 */}
       <div className="container mx-auto max-w-2xl px-4 pb-8">
-        <SymptomQuickLogForm userId={userId} />
+        <TriggerQuickLogForm userId={userId} />
       </div>
     </main>
   );

@@ -1,72 +1,44 @@
 "use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
-import type { FoodRecord } from "@/lib/db/schema";
+import type { MedicationRecord } from "@/lib/db/schema";
 import { cn } from "@/lib/utils/cn";
-import { CustomFoodBadge } from "@/components/food/CustomFoodBadge";
 
-interface FoodCategoryProps {
+interface MedicationCategoryProps {
   name: string;
-  foods: FoodRecord[];
+  medications: MedicationRecord[];
   isExpanded: boolean;
   onToggle: (expanded: boolean) => void;
-  onSelectFood: (food: FoodRecord) => void;
-  selectedFoodIds?: Set<string>;
-  searchQuery?: string;
+  onSelectMedication: (medication: MedicationRecord) => void;
+  selectedMedicationId?: string;
 }
 
 /**
- * Collapsible Food Category Component (Story 3.5.4)
+ * Collapsible Medication Category Component (Story 3.5.5)
  *
  * Accordion-style category with expand/collapse functionality.
  *
- * AC3.5.4.2: Foods organized in collapsible categories
+ * AC3.5.5.4: Collapsible categories for medications
  * - Category header shows: name, item count, expand state
  * - Clicking category header toggles expansion state
  * - Smooth CSS transitions for expand/collapse animations
  *
- * AC3.5.4.8: Mobile-optimized category interaction
+ * AC3.5.5.7: Mobile-optimized category interaction
  * - Category headers minimum 44x44px touch targets
  * - Expand/collapse icons clearly visible (chevron up/down)
- * - Food item selection uses large touch-friendly cards
+ * - Medication selection uses large touch-friendly cards
  */
-export function FoodCategory({
+export function MedicationCategory({
   name,
-  foods,
+  medications,
   isExpanded,
   onToggle,
-  onSelectFood,
-  selectedFoodIds,
-  searchQuery,
-}: FoodCategoryProps) {
-  // Highlight matching text in food names if searching
-  const highlightText = (text: string) => {
-    if (!searchQuery) return text;
-
-    const lowerText = text.toLowerCase();
-    const lowerQuery = searchQuery.toLowerCase();
-    const index = lowerText.indexOf(lowerQuery);
-
-    if (index === -1) return text;
-
-    const before = text.slice(0, index);
-    const match = text.slice(index, index + searchQuery.length);
-    const after = text.slice(index + searchQuery.length);
-
-    return (
-      <>
-        {before}
-        <mark className="bg-yellow-200 dark:bg-yellow-700 font-semibold">
-          {match}
-        </mark>
-        {after}
-      </>
-    );
-  };
-
+  onSelectMedication,
+  selectedMedicationId,
+}: MedicationCategoryProps) {
   return (
     <div className="border border-border rounded-lg mb-2 overflow-hidden bg-card">
-      {/* Category Header - AC3.5.4.8: 44x44px minimum touch target */}
+      {/* Category Header - AC3.5.5.7: 44x44px minimum touch target */}
       <button
         onClick={() => onToggle(!isExpanded)}
         className="w-full flex items-center justify-between p-4 min-h-[44px] hover:bg-muted transition-colors"
@@ -74,7 +46,7 @@ export function FoodCategory({
         aria-controls={`category-${name}`}
       >
         <span className="font-medium text-foreground">
-          {name} ({foods.length} {foods.length === 1 ? 'item' : 'items'})
+          {name} ({medications.length} {medications.length === 1 ? 'item' : 'items'})
         </span>
         {isExpanded ? (
           <ChevronUp className="w-5 h-5 text-muted-foreground transition-transform" />
@@ -83,7 +55,7 @@ export function FoodCategory({
         )}
       </button>
 
-      {/* Category Content - AC3.5.4.2: Smooth CSS transition */}
+      {/* Category Content - AC3.5.5.4: Smooth CSS transition */}
       <div
         id={`category-${name}`}
         className={cn(
@@ -92,27 +64,31 @@ export function FoodCategory({
         )}
       >
         <div className="p-4 pt-0 space-y-2">
-          {foods.map((food) => (
+          {medications.map((medication) => (
             <button
-              key={food.id}
-              onClick={() => onSelectFood(food)}
+              key={medication.id}
+              onClick={() => onSelectMedication(medication)}
               className={cn(
                 "w-full text-left p-3 border rounded-lg min-h-[44px] transition-all",
-                selectedFoodIds?.has(food.id)
+                selectedMedicationId === medication.id
                   ? "bg-primary/10 border-primary ring-2 ring-primary"
                   : "border-border hover:bg-primary/5 hover:border-primary/50"
               )}
-              aria-pressed={selectedFoodIds?.has(food.id) ?? false}
+              aria-pressed={selectedMedicationId === medication.id}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="flex-1 font-medium text-foreground">
-                  {highlightText(food.name)}
+                  {medication.name}
                 </span>
-                {!food.isDefault && <CustomFoodBadge />}
+                {!medication.isDefault && (
+                  <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded">
+                    Custom
+                  </span>
+                )}
               </div>
-              {food.preparationMethod && (
+              {medication.dosage && (
                 <span className="text-xs text-muted-foreground mt-1 block">
-                  {food.preparationMethod}
+                  {medication.dosage}
                 </span>
               )}
             </button>

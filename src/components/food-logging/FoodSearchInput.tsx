@@ -62,7 +62,7 @@ export function FoodSearchInput({
         value={searchValue}
         onChange={(e) => setSearchValue(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all"
+        className="w-full pl-10 pr-10 py-3 border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
         aria-label="Search foods"
       />
 
@@ -70,7 +70,7 @@ export function FoodSearchInput({
       {searchValue && (
         <button
           onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded transition-colors"
           aria-label="Clear search"
         >
           <X className="w-5 h-5 text-muted-foreground" />
