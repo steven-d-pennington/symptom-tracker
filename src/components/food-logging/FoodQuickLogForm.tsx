@@ -280,7 +280,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
       });
 
       // Create food event
-      await foodEventRepository.create({
+      const eventId = await foodEventRepository.create({
         userId,
         mealId,
         foodIds: JSON.stringify(foodIds),
@@ -288,6 +288,17 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
         mealType: showDetails ? mealType : getDefaultMealType(),
         portionMap: JSON.stringify(portionMap),
         notes: showDetails ? notes : undefined,
+      });
+
+      console.log("✅ Food event created:", {
+        eventId,
+        userId,
+        mealId,
+        foodIds,
+        timestamp: new Date(timestamp).getTime(),
+        timestampDate: new Date(timestamp).toLocaleString(),
+        mealType: showDetails ? mealType : getDefaultMealType(),
+        portionMap,
       });
 
       // Success feedback

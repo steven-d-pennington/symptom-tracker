@@ -75,6 +75,28 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         foodEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime())
       ]);
 
+      console.log("📊 Timeline query for date:", date.toLocaleDateString(), {
+        dateRange: {
+          start: startOfDay.toLocaleString(),
+          startMs: startOfDay.getTime(),
+          end: endOfDay.toLocaleString(),
+          endMs: endOfDay.getTime(),
+        },
+        counts: {
+          medicationEvents: medicationEvents.length,
+          triggerEvents: triggerEvents.length,
+          flareRecords: flareRecords.length,
+          foodEvents: foodEvents.length,
+        },
+        foodEventDetails: foodEvents.map(e => ({
+          id: e.id,
+          timestamp: e.timestamp,
+          timestampDate: new Date(e.timestamp).toLocaleString(),
+          mealType: e.mealType,
+          foodIds: e.foodIds,
+        })),
+      });
+
       // Story 2.1: Convert flareRecords to ActiveFlare format with trends
       const activeFlares = await Promise.all(
         flareRecords.map(async (flare) => {
