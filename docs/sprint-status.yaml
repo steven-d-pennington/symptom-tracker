@@ -78,7 +78,7 @@ development_status:
   3.5-3-redesign-symptom-logging-modal-to-page: done
   3.5-4-redesign-food-logging-modal-to-page: done
   3.5-5-redesign-trigger-and-medication-logging-to-pages: done
-  3.5-6-critical-ui-fixes-bundle: review
+  3.5-6-critical-ui-fixes-bundle: done
   3.5-7-fix-calendar-data-wiring: ready-for-dev
   3.5-8-add-keyboard-navigation-accessibility: ready-for-dev
   epic-3.5-retrospective: optional

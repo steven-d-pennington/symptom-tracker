@@ -7,6 +7,7 @@ import type { OnboardingStepComponent, OnboardingStepId } from "../types/onboard
 import { ONBOARDING_STEPS } from "../utils/onboardingConfig";
 import { CompletionStep } from "./CompletionStep";
 import { ConditionStep } from "./ConditionStep";
+import { EducationStep } from "./EducationStep";
 import { PreferencesStep } from "./PreferencesStep";
 import { PrivacyStep } from "./PrivacyStep";
 import { ProfileStep } from "./ProfileStep";
@@ -19,6 +20,7 @@ const STEP_COMPONENTS: Record<OnboardingStepId, OnboardingStepComponent> = {
   condition: ConditionStep,
   preferences: PreferencesStep,
   privacy: PrivacyStep,
+  education: EducationStep,
   completion: CompletionStep,
 };
 

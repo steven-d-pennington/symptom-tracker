@@ -6,6 +6,7 @@ export type OnboardingStepId =
   | "condition"
   | "preferences"
   | "privacy"
+  | "education"
   | "completion";
 
 export interface TrackingPreferences {
