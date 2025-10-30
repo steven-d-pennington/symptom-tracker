@@ -298,8 +298,8 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
         duration: 3000,
       });
 
-      // Navigate back to dashboard
-      router.push("/dashboard");
+      // Navigate back to dashboard with refresh flag
+      router.push("/dashboard?refresh=food");
     } catch (error) {
       console.error("Failed to log food:", error);
       toast.error("Failed to log food", {

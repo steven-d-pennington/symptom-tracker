@@ -29,6 +29,16 @@ function DashboardContent() {
 
   // Route-based modal state derived from search params
   const quickAction = searchParams?.get("quickAction");
+  const refreshFlag = searchParams?.get("refresh");
+
+  // Auto-refresh timeline when returning from logging pages (Story 3.5.3, 3.5.4)
+  useEffect(() => {
+    if (refreshFlag) {
+      setRefreshKey(prev => prev + 1);
+      // Clear the refresh flag from URL
+      router.replace("/dashboard");
+    }
+  }, [refreshFlag, router]);
 
   // Scroll to timeline item if eventId is in URL params
   useEffect(() => {

@@ -149,9 +149,9 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
         duration: 3000,
       });
 
-      // Navigate back to dashboard
+      // Navigate back to dashboard with refresh flag
       setTimeout(() => {
-        router.back();
+        router.push("/dashboard?refresh=symptom");
       }, 300);
     } catch (error) {
       console.error("Failed to log symptom:", error);
