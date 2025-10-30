@@ -254,7 +254,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
         userId,
         mealId,
         foodIds: JSON.stringify([selectedFood.id]),
-        timestamp: new Date(timestamp),
+        timestamp: new Date(timestamp).getTime(),
         mealType: showDetails ? mealType : getDefaultMealType(),
         portionMap,
         notes: showDetails ? notes : undefined,
