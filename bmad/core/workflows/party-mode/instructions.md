@@ -78,23 +78,20 @@
   </substep>
 
   <substep n="3c" goal="Handle Questions and Interactions">
-    <check if="an agent asks the user a direct question">
+    <check>If an agent asks the user a direct question:</check>
       <action>Clearly highlight the question</action>
       <action>End that round of responses</action>
       <action>Display: "[Agent Name]: [Their question]"</action>
       <action>Display: "[Awaiting user response...]"</action>
       <action>WAIT for user input before continuing</action>
-    </check>
 
-    <check if="agents ask each other questions">
+    <check>If agents ask each other questions:</check>
       <action>Allow natural back-and-forth in the same response round</action>
       <action>Maintain conversational flow</action>
-    </check>
 
-    <check if="discussion becomes circular or repetitive">
+    <check>If discussion becomes circular or repetitive:</check>
       <action>The BMad Master will summarize</action>
       <action>Redirect to new aspects or ask for user guidance</action>
-    </check>
 
   </substep>
 
@@ -114,18 +111,15 @@
   </substep>
 
   <substep n="3e" goal="Check for Exit Conditions">
-    <check if="user message contains any {{exit_triggers}}">
+    <check>If user message contains any {{exit_triggers}}:</check>
       <action>Have agents provide brief farewells in character</action>
       <action>Thank user for the discussion</action>
       <goto step="4">Exit party mode</goto>
-    </check>
 
-    <check if="user seems done or conversation naturally concludes">
+    <check>If user seems done or conversation naturally concludes:</check>
       <ask>Would you like to continue the discussion or end party mode?</ask>
-      <check if="user indicates end">
+      <check>If user indicates end:</check>
         <goto step="4">Exit party mode</goto>
-      </check>
-    </check>
 
   </substep>
 </step>

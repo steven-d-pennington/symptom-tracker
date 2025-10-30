@@ -26,7 +26,7 @@ export default function AboutPage() {
                   <strong className="text-foreground">Version:</strong> 0.2.0
                 </p>
                 <p>
-                  <strong className="text-foreground">Status:</strong> Phase 1 & 2
+                  <strong className="text-foreground">Status:</strong> Phase 1, 2 & 3
                   Complete ✅
                 </p>
                 <p>
@@ -101,7 +101,7 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Encrypted photo documentation</span>
+                  <span>Flare tracking and management</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
@@ -109,7 +109,28 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Trigger correlation analysis</span>
+                  <span>Intervention logging</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-medium text-foreground mb-2">Phase 3</h3>
+              <ul className="space-y-1.5 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Problem area analytics</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Flare duration and severity metrics</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Trend analysis visualization</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Intervention effectiveness analysis</span>
                 </li>
               </ul>
             </div>

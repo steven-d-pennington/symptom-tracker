@@ -8,8 +8,8 @@ import { BodyMapViewer } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
 import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
-import { FlaresMapIntro } from "@/components/flares/FlaresMapIntro"; // Story 0.3 Task 2
 import { FlaresSummaryPanel } from "@/components/flares/FlaresSummaryPanel"; // Story 0.3 Task 3
+import { InfoIcon } from "@/components/common/InfoIcon"; // Story 3.5.6 Task 7
 import { flareRepository } from "@/lib/repositories/flareRepository";
 import { userRepository } from "@/lib/repositories/userRepository";
 import { ActiveFlare } from "@/lib/types/flare";
@@ -35,7 +35,7 @@ export default function FlaresPage() {
     coordinates: { x: number; y: number };
   } | null>(null);
   const [isFlareCreationModalOpen, setIsFlareCreationModalOpen] = useState(false);
-  const [showMapIntro, setShowMapIntro] = useState(false); // Story 0.3 Task 2: Progressive guidance
+  const [isBodyMapActive, setIsBodyMapActive] = useState(false);
 
   // Calculate stats from flares data
   const stats = useMemo(() => {
@@ -72,14 +72,28 @@ export default function FlaresPage() {
     hydrateViewMode();
   }, [userId]);
 
+  // Deactivate map when changing body views
+  useEffect(() => {
+    setIsBodyMapActive(false);
+  }, [currentView]);
+
+  // Deactivate map with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isBodyMapActive) {
+        setIsBodyMapActive(false);
+        setSelectedRegion(null);
+        setSelectedCoordinates(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBodyMapActive]);
+
   // Story 0.3: Persist viewMode changes to user preferences
   const handleViewModeChange = useCallback(async (newMode: ViewMode) => {
     setViewMode(newMode);
-
-    // Story 0.3 Task 2: Show intro when switching to map/split view
-    if ((newMode === "map" || newMode === "both") && viewMode === "cards") {
-      setShowMapIntro(true);
-    }
 
     if (!userId) return;
 
@@ -113,6 +127,12 @@ export default function FlaresPage() {
     : flares;
 
   const handleRegionSelect = (regionId: string) => {
+    // Activate map on first interaction
+    if (!isBodyMapActive) {
+      setIsBodyMapActive(true);
+      return;
+    }
+
     if (selectedRegion === regionId) {
       // Don't deselect if coordinates are marked (allows re-clicking to mark different coordinates)
       if (!selectedCoordinates) {
@@ -123,7 +143,7 @@ export default function FlaresPage() {
     } else {
       setSelectedRegion(regionId);
       setSelectedFlareId(null);
-      
+
       // Find first flare with this region and auto-select it
       const flareWithRegion = flares.find(f => f.bodyRegions.includes(regionId));
       if (flareWithRegion) {
@@ -227,33 +247,6 @@ export default function FlaresPage() {
           />
         </div>
 
-        {/* Story 0.3: CTA Buttons for cards-only mode */}
-        {viewMode === "cards" && (
-          <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <p className="text-sm font-medium text-foreground mb-3">
-              Want to visualize where your flares are located?
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => handleViewModeChange("map")}
-                className="inline-flex items-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                aria-label="Switch to map view"
-              >
-                <MapPin className="h-4 w-4" />
-                Explore Map View
-              </button>
-              <button
-                onClick={() => handleViewModeChange("both")}
-                className="inline-flex items-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                aria-label="Switch to split view"
-              >
-                <Layers className="h-4 w-4" />
-                Show Split Layout
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* View Mode Toggle - Story 0.3: Persist preferences */}
         <div className="flex items-center gap-2 border-b border-border">
           <button
@@ -337,16 +330,22 @@ export default function FlaresPage() {
         {/* Body Map Section */}
         {(viewMode === "map" || viewMode === "both") && (
           <div className="space-y-4">
-            {/* Story 0.3 Task 2: Progressive body map guidance */}
-            <FlaresMapIntro
-              isOpen={showMapIntro}
-              onDismiss={() => setShowMapIntro(false)}
-              viewMode={viewMode === "both" ? "both" : "map"}
-            />
-
             <div id="flare-cards" className="rounded-lg border border-border bg-card p-6">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">Body Map View</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-foreground">Body Map View</h2>
+                  <InfoIcon
+                    side="right"
+                    content={
+                      <div className="space-y-2">
+                        <p><strong>Click on body regions</strong> to filter flares by location.</p>
+                        {viewMode === "both" && <p>The cards on the left update automatically when you select a region on the map.</p>}
+                        <p><strong>Zoom and pan:</strong> Use mouse wheel or pinch gestures to zoom in for precision, then drag to pan around.</p>
+                        <p>Color intensity shows severity — darker regions indicate more severe flares.</p>
+                      </div>
+                    }
+                  />
+                </div>
                 <BodyViewSwitcher
                   currentView={currentView}
                   onViewChange={setCurrentView}
@@ -372,19 +371,49 @@ export default function FlaresPage() {
                 </div>
               )}
 
-              <div className="h-[600px] bg-gray-50 rounded-lg mb-4 overflow-visible relative">
+              <div className="h-[500px] bg-gray-50 rounded-lg mb-4 overflow-hidden relative flex items-center justify-center">
+                {/* Inactive overlay - click to activate */}
+                {!isBodyMapActive && (
+                  <div
+                    className="absolute inset-0 bg-black/10 backdrop-blur-[2px] z-10 flex items-center justify-center cursor-pointer rounded-lg transition-all hover:bg-black/20"
+                    onClick={() => setIsBodyMapActive(true)}
+                  >
+                    <div className="bg-white/95 px-6 py-4 rounded-lg shadow-lg text-center">
+                      <MapPin className="h-8 w-8 text-primary mx-auto mb-2" />
+                      <p className="text-sm font-medium text-foreground">Click to activate body map</p>
+                      <p className="text-xs text-muted-foreground mt-1">Then click regions to select</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Active indicator - show when map is active */}
+                {isBodyMapActive && (
+                  <button
+                    onClick={() => {
+                      setIsBodyMapActive(false);
+                      setSelectedRegion(null);
+                      setSelectedCoordinates(null);
+                    }}
+                    className="absolute top-4 left-4 z-20 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-medium transition-colors border border-primary/20"
+                    aria-label="Deactivate body map"
+                  >
+                    <span>Map Active</span>
+                    <span className="text-xs opacity-70">(ESC to deactivate)</span>
+                  </button>
+                )}
+
                 <BodyMapViewer
                   view={currentView}
                   userId={userId}
                   selectedRegion={selectedRegion || undefined}
                   onRegionSelect={handleRegionSelect}
                   flareSeverityByRegion={flareSeverityByRegion}
-                  readOnly={false}
+                  readOnly={!isBodyMapActive}
                   onCoordinateMark={handleCoordinateMark}
                 />
-                
-                {/* Create Flare Button - appears when coordinates are selected */}
-                {selectedCoordinates && (
+
+                {/* Create Flare Button - appears when coordinates are selected (map must be active) */}
+                {isBodyMapActive && selectedCoordinates && (
                   <button
                     onClick={handleCreateFlareFromCoordinates}
                     className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"

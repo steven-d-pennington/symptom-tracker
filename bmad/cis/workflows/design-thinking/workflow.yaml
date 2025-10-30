@@ -28,5 +28,4 @@ design_methods: "{installed_path}/design-methods.csv"
 
 # Output configuration
 default_output_file: "{output_folder}/design-thinking-{{date}}.md"
-
-standalone: true
+

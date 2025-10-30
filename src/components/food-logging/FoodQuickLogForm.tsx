@@ -441,7 +441,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
         <form
           id="quick-log-form"
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4"
+          className="bg-card border border-border rounded-lg p-6 space-y-4"
         >
           <h3 className="text-lg font-semibold text-foreground">
             {selectedFoods.length === 1 ? `Log ${selectedFoods[0].food.name}` : `Log Meal (${selectedFoods.length} foods)`}
@@ -457,7 +457,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
               type="datetime-local"
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -465,7 +465,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
           <button
             type="button"
             onClick={() => setShowDetails(!showDetails)}
-            className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+            className="flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
           >
             {showDetails ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             {showDetails ? "Hide Details" : "Add Details"}
@@ -473,7 +473,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
 
           {/* Details Section - AC3.5.4.5 */}
           {showDetails && (
-            <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="space-y-4 pt-4 border-t border-border">
               {/* Meal Type */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -489,8 +489,8 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
                         onClick={() => setMealType(type)}
                         className={`flex items-center justify-center gap-2 p-3 border rounded-lg transition-all ${
                           mealType === type
-                            ? "bg-blue-50 dark:bg-blue-900 border-blue-500 dark:border-blue-400 text-blue-700 dark:text-blue-300"
-                            : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-foreground"
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "border-border hover:bg-muted text-foreground"
                         }`}
                       >
                         <Icon className="w-5 h-5" />
@@ -511,7 +511,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Any additional notes..."
                 />
               </div>
@@ -522,7 +522,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
           <button
             type="submit"
             disabled={isSaving}
-            className="w-full py-3 bg-blue-600 dark:bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSaving ? "Saving..." : selectedFoods.length === 1 ? "Log Food" : "Log Meal"}
           </button>

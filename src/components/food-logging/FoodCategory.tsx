@@ -65,11 +65,11 @@ export function FoodCategory({
   };
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg mb-2 overflow-hidden bg-white dark:bg-gray-800">
+    <div className="border border-border rounded-lg mb-2 overflow-hidden bg-card">
       {/* Category Header - AC3.5.4.8: 44x44px minimum touch target */}
       <button
         onClick={() => onToggle(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 min-h-[44px] hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        className="w-full flex items-center justify-between p-4 min-h-[44px] hover:bg-muted transition-colors"
         aria-expanded={isExpanded}
         aria-controls={`category-${name}`}
       >
@@ -99,8 +99,8 @@ export function FoodCategory({
               className={cn(
                 "w-full text-left p-3 border rounded-lg min-h-[44px] transition-all",
                 selectedFoodIds?.has(food.id)
-                  ? "bg-blue-50 dark:bg-blue-900 border-blue-500 dark:border-blue-400 ring-2 ring-blue-500 dark:ring-blue-400"
-                  : "border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900 hover:border-blue-300 dark:hover:border-blue-600"
+                  ? "bg-primary/10 border-primary ring-2 ring-primary"
+                  : "border-border hover:bg-primary/5 hover:border-primary/50"
               )}
               aria-pressed={selectedFoodIds?.has(food.id) ?? false}
             >

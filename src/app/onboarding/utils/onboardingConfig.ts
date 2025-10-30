@@ -26,13 +26,6 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
       "Tell us how often you want reminders and which symptom categories matter most to you.",
   },
   {
-    id: "education",
-    title: "Learn the Basics",
-    description:
-      "Review short lessons on effective symptom tracking, privacy, and staying motivated.",
-    optional: true,
-  },
-  {
     id: "privacy",
     title: "Review Privacy Controls",
     description:

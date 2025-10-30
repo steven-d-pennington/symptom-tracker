@@ -5,8 +5,8 @@ export type OnboardingStepId =
   | "profile"
   | "condition"
   | "preferences"
-  | "education"
   | "privacy"
+  | "education"
   | "completion";
 
 export interface TrackingPreferences {

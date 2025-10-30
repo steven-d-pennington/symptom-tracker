@@ -30,11 +30,11 @@
 
 .dark {
   --background: #020617;
-  --foreground: #e2e8f0;
+  --foreground: #f3f4f6;
   --card: #0f172a;
-  --card-foreground: #e2e8f0;
+  --card-foreground: #f3f4f6;
   --muted: #1e293b;
-  --muted-foreground: #94a3b8;
+  --muted-foreground: #d1d5db;
   --border: #1e293b;
   --primary: #818cf8;
   --primary-foreground: #0f172a;

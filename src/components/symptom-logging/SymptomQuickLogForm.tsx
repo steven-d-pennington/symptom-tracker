@@ -170,7 +170,7 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
   return (
     <div className="space-y-6">
       {/* Symptom Selection Section - AC3.5.3.7 */}
-      <section className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+      <section className="bg-card rounded-lg shadow-sm">
         <div className="p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Select Symptom</h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -194,7 +194,7 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
         <form
           id="quick-log-form"
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-6"
+          className="bg-card rounded-lg shadow-sm p-6 space-y-6"
         >
           {/* Selected Symptom Display */}
           <div className="pb-4 border-b border-border">
@@ -218,7 +218,7 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
                 max="10"
                 value={severity}
                 onChange={(e) => setSeverity(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                 required
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-2 px-1">
@@ -298,7 +298,7 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
                         key={index}
                         type="button"
                         onClick={() => handleNoteChipClick(note)}
-                        className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-foreground rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        className="px-3 py-1.5 text-sm bg-muted text-foreground rounded-full hover:bg-primary/10 transition-colors"
                         style={{ minHeight: "32px" }}
                       >
                         {note.length > 40 ? `${note.slice(0, 40)}...` : note}
@@ -331,7 +331,7 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
             <button
               type="button"
               onClick={toggleDetails}
-              className="w-full bg-gray-100 dark:bg-gray-700 text-foreground py-3 rounded-lg text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="w-full bg-muted text-foreground py-3 rounded-lg text-base font-medium hover:bg-primary/10 transition-colors"
               style={{ minHeight: "44px" }}
             >
               {showDetails ? "Hide Details" : "Add Details"}
@@ -351,7 +351,7 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
 
       {/* Empty state when no symptom selected */}
       {!selectedSymptom && !isLoadingSymptoms && symptoms.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+        <div className="bg-card rounded-lg shadow-sm p-8 text-center">
           <p className="text-muted-foreground">
             Select a symptom above to start logging
           </p>
@@ -360,7 +360,7 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
 
       {/* Empty state when no symptoms exist */}
       {!isLoadingSymptoms && symptoms.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+        <div className="bg-card rounded-lg shadow-sm p-8 text-center">
           <p className="text-muted-foreground mb-4">
             No symptoms available. Please add symptoms in Settings.
           </p>

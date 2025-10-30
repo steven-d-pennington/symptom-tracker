@@ -5,10 +5,10 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { QuickLogButtons } from "@/components/quick-log/QuickLogButtons";
 import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
-import { MedicationLogModal } from "@/components/medications/MedicationLogModal";
+// Story 3.5.5: MedicationLogModal deprecated, medication logging now uses dedicated page at /log/medication
 // Story 3.5.3: SymptomLogModal deprecated, symptom logging now uses dedicated page at /log/symptom
 // Story 3.5.4: FoodLogModal deprecated, food logging now uses dedicated page at /log/food
-import { TriggerLogModal } from "@/components/triggers/TriggerLogModal";
+// Story 3.5.5: TriggerLogModal deprecated, trigger logging now uses dedicated page at /log/trigger
 import TimelineView from "@/components/timeline/TimelineView";
 import { TodayQuickActionsCard } from "@/components/dashboard/TodayQuickActionsCard";
 import { TodayTimelineCard } from "@/components/dashboard/TodayTimelineCard";
@@ -125,7 +125,8 @@ function DashboardContent() {
     void recordUxEvent("quickAction.medication", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
-    router.push("/dashboard?quickAction=medication");
+    // Story 3.5.5: Navigate to dedicated medication logging page
+    router.push("/log/medication");
   }, [recordUxEvent, router]);
 
   const handleLogSymptom = useCallback(() => {
@@ -140,7 +141,8 @@ function DashboardContent() {
     void recordUxEvent("quickAction.trigger", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
-    router.push("/dashboard?quickAction=trigger");
+    // Story 3.5.5: Navigate to dedicated trigger logging page
+    router.push("/log/trigger");
   }, [recordUxEvent, router]);
 
   const handleLogFood = useCallback(() => {
@@ -244,26 +246,9 @@ function DashboardContent() {
         />
       )}
 
-      {userId && quickAction === "medication" && (
-        <MedicationLogModal
-          isOpen={true}
-          onClose={handleCloseQuickAction}
-          onLogged={handleEventLogged}
-          userId={userId}
-        />
-      )}
-
+      {/* Story 3.5.5: Medication logging moved to dedicated page at /log/medication */}
       {/* Story 3.5.3: Symptom logging moved to dedicated page at /log/symptom */}
-
-      {userId && quickAction === "trigger" && (
-        <TriggerLogModal
-          isOpen={true}
-          onClose={handleCloseQuickAction}
-          onLogged={handleEventLogged}
-          userId={userId}
-        />
-      )}
-
+      {/* Story 3.5.5: Trigger logging moved to dedicated page at /log/trigger */}
       {/* Story 3.5.4: Food Log Modal removed - food logging now uses dedicated page at /log/food */}
     </div>
   );

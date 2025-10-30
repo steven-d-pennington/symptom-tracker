@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-10-29
+- **Last Updated:** 2025-10-30
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** 4-Implementation (In Progress)
-- **Current Workflow:** Epic 3.5 Stories Drafted - Ready for Story Context Generation
-- **Overall Progress:** Epic 3 at 100%, Epic 3.5 at 100% (8/8 stories drafted)
-- **Next Action:** Generate story context XML files for Epic 3.5 stories using story-context workflow
-- **Command to Run:** /bmad:bmm:workflows:story-context for each story OR use SM agent with *story-context
-- **Agent to Load:** SM agent - bmad/bmm/agents/sm.md OR DEV agent - bmad/bmm/agents/dev.md
-- **Note:** Epic 3.5 story drafting COMPLETE (2025-10-29). All 8 stories created from comprehensive UI/UX brainstorming session. Story files in docs/stories/3-5-*.md. Next step: Generate story context XML to mark stories ready-for-dev. Epic document: docs/epic-3.5-production-ux.md. Brainstorming results: docs/brainstorming-session-results-2025-10-29.md. 8 stories, 47 points estimated, 2-3 weeks duration.
+- **Current Workflow:** Epic 3.5 Implementation - 6/8 stories complete
+- **Overall Progress:** Epic 3 at 100%, Epic 3.5 at 75% (6/8 stories done, 2 ready-for-dev)
+- **Next Action:** Implement Story 3.5.7 (Fix Calendar Data Wiring)
+- **Command to Run:** /bmad:bmm:workflows:dev-story
+- **Agent to Load:** DEV agent - bmad/bmm/agents/dev.md
+- **Note:** Epic 3.5 implementation in progress. Stories 3.5.1-3.5.6 COMPLETE (39/47 points = 83%). Stories 3.5.7 (3 pts) and 3.5.8 (5 pts) remaining - 8 points total. Story files in docs/stories/3-5-*.md. Epic document: docs/epic-3.5-production-ux.md.
 
 ---
 
@@ -26,7 +26,7 @@
 - [x] Phase 1: Analysis (Optional - skipped, brownfield enhancement)
 - [x] Phase 2: Plan (Complete - PRD + Epics)
 - [x] Phase 3: Solutioning (Complete - Architecture)
-- [ ] Phase 4: Implementation (87% complete - Epic 0.5 in progress)
+- [ ] Phase 4: Implementation (Epic 3.5 in progress - 6/8 stories complete)
 
 ---
 
@@ -86,6 +86,12 @@ Created from comprehensive UI/UX brainstorming session (2025-10-29). Identified 
 
 | Story ID | File | Completed Date | Points | Epic |
 |----------|------|----------------|--------|------|
+| 3.5.6 | docs/stories/3-5-6-critical-ui-fixes-bundle.md | 2025-10-30 | 5 | Epic 3.5: Production UX |
+| 3.5.5 | docs/stories/3-5-5-redesign-trigger-and-medication-logging-to-pages.md | 2025-10-30 | 5 | Epic 3.5: Production UX |
+| 3.5.4 | docs/stories/3-5-4-redesign-food-logging-modal-to-page.md | 2025-10-30 | 8 | Epic 3.5: Production UX |
+| 3.5.3 | docs/stories/3-5-3-redesign-symptom-logging-modal-to-page.md | 2025-10-30 | 5 | Epic 3.5: Production UX |
+| 3.5.2 | docs/stories/3-5-2-mood-and-sleep-basic-logging.md | 2025-10-30 | 8 | Epic 3.5: Production UX |
+| 3.5.1 | docs/stories/3-5-1-fix-empty-state-crisis-and-pre-populate-defaults.md | 2025-10-30 | 8 | Epic 3.5: Production UX |
 | 3.2 | docs/stories/story-3.2.md | 2025-10-29 | 8 | Epic 3: Analytics |
 | 3.5 | docs/stories/3-5-intervention-effectiveness-analysis.md | 2025-10-29 | 13 | Epic 3: Analytics |
 | 3.4 | docs/stories/3-4-flare-trend-analysis-visualization.md | 2025-10-29 | 13 | Epic 3: Analytics |
@@ -118,54 +124,44 @@ Created from comprehensive UI/UX brainstorming session (2025-10-29). Identified 
 - ✅ **Epic 1 (Enhanced Body Map):** 6/6 stories complete (100%)
 - 🟡 **Epic 2 (Flare Lifecycle):** 7/8 stories complete (87.5%) - Story 2.8 deferred
 - ✅ **Epic 3 (Analytics):** 5/5 stories complete (100%) - Retrospective done
-- 📝 **Epic 3.5 (Production-Ready UX):** 8/8 stories drafted (100%) - Awaiting context generation
+- 🟡 **Epic 3.5 (Production-Ready UX):** 6/8 stories complete (75%) - 2 stories remaining
 - ⏸️ **Epic 4 (Photo Documentation):** 0/4 stories drafted - Deferred until Epic 3.5 complete
 
-**Total completed:** 27 stories
-**Total points completed:** 174 points
+**Total completed:** 33 stories
+**Total points completed:** 213 points
 **In progress/review:** 0 stories
-**Drafted (awaiting context):** 8 stories (Epic 3.5) - 47 points
+**Ready for development:** 2 stories (Epic 3.5) - 8 points
 **Backlog:** 5 stories (1 Epic 2, 4 Epic 4)
-**Overall progress:** Epic 3.5 story drafting complete (8/8), ready for context generation
+**Overall progress:** Epic 3.5 at 75% (6/8 stories complete), 2 stories remaining
 
 ---
 
 ### Next Action Required
 
-**🎯 Epic 3.5: All Stories Drafted - Ready for Context Generation**
+**🎯 Epic 3.5: Implementation - 2 Stories Remaining**
 
-Epic 3.5 story drafting COMPLETE (2025-10-29). All 8 stories created with full acceptance criteria, tasks, and dev notes. Story files located in `docs/stories/3-5-*.md`.
+Epic 3.5 implementation at 75% complete (6/8 stories done). 39 of 47 points delivered. Final 2 stories ready for development.
 
-**Epic 3.5 Status:** Stories drafted, awaiting context generation (8/8 stories drafted)
-- ✅ Story 3.5.1: Fix Empty State Crisis & Pre-populate Defaults (8 pts) - CRITICAL
-- ✅ Story 3.5.2: Mood & Sleep Basic Logging (8 pts) - HIGH
-- ✅ Story 3.5.3: Redesign Symptom Logging Modal → Page (5 pts) - HIGH
-- ✅ Story 3.5.4: Redesign Food Logging Modal → Page (8 pts) - HIGH
-- ✅ Story 3.5.5: Redesign Trigger & Medication Logging → Pages (5 pts) - HIGH
-- ✅ Story 3.5.6: Critical UI Fixes Bundle (5 pts) - HIGH
-- ✅ Story 3.5.7: Fix Calendar Data Wiring (3 pts) - MEDIUM
-- ✅ Story 3.5.8: Add Keyboard Navigation (5 pts) - MEDIUM
+**Epic 3.5 Status:**
+- ✅ Story 3.5.1: Fix Empty State Crisis & Pre-populate Defaults (8 pts) - COMPLETE
+- ✅ Story 3.5.2: Mood & Sleep Basic Logging (8 pts) - COMPLETE
+- ✅ Story 3.5.3: Redesign Symptom Logging Modal → Page (5 pts) - COMPLETE
+- ✅ Story 3.5.4: Redesign Food Logging Modal → Page (8 pts) - COMPLETE
+- ✅ Story 3.5.5: Redesign Trigger & Medication Logging → Pages (5 pts) - COMPLETE
+- ✅ Story 3.5.6: Critical UI Fixes Bundle (5 pts) - COMPLETE
+- 🎯 **Story 3.5.7: Fix Calendar Data Wiring (3 pts) - READY-FOR-DEV** ← NEXT
+- 📋 Story 3.5.8: Add Keyboard Navigation (5 pts) - READY-FOR-DEV
 
-**Total:** 8 stories drafted, 47 points estimated, 2-3 weeks duration
-
-**Story Files Created:**
-- 3-5-1-fix-empty-state-crisis-and-pre-populate-defaults.md
-- 3-5-2-mood-and-sleep-basic-logging.md
-- 3-5-3-redesign-symptom-logging-modal-to-page.md
-- 3-5-4-redesign-food-logging-modal-to-page.md
-- 3-5-5-redesign-trigger-and-medication-logging-to-pages.md
-- 3-5-6-critical-ui-fixes-bundle.md
-- 3-5-7-fix-calendar-data-wiring.md
-- 3-5-8-add-keyboard-navigation-accessibility.md
+**Remaining Work:** 2 stories, 8 points
 
 **Next Steps:**
-1. **Generate Story Context XML:** Run story-context workflow for each story to create developer-ready context files
-2. **Command Options:**
-   - `/bmad:bmm:workflows:story-context` for individual stories
-   - Load SM agent and use `*story-context` menu item
-3. **After Context Generation:** Stories will be marked as ready-for-dev and can begin implementation
-4. **Implementation Order:** Begin with Story 3.5.1 (Empty State Crisis) - CRITICAL priority
-5. **Timeline:** 2-3 weeks to complete all 8 stories (47 points at ~25 pts/day velocity)
+1. **Implement Story 3.5.7:** Fix Calendar Data Wiring
+   - Command: `/bmad:bmm:workflows:dev-story`
+   - Agent: DEV agent
+   - File: `docs/stories/3-5-7-fix-calendar-data-wiring.md`
+2. **After 3.5.7 Complete:** Move to Story 3.5.8 (Keyboard Navigation)
+3. **After Epic 3.5 Complete:** Run Epic 3.5 retrospective (optional)
+4. **Final Milestone:** Epic 3.5 production readiness achieved
 
 ---
 
@@ -208,15 +204,15 @@ Epic 3.5 story drafting COMPLETE (2025-10-29). All 8 stories created with full a
 - 3.5: Intervention Effectiveness Analysis ✅
 - Epic 3 Retrospective ✅ (completed 2025-10-29)
 
-**📝 Epic 3.5: Production-Ready UI/UX Enhancement** (8/8 stories drafted - Awaiting context generation)
-- 3.5.1: Fix Empty State Crisis & Pre-populate Defaults ✅ DRAFTED (CRITICAL)
-- 3.5.2: Mood & Sleep Basic Logging ✅ DRAFTED (HIGH)
-- 3.5.3: Redesign Symptom Logging Modal → Page ✅ DRAFTED (HIGH)
-- 3.5.4: Redesign Food Logging Modal → Page ✅ DRAFTED (HIGH)
-- 3.5.5: Redesign Trigger & Medication Logging → Pages ✅ DRAFTED (HIGH)
-- 3.5.6: Critical UI Fixes Bundle ✅ DRAFTED (HIGH)
-- 3.5.7: Fix Calendar Data Wiring ✅ DRAFTED (MEDIUM)
-- 3.5.8: Add Keyboard Navigation ✅ DRAFTED (MEDIUM)
+**🟡 Epic 3.5: Production-Ready UI/UX Enhancement** (6/8 stories complete - 75%)
+- 3.5.1: Fix Empty State Crisis & Pre-populate Defaults ✅ (CRITICAL - 8 pts)
+- 3.5.2: Mood & Sleep Basic Logging ✅ (HIGH - 8 pts)
+- 3.5.3: Redesign Symptom Logging Modal → Page ✅ (HIGH - 5 pts)
+- 3.5.4: Redesign Food Logging Modal → Page ✅ (HIGH - 8 pts)
+- 3.5.5: Redesign Trigger & Medication Logging → Pages ✅ (HIGH - 5 pts)
+- 3.5.6: Critical UI Fixes Bundle ✅ (HIGH - 5 pts)
+- 3.5.7: Fix Calendar Data Wiring 🎯 NEXT (MEDIUM - 3 pts)
+- 3.5.8: Add Keyboard Navigation 📋 READY (MEDIUM - 5 pts)
 
 **⏸️ Epic 4: Photo Documentation Integration** (Deferred - 0/4 stories drafted)
 - All stories remain in backlog
@@ -279,6 +275,8 @@ Epic 3.5 story drafting COMPLETE (2025-10-29). All 8 stories created with full a
 ---
 
 ## Decision Log
+
+- **2025-10-30:** Completed Story 3.5.6 (Critical UI Fixes Bundle) and marked done. Epic 3.5 now at 75% complete (6/8 stories). 39 of 47 points delivered (83%). Remaining stories: 3.5.7 (Fix Calendar Data Wiring - 3 pts) and 3.5.8 (Add Keyboard Navigation - 5 pts). Both stories ready-for-dev. Next action: Implement Story 3.5.7 using dev-story workflow with DEV agent.
 
 - **2025-10-29:** Epic 3.5 Story Drafting COMPLETE. All 8 stories drafted in non-interactive mode using SM agent with comprehensive specifications. Story files created in docs/stories/3-5-*.md with full acceptance criteria (7-10 ACs per story), tasks/subtasks (8-11 tasks per story), dev notes with architecture patterns, implementation guidance, schema considerations, and testing strategy. All stories include critical reminders for import/export compatibility and devdatacontrols updates where applicable. Story breakdown: (1) Fix Empty State Crisis - 8pts CRITICAL, (2) Mood & Sleep Basic Logging - 8pts HIGH, (3) Redesign Symptom Logging - 5pts HIGH, (4) Redesign Food Logging - 8pts HIGH, (5) Redesign Trigger/Medication Logging - 5pts HIGH, (6) Critical UI Fixes Bundle - 5pts HIGH, (7) Fix Calendar Data Wiring - 3pts MEDIUM, (8) Add Keyboard Navigation - 5pts MEDIUM. Total: 47 points. Updated sprint-status.yaml: marked epic-3.5 as "contexted" and all 8 stories as "drafted". Updated bmm-workflow-status.md: Current state shows Epic 3.5 at 100% drafting complete, next action is story context XML generation. Epic 3.5 sourced from brainstorming session (docs/brainstorming-session-results-2025-10-29.md) with role-playing, assumption reversal, SCAMPER method, and expert panel review. Story drafting utilized epics.md (full story breakdown), PRD.md (requirements), and epic-3.5-production-ux.md (detailed epic document). Next step: Run story-context workflow for each story to generate developer-ready XML context files and mark stories as ready-for-dev.
 

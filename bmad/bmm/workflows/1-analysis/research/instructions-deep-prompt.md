@@ -403,8 +403,9 @@ Select option (1-4):</ask>
 
 **Next Steps:**
 
-- **Next required:** {{next_workflow}} ({{next_agent}} agent)
-- **Optional:** Execute the research prompt with AI platform, gather findings, or run additional research workflows
+1. Execute the research prompt with your chosen AI platform
+2. Gather and analyze findings
+3. Run `plan-project` to incorporate findings
 
 Check status anytime with: `workflow-status`
 </output>
@@ -421,13 +422,10 @@ Note: Running in standalone mode (no status file).
 
 **Next Steps:**
 
-Since no workflow is in progress:
-
-- Execute the research prompt with AI platform and gather findings
-- Refer to the BMM workflow guide if unsure what to do next
-- Or run `workflow-init` to create a workflow path and get guided next steps
-  </output>
-  </check>
-  </step>
+1. Execute the research prompt with AI platform
+2. Run plan-project workflow
+   </output>
+   </check>
+   </step>
 
 </workflow>

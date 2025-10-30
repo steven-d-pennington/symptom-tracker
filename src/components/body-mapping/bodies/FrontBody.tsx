@@ -79,12 +79,19 @@ export function FrontBody({
   const getRegionOpacity = (region: BodyRegion): number => {
     const isFlare = flareRegions.includes(region.id);
     const severity = severityByRegion[region.id];
+    const isSelected = selectedRegions.includes(region.id);
+    const hasSelection = selectedRegions.length > 0;
 
     // Flares are more opaque and prominent
     if (isFlare) return 0.9;
 
+    // If something is selected, dim non-selected regions
+    if (hasSelection && !isSelected) {
+      return 0.15; // Significantly dimmed
+    }
+
     if (severity) return 0.8;
-    if (selectedRegions.includes(region.id)) return 0.6;
+    if (isSelected) return 0.6;
     if (highlightedRegion === region.id) return 0.5;
     return 0.3;
   };
@@ -106,9 +113,11 @@ export function FrontBody({
   return (
     <svg
       viewBox="0 0 400 800"
-      className={`w-full h-full ${coordinateCursorActive ? "coordinate-mode" : ""}`}
+      className={coordinateCursorActive ? "coordinate-mode" : ""}
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
+      width="400"
+      height="800"
       onClickCapture={onCoordinateCapture}
       onTouchStart={onTouchCoordinateCapture}
       role="application"
@@ -166,7 +175,7 @@ export function FrontBody({
       <ellipse
         id="head-front"
         cx="200"
-        cy="60"
+        cy="40"
         rx="50"
         ry="60"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS[0])}`}
@@ -186,7 +195,7 @@ export function FrontBody({
       <rect
         id="neck-front"
         x="175"
-        y="110"
+        y="90"
         width="50"
         height="40"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS[1])}`}
@@ -206,7 +215,7 @@ export function FrontBody({
       <ellipse
         id="shoulder-left"
         cx="120"
-        cy="170"
+        cy="150"
         rx="45"
         ry="35"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}`}
@@ -222,7 +231,7 @@ export function FrontBody({
       <ellipse
         id="shoulder-right"
         cx="280"
-        cy="170"
+        cy="150"
         rx="45"
         ry="35"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-right")!)}`}
@@ -233,11 +242,41 @@ export function FrontBody({
         onMouseLeave={() => onRegionHover?.(null)}
       />
 
+      {/* Left Chest */}
+      <ellipse
+        id="chest-left"
+        cx="165"
+        cy="205"
+        rx="35"
+        ry="45"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
+        onClick={() => onRegionClick?.("chest-left")}
+        onMouseEnter={() => onRegionHover?.("chest-left")}
+        onMouseLeave={() => onRegionHover?.(null)}
+      />
+
+      {/* Right Chest */}
+      <ellipse
+        id="chest-right"
+        cx="235"
+        cy="205"
+        rx="35"
+        ry="45"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
+        onClick={() => onRegionClick?.("chest-right")}
+        onMouseEnter={() => onRegionHover?.("chest-right")}
+        onMouseLeave={() => onRegionHover?.(null)}
+      />
+
       {/* Left Armpit */}
       <ellipse
         id="armpit-left"
         cx="145"
-        cy="195"
+        cy="175"
         rx="20"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-left")!)}`}
@@ -252,7 +291,7 @@ export function FrontBody({
       <ellipse
         id="armpit-right"
         cx="255"
-        cy="195"
+        cy="175"
         rx="20"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-right")!)}`}
@@ -260,34 +299,6 @@ export function FrontBody({
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-right")!)}
         onClick={() => onRegionClick?.("armpit-right")}
         onMouseEnter={() => onRegionHover?.("armpit-right")}
-        onMouseLeave={() => onRegionHover?.(null)}
-      />
-
-      {/* Left Chest */}
-      <path
-        id="chest-left"
-        d="M 145 160 Q 145 220 165 250"
-        fill="none"
-        stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
-        strokeWidth="60"
-        strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
-        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}`}
-        onClick={() => onRegionClick?.("chest-left")}
-        onMouseEnter={() => onRegionHover?.("chest-left")}
-        onMouseLeave={() => onRegionHover?.(null)}
-      />
-
-      {/* Right Chest */}
-      <path
-        id="chest-right"
-        d="M 255 160 Q 255 220 235 250"
-        fill="none"
-        stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
-        strokeWidth="60"
-        strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
-        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}`}
-        onClick={() => onRegionClick?.("chest-right")}
-        onMouseEnter={() => onRegionHover?.("chest-right")}
         onMouseLeave={() => onRegionHover?.(null)}
       />
 
@@ -324,9 +335,9 @@ export function FrontBody({
       {/* Upper Abdomen */}
       <rect
         id="abdomen-upper"
-        x="165"
+        x="155"
         y="265"
-        width="70"
+        width="90"
         height="60"
         rx="10"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-upper")!)}`}
@@ -340,9 +351,9 @@ export function FrontBody({
       {/* Lower Abdomen */}
       <rect
         id="abdomen-lower"
-        x="165"
+        x="155"
         y="325"
-        width="70"
+        width="90"
         height="60"
         rx="10"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-lower")!)}`}
@@ -405,7 +416,7 @@ export function FrontBody({
       <rect
         id="upper-arm-left"
         x="75"
-        y="195"
+        y="175"
         width="40"
         height="120"
         rx="20"
@@ -422,7 +433,7 @@ export function FrontBody({
       <rect
         id="upper-arm-right"
         x="285"
-        y="195"
+        y="175"
         width="40"
         height="120"
         rx="20"
@@ -439,7 +450,7 @@ export function FrontBody({
       <ellipse
         id="elbow-left"
         cx="95"
-        cy="325"
+        cy="305"
         rx="25"
         ry="20"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-left")!)}`}
@@ -454,7 +465,7 @@ export function FrontBody({
       <ellipse
         id="elbow-right"
         cx="305"
-        cy="325"
+        cy="305"
         rx="25"
         ry="20"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-right")!)}`}
@@ -469,7 +480,7 @@ export function FrontBody({
       <rect
         id="forearm-left"
         x="75"
-        y="345"
+        y="325"
         width="35"
         height="110"
         rx="17"
@@ -485,7 +496,7 @@ export function FrontBody({
       <rect
         id="forearm-right"
         x="290"
-        y="345"
+        y="325"
         width="35"
         height="110"
         rx="17"
@@ -501,7 +512,7 @@ export function FrontBody({
       <ellipse
         id="wrist-left"
         cx="92"
-        cy="465"
+        cy="445"
         rx="18"
         ry="15"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-left")!)}`}
@@ -516,7 +527,7 @@ export function FrontBody({
       <ellipse
         id="wrist-right"
         cx="308"
-        cy="465"
+        cy="445"
         rx="18"
         ry="15"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-right")!)}`}
@@ -531,7 +542,7 @@ export function FrontBody({
       <ellipse
         id="hand-left"
         cx="92"
-        cy="495"
+        cy="470"
         rx="20"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hand-left")!)}`}
@@ -546,7 +557,7 @@ export function FrontBody({
       <ellipse
         id="hand-right"
         cx="308"
-        cy="495"
+        cy="470"
         rx="20"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hand-right")!)}`}
@@ -770,6 +781,53 @@ export function FrontBody({
         onMouseEnter={() => onRegionHover?.("foot-right")}
         onMouseLeave={() => onRegionHover?.(null)}
       />
+
+      {/* Re-render selected regions on top for better visibility when overlapping */}
+      {selectedRegions.map((regionId) => {
+        const region = FRONT_BODY_REGIONS.find((r) => r.id === regionId);
+        if (!region) return null;
+
+        // Re-render specific regions that need to be brought to front
+        if (regionId === "chest-left") {
+          return (
+            <ellipse
+              key={`${regionId}-top`}
+              id={`${regionId}-overlay`}
+              cx="165"
+              cy="205"
+              rx="35"
+              ry="45"
+              className={`body-region ${getRegionClassName(region)}`}
+              fill={getRegionFill(region)}
+              fillOpacity={getRegionOpacity(region)}
+              onClick={() => onRegionClick?.(regionId)}
+              onMouseEnter={() => onRegionHover?.(regionId)}
+              onMouseLeave={() => onRegionHover?.(null)}
+              style={{ pointerEvents: 'all' }}
+            />
+          );
+        }
+        if (regionId === "chest-right") {
+          return (
+            <ellipse
+              key={`${regionId}-top`}
+              id={`${regionId}-overlay`}
+              cx="235"
+              cy="205"
+              rx="35"
+              ry="45"
+              className={`body-region ${getRegionClassName(region)}`}
+              fill={getRegionFill(region)}
+              fillOpacity={getRegionOpacity(region)}
+              onClick={() => onRegionClick?.(regionId)}
+              onMouseEnter={() => onRegionHover?.(regionId)}
+              onMouseLeave={() => onRegionHover?.(null)}
+              style={{ pointerEvents: 'all' }}
+            />
+          );
+        }
+        return null;
+      })}
 
       {flareOverlay}
       {coordinateMarker}

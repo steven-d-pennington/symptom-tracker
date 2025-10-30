@@ -19,8 +19,8 @@ const STEP_COMPONENTS: Record<OnboardingStepId, OnboardingStepComponent> = {
   profile: ProfileStep,
   condition: ConditionStep,
   preferences: PreferencesStep,
-  education: EducationStep,
   privacy: PrivacyStep,
+  education: EducationStep,
   completion: CompletionStep,
 };
 

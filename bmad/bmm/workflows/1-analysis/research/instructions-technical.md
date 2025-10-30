@@ -471,8 +471,9 @@ Select option (1-5):</ask>
 
 **Next Steps:**
 
-- **Next required:** {{next_workflow}} ({{next_agent}} agent)
-- **Optional:** Review findings with architecture team, or run additional analysis workflows
+1. Review technical research findings
+2. Share with architecture team
+3. Run `plan-project` to incorporate findings into PRD
 
 Check status anytime with: `workflow-status`
 </output>
@@ -489,13 +490,10 @@ Note: Running in standalone mode (no status file).
 
 **Next Steps:**
 
-Since no workflow is in progress:
-
-- Review technical research findings
-- Refer to the BMM workflow guide if unsure what to do next
-- Or run `workflow-init` to create a workflow path and get guided next steps
-  </output>
-  </check>
-  </step>
+1. Review technical research findings
+2. Run plan-project workflow
+   </output>
+   </check>
+   </step>
 
 </workflow>
