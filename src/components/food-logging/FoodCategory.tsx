@@ -11,7 +11,7 @@ interface FoodCategoryProps {
   isExpanded: boolean;
   onToggle: (expanded: boolean) => void;
   onSelectFood: (food: FoodRecord) => void;
-  selectedFoodId?: string;
+  selectedFoodIds?: Set<string>;
   searchQuery?: string;
 }
 
@@ -36,7 +36,7 @@ export function FoodCategory({
   isExpanded,
   onToggle,
   onSelectFood,
-  selectedFoodId,
+  selectedFoodIds,
   searchQuery,
 }: FoodCategoryProps) {
   // Highlight matching text in food names if searching
@@ -98,11 +98,11 @@ export function FoodCategory({
               onClick={() => onSelectFood(food)}
               className={cn(
                 "w-full text-left p-3 border rounded-lg min-h-[44px] transition-all",
-                selectedFoodId === food.id
+                selectedFoodIds?.has(food.id)
                   ? "bg-blue-50 dark:bg-blue-900 border-blue-500 dark:border-blue-400 ring-2 ring-blue-500 dark:ring-blue-400"
                   : "border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900 hover:border-blue-300 dark:hover:border-blue-600"
               )}
-              aria-pressed={selectedFoodId === food.id}
+              aria-pressed={selectedFoodIds?.has(food.id) ?? false}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="flex-1 font-medium text-foreground">

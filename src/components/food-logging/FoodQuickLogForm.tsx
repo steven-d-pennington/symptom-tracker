@@ -10,6 +10,8 @@ import { generateId } from "@/lib/utils/idGenerator";
 import { toast } from "@/components/common/Toast";
 import { FoodCategory } from "./FoodCategory";
 import { FoodSearchInput } from "./FoodSearchInput";
+import { MealComposer } from "@/components/food/MealComposer";
+import type { SelectedFoodItem } from "@/components/food/MealComposer";
 import type { FoodRecord, MealType, PortionSize } from "@/lib/db/schema";
 import { Coffee, Sunset, Moon, Cookie } from "lucide-react";
 
@@ -65,8 +67,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
   const router = useRouter();
 
   // Form state - Quick Log fields (essential)
-  const [selectedFood, setSelectedFood] = useState<FoodRecord | null>(null);
-  const [portionSize, setPortionSize] = useState<PortionSize>("medium");
+  const [selectedFoods, setSelectedFoods] = useState<SelectedFoodItem[]>([]);
   const [timestamp, setTimestamp] = useState<string>(
     new Date().toISOString().slice(0, 16)
   );
@@ -184,16 +185,41 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
     });
   };
 
-  // Handle food selection
+  // Handle food selection - add to meal
   const handleFoodSelect = (food: FoodRecord) => {
-    setSelectedFood(food);
-    // Scroll to form after selection on mobile
-    setTimeout(() => {
-      document.getElementById("quick-log-form")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    }, 100);
+    // Check if food is already selected
+    const isAlreadySelected = selectedFoods.some(item => item.food.id === food.id);
+    if (isAlreadySelected) {
+      toast.error("This food is already in your meal");
+      return;
+    }
+
+    // Add food with default medium portion
+    setSelectedFoods(prev => [...prev, { food, portion: "medium" }]);
+
+    // Scroll to form after first selection on mobile
+    if (selectedFoods.length === 0) {
+      setTimeout(() => {
+        document.getElementById("quick-log-form")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }, 100);
+    }
+  };
+
+  // Handle removing a food from the meal
+  const handleRemoveFood = (foodId: string) => {
+    setSelectedFoods(prev => prev.filter(item => item.food.id !== foodId));
+  };
+
+  // Handle portion size change for a food
+  const handlePortionChange = (foodId: string, portion: PortionSize) => {
+    setSelectedFoods(prev =>
+      prev.map(item =>
+        item.food.id === foodId ? { ...item, portion } : item
+      )
+    );
   };
 
   // Filter foods based on search query (AC3.5.4.4)
@@ -233,36 +259,42 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
     e.preventDefault();
 
     // Validation
-    if (!selectedFood) {
-      toast.error("Please select a food");
+    if (selectedFoods.length === 0) {
+      toast.error("Please select at least one food");
       return;
     }
 
     try {
       setIsSaving(true);
 
-      // Create meal ID
+      // Create meal ID (same for all foods in this meal)
       const mealId = generateId();
 
+      // Extract food IDs
+      const foodIds = selectedFoods.map(item => item.food.id);
+
       // Create portion map
-      const portionMap = JSON.stringify({
-        [selectedFood.id]: portionSize,
+      const portionMap: Record<string, PortionSize> = {};
+      selectedFoods.forEach(item => {
+        portionMap[item.food.id] = item.portion;
       });
 
       // Create food event
       await foodEventRepository.create({
         userId,
         mealId,
-        foodIds: JSON.stringify([selectedFood.id]),
+        foodIds: JSON.stringify(foodIds),
         timestamp: new Date(timestamp).getTime(),
         mealType: showDetails ? mealType : getDefaultMealType(),
-        portionMap,
+        portionMap: JSON.stringify(portionMap),
         notes: showDetails ? notes : undefined,
       });
 
       // Success feedback
-      toast.success("Food logged successfully", {
-        description: `${selectedFood.name} logged`,
+      const foodCount = selectedFoods.length;
+      const foodNames = selectedFoods.map(item => item.food.name).join(", ");
+      toast.success("Meal logged successfully", {
+        description: foodCount === 1 ? foodNames : `${foodCount} foods logged`,
         duration: 3000,
       });
 
@@ -291,12 +323,22 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
 
   const MealTypeIcon = getMealTypeIcon(mealType);
 
+  // Get IDs of selected foods for highlighting
+  const selectedFoodIds = new Set(selectedFoods.map(item => item.food.id));
+
   return (
     <div className="space-y-6">
       {/* Search Input - AC3.5.4.4 */}
       <FoodSearchInput
         onSearchChange={setSearchQuery}
         placeholder="Search foods..."
+      />
+
+      {/* MealComposer - shows selected foods with portion controls */}
+      <MealComposer
+        selectedFoods={selectedFoods}
+        onRemoveFood={handleRemoveFood}
+        onPortionChange={handlePortionChange}
       />
 
       {/* Empty state when search returns no results - AC3.5.4.4 */}
@@ -320,7 +362,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
                 isExpanded={expandedCategories.has("My Foods")}
                 onToggle={(expanded) => handleCategoryToggle("My Foods", expanded)}
                 onSelectFood={handleFoodSelect}
-                selectedFoodId={selectedFood?.id}
+                selectedFoodIds={selectedFoodIds}
               />
             </div>
           )}
@@ -339,7 +381,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
                   isExpanded={expandedCategories.has(`Favorites-${category}`)}
                   onToggle={(expanded) => handleCategoryToggle(`Favorites-${category}`, expanded)}
                   onSelectFood={handleFoodSelect}
-                  selectedFoodId={selectedFood?.id}
+                  selectedFoodIds={selectedFoodIds}
                 />
               ))}
             </div>
@@ -358,7 +400,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
                 isExpanded={expandedCategories.has(category)}
                 onToggle={(expanded) => handleCategoryToggle(category, expanded)}
                 onSelectFood={handleFoodSelect}
-                selectedFoodId={selectedFood?.id}
+                selectedFoodIds={selectedFoodIds}
               />
             ))}
           </div>
@@ -376,7 +418,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
               isExpanded={expandedCategories.has(category)}
               onToggle={(expanded) => handleCategoryToggle(category, expanded)}
               onSelectFood={handleFoodSelect}
-              selectedFoodId={selectedFood?.id}
+              selectedFoodIds={selectedFoodIds}
               searchQuery={searchQuery}
             />
           ))}
@@ -384,32 +426,15 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
       )}
 
       {/* Quick Log Form - AC3.5.4.5 */}
-      {selectedFood && (
+      {selectedFoods.length > 0 && (
         <form
           id="quick-log-form"
           onSubmit={handleSubmit}
           className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4"
         >
           <h3 className="text-lg font-semibold text-foreground">
-            Log {selectedFood.name}
+            {selectedFoods.length === 1 ? `Log ${selectedFoods[0].food.name}` : `Log Meal (${selectedFoods.length} foods)`}
           </h3>
-
-          {/* Portion Size */}
-          <div>
-            <label htmlFor="portion-size" className="block text-sm font-medium text-foreground mb-2">
-              Portion Size
-            </label>
-            <select
-              id="portion-size"
-              value={portionSize}
-              onChange={(e) => setPortionSize(e.target.value as PortionSize)}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
-            </select>
-          </div>
 
           {/* Timestamp */}
           <div>
@@ -488,7 +513,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
             disabled={isSaving}
             className="w-full py-3 bg-blue-600 dark:bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isSaving ? "Saving..." : "Log Food"}
+            {isSaving ? "Saving..." : selectedFoods.length === 1 ? "Log Food" : "Log Meal"}
           </button>
         </form>
       )}

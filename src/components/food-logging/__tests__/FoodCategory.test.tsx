@@ -219,7 +219,9 @@ describe('FoodCategory', () => {
       expect(mockOnSelectFood).toHaveBeenCalledWith(mockFoods[0]);
     });
 
-    it('highlights selected food item', () => {
+    it('highlights selected food items', () => {
+      const selectedIds = new Set(['food-1', 'food-3']);
+
       const { container } = render(
         <FoodCategory
           name="Dairy"
@@ -227,12 +229,17 @@ describe('FoodCategory', () => {
           isExpanded={true}
           onToggle={mockOnToggle}
           onSelectFood={mockOnSelectFood}
-          selectedFoodId="food-1"
+          selectedFoodIds={selectedIds}
         />
       );
 
-      const foodButton = screen.getByText('Cheddar Cheese').closest('button');
-      expect(foodButton).toHaveClass('bg-blue-50');
+      const cheeseButton = screen.getByText('Cheddar Cheese').closest('button');
+      const yogurtButton = screen.getByText('Custom Yogurt').closest('button');
+      const milkButton = screen.getByText('Milk').closest('button');
+
+      expect(cheeseButton).toHaveClass('bg-blue-50');
+      expect(yogurtButton).toHaveClass('bg-blue-50');
+      expect(milkButton).not.toHaveClass('bg-blue-50');
     });
 
     it('shows custom food badge for non-default foods', () => {
@@ -364,6 +371,8 @@ describe('FoodCategory', () => {
     });
 
     it('sets aria-pressed attribute on selected food items', () => {
+      const selectedIds = new Set(['food-1']);
+
       render(
         <FoodCategory
           name="Dairy"
@@ -371,12 +380,15 @@ describe('FoodCategory', () => {
           isExpanded={true}
           onToggle={mockOnToggle}
           onSelectFood={mockOnSelectFood}
-          selectedFoodId="food-1"
+          selectedFoodIds={selectedIds}
         />
       );
 
-      const foodButton = screen.getByText('Cheddar Cheese').closest('button');
-      expect(foodButton).toHaveAttribute('aria-pressed', 'true');
+      const cheeseButton = screen.getByText('Cheddar Cheese').closest('button');
+      const milkButton = screen.getByText('Milk').closest('button');
+
+      expect(cheeseButton).toHaveAttribute('aria-pressed', 'true');
+      expect(milkButton).toHaveAttribute('aria-pressed', 'false');
     });
   });
 });
