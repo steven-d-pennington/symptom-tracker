@@ -7,12 +7,11 @@ import { QuickLogButtons } from "@/components/quick-log/QuickLogButtons";
 import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
 import { MedicationLogModal } from "@/components/medications/MedicationLogModal";
 // Story 3.5.3: SymptomLogModal deprecated, symptom logging now uses dedicated page at /log/symptom
+// Story 3.5.4: FoodLogModal deprecated, food logging now uses dedicated page at /log/food
 import { TriggerLogModal } from "@/components/triggers/TriggerLogModal";
-import { FoodLogModal } from "@/components/food/FoodLogModal";
 import TimelineView from "@/components/timeline/TimelineView";
 import { TodayQuickActionsCard } from "@/components/dashboard/TodayQuickActionsCard";
 import { TodayTimelineCard } from "@/components/dashboard/TodayTimelineCard";
-import { FoodProvider, useFoodContext } from "@/contexts/FoodContext";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
 import { cn } from "@/lib/utils/cn";
@@ -21,7 +20,6 @@ function DashboardContent() {
   const { userId } = useCurrentUser();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { openFoodLog } = useFoodContext();
   const { recordUxEvent } = useUxInstrumentation();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -136,13 +134,13 @@ function DashboardContent() {
   }, [recordUxEvent, router]);
 
   const handleLogFood = useCallback(() => {
-    // Food log uses FoodProvider context (already handles its own modal state)
+    // Story 3.5.4: Food logging now uses dedicated page at /log/food
     void recordUxEvent("quickAction.food", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
     performance.mark("food-log-button-click");
-    openFoodLog();
-  }, [openFoodLog, recordUxEvent]);
+    router.push("/log/food");
+  }, [router, recordUxEvent]);
 
   // Close modal by navigating back to dashboard
   const handleCloseQuickAction = useCallback(() => {
@@ -256,16 +254,11 @@ function DashboardContent() {
         />
       )}
 
-      {/* Food Log Modal - managed by FoodProvider */}
-      {userId && <FoodLogModal userId={userId} />}
+      {/* Story 3.5.4: Food Log Modal removed - food logging now uses dedicated page at /log/food */}
     </div>
   );
 }
 
 export default function DashboardPage() {
-  return (
-    <FoodProvider>
-      <DashboardContent />
-    </FoodProvider>
-  );
+  return <DashboardContent />;
 }
