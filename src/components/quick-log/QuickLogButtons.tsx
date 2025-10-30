@@ -47,7 +47,7 @@ export function QuickLogButtons({
       emoji: "🔥",
       label: "New Flare",
       onClick: onLogFlare,
-      colorClasses: "bg-red-500 hover:bg-red-600 active:bg-red-700 text-white",
+      colorClasses: "bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground",
       ariaLabel: "Log new flare",
     },
     {
@@ -55,7 +55,7 @@ export function QuickLogButtons({
       emoji: "💊",
       label: "Medication",
       onClick: onLogMedication,
-      colorClasses: "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white",
+      colorClasses: "bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground",
       ariaLabel: "Log medication",
     },
     {
@@ -63,14 +63,14 @@ export function QuickLogButtons({
       emoji: "😣",
       label: "Symptom",
       onClick: onLogSymptom,
-      colorClasses: "bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-white",
+      colorClasses: "bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground",
       ariaLabel: "Log symptom",
     },
     {
       id: "food",
       label: "Food",
       onClick: onLogFood,
-      colorClasses: "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white",
+      colorClasses: "bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground",
       ariaLabel: "Log food",
       icon: Utensils,
     },
@@ -79,7 +79,7 @@ export function QuickLogButtons({
       emoji: "⚠️",
       label: "Trigger",
       onClick: onLogTrigger,
-      colorClasses: "bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white",
+      colorClasses: "bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground",
       ariaLabel: "Log trigger",
     },
   ];

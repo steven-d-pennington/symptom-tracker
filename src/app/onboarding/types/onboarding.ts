@@ -5,7 +5,6 @@ export type OnboardingStepId =
   | "profile"
   | "condition"
   | "preferences"
-  | "education"
   | "privacy"
   | "completion";
 

@@ -37,11 +37,28 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
   const handleInit = useCallback(
     (ref: ReactZoomPanPinchRef) => {
       apiRef.current = ref;
-      // Center with slight downward offset to better position the body
-      if (ref.setTransform) {
-        ref.setTransform(0, 100, 0.8, 0);
-      }
-      onZoomChange?.(0.8);
+      // Manually center the content
+      setTimeout(() => {
+        if (ref.setTransform) {
+          // Get the wrapper element size
+          const wrapperElement = ref.instance.wrapperComponent;
+          if (wrapperElement) {
+            const wrapperWidth = wrapperElement.offsetWidth;
+            const wrapperHeight = wrapperElement.offsetHeight;
+
+            // SVG is 400x800, at 0.6 scale = 240x480
+            const scaledWidth = 400 * 0.6;
+            const scaledHeight = 800 * 0.6;
+
+            // Center it
+            const x = (wrapperWidth - scaledWidth) / 2;
+            const y = (wrapperHeight - scaledHeight) / 2;
+
+            ref.setTransform(x, y, 0.6, 0);
+          }
+        }
+      }, 50);
+      onZoomChange?.(0.6);
     },
     [onZoomChange]
   );
@@ -62,10 +79,12 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
   return (
     <div className="relative w-full h-full">
       <TransformWrapper
-        initialScale={0.8}
-        minScale={0.5}
+        initialScale={0.6}
+        initialPositionX={0}
+        initialPositionY={0}
+        minScale={0.3}
         maxScale={3}
-        centerOnInit
+        centerOnInit={false}
         centerZoomedOut={false}
         limitToBounds={false}
         wheel={{ smoothStep: 0.005, disabled: false }}

@@ -38,7 +38,8 @@ You must fully embody this agent's persona and follow all activation instruction
       (workflow, exec, tmpl, data, action, validate-workflow) and follow the corresponding handler instructions</step>
 
   <menu-handlers>
-      <handlers>
+    <extract>{DYNAMIC_EXTRACT_LIST}</extract>
+    <handlers>
   <handler type="workflow">
     When menu item has: workflow="path/to/workflow.yaml"
     1. CRITICAL: Always LOAD {project-root}/bmad/core/tasks/workflow.xml
@@ -70,7 +71,7 @@ You must fully embody this agent's persona and follow all activation instruction
     <item cmd="*help">Show numbered menu</item>
     <item cmd="*workflow-status" workflow="{project-root}/bmad/bmm/workflows/workflow-status/workflow.yaml">Check workflow status and get recommendations</item>
     <item cmd="*develop" workflow="{project-root}/bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml">Execute Dev Story workflow, implementing tasks and tests, or performing updates to the story</item>
-    <item cmd="*story-done" workflow="{project-root}/bmad/bmm/workflows/4-implementation/story-done/workflow.yaml">Mark story done after DoD complete</item>
+    <item cmd="*story-approved" workflow="{project-root}/bmad/bmm/workflows/4-implementation/story-approved/workflow.yaml">Mark story done after DoD complete</item>
     <item cmd="*review" workflow="{project-root}/bmad/bmm/workflows/4-implementation/review-story/workflow.yaml">Perform a thorough clean context review on a story flagged Ready for Review, and appends review notes to story file</item>
     <item cmd="*exit">Exit with confirmation</item>
   </menu>

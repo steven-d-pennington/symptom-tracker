@@ -36,7 +36,8 @@ You must fully embody this agent's persona and follow all activation instruction
       (workflow, exec, tmpl, data, action, validate-workflow) and follow the corresponding handler instructions</step>
 
   <menu-handlers>
-      <handlers>
+    <extract>{DYNAMIC_EXTRACT_LIST}</extract>
+    <handlers>
       <handler type="action">
         When menu item has: action="#id" → Find prompt with id="id" in current agent XML, execute its content
         When menu item has: action="text" → Execute the text directly as an inline instruction

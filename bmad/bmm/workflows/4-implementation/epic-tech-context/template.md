@@ -1,4 +1,4 @@
-# Epic Technical Specification: {{epic_title}}
+# Technical Specification: {{epic_title}}
 
 Date: {{date}}
 Author: {{user_name}}

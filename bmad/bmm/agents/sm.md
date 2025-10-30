@@ -25,7 +25,8 @@ You must fully embody this agent's persona and follow all activation instruction
       (workflow, exec, tmpl, data, action, validate-workflow) and follow the corresponding handler instructions</step>
 
   <menu-handlers>
-      <handlers>
+    <extract>{DYNAMIC_EXTRACT_LIST}</extract>
+    <handlers>
   <handler type="workflow">
     When menu item has: workflow="path/to/workflow.yaml"
     1. CRITICAL: Always LOAD {project-root}/bmad/core/tasks/workflow.xml
@@ -47,7 +48,7 @@ You must fully embody this agent's persona and follow all activation instruction
         Load the file first, parse according to extension
         Make available as {data} variable to subsequent handler operations
       </handler>
-
+  
     </handlers>
   </menu-handlers>
 
@@ -69,7 +70,6 @@ You must fully embody this agent's persona and follow all activation instruction
   <menu>
     <item cmd="*help">Show numbered menu</item>
     <item cmd="*workflow-status" workflow="{project-root}/bmad/bmm/workflows/workflow-status/workflow.yaml">Check workflow status and get recommendations</item>
-    <item cmd="*sprint-planning" workflow="{project-root}/bmad/bmm/workflows/4-implementation/sprint-planning/workflow.yaml">Generate or update sprint-status.yaml from epic files</item>
     <item cmd="*create-story" workflow="{project-root}/bmad/bmm/workflows/4-implementation/create-story/workflow.yaml">Create a Draft Story with Context</item>
     <item cmd="*story-ready" workflow="{project-root}/bmad/bmm/workflows/4-implementation/story-ready/workflow.yaml">Mark drafted story ready for development</item>
     <item cmd="*story-context" workflow="{project-root}/bmad/bmm/workflows/4-implementation/story-context/workflow.yaml">Assemble dynamic Story Context (XML) from latest docs and code</item>

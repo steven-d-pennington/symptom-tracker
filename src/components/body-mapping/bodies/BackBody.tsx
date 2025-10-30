@@ -106,9 +106,11 @@ export function BackBody({
   return (
     <svg
       viewBox="0 0 400 800"
-      className={`w-full h-full ${coordinateCursorActive ? "coordinate-mode" : ""}`}
+      className={coordinateCursorActive ? "coordinate-mode" : ""}
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
+      width="400"
+      height="800"
       onClickCapture={onCoordinateCapture}
       onTouchStart={onTouchCoordinateCapture}
       role="application"

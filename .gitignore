@@ -29,6 +29,7 @@ BMAD-METHOD
 #bmad
 .gemini
 .github
+.bmad-*
 
 
 # next.js
