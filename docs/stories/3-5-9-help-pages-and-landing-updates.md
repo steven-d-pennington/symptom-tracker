@@ -1,6 +1,6 @@
 # Story 3.5.9: Help Pages, Landing Page, and About Page Enhancements
 
-Status: ready-for-dev
+Status: completed
 
 **Priority:** MEDIUM
 **Points:** 8
