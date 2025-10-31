@@ -857,6 +857,148 @@ So that I can highlight specific areas of concern.
 
 ---
 
+## Epic 5: Body Map Multi-Layer Enhancement
+
+### Expanded Goal
+
+Transform the body map from a single-purpose flare tracking tool into a multi-layer visualization system that allows users to track different types of body-area-related conditions (flares, pain, mobility restrictions, inflammation) on separate layers. Users can switch between layers for focused tracking and view multiple layers simultaneously for comprehensive health analysis.
+
+### Value Proposition
+
+- **Reduces visual clutter** by separating different condition types on distinct layers with unique visual markers
+- **Enables focused analysis** through layer-specific filtering and visualization for tracking trends in individual conditions
+- **Provides scalable architecture** for adding future tracking types without redesigning the core system
+- **Improves data quality** by allowing users to clearly distinguish between flare-related pain, general chronic pain, mobility issues, and inflammation
+- **Streamlines daily logging** through persistent layer selection that remembers the user's most-used tracking mode
+
+### Story Breakdown
+
+**Story 5.1: Add Layer Field to Data Model and IndexedDB Schema (3 pts)**
+
+As a developer implementing multi-layer support,
+I want to extend the body map data model to include layer information,
+So that markers can be categorized by tracking type with efficient querying.
+
+**Acceptance Criteria:**
+1. BodyMapMarker interface extended with `layer` field of type `'flares' | 'pain' | 'mobility' | 'inflammation'`
+2. IndexedDB schema migration adds `layer` field to existing body map marker records
+3. All existing flare markers automatically assigned `layer: 'flares'` during migration (backward compatible)
+4. Compound index created on `[userId+layer+timestamp]` for efficient layer-filtered queries
+5. TypeScript `LayerType` type definition created and exported from data model
+6. FlareRepository updated to support layer-filtered queries without breaking existing functionality
+7. Migration script tested with existing data to ensure no data loss
+8. Schema version incremented and migration handler registered in Dexie configuration
+9. Database queries maintain offline-first pattern (NFR002)
+
+**Prerequisites:** Epic 2 complete (body map data model exists)
+
+---
+
+**Story 5.2: Implement Layer Preferences and Persistence (2 pts)**
+
+As a user who primarily tracks one condition type,
+I want my last-used layer to persist between sessions,
+So that I don't have to re-select my preferred layer every time I log data.
+
+**Acceptance Criteria:**
+1. New `bodyMapPreferences` IndexedDB table created with fields: userId, lastUsedLayer, visibleLayers, defaultViewMode
+2. Preference repository implemented with get/set operations for layer preferences
+3. Last-used layer persists immediately when user switches layers (NFR002)
+4. Body map loads with last-used layer active on subsequent sessions
+5. Default layer set to 'flares' for new users (backward compatible)
+6. Preference updates happen without blocking UI interactions
+7. Preferences respect user isolation (userId-scoped)
+8. Import/export functionality includes preference data
+9. DevDataControls updated to support layer preference testing
+
+**Prerequisites:** Story 5.1 (layer field exists in data model)
+
+---
+
+**Story 5.3: Create Layer Selector Component for Tracking Mode (3 pts)**
+
+As a user tracking different condition types,
+I want to select which layer I'm logging to before marking body regions,
+So that my data is categorized correctly without extra steps.
+
+**Acceptance Criteria:**
+1. LayerSelector component displays current active layer with dropdown/tab interface
+2. Layer options shown: Flares (🔥), Pain (⚡), Mobility (🔒), Inflammation (🟣) with icons and labels
+3. Layer selection updates immediately when clicked (optimistic UI)
+4. Last-used layer badge displays "Last used: [layer name]" for user context
+5. Layer selector positioned prominently in body map tracking interface (above body diagram)
+6. Mobile-optimized with thumb-friendly touch targets (minimum 44x44px per NFR001)
+7. Keyboard navigation supported: Tab to focus, Arrow keys to navigate options, Enter to select
+8. Layer change persists via preference repository (Story 5.2)
+9. Screen reader announces layer selection: "Pain layer selected" with appropriate ARIA labels
+
+**Prerequisites:** Story 5.2 (layer preferences exist)
+
+---
+
+**Story 5.4: Implement Layer-Aware Marker Rendering (5 pts)**
+
+As a user viewing marked body areas,
+I want to see different visual markers for each layer type,
+So that I can instantly distinguish between flares, pain, mobility issues, and inflammation.
+
+**Acceptance Criteria:**
+1. Marker component (generalized from FlareMarker) renders layer-specific icons: Flares (🔥 red/orange), Pain (⚡ yellow/amber), Mobility (🔒 blue), Inflammation (🟣 purple)
+2. Marker size scales with severity (1-10 scale) maintaining touch-friendly minimum
+3. Marker opacity indicates recency (newer markers more opaque: 100% for <7 days, 70% for 7-30 days, 50% for >30 days)
+4. Multiple markers in same region position with smart offset to prevent complete overlap
+5. Body map queries filter markers by active layer in tracking mode (single layer view)
+6. Marker rendering performance optimized to handle 50+ markers without lag (NFR001)
+7. All marker types maintain accessibility: distinct shapes/icons AND colors for colorblind users
+8. Tapping marker opens layer-appropriate detail view (flare detail, pain log, etc.)
+9. Markers update in real-time when new data logged or layer switched
+
+**Prerequisites:** Story 5.3 (layer selector determines active layer)
+
+---
+
+**Story 5.5: Add Multi-Layer View Controls and Filtering (5 pts)**
+
+As a user analyzing my overall health patterns,
+I want to view multiple layers simultaneously with toggle controls,
+So that I can see the complete picture of all my tracked conditions.
+
+**Acceptance Criteria:**
+1. LayerToggle component displays checkboxes for each layer with current marker counts: "☑ Flares (3) ☑ Pain (5) ☐ Mobility (0) ☑ Inflammation (2)"
+2. View mode selector includes: "Single Layer" (shows active layer only) and "All Layers" (shows all enabled layers)
+3. Individual layer visibility toggled on/off via checkboxes without affecting persistence
+4. All enabled layers render simultaneously using distinct marker styles from Story 5.4
+5. Layer visibility state persists via preferences (visibleLayers field)
+6. Smart positioning algorithm prevents marker overlap when multiple layers visible (stagger positions)
+7. Performance remains responsive with all layers visible (60fps interactions per NFR001)
+8. Keyboard shortcuts added: Numbers 1-4 toggle individual layers, 'A' toggles all layers view
+9. Empty state messaging when no layers have active markers: "No markers on enabled layers. Switch to tracking mode to add data."
+
+**Prerequisites:** Story 5.4 (layer-aware markers render correctly)
+
+---
+
+**Story 5.6: Create Layer Legend and Accessibility Features (3 pts)**
+
+As a user viewing multi-layer body maps,
+I want a clear legend explaining what each marker represents,
+So that I can quickly interpret the visualization without confusion.
+
+**Acceptance Criteria:**
+1. LayerLegend component displays all layer types with: icon, color, label, and brief description
+2. Legend shows only currently visible layers in multi-layer view (auto-updates on toggle)
+3. Legend positioned prominently but non-intrusively (collapsible on mobile to save space)
+4. Each legend item clickable to toggle that layer's visibility
+5. Color contrast verified for WCAG AA compliance in both light and dark modes
+6. Screen reader support: Legend read as "Legend: Flares shown as red flame icons, Pain shown as yellow lightning icons..." with proper ARIA structure
+7. Keyboard navigation: Tab through legend items, Enter toggles layer visibility
+8. Help tooltip available explaining layer system: "Layers separate different tracking types. Switch layers to log different conditions, or view all layers to see comprehensive patterns."
+9. Legend exports with body map screenshots for medical consultations (future Story 4.x integration point)
+
+**Prerequisites:** Story 5.5 (multi-layer view and controls implemented)
+
+---
+
 ## Story Guidelines Reference
 
 **Story Format:**

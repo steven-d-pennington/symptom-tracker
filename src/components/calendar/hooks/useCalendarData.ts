@@ -23,6 +23,13 @@ import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
 import { symptomRepository } from "@/lib/repositories/symptomRepository";
 import { medicationRepository } from "@/lib/repositories/medicationRepository";
 import { triggerRepository } from "@/lib/repositories/triggerRepository";
+import { moodRepository } from "@/lib/repositories/moodRepository"; // Story 3.5.7
+import { sleepRepository } from "@/lib/repositories/sleepRepository"; // Story 3.5.7
+import { foodEventRepository } from "@/lib/repositories/foodEventRepository"; // Story 3.5.7
+import { symptomInstanceRepository } from "@/lib/repositories/symptomInstanceRepository"; // Story 3.5.7
+import { medicationEventRepository } from "@/lib/repositories/medicationEventRepository"; // Story 3.5.7
+import { triggerEventRepository } from "@/lib/repositories/triggerEventRepository"; // Story 3.5.7
+import { flareRepository } from "@/lib/repositories/flareRepository"; // Story 3.5.7
 import { useDateNavigation } from "./useDateNavigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
@@ -104,7 +111,20 @@ const impactFromIntensity = (value: number): "low" | "medium" | "high" => {
   return "low";
 };
 
-const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
+// Story 3.5.7: Enhanced buildDataset to include food, mood, sleep, and flare data
+const buildDataset = (
+  history: DailyEntry[],
+  lookups: LookupMaps,
+  additionalData?: {
+    moodEntries: any[];
+    sleepEntries: any[];
+    foodEvents: any[];
+    symptomInstances: any[];
+    medicationEvents: any[];
+    triggerEvents: any[];
+    flares: any[];
+  }
+) => {
   const entries: CalendarEntry[] = [];
   const dayLookup = new Map<string, CalendarDayDetail>();
   const events: TimelineEvent[] = [];
@@ -163,6 +183,10 @@ const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
       symptomCount: symptomsDetails.length,
       medicationCount: medicationDetails.filter((item) => item.taken).length,
       triggerCount: triggerDetails.length,
+      foodCount: 0, // Will be populated from additionalData
+      moodCount: 0,
+      sleepCount: 0,
+      flareCount: 0,
       mood: moodLabel,
       notes: Boolean(entry.notes),
       symptomCategories: [...new Set(symptomsDetails.map((item) => item.category))],
@@ -182,6 +206,10 @@ const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
       symptomsDetails,
       medicationDetails,
       triggerDetails,
+      foodDetails: [],
+      moodDetails: [],
+      sleepDetails: [],
+      flareDetails: [],
     };
 
     entries.push(calendarEntry);
@@ -252,6 +280,183 @@ const buildDataset = (history: DailyEntry[], lookups: LookupMaps) => {
       });
     }
   });
+
+  // Story 3.5.7: Process additional data sources and group by date
+  if (additionalData) {
+    // Process mood entries
+    additionalData.moodEntries.forEach((mood) => {
+      const iso = new Date(mood.timestamp).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const moodDetail = {
+        id: mood.id,
+        mood: mood.mood,
+        moodType: mood.moodType,
+        notes: mood.notes,
+        timestamp: mood.timestamp,
+      };
+
+      if (existing) {
+        existing.moodCount = (existing.moodCount || 0) + 1;
+        existing.moodDetails.push(moodDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 0,
+          moodCount: 1,
+          sleepCount: 0,
+          flareCount: 0,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [],
+          moodDetails: [moodDetail],
+          sleepDetails: [],
+          flareDetails: [],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+
+    // Process sleep entries
+    additionalData.sleepEntries.forEach((sleep) => {
+      const iso = new Date(sleep.timestamp).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const sleepDetail = {
+        id: sleep.id,
+        hours: sleep.hours,
+        quality: sleep.quality,
+        notes: sleep.notes,
+        timestamp: sleep.timestamp,
+      };
+
+      if (existing) {
+        existing.sleepCount = (existing.sleepCount || 0) + 1;
+        existing.sleepDetails.push(sleepDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 0,
+          moodCount: 0,
+          sleepCount: 1,
+          flareCount: 0,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [],
+          moodDetails: [],
+          sleepDetails: [sleepDetail],
+          flareDetails: [],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+
+    // Process food events
+    additionalData.foodEvents.forEach((food) => {
+      const iso = new Date(food.timestamp).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const foodIds = JSON.parse(food.foodIds || "[]");
+      const foodDetail = {
+        id: food.id,
+        foodIds,
+        foodNames: foodIds, // TODO: Resolve actual food names from food repository
+        mealType: food.mealType,
+        timestamp: food.timestamp,
+        notes: food.notes,
+      };
+
+      if (existing) {
+        existing.foodCount = (existing.foodCount || 0) + 1;
+        existing.foodDetails.push(foodDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 1,
+          moodCount: 0,
+          sleepCount: 0,
+          flareCount: 0,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [foodDetail],
+          moodDetails: [],
+          sleepDetails: [],
+          flareDetails: [],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+
+    // Process flares (show on start date)
+    additionalData.flares.forEach((flare) => {
+      const iso = new Date(flare.startDate).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const flareDetail = {
+        id: flare.id,
+        bodyRegionId: flare.bodyRegionId,
+        status: flare.status,
+        currentSeverity: flare.currentSeverity,
+        startDate: flare.startDate,
+      };
+
+      if (existing) {
+        existing.flareCount = (existing.flareCount || 0) + 1;
+        existing.flareDetails.push(flareDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 0,
+          moodCount: 0,
+          sleepCount: 0,
+          flareCount: 1,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [],
+          moodDetails: [],
+          sleepDetails: [],
+          flareDetails: [flareDetail],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+  }
 
   events.sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -466,6 +671,15 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     loadLookups().catch(console.error);
   }, [userId]);
 
+  // Story 3.5.7: Store additional calendar data
+  const [moodEntries, setMoodEntries] = useState<any[]>([]);
+  const [sleepEntries, setSleepEntries] = useState<any[]>([]);
+  const [foodEvents, setFoodEvents] = useState<any[]>([]);
+  const [symptomInstances, setSymptomInstances] = useState<any[]>([]);
+  const [medicationEvents, setMedicationEvents] = useState<any[]>([]);
+  const [triggerEvents, setTriggerEvents] = useState<any[]>([]);
+  const [flares, setFlares] = useState<any[]>([]);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -496,14 +710,89 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     };
   }, [userId]);
 
+  // Story 3.5.7: Load additional calendar data from all repositories
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadAllCalendarData = async () => {
+      try {
+        // Fetch from all repositories in parallel for performance (AC 3.5.7.1, 3.5.7.7)
+        const [
+          moods,
+          sleeps,
+          foods,
+          symptoms,
+          medications,
+          triggers,
+          activeFlares,
+        ] = await Promise.all([
+          moodRepository.getByUserId(userId),
+          sleepRepository.getByUserId(userId),
+          foodEventRepository.getAll(userId),
+          symptomInstanceRepository.getAll(userId),
+          medicationEventRepository.getAll(userId),
+          triggerEventRepository.getAll(userId),
+          flareRepository.getActiveFlares(userId),
+        ]);
+
+        setMoodEntries(moods);
+        setSleepEntries(sleeps);
+        setFoodEvents(foods);
+        setSymptomInstances(symptoms);
+        setMedicationEvents(medications);
+        setTriggerEvents(triggers);
+        setFlares(activeFlares);
+      } catch (error) {
+        console.error("Error loading calendar data:", error);
+      }
+    };
+
+    loadAllCalendarData();
+
+    // Listen for updates from new data sources
+    const handleUpdate = () => {
+      loadAllCalendarData().catch(console.error);
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("mood-entry-updated", handleUpdate);
+      window.addEventListener("sleep-entry-updated", handleUpdate);
+      window.addEventListener("food-event-updated", handleUpdate);
+      window.addEventListener("symptom-instance-updated", handleUpdate);
+      window.addEventListener("medication-event-updated", handleUpdate);
+      window.addEventListener("trigger-event-updated", handleUpdate);
+      window.addEventListener("flare-updated", handleUpdate);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("mood-entry-updated", handleUpdate);
+        window.removeEventListener("sleep-entry-updated", handleUpdate);
+        window.removeEventListener("food-event-updated", handleUpdate);
+        window.removeEventListener("symptom-instance-updated", handleUpdate);
+        window.removeEventListener("medication-event-updated", handleUpdate);
+        window.removeEventListener("trigger-event-updated", handleUpdate);
+        window.removeEventListener("flare-updated", handleUpdate);
+      }
+    };
+  }, [userId]);
+
   const dataset = useMemo(
     () => buildDataset(history, {
       symptoms: symptomLookup,
       medications: medicationLookup,
       triggers: triggerLookup,
       moods: moodLookup,
+    }, {
+      moodEntries,
+      sleepEntries,
+      foodEvents,
+      symptomInstances,
+      medicationEvents,
+      triggerEvents,
+      flares,
     }),
-    [history, symptomLookup, medicationLookup, triggerLookup],
+    [history, symptomLookup, medicationLookup, triggerLookup, moodEntries, sleepEntries, foodEvents, symptomInstances, medicationEvents, triggerEvents, flares],
   );
 
   // Initialize selected date to latest entry on first load only
