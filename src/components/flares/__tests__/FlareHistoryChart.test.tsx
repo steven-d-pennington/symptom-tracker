@@ -3,6 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { FlareHistoryChart } from '../FlareHistoryChart';
 import { FlareEventRecord, FlareEventType } from '@/types/flare';
 import '@testing-library/jest-dom';
+import { Chart, Filler } from 'chart.js';
+
+Chart.register(Filler);
 
 // Mock Chart.js components
 jest.mock('react-chartjs-2', () => ({

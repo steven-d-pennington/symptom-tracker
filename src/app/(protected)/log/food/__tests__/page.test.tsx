@@ -33,12 +33,15 @@ const mockRouter = {
   back: jest.fn(),
 };
 
-const mockUseCurrentUser = require('@/lib/hooks/useCurrentUser').useCurrentUser;
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+const mockUseCurrentUser = useCurrentUser as jest.Mock;
+
+const mockedUseRouter = useRouter as jest.Mock;
+mockedUseRouter.mockReturnValue(mockRouter);
 
 describe('LogFoodPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
   describe('AC3.5.4.1 - Dedicated page route', () => {

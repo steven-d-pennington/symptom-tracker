@@ -9,6 +9,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import LogSymptomPage from '../page';
 
 // Mock hooks and dependencies
@@ -33,12 +34,14 @@ const mockRouter = {
   back: jest.fn(),
 };
 
-const mockUseCurrentUser = require('@/lib/hooks/useCurrentUser').useCurrentUser;
+const mockUseCurrentUser = useCurrentUser as jest.Mock;
+
+const mockedUseRouter = useRouter as jest.Mock;
+mockedUseRouter.mockReturnValue(mockRouter);
 
 describe('LogSymptomPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
   describe('AC3.5.3.1 - Dedicated page route', () => {

@@ -7,6 +7,9 @@
 import { render, screen } from '@testing-library/react';
 import { DoseResponseChart } from '../DoseResponseChart';
 import type { DoseResponseResult } from '@/lib/services/food/DoseResponseService';
+import { Chart, Filler } from 'chart.js';
+
+Chart.register(Filler);
 
 // Mock Chart.js
 jest.mock('react-chartjs-2', () => ({

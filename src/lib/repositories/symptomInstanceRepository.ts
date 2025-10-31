@@ -10,7 +10,7 @@ export class SymptomInstanceRepository {
   private recordToSymptom(record: SymptomInstanceRecord): Symptom {
     return {
       ...record,
-      severityScale: JSON.parse(record.severityScale),
+      severityScale: record.severityScale ? JSON.parse(record.severityScale) : undefined,
       triggers: record.triggers ? JSON.parse(record.triggers) : undefined,
       photos: record.photos ? JSON.parse(record.photos) : undefined,
     };

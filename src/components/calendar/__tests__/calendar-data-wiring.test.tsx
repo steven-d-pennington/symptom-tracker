@@ -14,6 +14,10 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useCalendarData } from '../hooks/useCalendarData';
+import { moodRepository } from '@/lib/repositories/moodRepository';
+import { sleepRepository } from '@/lib/repositories/sleepRepository';
+import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
+import { flareRepository } from '@/lib/repositories/flareRepository';
 
 // Mock the repositories
 jest.mock('@/lib/repositories/moodRepository', () => ({
@@ -114,11 +118,6 @@ describe('Calendar Data Wiring (Story 3.5.7)', () => {
     });
 
     // Verify all repositories were called
-    const { moodRepository } = require('@/lib/repositories/moodRepository');
-    const { sleepRepository } = require('@/lib/repositories/sleepRepository');
-    const { foodEventRepository } = require('@/lib/repositories/foodEventRepository');
-    const { flareRepository } = require('@/lib/repositories/flareRepository');
-
     expect(moodRepository.getByUserId).toHaveBeenCalledWith('user-1');
     expect(sleepRepository.getByUserId).toHaveBeenCalledWith('user-1');
     expect(foodEventRepository.getAll).toHaveBeenCalledWith('user-1');
@@ -194,7 +193,6 @@ describe('Calendar Data Wiring (Story 3.5.7)', () => {
     }));
 
     await waitFor(() => {
-      const { moodRepository } = require('@/lib/repositories/moodRepository');
       expect(moodRepository.getByUserId).toHaveBeenCalled();
     });
 

@@ -11,9 +11,22 @@ import { userRepository } from "@/lib/repositories/userRepository";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 // Mock dependencies
-jest.mock("@/lib/repositories/flareRepository");
-jest.mock("@/lib/repositories/userRepository");
-jest.mock("@/lib/hooks/useCurrentUser");
+jest.mock("@/lib/repositories/flareRepository", () => ({
+  flareRepository: {
+    getActiveFlaresWithTrend: jest.fn(),
+  },
+}));
+jest.mock("@/lib/repositories/userRepository", () => ({
+  userRepository: {
+    getById: jest.fn(),
+    updatePreferences: jest.fn(),
+  },
+}));
+jest.mock("@/lib/hooks/useCurrentUser", () => ({
+  useCurrentUser: jest.fn(() => ({
+    userId: "test-user-123",
+  })),
+}));
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({
     push: jest.fn(),
@@ -38,9 +51,8 @@ jest.mock("@/components/flares/ActiveFlareCards", () => ({
   ActiveFlareCards: () => <div data-testid="active-flare-cards">Active Flare Cards</div>,
 }));
 
-const mockFlareRepository = flareRepository as jest.Mocked<typeof flareRepository>;
-const mockUserRepository = userRepository as jest.Mocked<typeof userRepository>;
-const mockUseCurrentUser = useCurrentUser as jest.MockedFunction<typeof useCurrentUser>;
+
+
 
 describe("FlaresPage - Story 0.3", () => {
   const mockUserId = "test-user-123";
@@ -102,10 +114,9 @@ describe("FlaresPage - Story 0.3", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseCurrentUser.mockReturnValue({ userId: mockUserId });
-    mockUserRepository.getById.mockResolvedValue(mockUser);
-    mockFlareRepository.getActiveFlaresWithTrend.mockResolvedValue(mockFlares);
-    mockUserRepository.updatePreferences.mockResolvedValue();
+    (userRepository.getById as jest.Mock).mockResolvedValue(mockUser);
+    (flareRepository.getActiveFlaresWithTrend as jest.Mock).mockResolvedValue(mockFlares);
+    (userRepository.updatePreferences as jest.Mock).mockResolvedValue();
   });
 
   describe("AC0.3.1 - Cards-first entry with saved preference", () => {
@@ -126,7 +137,7 @@ describe("FlaresPage - Story 0.3", () => {
           flareViewMode: "map" as const,
         },
       };
-      mockUserRepository.getById.mockResolvedValue(userWithMapMode);
+      (userRepository.getById as jest.Mock).mockResolvedValue(userWithMapMode);
 
       render(<FlaresPage />);
 
@@ -148,7 +159,7 @@ describe("FlaresPage - Story 0.3", () => {
       await user.click(mapButton);
 
       await waitFor(() => {
-        expect(mockUserRepository.updatePreferences).toHaveBeenCalledWith(mockUserId, {
+        expect(userRepository.updatePreferences).toHaveBeenCalledWith(mockUserId, {
           flareViewMode: "map",
         });
       });
