@@ -1,10 +1,11 @@
 "use client";
 
-import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database, Keyboard } from "lucide-react";
 import DevDataControls from "@/components/settings/DevDataControls";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { ManageDataSettings } from "@/components/settings/ManageDataSettings";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -44,6 +45,15 @@ export default function SettingsPage() {
     },
   ];
 
+  const accessibilitySections = [
+    {
+      title: "Keyboard Shortcuts",
+      icon: Keyboard,
+      description: "View all keyboard shortcuts and accessibility features",
+      href: "/help/keyboard-shortcuts",
+    },
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="mb-8">
@@ -53,57 +63,94 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="space-y-4">
-        {settingsSections.map((section) => {
-          const Icon = section.icon;
-          const isExpanded = expandedSection === section.title;
-          const hasContent = !section.comingSoon && section.content;
+      <div className="space-y-6">
+        {/* Settings Sections */}
+        <div className="space-y-4">
+          {settingsSections.map((section) => {
+            const Icon = section.icon;
+            const isExpanded = expandedSection === section.title;
+            const hasContent = !section.comingSoon && section.content;
 
-          return (
-            <div
-              key={section.title}
-              className="rounded-lg border border-border bg-card overflow-hidden"
-            >
-              <button
-                onClick={() =>
-                  hasContent
-                    ? setExpandedSection(isExpanded ? null : section.title)
-                    : undefined
-                }
-                disabled={!hasContent}
-                className={`w-full p-6 text-left ${
-                  hasContent ? "cursor-pointer hover:bg-muted/50" : ""
-                }`}
+            return (
+              <div
+                key={section.title}
+                className="rounded-lg border border-border bg-card overflow-hidden"
               >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-lg bg-primary/10 text-primary">
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-foreground">
-                        {section.title}
-                      </h3>
-                      {section.comingSoon && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-orange-500/10 text-orange-700 rounded">
-                          Coming Soon
-                        </span>
-                      )}
+                <button
+                  onClick={() =>
+                    hasContent
+                      ? setExpandedSection(isExpanded ? null : section.title)
+                      : undefined
+                  }
+                  disabled={!hasContent}
+                  className={`w-full p-6 text-left ${
+                    hasContent ? "cursor-pointer hover:bg-muted/50" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-lg bg-primary/10 text-primary">
+                      <Icon className="w-6 h-6" />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {section.description}
-                    </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-foreground">
+                          {section.title}
+                        </h3>
+                        {section.comingSoon && (
+                          <span className="px-2 py-0.5 text-xs font-medium bg-orange-500/10 text-orange-700 rounded">
+                            Coming Soon
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {section.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </button>
-              {hasContent && isExpanded && (
-                <div className="px-6 pb-6 pt-0 border-t border-border">
-                  <div className="pt-4">{section.content}</div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                </button>
+                {hasContent && isExpanded && (
+                  <div className="px-6 pb-6 pt-0 border-t border-border">
+                    <div className="pt-4">{section.content}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Accessibility Sections */}
+        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-3">Accessibility</h2>
+          <div className="space-y-4">
+            {accessibilitySections.map((section) => {
+              const Icon = section.icon;
+
+              return (
+                <Link
+                  key={section.title}
+                  href={section.href}
+                  className="block rounded-lg border border-border bg-card overflow-hidden hover:bg-muted/50 transition-colors"
+                >
+                  <div className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-lg bg-primary/10 text-primary">
+                        <Icon className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground mb-1">
+                          {section.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {section.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 p-4 rounded-lg bg-muted/50">
