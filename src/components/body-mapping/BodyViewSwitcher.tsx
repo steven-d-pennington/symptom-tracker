@@ -2,6 +2,7 @@
 
 import React from "react";
 import { User, UserSquare } from "lucide-react";
+import { isTyping } from "@/lib/hooks/useKeyboardShortcuts";
 
 interface BodyViewSwitcherProps {
   currentView: "front" | "back" | "left" | "right";
@@ -21,7 +22,11 @@ export function BodyViewSwitcher({
 
   React.useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) return; // Ignore if modifier keys are pressed
+      // Don't handle shortcuts when user is typing in text fields
+      if (isTyping()) return;
+
+      // Ignore if modifier keys are pressed
+      if (e.ctrlKey || e.metaKey) return;
 
       switch (e.key.toLowerCase()) {
         case "f":

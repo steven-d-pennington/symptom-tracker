@@ -62,6 +62,9 @@ export function Toast({
 
   const Icon = icons[type];
 
+  // Use assertive for errors/warnings, polite for success/info
+  const ariaLive = type === 'error' || type === 'warning' ? 'assertive' : 'polite';
+
   return (
     <div
       className={cn(
@@ -70,7 +73,7 @@ export function Toast({
       )}
       style={{ zIndex: 9999 }}
       role="alert"
-      aria-live="assertive"
+      aria-live={ariaLive}
     >
       <div className={cn(
         'rounded-lg border p-4 shadow-lg',

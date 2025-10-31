@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { PhotoAttachment } from '@/lib/types/photo';
 import { PhotoEncryption } from '@/lib/utils/photoEncryption';
+import { isTyping } from '@/lib/hooks/useKeyboardShortcuts';
 import {
   PhotoAnnotation as PhotoAnnotationType,
   AnnotationTool,
@@ -347,17 +348,19 @@ export function PhotoAnnotation({
         return;
       }
 
-      // Tool shortcuts
-      if (e.key === 'a' || e.key === 'A') {
-        setSelectedTool('arrow');
-      } else if (e.key === 'c' || e.key === 'C') {
-        setSelectedTool('circle');
-      } else if (e.key === 'r' || e.key === 'R') {
-        setSelectedTool('rectangle');
-      } else if (e.key === 't' || e.key === 'T') {
-        setSelectedTool('text');
-      } else if (e.key === 'b' || e.key === 'B') {
-        setSelectedTool('blur');
+      // Tool shortcuts - only when not typing in text fields
+      if (!isTyping()) {
+        if (e.key === 'a' || e.key === 'A') {
+          setSelectedTool('arrow');
+        } else if (e.key === 'c' || e.key === 'C') {
+          setSelectedTool('circle');
+        } else if (e.key === 'r' || e.key === 'R') {
+          setSelectedTool('rectangle');
+        } else if (e.key === 't' || e.key === 'T') {
+          setSelectedTool('text');
+        } else if (e.key === 'b' || e.key === 'B') {
+          setSelectedTool('blur');
+        }
       }
     };
 

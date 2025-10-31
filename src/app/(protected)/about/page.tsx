@@ -1,4 +1,5 @@
-import { Info, Heart, Github, Mail, ExternalLink } from "lucide-react";
+import { Info, Heart, Github, Mail, ExternalLink, Keyboard } from "lucide-react";
+import Link from "next/link";
 
 export default function AboutPage() {
   return (
@@ -168,6 +169,15 @@ export default function AboutPage() {
         <div className="p-6 rounded-lg border border-border bg-card">
           <h2 className="text-xl font-semibold text-foreground mb-4">Links</h2>
           <div className="space-y-3">
+            <Link
+              href="/help/keyboard-shortcuts"
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group"
+            >
+              <Keyboard className="w-5 h-5 text-muted-foreground" />
+              <span className="flex-1 text-sm text-foreground">
+                Keyboard Shortcuts & Accessibility
+              </span>
+            </Link>
             <a
               href="https://github.com/steven-d-pennington/symptom-tracker"
               target="_blank"
