@@ -196,6 +196,7 @@ export const persistUserSettings = async (data: OnboardingData) => {
 
   try {
     const { userRepository } = await import("@/lib/repositories/userRepository");
+    const { initializeUserDefaults } = await import("@/lib/services/userInitialization");
 
     // Create user record in IndexedDB with all onboarding data
     const userId = await userRepository.create({
@@ -214,6 +215,26 @@ export const persistUserSettings = async (data: OnboardingData) => {
     });
 
     console.log("[Onboarding] User created in IndexedDB:", userId);
+
+    // Story 3.6.1 - AC3.6.1.10: Initialize with selections if provided
+    if (data.selections) {
+      console.log("[Onboarding] Initializing user defaults with selections:", data.selections);
+      const initResult = await initializeUserDefaults(userId, data.selections);
+      if (initResult.success) {
+        console.log("[Onboarding] ✅ Defaults initialized successfully:", initResult.details);
+      } else {
+        console.error("[Onboarding] ⚠️ Failed to initialize defaults:", initResult.error);
+      }
+    } else {
+      // Fallback to old behavior - auto-populate all defaults
+      console.log("[Onboarding] No selections provided, initializing with all defaults");
+      const initResult = await initializeUserDefaults(userId);
+      if (initResult.success) {
+        console.log("[Onboarding] ✅ Defaults initialized successfully:", initResult.details);
+      } else {
+        console.error("[Onboarding] ⚠️ Failed to initialize defaults:", initResult.error);
+      }
+    }
 
     // Store userId in localStorage for quick access
     window.localStorage.setItem(CURRENT_USER_ID_KEY, userId);

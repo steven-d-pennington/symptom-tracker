@@ -3,8 +3,16 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import type { OnboardingStepComponentProps } from "../types/onboarding";
+import { useOnboardingSelections } from "../contexts/OnboardingSelectionsContext";
 
-export const CompletionStep = ({ data, onContinue, reset }: OnboardingStepComponentProps) => {
+/**
+ * Completion Step - Story 3.6.1
+ * Updated to display selected items and pass selections to user initialization
+ */
+
+export const CompletionStep = ({ data, onContinue, reset, updateData }: OnboardingStepComponentProps) => {
+  const { selections, getSelectionCount } = useOnboardingSelections();
+
   const highlights = useMemo(
     () => [
       {
@@ -21,12 +29,32 @@ export const CompletionStep = ({ data, onContinue, reset }: OnboardingStepCompon
               : "Returning after a break",
       },
       {
-        label: "Reminder cadence",
-        value: `${data.trackingPreferences.frequency.replace("custom", "custom schedule")} reminders`,
+        label: "Symptoms to track",
+        value: getSelectionCount("symptoms") > 0
+          ? `${getSelectionCount("symptoms")} selected`
+          : "None selected",
       },
       {
-        label: "Focus areas",
-        value: data.trackingPreferences.focusAreas.join(", ") || "To be customized",
+        label: "Triggers to monitor",
+        value: getSelectionCount("triggers") > 0
+          ? `${getSelectionCount("triggers")} selected`
+          : "None selected",
+      },
+      {
+        label: "Treatments tracking",
+        value: getSelectionCount("medications") > 0
+          ? `${getSelectionCount("medications")} selected`
+          : "None selected",
+      },
+      {
+        label: "Foods tracking",
+        value: getSelectionCount("foods") > 0
+          ? `${getSelectionCount("foods")} selected`
+          : "None selected",
+      },
+      {
+        label: "Reminder cadence",
+        value: `${data.trackingPreferences.frequency.replace("custom", "custom schedule")} reminders`,
       },
       {
         label: "Privacy mode",
@@ -40,12 +68,15 @@ export const CompletionStep = ({ data, onContinue, reset }: OnboardingStepCompon
       data.condition,
       data.experience,
       data.privacySettings.dataStorage,
-      data.trackingPreferences.focusAreas,
       data.trackingPreferences.frequency,
+      getSelectionCount,
     ],
   );
 
   const handleFinish = () => {
+    // Story 3.6.1 - AC3.6.1.10: Pass selections to user initialization
+    console.log("[CompletionStep] Saving selections to onboarding data:", selections);
+    updateData({ selections });
     onContinue("completion");
   };
 
@@ -53,7 +84,7 @@ export const CompletionStep = ({ data, onContinue, reset }: OnboardingStepCompon
     <div className="flex flex-col gap-6">
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold text-foreground">
-          {"You\u2019re ready to start tracking"}
+          {"You're ready to start tracking"}
         </h2>
         <p className="text-sm text-muted-foreground">
           {"Your preferences are saved locally. You can revisit onboarding anytime from the settings menu if you want to adjust them."}
@@ -76,7 +107,8 @@ export const CompletionStep = ({ data, onContinue, reset }: OnboardingStepCompon
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-foreground">What happens next?</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-            <li>Jump into the dashboard to log today’s health context.</li>
+            <li>Your selected items will be ready to log immediately.</li>
+            <li>Jump into the dashboard to log today's health context.</li>
             <li>Review tips in the help center whenever you need a refresher.</li>
             <li>Adjust notifications or privacy settings from the settings menu.</li>
           </ul>
