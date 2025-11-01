@@ -1,0 +1,190 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>3.5.12</storyId>
+    <title>Fix iPhone Body Region Marker Positioning on Touch</title>
+    <status>Draft</status>
+    <generatedAt>2025-11-01</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.5.12.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user on iPhone logging a flare</asA>
+    <iWant>to pinpoint the exact location within a body region by tapping</iWant>
+    <soThat>I can accurately mark where my flare is located instead of the marker appearing at the region edge</soThat>
+    <tasks>
+      - Task 1: Implement touch coordinate capture handler in BodyMapViewer
+      - Task 2: Wire touch handler through component hierarchy
+      - Task 3: Verify coordinate transformation accuracy
+      - Task 4: Ensure touch target accessibility
+      - Task 5: Cross-browser and cross-device testing
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Touch events on iPhone properly capture tap coordinates when marking body regions
+    2. Coordinate marker appears at the exact tap location, not at the edge of the region
+    3. Touch coordinate capture uses `TouchEvent.touches` or `changedTouches` instead of relying on mouse event coordinates
+    4. Body map viewer implements `onTouchCoordinateCapture` handler alongside the existing mouse handler
+    5. Touch and mouse coordinate capture produce equivalent normalized coordinates
+    6. The coordinate normalization logic correctly handles touch coordinates relative to the SVG viewport
+    7. Touch interactions work correctly with zoom/pan functionality
+    8. Touch target is large enough for accurate tapping (minimum 44x44px per WCAG AAA)
+    9. Marker positioning tested on iPhone Safari, Chrome, and other mobile browsers
+    10. No regression in desktop/mouse-based coordinate marking
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 1: Enhanced Body Map with Precision Location Tracking</title>
+        <section>Story 1.4: Coordinate-based Location Marking</section>
+        <snippet>When zoomed and region is selected, tap/click captures precise X/Y coordinates normalized relative to the selected body region (0-1 scale). Coordinates stored with body region ID for distinguishing multiple flares in same region.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 2: Flare Lifecycle Management</title>
+        <section>Story 2.2: Create New Flare from Body Map</section>
+        <snippet>After marking precise location on body map, Create Flare button appears. System captures initial severity, optional notes, and timestamp with unique persistent flare ID.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>31-256</lines>
+        <reason>**CRITICAL BUG**: BodyMapViewer implements handleCoordinateCapture for mouse events (lines 91-156) but does NOT implement handleTouchCoordinateCapture. Must add touch handler that mirrors mouse handler logic using TouchEvent.touches[0] or changedTouches[0] for coordinate extraction.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>handleCoordinateCapture</symbol>
+        <lines>91-156</lines>
+        <reason>Mouse event handler that should be duplicated for touch events. Uses createSVGPoint(), getScreenCTM(), matrixTransform() for coordinate conversion, then normalizeCoordinates() for 0-1 range mapping.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyRegionSelector</symbol>
+        <lines>213-234</lines>
+        <reason>BodyMapViewer passes onCoordinateCapture but needs to also pass onTouchCoordinateCapture prop to BodyRegionSelector</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyRegionSelector.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyRegionSelector</symbol>
+        <lines>8-43</lines>
+        <reason>Already has onTouchCoordinateCapture prop defined (line 16) and forwards it to FrontBody/BackBody. No changes needed here.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/bodies/FrontBody.tsx</path>
+        <kind>component</kind>
+        <symbol>FrontBody</symbol>
+        <lines>8-180</lines>
+        <reason>Already has onTouchCoordinateCapture prop (line 16) and wires it to SVG element with onTouchStart (line 122). No changes needed - infrastructure is ready, just needs handler from BodyMapViewer.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/bodies/BackBody.tsx</path>
+        <kind>component</kind>
+        <symbol>BackBody</symbol>
+        <lines>1-200</lines>
+        <reason>Should have same onTouchStart wiring as FrontBody. Verify and add if missing.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>normalizeCoordinates</symbol>
+        <lines>22-39</lines>
+        <reason>Converts SVG point to 0-1 normalized coordinates relative to region bounds. Works for both mouse and touch - no changes needed.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>getRegionBounds</symbol>
+        <lines>53-82</lines>
+        <reason>Gets bounding box of region element for coordinate normalization. Works for both mouse and touch - no changes needed.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/FlareCreationModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareCreationModal</symbol>
+        <lines>354-380</lines>
+        <reason>Uses BodyMapViewer for flare location marking. Will benefit from touch fix - no changes needed to this component.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="19.1.0">UI framework providing TouchEvent types</package>
+        <package name="next" version="15.5.4">Next.js framework</package>
+        <package name="lucide-react" version="^0.544.0">Icon library</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Touch event handler must use TouchEvent.touches[0] or changedTouches[0], NOT mouse event coordinates
+    - Must call event.preventDefault() on touch events to prevent mouse event synthesis
+    - Coordinate transformation logic must be identical for touch and mouse to ensure consistent behavior
+    - Touch coordinates must go through same SVG transformation: createSVGPoint() → getScreenCTM() → matrixTransform()
+    - Normalized coordinates must be in 0-1 range using existing normalizeCoordinates() utility
+    - Must work with zoom and pan functionality (BodyMapZoom component)
+    - Touch targets must meet WCAG AAA minimum 44x44px
+    - No regression in desktop/mouse functionality
+    - Must test on actual iPhone device, not just emulator
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>BodyMapViewerProps.onCoordinateMark</name>
+      <kind>Component prop callback</kind>
+      <signature>onCoordinateMark?: (regionId: string, coordinates: { x: number; y: number }) =&gt; void</signature>
+      <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+    </interface>
+    <interface>
+      <name>BodyRegionSelectorProps.onTouchCoordinateCapture</name>
+      <kind>Component prop callback</kind>
+      <signature>onTouchCoordinateCapture?: (event: React.TouchEvent&lt;SVGSVGElement&gt;) =&gt; void</signature>
+      <path>src/components/body-mapping/BodyRegionSelector.tsx</path>
+    </interface>
+    <interface>
+      <name>normalizeCoordinates</name>
+      <kind>Utility function</kind>
+      <signature>normalizeCoordinates(point: SvgCoordinates, bounds: RegionBounds): NormalizedCoordinates</signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>getRegionBounds</name>
+      <kind>Utility function</kind>
+      <signature>getRegionBounds(svgElement: SVGSVGElement | null, regionId: string): RegionBounds | null</signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>React.TouchEvent</name>
+      <kind>React type</kind>
+      <signature>interface TouchEvent&lt;T&gt; { touches: TouchList; changedTouches: TouchList; target: EventTarget; currentTarget: T; preventDefault(): void; stopPropagation(): void; }</signature>
+      <path>React type definitions</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses Jest with React Testing Library. Tests located in __tests__ directories and *.test.tsx files. Testing emphasizes component integration and user workflows. Touch events should be simulated using fireEvent.touchStart/touchEnd from @testing-library/react.
+    </standards>
+    <locations>
+      - src/**/__tests__/**/*.test.tsx
+      - src/**/*.test.tsx
+      - src/__tests__/integration/**/*.test.tsx (integration tests for body map)
+    </locations>
+    <ideas>
+      - AC3, AC4: Unit test for BodyMapViewer verifying handleTouchCoordinateCapture exists and is passed to BodyRegionSelector
+      - AC5: Integration test comparing touch vs mouse coordinate capture at same visual location - should produce identical normalized coordinates
+      - AC6: Unit test verifying normalizeCoordinates() handles touch-derived coordinates correctly
+      - AC7: Integration test for touch coordinate capture at different zoom levels (1x, 2x, 3x)
+      - AC10: Regression test ensuring existing mouse-based coordinate marking still works after touch handler addition
+      - Performance test: Touch event handling should complete within 100ms (NFR001)
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,176 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>3.5.11</storyId>
+    <title>Fix Dashboard Symptom/Trigger Logging Display and Save Issues</title>
+    <status>Draft</status>
+    <generatedAt>2025-11-01</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.5.11.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user logging symptoms and triggers from the dashboard</asA>
+    <iWant>my logged data to save correctly and display immediately in the timeline</iWant>
+    <soThat>I can see my logged entries and verify they were saved successfully</soThat>
+    <tasks>
+      - Task 1: Verify symptomInstanceRepository and triggerEventRepository save methods working correctly
+      - Task 2: Debug timeline refresh and data loading
+      - Task 3: Fix any race conditions or timing issues
+      - Task 4: Verify manual refresh functionality
+      - Task 5: Testing and verification across devices
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Symptom logging from `/log/symptom` saves data correctly to IndexedDB
+    2. Trigger logging from `/log/trigger` saves data correctly to IndexedDB
+    3. After logging a symptom or trigger, the dashboard timeline refreshes and displays the newly logged entry
+    4. The refresh flag (`?refresh=symptom` or `?refresh=trigger`) in the dashboard URL properly triggers timeline reload
+    5. Timeline component properly queries and displays all logged symptoms and triggers from IndexedDB
+    6. Newly logged data appears in the timeline within 1 second of navigation back to dashboard
+    7. Manual dashboard refresh button also correctly reloads and displays all timeline data
+    8. Console errors related to data loading or display are resolved
+    9. Data persistence verified across page reloads (data still visible after refresh)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3.5: Production-Ready UI/UX Enhancement</title>
+        <section>Story 3.5.3: Redesign Symptom Logging</section>
+        <snippet>Dedicated page for symptom logging at /log/symptom with Quick Log mode for essential fields and expandable details section.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3.5: Production-Ready UI/UX Enhancement</title>
+        <section>Story 3.5.5: Redesign Trigger & Medication Logging</section>
+        <snippet>Dedicated pages for trigger and medication logging following the same improved patterns as symptom and food logging.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/timeline/TimelineView.tsx</path>
+        <kind>component</kind>
+        <symbol>TimelineView</symbol>
+        <lines>1-300</lines>
+        <reason>**CRITICAL BUG FOUND**: TimelineView only queries medicationEvents, triggerEvents, flareRecords, and foodEvents (line 71-76). It does NOT query symptomInstanceRepository, which explains why symptoms are not displaying. Must add symptom query to the Promise.all.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/timeline/TimelineView.tsx</path>
+        <kind>component</kind>
+        <symbol>loadEvents</symbol>
+        <lines>58-250</lines>
+        <reason>Main data loading function that needs to include symptomInstanceRepository.findByDateRange() call and convert symptom instances to timeline events</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/dashboard/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DashboardContent</symbol>
+        <lines>19-259</lines>
+        <reason>Dashboard refresh mechanism using refreshKey state and URL query params. Lines 34-41 handle auto-refresh when ?refresh flag is present.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/symptom-logging/SymptomQuickLogForm.tsx</path>
+        <kind>component</kind>
+        <symbol>handleSubmit</symbol>
+        <lines>111-164</lines>
+        <reason>Symptom save logic using symptomInstanceRepository.create() and navigation with ?refresh=symptom flag (line 154)</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/trigger-logging/TriggerQuickLogForm.tsx</path>
+        <kind>component</kind>
+        <symbol>handleSubmit</symbol>
+        <lines>226-273</lines>
+        <reason>Trigger save logic using triggerEventRepository.create() and navigation with ?refresh=trigger flag (line 264)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>findByDateRange</symbol>
+        <lines>80-95</lines>
+        <reason>Repository method for querying symptoms by date range (epoch milliseconds). Should be called from TimelineView to fetch symptom data.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>create</symbol>
+        <lines>100-150</lines>
+        <reason>Symptom save method used by SymptomQuickLogForm to persist symptom instances to IndexedDB</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/triggerEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>findByDateRange</symbol>
+        <lines>1-100</lines>
+        <reason>Trigger query by date range - already working in TimelineView (line 73)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/triggerEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>create</symbol>
+        <lines>100-200</lines>
+        <reason>Trigger save method used by TriggerQuickLogForm - verify this is persisting correctly</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="dexie" version="^4.2.0">IndexedDB wrapper used for all data persistence</package>
+        <package name="next" version="15.5.4">Next.js framework providing routing and navigation</package>
+        <package name="react" version="19.1.0">UI framework</package>
+        <package name="lucide-react" version="^0.544.0">Icon library</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - All data must persist to IndexedDB using offline-first pattern (NFR002)
+    - Timeline must query all event types: symptoms, triggers, medications, foods, and flares
+    - Navigation refresh flag mechanism must trigger proper timeline re-query
+    - Data save operations must complete before navigation to prevent race conditions
+    - Timeline events must be sorted chronologically and grouped by date
+    - Must maintain existing functionality for medications, triggers, foods, and flares
+    - Console errors must be investigated and resolved, not silently caught
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>symptomInstanceRepository.findByDateRange</name>
+      <kind>Repository method</kind>
+      <signature>async findByDateRange(userId: string, startMs: number, endMs: number): Promise&lt;Symptom[]&gt;</signature>
+      <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+    </interface>
+    <interface>
+      <name>symptomInstanceRepository.create</name>
+      <kind>Repository method</kind>
+      <signature>async create(symptomData: Partial&lt;Symptom&gt;): Promise&lt;Symptom&gt;</signature>
+      <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+    </interface>
+    <interface>
+      <name>TimelineEvent</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface TimelineEvent { id: string; type: TimelineEventType; timestamp: number; summary: string; details?: any; eventRef: any; hasDetails?: boolean; allergens?: string[]; }</signature>
+      <path>src/components/timeline/TimelineView.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses Jest with React Testing Library. Tests located in __tests__ directories and *.test.tsx files. Testing emphasizes component integration and user workflows. IndexedDB operations tested using fake-indexeddb mock library.
+    </standards>
+    <locations>
+      - src/**/__tests__/**/*.test.tsx
+      - src/**/*.test.tsx
+      - __tests__/**/*.test.ts
+    </locations>
+    <ideas>
+      - AC1, AC2: Integration test for symptomInstanceRepository.create() and triggerEventRepository.create() verifying IndexedDB writes
+      - AC3, AC4, AC5: Integration test simulating: log symptom → save → navigate with ?refresh → verify timeline queries and displays new entry
+      - AC5: Unit test for TimelineView.loadEvents() ensuring symptomInstanceRepository.findByDateRange() is called
+      - AC6: Performance test ensuring timeline refresh completes within 1 second
+      - AC7: Test manual refresh button click triggers timeline reload
+      - AC9: Test data persistence by logging → refreshing page → verifying data still visible
+    </ideas>
+  </tests>
+</story-context>

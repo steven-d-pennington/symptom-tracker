@@ -1,6 +1,6 @@
 # Story 3.5.11: Fix Dashboard Symptom/Trigger Logging Display and Save Issues
 
-Status: Draft
+Status: ContextReadyDraft
 
 ## Story
 
@@ -89,7 +89,7 @@ All required files exist in the codebase. Changes will be limited to:
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/story-context-3.5.11.xml
 
 ### Agent Model Used
 

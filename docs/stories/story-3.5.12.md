@@ -1,6 +1,6 @@
 # Story 3.5.12: Fix iPhone Body Region Marker Positioning on Touch
 
-Status: Draft
+Status: ContextReadyDraft
 
 ## Story
 
@@ -172,7 +172,7 @@ No new files needed. Changes are surgical and focused on touch event handling.
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/story-context-3.5.12.xml
 
 ### Agent Model Used
 
