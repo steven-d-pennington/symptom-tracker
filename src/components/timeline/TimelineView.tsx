@@ -54,6 +54,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedFood, setExpandedFood] = useState<Set<string>>(new Set());
+  const [mountTimestamp] = useState(() => Date.now()); // Unique value per mount
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -211,6 +212,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         const trigger = triggerNameById.get(event.triggerId) || 'Unknown trigger';
         const intensity = event.intensity;
         const summary = `⚠️ ${trigger} (${intensity} intensity)`;
+        console.log("➕ Adding trigger event to timeline:", {
+          id: event.id,
+          trigger,
+          intensity,
+          timestamp: event.timestamp,
+          timestampDate: new Date(event.timestamp).toLocaleString(),
+          summary,
+        });
         timelineEvents.push({
           id: event.id,
           type: 'trigger',
@@ -227,6 +236,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         const severity = symptom.severity;
         const location = symptom.location ? ` (${symptom.location})` : '';
         const summary = `🩺 ${symptom.name} - severity ${severity}/10${location}`;
+        console.log("➕ Adding symptom event to timeline:", {
+          id: symptom.id,
+          name: symptom.name,
+          severity,
+          location,
+          timestamp: symptom.timestamp.getTime(),
+          timestampDate: symptom.timestamp.toLocaleString(),
+          summary,
+        });
         timelineEvents.push({
           id: symptom.id,
           type: 'symptom',
@@ -357,6 +375,17 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       // Sort by timestamp descending (most recent first)
       timelineEvents.sort((a, b) => b.timestamp - a.timestamp);
 
+      console.log("✅ Timeline events ready to display:", {
+        totalEvents: timelineEvents.length,
+        byType: {
+          medication: timelineEvents.filter(e => e.type === 'medication').length,
+          trigger: timelineEvents.filter(e => e.type === 'trigger').length,
+          symptom: timelineEvents.filter(e => e.type === 'symptom').length,
+          flare: timelineEvents.filter(e => e.type.startsWith('flare')).length,
+          food: timelineEvents.filter(e => e.type === 'food').length,
+        }
+      });
+
       if (append) {
         setEvents(prev => [...prev, ...timelineEvents]);
       } else {
@@ -369,6 +398,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   };
 
   // Initial load - load only today
+  // mountTimestamp ensures this runs on EVERY mount (Story 3.5.13 fix)
   useEffect(() => {
     const loadInitialEvents = async () => {
       if (!userId) {
@@ -378,6 +408,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       setLoading(true);
       setError(null);
 
+      console.log("🔄 TimelineView: Loading initial events (mount:", mountTimestamp, ") for userId:", userId);
+
       // Load only today's events
       await loadEvents(new Date());
 
@@ -385,7 +417,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     };
 
     loadInitialEvents();
-  }, [userId]); // Only run on mount or when userId changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, mountTimestamp]); // Re-run when userId changes OR component remounts
 
   // Group events by day
   const groupedEvents = useMemo((): DayGroup[] => {
