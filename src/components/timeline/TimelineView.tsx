@@ -10,6 +10,7 @@ import { medicationRepository } from '@/lib/repositories/medicationRepository';
 import { triggerRepository } from '@/lib/repositories/triggerRepository';
 import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
 import { foodRepository } from '@/lib/repositories/foodRepository';
+import { symptomInstanceRepository } from '@/lib/repositories/symptomInstanceRepository';
 import EventDetailModal from './EventDetailModal';
 import { useAllergenFilter } from '@/lib/hooks/useAllergenFilter';
 import AllergenFilter from '@/components/filters/AllergenFilter';
@@ -68,9 +69,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       endOfDay.setHours(23, 59, 59, 999);
 
       // Query all event types in parallel
-      const [medicationEvents, triggerEvents, flareRecords, foodEvents] = await Promise.all([
+      const [medicationEvents, triggerEvents, symptomInstances, flareRecords, foodEvents] = await Promise.all([
         medicationEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime()),
         triggerEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime()),
+        symptomInstanceRepository.getByDateRange(userId, startOfDay, endOfDay),
         flareRepository.getActiveFlares(userId), // Story 2.1: Use new API
         foodEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime())
       ]);
@@ -85,6 +87,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         counts: {
           medicationEvents: medicationEvents.length,
           triggerEvents: triggerEvents.length,
+          symptomInstances: symptomInstances.length,
           flareRecords: flareRecords.length,
           foodEvents: foodEvents.length,
         },
@@ -216,6 +219,22 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           details: event.notes,
           eventRef: event,
           hasDetails: !!event.notes
+        });
+      });
+
+      // Symptom events (Story 3.5.11: Add symptom logging display)
+      symptomInstances.forEach(symptom => {
+        const severity = symptom.severity;
+        const location = symptom.location ? ` (${symptom.location})` : '';
+        const summary = `🩺 ${symptom.name} - severity ${severity}/10${location}`;
+        timelineEvents.push({
+          id: symptom.id,
+          type: 'symptom',
+          timestamp: symptom.timestamp.getTime(),
+          summary,
+          details: symptom.notes,
+          eventRef: symptom,
+          hasDetails: !!symptom.notes
         });
       });
 

@@ -69,42 +69,59 @@ function DashboardContent() {
     setIsPullToRefresh(false);
   }, []);
 
-  // Pull-to-refresh handling (mobile)
+  // Pull-to-refresh handling (mobile) - Story 3.5.14
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     let startY = 0;
     let currentY = 0;
+    let isPulling = false;
 
     const handleTouchStart = (e: TouchEvent) => {
+      // Only start tracking if we're at the very top of the container
       if (container.scrollTop === 0) {
         startY = e.touches[0].clientY;
         touchStartY.current = startY;
+        isPulling = false;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (container.scrollTop > 0) return;
+      // Ignore if we're not at the top
+      if (container.scrollTop > 0) {
+        isPulling = false;
+        return;
+      }
 
       currentY = e.touches[0].clientY;
       const diff = currentY - startY;
 
-      if (diff > 80 && !isRefreshing) {
+      // Only trigger pull-to-refresh for downward swipes (positive diff)
+      // and only if diff is significant (> 80px) to avoid false positives
+      if (diff > 80 && !isRefreshing && !isPulling) {
+        isPulling = true;
         setIsPullToRefresh(true);
+        // Prevent default to avoid scroll bounce on iOS
+        e.preventDefault();
+      } else if (diff < 0) {
+        // User is scrolling up, not pulling down - allow normal scroll
+        isPulling = false;
       }
     };
 
     const handleTouchEnd = () => {
-      if (isPullToRefresh && !isRefreshing) {
+      if (isPullToRefresh && !isRefreshing && isPulling) {
         handleRefresh();
       }
+      isPulling = false;
       setIsPullToRefresh(false);
     };
 
-    container.addEventListener("touchstart", handleTouchStart);
-    container.addEventListener("touchmove", handleTouchMove);
-    container.addEventListener("touchend", handleTouchEnd);
+    // Use passive: false to allow preventDefault() for pull gesture
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchmove", handleTouchMove, { passive: false });
+    container.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
       container.removeEventListener("touchstart", handleTouchStart);

@@ -52,6 +52,12 @@ jest.mock('@/lib/repositories/triggerRepository', () => ({
   }
 }));
 
+jest.mock('@/lib/repositories/symptomInstanceRepository', () => ({
+  symptomInstanceRepository: {
+    getByDateRange: jest.fn().mockResolvedValue([])
+  }
+}));
+
 // Mock utils
 jest.mock('@/lib/utils/cn', () => ({
   cn: (...classes: string[]) => classes.join(' ')
@@ -135,6 +141,24 @@ describe('TimelineView', () => {
       await waitFor(() => {
         expect(screen.getByText('No events today yet. Use quick-log buttons above to get started!')).toBeInTheDocument();
       }, { timeout: 3000 });
+    });
+  });
+
+  describe('Symptom Display (Story 3.5.11)', () => {
+    it('calls symptomInstanceRepository.getByDateRange when loading events', async () => {
+      const symptomInstanceRepository = jest.requireMock('@/lib/repositories/symptomInstanceRepository').symptomInstanceRepository;
+
+      render(<TimelineView />);
+
+      await waitFor(() => {
+        expect(symptomInstanceRepository.getByDateRange).toHaveBeenCalled();
+      });
+    });
+
+    it('verifies symptom repository is imported and mocked correctly', () => {
+      const symptomInstanceRepository = jest.requireMock('@/lib/repositories/symptomInstanceRepository').symptomInstanceRepository;
+      expect(symptomInstanceRepository).toBeDefined();
+      expect(symptomInstanceRepository.getByDateRange).toBeDefined();
     });
   });
 

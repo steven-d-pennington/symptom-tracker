@@ -148,8 +148,86 @@ export function BodyMapViewer({
       }));
 
       onCoordinateMark?.(regionId, normalized);
-      
+
       // Prevent the onClick handler from firing to avoid double region selection
+      event.stopPropagation();
+    },
+    [onCoordinateMark, onRegionSelect, readOnly, selectedRegion]
+  );
+
+  // Story 3.5.12: Touch coordinate capture handler for iPhone/mobile devices
+  const handleTouchCoordinateCapture = useCallback(
+    (event: React.TouchEvent<SVGSVGElement>) => {
+      if (readOnly) {
+        return;
+      }
+
+      // Prevent default to avoid mouse event synthesis which causes incorrect coordinates
+      event.preventDefault();
+
+      // Get touch coordinates from the first touch point
+      const touch = event.touches[0] || event.changedTouches[0];
+      if (!touch) {
+        return;
+      }
+
+      const target = event.target as SVGElement | null;
+      if (!target) {
+        return;
+      }
+
+      const isBodyRegionElement = target.classList?.contains("body-region");
+      const regionIdFromTarget = target?.id;
+      if (!regionIdFromTarget && !isBodyRegionElement) {
+        return;
+      }
+
+      const regionId = regionIdFromTarget || selectedRegion;
+
+      if (!regionId) {
+        return;
+      }
+
+      // If this region isn't already selected, select it first
+      if (selectedRegion !== regionId) {
+        onRegionSelect(regionId);
+      }
+
+      const svgElement = event.currentTarget;
+      svgRef.current = svgElement;
+
+      // Use touch coordinates instead of mouse coordinates
+      const point = svgElement.createSVGPoint();
+      point.x = touch.clientX;
+      point.y = touch.clientY;
+
+      const ctm = svgElement.getScreenCTM();
+      if (!ctm) {
+        return;
+      }
+
+      const svgPoint = point.matrixTransform(ctm.inverse());
+      const bounds = getRegionBounds(svgElement, regionId);
+      if (!bounds) {
+        return;
+      }
+
+      const normalized = normalizeCoordinates(
+        { x: svgPoint.x, y: svgPoint.y },
+        bounds
+      );
+
+      setRegionMarkers((previous) => ({
+        ...previous,
+        [regionId]: {
+          normalized,
+          bounds,
+        },
+      }));
+
+      onCoordinateMark?.(regionId, normalized);
+
+      // Prevent event bubbling
       event.stopPropagation();
     },
     [onCoordinateMark, onRegionSelect, readOnly, selectedRegion]
@@ -223,6 +301,7 @@ export function BodyMapViewer({
           severityByRegion={combinedSeverityByRegion}
           flareRegions={Object.keys(flareSeverityByRegion)}
           onCoordinateCapture={handleCoordinateCapture}
+          onTouchCoordinateCapture={handleTouchCoordinateCapture}
           coordinateCursorActive={!readOnly && Boolean(selectedRegion)}
           coordinateMarker={coordinateMarkerNode}
           flareOverlay={flareMarkerOverlay}

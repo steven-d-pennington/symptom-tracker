@@ -126,7 +126,7 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
       setIsSaving(true);
 
       // Create symptom instance
-      await symptomInstanceRepository.create({
+      const symptomId = await symptomInstanceRepository.create({
         userId,
         name: selectedSymptom.name,
         category: selectedSymptom.category,
@@ -143,6 +143,19 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
         }),
       });
 
+      console.log("✅ Symptom instance created:", {
+        symptomId,
+        userId,
+        name: selectedSymptom.name,
+        severity,
+        timestamp: new Date(timestamp).toLocaleString(),
+        hasDetails: showDetails,
+      });
+
+      // CRITICAL: Wait for IndexedDB transaction to fully commit
+      // Mobile devices especially need time for disk writes
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       // Success feedback
       toast.success("Symptom logged successfully", {
         description: `${selectedSymptom.name} logged at severity ${severity}/10`,
@@ -150,9 +163,10 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
       });
 
       // Navigate back to dashboard with refresh flag
+      // Additional delay ensures IndexedDB commit completes (Story 3.5.13)
       setTimeout(() => {
         router.push("/dashboard?refresh=symptom");
-      }, 300);
+      }, 500);
     } catch (error) {
       console.error("Failed to log symptom:", error);
       toast.error("Failed to log symptom", {
