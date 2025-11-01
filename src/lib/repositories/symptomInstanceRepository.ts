@@ -71,9 +71,16 @@ export class SymptomInstanceRepository {
     const records = await db.symptomInstances
       .where("[userId+timestamp]")
       .between([userId, startDate], [userId, endDate], true, true)
-      .reverse()
-      .sortBy("timestamp");
-    return records.map(r => this.recordToSymptom(r));
+      .toArray();
+
+    // Sort manually to ensure correct results (sortBy() can break .between() filters)
+    const sorted = records.sort((a, b) => {
+      const aTime = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+      const bTime = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+      return bTime - aTime; // Descending order (most recent first)
+    });
+
+    return sorted.map(r => this.recordToSymptom(r));
   }
 
   /**
