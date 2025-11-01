@@ -140,18 +140,17 @@ export class UserRepository {
     }
 
     // Story 3.5.1: Initialize default data for new user
-    // Run asynchronously to avoid blocking user creation, but log any errors
-    initializeUserDefaults(id)
-      .then((result) => {
-        if (result.success) {
-          console.log(`[getOrCreateCurrentUser] User defaults initialized successfully for ${id}`);
-        } else {
-          console.error(`[getOrCreateCurrentUser] Failed to initialize defaults: ${result.error}`);
-        }
-      })
-      .catch((error) => {
-        console.error(`[getOrCreateCurrentUser] Error initializing defaults:`, error);
-      });
+    // CRITICAL: Must await to ensure defaults are loaded before user sees the app
+    console.log(`[getOrCreateCurrentUser] Initializing default data for new user: ${id}`);
+    const initResult = await initializeUserDefaults(id);
+
+    if (initResult.success) {
+      console.log(`[getOrCreateCurrentUser] ✅ Defaults initialized successfully:`, initResult.details);
+    } else {
+      console.error(`[getOrCreateCurrentUser] ⚠️ Failed to initialize defaults: ${initResult.error}`);
+      console.error(`[getOrCreateCurrentUser] User can manually initialize via Settings > Advanced > Reinitialize Defaults`);
+      // Don't throw - let user proceed even if defaults fail
+    }
 
     return user;
   }
