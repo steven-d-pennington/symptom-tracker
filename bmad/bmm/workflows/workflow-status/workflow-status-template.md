@@ -34,6 +34,13 @@ NEXT_ACTION: {{next_action}}
 NEXT_COMMAND: {{next_command}}
 NEXT_AGENT: {{next_agent}}
 
+## Special Commands
+
+**Version Bump Command:** When user says `*bump-version`, increment the version number in:
+- `src/components/navigation/Sidebar.tsx` (lines 168 and 239)
+- `src/app/(protected)/about/page.tsx` (line 90 and changelog section around line 228)
+- Follow semantic versioning (MAJOR.MINOR.PATCH)
+
 ## Story Backlog
 
 {{#backlog_stories}}

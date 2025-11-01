@@ -338,6 +338,9 @@ export function DevDataControls() {
         db.foodEvents?.where({ userId }).delete(),
         db.foods?.where({ userId }).delete(),
         db.foodCombinations?.where({ userId }).delete(),
+        // Mood and sleep
+        db.moodEntries?.where({ userId }).delete(),
+        db.sleepEntries?.where({ userId }).delete(),
         // Legacy data
         db.dailyEntries.where({ userId }).delete(),
         db.analysisResults.where({ userId }).delete(),
@@ -360,6 +363,78 @@ export function DevDataControls() {
           : "Something went wrong while clearing data."
       );
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNuclearReset = async () => {
+    const confirmed = confirm(
+      "🚨 NUCLEAR RESET - EXTREME WARNING 🚨\\n\\n" +
+      "This will COMPLETELY ERASE EVERYTHING:\\n\\n" +
+      "• ENTIRE IndexedDB database (all tables, all users)\\n" +
+      "• ALL localStorage data\\n" +
+      "• ALL sessionStorage data\\n" +
+      "• ALL cookies\\n" +
+      "• User account and preferences\\n\\n" +
+      "The app will reload and you'll start from scratch.\\n" +
+      "There is NO way to undo this!\\n\\n" +
+      "Type 'DELETE EVERYTHING' if you're absolutely sure you want to proceed."
+    );
+
+    if (!confirmed) return;
+
+    const doubleCheck = prompt(
+      "Type 'DELETE EVERYTHING' (in all caps) to confirm nuclear reset:"
+    );
+
+    if (doubleCheck !== "DELETE EVERYTHING") {
+      setError("Nuclear reset cancelled. You must type 'DELETE EVERYTHING' to confirm.");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      console.log("[Nuclear Reset] Starting complete app reset...");
+
+      // 1. Delete entire IndexedDB database
+      const { db } = await import("@/lib/db/client");
+      await db.delete();
+      console.log("[Nuclear Reset] IndexedDB deleted");
+
+      // 2. Clear localStorage
+      localStorage.clear();
+      console.log("[Nuclear Reset] localStorage cleared");
+
+      // 3. Clear sessionStorage
+      sessionStorage.clear();
+      console.log("[Nuclear Reset] sessionStorage cleared");
+
+      // 4. Clear all cookies
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      }
+      console.log("[Nuclear Reset] Cookies cleared");
+
+      setMessage("✅ Nuclear reset complete! Reloading app...");
+
+      // 5. Reload the page to start fresh
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
+    } catch (err) {
+      console.error("Failed to complete nuclear reset", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong during nuclear reset."
+      );
       setIsLoading(false);
     }
   };
@@ -519,6 +594,29 @@ export function DevDataControls() {
             className="inline-flex items-center rounded-md bg-destructive px-6 py-2.5 text-sm font-semibold text-destructive-foreground shadow-md hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isLoading ? "Clearing…" : "Clear All Data"}
+          </button>
+        </div>
+
+        {/* Nuclear Reset Section */}
+        <div className="mt-6 p-4 border-2 border-red-600 rounded-lg bg-red-50 dark:bg-red-900/20">
+          <div className="flex items-start gap-3 mb-3">
+            <span className="text-2xl">🚨</span>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-red-900 dark:text-red-200">
+                DANGER ZONE: Nuclear Reset
+              </h4>
+              <p className="text-xs text-red-800 dark:text-red-300 mt-1">
+                This will completely erase EVERYTHING: entire database, localStorage, sessionStorage, cookies, and all user data. The app will reload to a completely fresh state.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleNuclearReset}
+            disabled={isLoading}
+            className="inline-flex items-center rounded-md bg-red-700 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-70 border-2 border-red-900"
+          >
+            {isLoading ? "Resetting…" : "🚨 NUCLEAR RESET - DELETE EVERYTHING"}
           </button>
         </div>
 
