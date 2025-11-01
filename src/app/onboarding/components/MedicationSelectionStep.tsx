@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { SelectionStep } from "./SelectionStep";
 import { DEFAULT_MEDICATIONS } from "@/lib/data/defaultData";
 import type { OnboardingStepComponentProps } from "../types/onboarding";
@@ -24,12 +25,21 @@ export function MedicationSelectionStep({
     onContinue("medicationSelection");
   };
 
+  // Map DEFAULT_MEDICATIONS to include category (use 'type' field as category)
+  const medicationItems = useMemo(() =>
+    DEFAULT_MEDICATIONS.map(med => ({
+      ...med,
+      category: med.type, // Map 'type' to 'category' for SelectionStep
+    })),
+    []
+  );
+
   return (
     <SelectionStep
       type="medications"
       title="What treatments do you use?"
       description="Select medications and treatments you want to track"
-      defaultItems={DEFAULT_MEDICATIONS}
+      defaultItems={medicationItems}
       onNext={handleNext}
       onSkip={handleSkip}
       onBack={onBack}
