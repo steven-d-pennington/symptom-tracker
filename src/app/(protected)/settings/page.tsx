@@ -54,6 +54,15 @@ export default function SettingsPage() {
     },
   ];
 
+  const advancedSections = [
+    {
+      title: "My Data",
+      icon: Database,
+      description: "View and manage your IndexedDB data (advanced users)",
+      href: "/settings/my-data",
+    },
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="mb-8">
@@ -134,6 +143,40 @@ export default function SettingsPage() {
                   <div className="p-6">
                     <div className="flex items-start gap-4">
                       <div className="p-3 rounded-lg bg-primary/10 text-primary">
+                        <Icon className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground mb-1">
+                          {section.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {section.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Advanced Sections */}
+        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-3">Advanced</h2>
+          <div className="space-y-4">
+            {advancedSections.map((section) => {
+              const Icon = section.icon;
+
+              return (
+                <Link
+                  key={section.title}
+                  href={section.href}
+                  className="block rounded-lg border border-border bg-card overflow-hidden hover:bg-muted/50 transition-colors"
+                >
+                  <div className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400">
                         <Icon className="w-6 h-6" />
                       </div>
                       <div className="flex-1">
