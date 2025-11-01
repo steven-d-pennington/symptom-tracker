@@ -107,9 +107,16 @@ class PhotoRepository {
     const records = await db.photoAttachments
       .where("[userId+capturedAt]")
       .between([userId, startDate], [userId, endDate], true, true)
-      .reverse()
-      .sortBy("capturedAt");
-    return records.map((r) => this.recordToPhoto(r));
+      .toArray();
+
+    // Sort manually to ensure correct results (sortBy() can break .between() filters)
+    const sorted = records.sort((a, b) => {
+      const aTime = a.capturedAt instanceof Date ? a.capturedAt.getTime() : new Date(a.capturedAt).getTime();
+      const bTime = b.capturedAt instanceof Date ? b.capturedAt.getTime() : new Date(b.capturedAt).getTime();
+      return bTime - aTime; // Descending order (most recent first)
+    });
+
+    return sorted.map((r) => this.recordToPhoto(r));
   }
 
   /**

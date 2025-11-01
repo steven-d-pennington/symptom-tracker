@@ -106,11 +106,13 @@ export class MedicationEventRepository {
     startTimestamp: number,
     endTimestamp: number
   ): Promise<MedicationEventRecord[]> {
-    return await db.medicationEvents
+    const records = await db.medicationEvents
       .where("[userId+timestamp]")
       .between([userId, startTimestamp], [userId, endTimestamp], true, true)
-      .reverse()
-      .sortBy("timestamp");
+      .toArray();
+
+    // Sort manually to ensure correct results (sortBy() can break .between() filters)
+    return records.sort((a, b) => b.timestamp - a.timestamp); // Descending order
   }
 
   /**
