@@ -13,6 +13,10 @@ import { PrivacyStep } from "./PrivacyStep";
 import { ProfileStep } from "./ProfileStep";
 import { ProgressIndicator } from "./ProgressIndicator";
 import { WelcomeStep } from "./WelcomeStep";
+import { SymptomSelectionStep } from "./SymptomSelectionStep";
+import { TriggerSelectionStep } from "./TriggerSelectionStep";
+import { MedicationSelectionStep } from "./MedicationSelectionStep";
+import { FoodSelectionStep } from "./FoodSelectionStep";
 
 const STEP_COMPONENTS: Record<OnboardingStepId, OnboardingStepComponent> = {
   welcome: WelcomeStep,
@@ -20,6 +24,10 @@ const STEP_COMPONENTS: Record<OnboardingStepId, OnboardingStepComponent> = {
   condition: ConditionStep,
   preferences: PreferencesStep,
   privacy: PrivacyStep,
+  symptomSelection: SymptomSelectionStep,
+  triggerSelection: TriggerSelectionStep,
+  medicationSelection: MedicationSelectionStep,
+  foodSelection: FoodSelectionStep,
   education: EducationStep,
   completion: CompletionStep,
 };
