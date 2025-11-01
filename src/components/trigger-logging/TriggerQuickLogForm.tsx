@@ -38,9 +38,18 @@ export function TriggerQuickLogForm({ userId }: TriggerQuickLogFormProps) {
   // Form state - Quick Log fields (essential)
   const [selectedTrigger, setSelectedTrigger] = useState<TriggerRecord | null>(null);
   const [intensity, setIntensity] = useState<'low' | 'medium' | 'high'>('medium');
-  const [timestamp, setTimestamp] = useState<string>(
-    new Date().toISOString().slice(0, 16)
-  );
+  // FIX: datetime-local inputs expect LOCAL time, not UTC
+  // toISOString() gives UTC which causes timezone bugs
+  const getLocalDateTimeString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+  const [timestamp, setTimestamp] = useState<string>(getLocalDateTimeString());
 
   // Form state - Add Details fields (optional, progressive disclosure)
   const [showDetails, setShowDetails] = useState(false);
