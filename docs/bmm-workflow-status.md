@@ -37,6 +37,7 @@
 | Epic | Story | ID | Title | File | Points | Priority |
 |------|-------|-----|-------|------|--------|----------|
 | 3.5 | 10 | 3.5.10 | CRITICAL: Calendar page crashes on loading data | story-3.5.10.md | 1 | CRITICAL |
+| 3.6 | 1 | 3.6.1 | Interactive Data Selection During Onboarding | 3.6.1-onboarding-data-selection-flow.md | 13 | HIGH |
 
 ---
 
@@ -91,6 +92,8 @@ A critical regression was discovered that crashes the calendar page. This must b
 ---
 
 ## Decision Log
+
+- **2025-11-01:** Created Story 3.6.1: Interactive Data Selection During Onboarding. This story expands the onboarding flow to allow users to interactively select symptoms, triggers, medications, and foods instead of auto-populating all defaults. Features include: collapsible category organization, real-time search across all data types, ability to add custom items during onboarding, and GUID-based user ID generation for cloud sync preparation. Story includes 13 acceptance criteria and 16 detailed tasks. Priority: HIGH (13 story points).
 
 - **2025-10-31:** Created Story 3.5.10 to address a critical regression in the calendar page (`SyntaxError: "undefined" is not valid JSON`). This bug blocks production readiness. The start of Epic 4 is paused until this fix is implemented and verified. The next action is for the DEV agent to run `*dev-story` to implement the fix.
 
