@@ -254,6 +254,10 @@ export function TriggerQuickLogForm({ userId }: TriggerQuickLogFormProps) {
         notes: showDetails && notes ? notes : undefined,
       });
 
+      // CRITICAL: Wait for IndexedDB transaction to fully commit
+      // Mobile devices especially need time for disk writes (Story 3.5.13)
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       // Success feedback
       toast.success("Trigger logged successfully", {
         description: selectedTrigger.name,
@@ -261,7 +265,10 @@ export function TriggerQuickLogForm({ userId }: TriggerQuickLogFormProps) {
       });
 
       // Navigate back to dashboard with refresh flag
-      router.push("/dashboard?refresh=trigger");
+      // Delay ensures IndexedDB commit completes before navigation
+      setTimeout(() => {
+        router.push("/dashboard?refresh=trigger");
+      }, 500);
     } catch (error) {
       console.error("Failed to log trigger:", error);
       toast.error("Failed to log trigger", {
