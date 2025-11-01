@@ -62,18 +62,38 @@ export class SymptomInstanceRepository {
 
   /**
    * Get symptom instances in date range
+   * CRITICAL: Compound indexes with Date fields require Date objects for comparison
+   * Dexie compares Date objects properly when stored as Date type
    */
   async getByDateRange(
     userId: string,
     startDate: Date,
     endDate: Date
   ): Promise<Symptom[]> {
-    const records = await db.symptomInstances
-      .where("[userId+timestamp]")
-      .between([userId, startDate], [userId, endDate], true, true)
-      .reverse()
-      .sortBy("timestamp");
-    return records.map(r => this.recordToSymptom(r));
+    // Use all records and filter manually since compound index comparison is unreliable
+    const allRecords = await db.symptomInstances
+      .where("userId")
+      .equals(userId)
+      .toArray();
+
+    // Filter by date range manually
+    const filteredRecords = allRecords.filter(record => {
+      const recordTime = record.timestamp instanceof Date
+        ? record.timestamp.getTime()
+        : new Date(record.timestamp).getTime();
+      const startTime = startDate.getTime();
+      const endTime = endDate.getTime();
+      return recordTime >= startTime && recordTime <= endTime;
+    });
+
+    // Sort descending (most recent first)
+    const sorted = filteredRecords.sort((a, b) => {
+      const aTime = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+      const bTime = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+      return bTime - aTime;
+    });
+
+    return sorted.map(r => this.recordToSymptom(r));
   }
 
   /**

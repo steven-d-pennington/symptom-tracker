@@ -57,11 +57,13 @@ export class TriggerEventRepository {
     startTimestamp: number,
     endTimestamp: number
   ): Promise<TriggerEventRecord[]> {
-    return await db.triggerEvents
+    const records = await db.triggerEvents
       .where("[userId+timestamp]")
       .between([userId, startTimestamp], [userId, endTimestamp], true, true)
-      .reverse()
-      .sortBy("timestamp");
+      .toArray();
+
+    // Sort manually to ensure correct results (sortBy() can break .between() filters)
+    return records.sort((a, b) => b.timestamp - a.timestamp); // Descending order
   }
 
   /**
