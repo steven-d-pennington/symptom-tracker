@@ -87,7 +87,7 @@ export default function AboutPage() {
           </h2>
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>
-              <strong className="text-foreground">Version:</strong> 0.2.0
+              <strong className="text-foreground">Version:</strong> 0.3.0
             </p>
             <p>
               <strong className="text-foreground">Status:</strong> Beta - Production Ready ✅
@@ -225,7 +225,7 @@ export default function AboutPage() {
                   )}
                   <div className="text-left">
                     <h3 className="font-semibold text-foreground">
-                      Version 0.2.0 - Epic 3.5: Production-Ready UI/UX
+                      Version 0.3.0 - Epic 3.5: Production-Ready UI/UX
                     </h3>
                     <p className="text-sm text-muted-foreground">October 2025</p>
                   </div>

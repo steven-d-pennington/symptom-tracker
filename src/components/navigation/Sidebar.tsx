@@ -165,7 +165,7 @@ export function Sidebar({ isMobile = false, isOpen = false, onClose }: SidebarPr
           {/* Footer */}
           <div className="p-4 border-t border-border">
             <div className="px-3 py-2 text-xs text-muted-foreground">
-              <div>Version 0.2.0</div>
+              <div>Version 0.3.0</div>
               <div className="mt-1">Phase 1 & 2 Complete</div>
             </div>
           </div>
@@ -236,7 +236,7 @@ export function Sidebar({ isMobile = false, isOpen = false, onClose }: SidebarPr
       {/* Footer */}
       <div className="p-4 border-t border-border">
         <div className="px-3 py-2 text-xs text-muted-foreground">
-          <div>Version 0.2.0</div>
+          <div>Version 0.3.0</div>
           <div className="mt-1">Phase 1 & 2 Complete</div>
         </div>
       </div>
