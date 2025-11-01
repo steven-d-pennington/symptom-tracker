@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-10-31
+- **Last Updated:** 2025-11-01
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** Phase 4: Implementation (In Progress)
-- **Current Workflow:** Fixing critical regression in Epic 3.5
-- **Overall Progress:** Epic 3.5 requires a patch (Story 3.5.10).
-- **Next Action:** Implement Story 3.5.10 (CRITICAL: Calendar page crashes on loading data)
-- **Command to Run:** *dev-story
-- **Agent to Load:** dev (bmad/bmm/agents/dev.md)
-- **Note:** A critical regression was found in Story 3.5.7. A new story, 3.5.10, has been created to address it. This blocks the start of Epic 4.
+- **Current Workflow:** Ready to begin Epic 3.6 or Epic 4
+- **Overall Progress:** Epic 3.5 complete (including bug fix 3.5.10). Ready for new feature work.
+- **Next Action:** Implement Story 3.6.1 (Interactive Data Selection During Onboarding) OR begin Epic 4 stories
+- **Command to Run:** *dev-story OR *create-story
+- **Agent to Load:** dev (bmad/bmm/agents/dev.md) OR sm (bmad/bmm/agents/sm.md)
+- **Note:** Epic 3.5 fully complete. Story 3.6.1 drafted and ready. Epic 4 unblocked.
 
 ---
 
@@ -36,7 +36,7 @@
 
 | Epic | Story | ID | Title | File | Points | Priority |
 |------|-------|-----|-------|------|--------|----------|
-| 3.5 | 10 | 3.5.10 | CRITICAL: Calendar page crashes on loading data | story-3.5.10.md | 1 | CRITICAL |
+| 3.6 | 1 | 3.6.1 | Interactive Data Selection During Onboarding | 3.6.1-onboarding-data-selection-flow.md | 13 | HIGH |
 
 ---
 
@@ -52,8 +52,6 @@
 
 **Total in backlog:** 5 stories (4 Epic 4, 1 Epic 2)
 
-**Note:** Epic 4 stories blocked until Epic 3.5 is fully complete.
-
 #### IN PROGRESS (Approved for Development / Review)
 
 *No stories currently in progress.*
@@ -64,6 +62,7 @@
 
 | Story ID | File | Completed Date | Points | Epic |
 |----------|------|----------------|--------|------|
+| 3.5.10 | docs/stories/story-3.5.10.md | 2025-11-01 | 1 | Epic 3.5: Production UX (Bug Fix) |
 | 3.5.9 | docs/stories/3-5-9-help-pages-and-landing-page.md | 2025-10-31 | 5 | Epic 3.5: Production UX |
 | 3.5.8 | docs/stories/3-5-8-add-keyboard-navigation-accessibility.md | 2025-10-31 | 5 | Epic 3.5: Production UX |
 | 3.5.7 | docs/stories/3-5-7-fix-calendar-data-wiring.md | 2025-10-31 | 3 | Epic 3.5: Production UX |
@@ -79,18 +78,28 @@
 
 ### Next Action Required
 
-**🎯 CRITICAL BUG FIX: Story 3.5.10**
+**🎯 Epic 3.5 COMPLETE - Ready for New Features**
 
-A critical regression was discovered that crashes the calendar page. This must be fixed before proceeding to Epic 4.
+Story 3.5.10 (critical bug fix) has been completed. Epic 3.5 is now fully complete. The project is ready for new feature work.
 
-**Next Steps:**
-1. **Implement Story 3.5.10:** CRITICAL: Calendar page crashes on loading data
+**Available Options:**
+1. **Implement Story 3.6.1:** Interactive Data Selection During Onboarding (13 points, HIGH priority)
    - Command: `*dev-story`
    - Agent: `dev` (Developer)
+   - Enhances onboarding UX with user-selected defaults
+
+2. **Begin Epic 4:** Photo Documentation features
+   - Command: `*create-story` (to draft story 4.1)
+   - Agent: `sm` (Scrum Master)
+   - Start photo attachment and timeline features
 
 ---
 
 ## Decision Log
+
+- **2025-11-01:** Completed Story 3.5.10 (CRITICAL bug fix). Fixed calendar page crash caused by undefined severityScale in old data. Added conditional check in recordToSymptom method and comprehensive unit test. All tests passing. Epic 3.5 now fully complete with 10 stories (53 points total). Epic 4 unblocked and ready to begin.
+
+- **2025-11-01:** Created Story 3.6.1: Interactive Data Selection During Onboarding. This story expands the onboarding flow to allow users to interactively select symptoms, triggers, medications, and foods instead of auto-populating all defaults. Features include: collapsible category organization, real-time search across all data types, ability to add custom items during onboarding, and GUID-based user ID generation for cloud sync preparation. Story includes 13 acceptance criteria and 16 detailed tasks. Priority: HIGH (13 story points).
 
 - **2025-10-31:** Created Story 3.5.10 to address a critical regression in the calendar page (`SyntaxError: "undefined" is not valid JSON`). This bug blocks production readiness. The start of Epic 4 is paused until this fix is implemented and verified. The next action is for the DEV agent to run `*dev-story` to implement the fix.
 

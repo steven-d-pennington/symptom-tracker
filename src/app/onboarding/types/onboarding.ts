@@ -7,6 +7,10 @@ export type OnboardingStepId =
   | "preferences"
   | "privacy"
   | "education"
+  | "symptomSelection"
+  | "triggerSelection"
+  | "medicationSelection"
+  | "foodSelection"
   | "completion";
 
 export interface TrackingPreferences {
@@ -32,6 +36,30 @@ export interface UserProfile {
   email: string;
 }
 
+/**
+ * Selection item for onboarding (symptoms, triggers, medications, foods)
+ * Story 3.6.1 - AC3.6.1.9, AC3.6.1.10
+ */
+export interface SelectionItem {
+  id?: string;
+  name: string;
+  category: string;
+  description?: string;
+  isDefault: boolean;
+  isCustom: boolean;
+}
+
+/**
+ * Onboarding selections for all data types
+ * Story 3.6.1 - Task 1
+ */
+export interface OnboardingSelections {
+  symptoms: SelectionItem[];
+  triggers: SelectionItem[];
+  medications: SelectionItem[];
+  foods: SelectionItem[];
+}
+
 export interface OnboardingData {
   userProfile?: UserProfile;
   condition: string;
@@ -39,6 +67,7 @@ export interface OnboardingData {
   trackingPreferences: TrackingPreferences;
   privacySettings: PrivacySettings;
   educationalContent: EducationalProgress;
+  selections?: OnboardingSelections;
 }
 
 export interface OnboardingState {

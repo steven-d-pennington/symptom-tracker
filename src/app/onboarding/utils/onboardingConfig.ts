@@ -32,6 +32,30 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
       "Understand exactly how your information stays on your device and under your control.",
   },
   {
+    id: "symptomSelection",
+    title: "Select Your Symptoms",
+    description:
+      "Choose which symptoms you want to track. Search and add custom items if needed.",
+  },
+  {
+    id: "triggerSelection",
+    title: "Select Your Triggers",
+    description:
+      "Choose which triggers you want to monitor. Search and add custom items if needed.",
+  },
+  {
+    id: "medicationSelection",
+    title: "Select Your Treatments",
+    description:
+      "Choose which medications and treatments you want to track. Search and add custom items if needed.",
+  },
+  {
+    id: "foodSelection",
+    title: "Select Foods to Track",
+    description:
+      "Choose which foods you want to monitor. Search and add custom items if needed.",
+  },
+  {
     id: "completion",
     title: "All Set!",
     description:

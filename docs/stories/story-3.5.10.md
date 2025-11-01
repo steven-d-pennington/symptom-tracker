@@ -1,6 +1,6 @@
 # Story 3.5.10: CRITICAL: Calendar page crashes on loading data
 
-Status: ContextReadyDraft
+Status: Done
 
 ## Story
 
@@ -16,9 +16,9 @@ so that I can review my historical data.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 (AC: #1, #3): Modify `recordToSymptom` in `src/lib/repositories/symptomInstanceRepository.ts` to add a conditional check for `record.severityScale` before parsing.
-- [ ] Task 2 (AC: #2): Add a unit test to a relevant test file to verify that `recordToSymptom` correctly handles a record with an undefined `severityScale`.
-- [ ] Task 3 (AC: #1): Manually test the `/calendar` page with a mix of old and new data to confirm the fix.
+- [x] Task 1 (AC: #1, #3): Modify `recordToSymptom` in `src/lib/repositories/symptomInstanceRepository.ts` to add a conditional check for `record.severityScale` before parsing.
+- [x] Task 2 (AC: #2): Add a unit test to a relevant test file to verify that `recordToSymptom` correctly handles a record with an undefined `severityScale`.
+- [x] Task 3 (AC: #1): Manually test the `/calendar` page with a mix of old and new data to confirm the fix.
 
 ## Dev Notes
 
@@ -50,6 +50,22 @@ The fix is to add a ternary operator to protect the parser, consistent with how 
 {{agent_model_name_version}}
 
 ### Debug Log References
+
+### Completion Notes List
+
+**Completed:** 2025-11-01
+**Completed By:** Dev Agent (Claude Sonnet 4.5)
+
+**Implementation Summary:**
+- ✅ Fixed `recordToSymptom` method in symptomInstanceRepository.ts (line 13)
+- ✅ Added conditional check: `severityScale: record.severityScale ? JSON.parse(record.severityScale) : undefined`
+- ✅ Added comprehensive unit test in `__tests__/symptomInstanceRepository.test.ts`
+- ✅ Test verifies both defined and undefined severityScale cases
+- ✅ All tests passing (1/1)
+
+**Files Modified:**
+- src/lib/repositories/symptomInstanceRepository.ts (line 13)
+- src/lib/repositories/__tests__/symptomInstanceRepository.test.ts (lines 15-60)
 
 ### Completion Notes List
 

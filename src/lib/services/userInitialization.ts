@@ -21,6 +21,7 @@ import {
   DEFAULT_MEDICATIONS,
 } from '../data/defaultData';
 import type { SymptomRecord, FoodRecord, TriggerRecord, MedicationRecord } from '../db/schema';
+import type { OnboardingSelections } from '../../app/onboarding/types/onboarding';
 
 export interface InitializationResult {
   success: boolean;
@@ -36,15 +37,20 @@ export interface InitializationResult {
 /**
  * Initialize default data for a new user
  * @param userId - The user ID to initialize defaults for
+ * @param selections - Optional onboarding selections (Story 3.6.1)
  * @returns Promise<InitializationResult> - Success status and details
  *
  * AC3.5.1.1-4: Pre-populate default symptoms, foods, triggers, and medications
  * at user creation with isDefault: true flag
  *
+ * Story 3.6.1 - AC3.6.1.10: If selections provided, create only selected items
+ * instead of all defaults. Custom items marked with isFavorite: true.
+ *
  * This function is idempotent - calling it multiple times will not create duplicates
  */
 export async function initializeUserDefaults(
-  userId: string
+  userId: string,
+  selections?: OnboardingSelections
 ): Promise<InitializationResult> {
   // Prevent initialization for the fallback user ID (ghost user from useCurrentUser hook)
   if (userId === 'default-user-id') {
@@ -68,7 +74,7 @@ export async function initializeUserDefaults(
   }
 
   // Create a new initialization promise and store it in the lock map
-  const initPromise = performInitialization(userId);
+  const initPromise = performInitialization(userId, selections);
   initializationLocks.set(userId, initPromise);
 
   // Clean up the lock when done
@@ -80,10 +86,16 @@ export async function initializeUserDefaults(
 }
 
 async function performInitialization(
-  userId: string
+  userId: string,
+  selections?: OnboardingSelections
 ): Promise<InitializationResult> {
   try {
-    console.log(`[performInitialization] Starting initialization for user: ${userId}`);
+    if (selections) {
+      console.log(`[performInitialization] Starting initialization with onboarding selections for user: ${userId}`);
+      return await performSelectionBasedInitialization(userId, selections);
+    }
+
+    console.log(`[performInitialization] Starting initialization with all defaults for user: ${userId}`);
 
     // Check if defaults already exist (idempotency)
     // Must check ALL four data types, not just symptoms
@@ -265,4 +277,120 @@ export async function reinitializeUserDefaults(
   }
 
   return await initializeUserDefaults(userId);
+}
+
+/**
+ * Perform selection-based initialization for Story 3.6.1
+ * Creates only the items selected during onboarding instead of all defaults
+ * AC3.6.1.10: Batch creation with isDefault+isEnabled for defaults, isFavorite for custom
+ */
+async function performSelectionBasedInitialization(
+  userId: string,
+  selections: OnboardingSelections
+): Promise<InitializationResult> {
+  try {
+    console.log(`[performSelectionBasedInitialization] Creating selected items for user: ${userId}`);
+    console.log(`  - Symptoms: ${selections.symptoms.length}`);
+    console.log(`  - Triggers: ${selections.triggers.length}`);
+    console.log(`  - Medications: ${selections.medications.length}`);
+    console.log(`  - Foods: ${selections.foods.length}`);
+
+    // Prepare selected symptoms for bulk creation
+    const symptomsToCreate: Omit<SymptomRecord, 'id' | 'createdAt' | 'updatedAt'>[] =
+      selections.symptoms.map((item) => {
+        // Find the default symptom to get severityScale
+        const defaultSymptom = DEFAULT_SYMPTOMS.find(s => s.name === item.name);
+        return {
+          userId,
+          name: item.name,
+          category: item.category,
+          description: item.description,
+          severityScale: defaultSymptom?.severityScale || {
+            min: 0,
+            max: 10,
+            labels: { 0: 'None', 5: 'Moderate', 10: 'Severe' }
+          },
+          isActive: true,
+          isDefault: item.isDefault,
+          isEnabled: true,
+          isFavorite: item.isCustom, // Custom items are favorites
+        };
+      });
+
+    // Prepare selected foods for bulk creation
+    const foodsToCreate: Omit<FoodRecord, 'id' | 'createdAt' | 'updatedAt'>[] =
+      selections.foods.map((item) => ({
+        userId,
+        name: item.name,
+        category: item.category,
+        allergenTags: JSON.stringify([]),
+        isDefault: item.isDefault,
+        isActive: true,
+        isFavorite: item.isCustom,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }));
+
+    // Prepare selected triggers for bulk creation
+    const triggersToCreate: Omit<TriggerRecord, 'id' | 'createdAt' | 'updatedAt'>[] =
+      selections.triggers.map((item) => ({
+        userId,
+        name: item.name,
+        category: item.category,
+        description: item.description,
+        isActive: true,
+        isDefault: item.isDefault,
+        isEnabled: true,
+        isFavorite: item.isCustom,
+      }));
+
+    // Prepare selected medications for bulk creation
+    const medicationsToCreate: Omit<MedicationRecord, 'id' | 'createdAt' | 'updatedAt'>[] =
+      selections.medications.map((item) => {
+        // Find the default medication to get dosage/frequency
+        const defaultMed = DEFAULT_MEDICATIONS.find(m => m.name === item.name);
+        return {
+          userId,
+          name: item.name,
+          dosage: defaultMed?.dosage,
+          frequency: defaultMed?.frequency || 'as-needed',
+          schedule: [],
+          sideEffects: [],
+          isActive: true,
+          isDefault: item.isDefault,
+          isEnabled: true,
+          isFavorite: item.isCustom,
+        };
+      });
+
+    // Batch create all selected items in parallel
+    const [symptomIds, foodIds, triggerIds, medicationIds] = await Promise.all([
+      symptomsToCreate.length > 0 ? symptomRepository.bulkCreate(symptomsToCreate) : [],
+      foodsToCreate.length > 0 ? foodRepository.bulkCreate(foodsToCreate) : [],
+      triggersToCreate.length > 0 ? triggerRepository.bulkCreate(triggersToCreate) : [],
+      medicationsToCreate.length > 0 ? medicationRepository.bulkCreate(medicationsToCreate) : [],
+    ]);
+
+    console.log(`[performSelectionBasedInitialization] Successfully created selected items for user: ${userId}`);
+    console.log(`  - Symptoms created: ${symptomIds.length}`);
+    console.log(`  - Foods created: ${foodIds.length}`);
+    console.log(`  - Triggers created: ${triggerIds.length}`);
+    console.log(`  - Medications created: ${medicationIds.length}`);
+
+    return {
+      success: true,
+      details: {
+        symptomsCreated: symptomIds.length,
+        foodsCreated: foodIds.length,
+        triggersCreated: triggerIds.length,
+        medicationsCreated: medicationIds.length,
+      },
+    };
+  } catch (error) {
+    console.error('[performSelectionBasedInitialization] Failed to create selected items:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
 }

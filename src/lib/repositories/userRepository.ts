@@ -1,6 +1,6 @@
 import { db } from "../db/client";
 import { UserRecord, UserPreferences, SymptomCategoryRecord, EntryTemplateRecord } from "../db/schema";
-import { generateId } from "../utils/idGenerator";
+import { generateId, generateUUID } from "../utils/idGenerator";
 import { initializeUserDefaults } from "../services/userInitialization";
 
 export class UserRepository {
@@ -27,11 +27,12 @@ export class UserRepository {
 
   /**
    * Create a new user
+   * Story 3.6.1 - AC3.6.1.13: Use GUID for cloud sync preparation
    */
   async create(
     userData: Omit<UserRecord, "id" | "createdAt" | "updatedAt">
   ): Promise<string> {
-    const id = generateId();
+    const id = generateUUID(); // Use GUID format for cloud sync readiness
     const now = new Date();
 
     await db.users.add({

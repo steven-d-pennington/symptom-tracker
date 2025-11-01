@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { OnboardingFlow } from "./components/OnboardingFlow";
 import { OnboardingProvider } from "./hooks/useOnboarding";
 import { OnboardingImportOption } from "./components/OnboardingImportOption";
+import { OnboardingSelectionsProvider } from "./contexts/OnboardingSelectionsContext";
 
 export const metadata: Metadata = {
   title: "Onboarding • Pocket Symptom Tracker",
@@ -24,8 +25,10 @@ const OnboardingPage = () => {
         </p>
       </div>
       <OnboardingProvider>
-        <OnboardingFlow />
-        <OnboardingImportOption />
+        <OnboardingSelectionsProvider>
+          <OnboardingFlow />
+          <OnboardingImportOption />
+        </OnboardingSelectionsProvider>
       </OnboardingProvider>
     </div>
   );
