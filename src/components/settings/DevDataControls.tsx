@@ -619,7 +619,6 @@ export function DevDataControls() {
             {isLoading ? "Resetting…" : "🚨 NUCLEAR RESET - DELETE EVERYTHING"}
           </button>
         </div>
-      </div>
 
         {/* Help Text */}
         <div className="mt-4 rounded-md bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-200 dark:border-blue-800">
