@@ -1538,6 +1538,419 @@ export function useSync() {
 
 ---
 
+## LocalStorage Sync
+
+### Problem
+
+The app stores important data in localStorage that needs to sync across devices:
+- User preferences (theme, notifications, privacy settings)
+- Onboarding data (completed steps, flags)
+- UI state (collapsed sections, view preferences)
+- Feature flags and A/B test assignments
+- Last-used selections (body regions, symptom categories)
+
+**Current localStorage keys (examples):**
+```
+pocket:currentUserId
+pocket:theme
+pocket:onboarding:completed
+pocket:notifications:enabled
+pocket:privacy:analyticsOptIn
+pocket:lastBodyRegion
+```
+
+### Solution: User Settings Table
+
+Instead of syncing raw localStorage key-value pairs, create a structured `user_settings` table:
+
+```sql
+-- User settings (synced localStorage equivalent)
+CREATE TABLE user_settings (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+
+  -- Preferences
+  theme TEXT DEFAULT 'system',
+  notifications_enabled BOOLEAN DEFAULT true,
+  analytics_opt_in BOOLEAN DEFAULT false,
+
+  -- Onboarding
+  onboarding_completed BOOLEAN DEFAULT false,
+  onboarding_step INTEGER DEFAULT 0,
+
+  -- UI state
+  ui_preferences JSONB DEFAULT '{}'::jsonb, -- Flexible for future additions
+
+  -- Feature flags
+  feature_flags JSONB DEFAULT '{}'::jsonb,
+
+  -- Metadata
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can access own settings" ON user_settings
+  FOR ALL USING (user_id = current_setting('app.current_user_id')::uuid);
+```
+
+### LocalStorage Manager
+
+```typescript
+// src/lib/services/sync/localStorageManager.ts
+
+export interface UserSettings {
+  // Preferences
+  theme: 'light' | 'dark' | 'system';
+  notificationsEnabled: boolean;
+  analyticsOptIn: boolean;
+
+  // Onboarding
+  onboardingCompleted: boolean;
+  onboardingStep: number;
+
+  // UI state (flexible)
+  uiPreferences: {
+    lastBodyRegion?: string;
+    collapsedSections?: string[];
+    viewMode?: 'list' | 'grid';
+    [key: string]: any;
+  };
+
+  // Feature flags
+  featureFlags: {
+    [key: string]: boolean;
+  };
+}
+
+export class LocalStorageManager {
+  private userId: string;
+  private prefix = 'pocket:';
+
+  constructor(userId: string) {
+    this.userId = userId;
+  }
+
+  /**
+   * Extract all relevant localStorage data for syncing
+   */
+  extractSettings(): UserSettings {
+    return {
+      theme: this.get('theme', 'system'),
+      notificationsEnabled: this.get('notifications:enabled', true),
+      analyticsOptIn: this.get('privacy:analyticsOptIn', false),
+      onboardingCompleted: this.get('onboarding:completed', false),
+      onboardingStep: this.get('onboarding:step', 0),
+      uiPreferences: {
+        lastBodyRegion: this.get('lastBodyRegion'),
+        collapsedSections: this.get('ui:collapsedSections', []),
+        viewMode: this.get('ui:viewMode', 'list')
+      },
+      featureFlags: this.get('featureFlags', {})
+    };
+  }
+
+  /**
+   * Apply settings from cloud to localStorage
+   */
+  applySettings(settings: UserSettings): void {
+    this.set('theme', settings.theme);
+    this.set('notifications:enabled', settings.notificationsEnabled);
+    this.set('privacy:analyticsOptIn', settings.analyticsOptIn);
+    this.set('onboarding:completed', settings.onboardingCompleted);
+    this.set('onboarding:step', settings.onboardingStep);
+
+    if (settings.uiPreferences.lastBodyRegion) {
+      this.set('lastBodyRegion', settings.uiPreferences.lastBodyRegion);
+    }
+    if (settings.uiPreferences.collapsedSections) {
+      this.set('ui:collapsedSections', settings.uiPreferences.collapsedSections);
+    }
+    if (settings.uiPreferences.viewMode) {
+      this.set('ui:viewMode', settings.uiPreferences.viewMode);
+    }
+
+    this.set('featureFlags', settings.featureFlags);
+  }
+
+  /**
+   * Get value from localStorage
+   */
+  private get<T>(key: string, defaultValue?: T): T {
+    const fullKey = `${this.prefix}${key}`;
+    const value = localStorage.getItem(fullKey);
+
+    if (value === null) {
+      return defaultValue as T;
+    }
+
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value as any;
+    }
+  }
+
+  /**
+   * Set value in localStorage
+   */
+  private set(key: string, value: any): void {
+    const fullKey = `${this.prefix}${key}`;
+    localStorage.setItem(fullKey, JSON.stringify(value));
+  }
+
+  /**
+   * Track if localStorage has been modified since last sync
+   */
+  hasChanges(lastSettings: UserSettings): boolean {
+    const current = this.extractSettings();
+    return JSON.stringify(current) !== JSON.stringify(lastSettings);
+  }
+}
+```
+
+### Integration with Sync Engine
+
+Update the SyncEngine to include localStorage sync:
+
+```typescript
+// Add to SyncEngine class
+
+private localStorageManager: LocalStorageManager;
+private lastSyncedSettings: UserSettings | null = null;
+
+constructor(userId: string, config: SyncConfig) {
+  // ... existing code ...
+  this.localStorageManager = new LocalStorageManager(userId);
+}
+
+async sync(): Promise<void> {
+  // ... existing sync code ...
+
+  try {
+    this.updateState({ status: 'syncing' });
+
+    // Phase 0: Sync settings (localStorage)
+    await this.syncSettings();
+
+    // Phase 1: Pull remote changes
+    await this.pullChanges();
+
+    // Phase 2: Push local changes
+    await this.pushChanges();
+
+    // Phase 3: Sync photos
+    await this.syncPhotos();
+
+    this.updateState({
+      status: 'idle',
+      lastSyncAt: new Date(),
+      lastError: null
+    });
+  } catch (error) {
+    // ... error handling ...
+  }
+}
+
+/**
+ * Sync localStorage settings with cloud
+ */
+private async syncSettings(): Promise<void> {
+  this.reportProgress({
+    phase: 'settings',
+    current: 0,
+    total: 2,
+    message: 'Syncing settings...'
+  });
+
+  // 1. Pull remote settings
+  const { data: remoteSettings, error } = await this.supabase
+    .from('user_settings')
+    .select('*')
+    .eq('user_id', this.userId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // Not found is OK on first sync
+    throw new Error(`Failed to fetch settings: ${error.message}`);
+  }
+
+  // 2. Get local settings
+  const localSettings = this.localStorageManager.extractSettings();
+
+  // 3. Determine which is newer
+  if (!remoteSettings) {
+    // First sync - push local to cloud
+    await this.pushSettings(localSettings);
+  } else {
+    // Compare and merge
+    const merged = this.mergeSettings(localSettings, remoteSettings);
+
+    // Update localStorage
+    this.localStorageManager.applySettings(merged);
+
+    // Update cloud
+    await this.pushSettings(merged);
+  }
+
+  this.lastSyncedSettings = localSettings;
+}
+
+/**
+ * Push settings to cloud
+ */
+private async pushSettings(settings: UserSettings): Promise<void> {
+  const { error } = await this.supabase
+    .from('user_settings')
+    .upsert({
+      user_id: this.userId,
+      theme: settings.theme,
+      notifications_enabled: settings.notificationsEnabled,
+      analytics_opt_in: settings.analyticsOptIn,
+      onboarding_completed: settings.onboardingCompleted,
+      onboarding_step: settings.onboardingStep,
+      ui_preferences: settings.uiPreferences,
+      feature_flags: settings.featureFlags,
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+    throw new Error(`Failed to push settings: ${error.message}`);
+  }
+}
+
+/**
+ * Merge local and remote settings
+ */
+private mergeSettings(local: UserSettings, remote: any): UserSettings {
+  // Simple strategy: prefer most complete data
+  // For booleans: true wins (user opted in)
+  // For numbers: higher wins (onboarding progress)
+  // For objects: deep merge
+
+  return {
+    theme: local.theme !== 'system' ? local.theme : remote.theme,
+    notificationsEnabled: local.notificationsEnabled || remote.notifications_enabled,
+    analyticsOptIn: local.analyticsOptIn || remote.analytics_opt_in,
+    onboardingCompleted: local.onboardingCompleted || remote.onboarding_completed,
+    onboardingStep: Math.max(local.onboardingStep, remote.onboarding_step || 0),
+    uiPreferences: {
+      ...remote.ui_preferences,
+      ...local.uiPreferences
+    },
+    featureFlags: {
+      ...remote.feature_flags,
+      ...local.featureFlags
+    }
+  };
+}
+```
+
+### Update SyncProgress Type
+
+```typescript
+export interface SyncProgress {
+  phase: 'settings' | 'pull' | 'push' | 'photos';
+  current: number;
+  total: number;
+  message: string;
+}
+```
+
+### When to Sync Settings
+
+**1. On Sync Enable (Initial)**
+```typescript
+async enable(): Promise<void> {
+  this.config.enabled = true;
+  await this.syncSettings(); // Sync settings first
+  await this.sync(); // Then full sync
+}
+```
+
+**2. On Setting Change (Reactive)**
+```typescript
+// Hook into localStorage changes
+window.addEventListener('storage', (e) => {
+  if (e.key?.startsWith('pocket:')) {
+    // Debounce and queue for next sync
+    this.changeTracker.trackSettingChange(e.key, e.newValue);
+  }
+});
+```
+
+**3. On Every Sync (Check for Changes)**
+```typescript
+// Already covered in syncSettings() method above
+```
+
+### Migration Strategy
+
+When a user first enables sync:
+
+```typescript
+async function migrateLocalStorageToCloud() {
+  // 1. Extract all current localStorage settings
+  const settings = localStorageManager.extractSettings();
+
+  // 2. Check if user has cloud settings
+  const cloudSettings = await fetchCloudSettings(userId);
+
+  if (!cloudSettings) {
+    // New sync user - push local to cloud
+    await pushSettings(settings);
+  } else {
+    // Returning user - merge and apply
+    const merged = mergeSettings(settings, cloudSettings);
+    localStorageManager.applySettings(merged);
+    await pushSettings(merged);
+  }
+}
+```
+
+### Multi-Device Scenario
+
+**Device A (Phone):**
+```
+localStorage:
+  theme: 'dark'
+  onboarding:completed: true
+  notifications:enabled: true
+```
+
+**Device B (Desktop):**
+```
+localStorage:
+  theme: 'light'
+  onboarding:completed: false
+  notifications:enabled: false
+```
+
+**After Sync:**
+```
+Both devices get:
+  theme: 'dark' (last non-default wins)
+  onboarding:completed: true (true wins)
+  notifications:enabled: true (true wins)
+```
+
+### Example: Settings Sync in Action
+
+```typescript
+// User changes theme on Device 1
+localStorage.setItem('pocket:theme', 'dark');
+
+// On next sync:
+// 1. LocalStorageManager detects change
+// 2. Extracts all settings including new theme
+// 3. Pushes to cloud
+// 4. Device 2 pulls on next sync
+// 5. Device 2 localStorage updated
+// 6. UI reactively updates to dark theme
+```
+
+---
+
 ## UI Components
 
 ### 1. Sync Status Indicator
@@ -1763,6 +2176,9 @@ function formatRelativeTime(date: Date): string {
 - [ ] Implement conflict resolution
 - [ ] Add rate limiting
 - [ ] Add error handling and retries
+- [ ] Implement LocalStorageManager class
+- [ ] Add user_settings table to schema
+- [ ] Integrate localStorage sync into sync engine
 
 ### Phase 4: UI Integration (Week 3)
 - [ ] Create useSync hook
@@ -1770,6 +2186,7 @@ function formatRelativeTime(date: Date): string {
 - [ ] Build SyncSettings panel
 - [ ] Add to app header/settings page
 - [ ] Test user flows
+- [ ] Test settings sync across devices
 
 ### Phase 5: Photo Sync (Week 4)
 - [ ] Upload encrypted photos to Supabase Storage
@@ -1781,6 +2198,7 @@ function formatRelativeTime(date: Date): string {
 - [ ] Test multi-device scenarios
 - [ ] Test offline sync
 - [ ] Test conflict resolution
+- [ ] Test localStorage/settings sync
 - [ ] Performance optimization
 - [ ] Error handling improvements
 
