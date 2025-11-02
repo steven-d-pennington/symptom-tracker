@@ -74,10 +74,9 @@ export const CompletionStep = ({ data, onContinue, reset, updateData }: Onboardi
   );
 
   const handleFinish = () => {
-    // Story 3.6.1 - AC3.6.1.10: Pass selections to user initialization
-    console.log("[CompletionStep] Saving selections to onboarding data:", selections);
-    updateData({ selections });
-    onContinue("completion");
+    // Story 3.6.1 - AC3.6.1.10: Pass selections directly to avoid race condition
+    console.log("[CompletionStep] Passing selections to onContinue:", selections);
+    onContinue("completion", { selections });
   };
 
   return (

@@ -194,6 +194,18 @@ export const persistUserSettings = async (data: OnboardingData) => {
     return;
   }
 
+  // DEBUG: Check if selections are present
+  console.log("[Onboarding] persistUserSettings called with data:", {
+    hasUserProfile: !!data.userProfile,
+    hasSelections: !!data.selections,
+    selectionCounts: data.selections ? {
+      symptoms: data.selections.symptoms.length,
+      triggers: data.selections.triggers.length,
+      medications: data.selections.medications.length,
+      foods: data.selections.foods.length,
+    } : null
+  });
+
   try {
     const { userRepository } = await import("@/lib/repositories/userRepository");
     const { initializeUserDefaults } = await import("@/lib/services/userInitialization");
