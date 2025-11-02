@@ -1,7 +1,24 @@
 # Cloud Sync Implementation Plan
 
-**Phase:** Technical Infrastructure (Pre-Payment)
-**Goal:** Build reliable cloud sync, validate with free access, gate with payment later
+**Updated:** 2025-11-02
+**Phase:** Technical Infrastructure + Authentication + Payment
+**Goal:** Build reliable cloud sync with email-based magic link auth and payment gateway
+
+---
+
+## Architecture Decisions
+
+Based on design discussions, the following architectural decisions have been finalized:
+
+1. **Email as Primary Identifier** - Users interact only with email; GUID abstracted on backend
+2. **One Email = One Account** - Enforced 1:1 mapping between email and GUID
+3. **Magic Link Authentication** - No passwords, email-based verification via magic links
+4. **Payment Abstraction** - Support multiple payment providers (Stripe now, L402 later)
+5. **Promo Codes** - Both single-use and multi-use codes for beta testers/partnerships
+6. **Email Recovery Only** - No separate recovery codes (magic link handles recovery)
+7. **Smart Multi-Device Sync** - Only prompt about data replacement if local data exists
+8. **Storage Quota** - 100MB default, $5 per 50MB top-up
+9. **Rate Limiting** - 100 syncs per hour per user
 
 ---
 
@@ -67,6 +84,472 @@ npx supabase start # Local development
 
 ---
 
+## User Flows
+
+### New User Onboarding
+
+```
+1. Install app
+2. "What's your email?" → user@example.com
+3. Backend checks: Does email exist?
+   → No: Create new user (generate GUID, link to email)
+   → Yes: "We found your account! Sending magic link..."
+4. Local-only usage (no sync yet)
+5. User can unlock sync later
+```
+
+### Unlock Cloud Sync Flow
+
+```
+1. User clicks "Unlock Cloud Sync"
+2. Show unlock options:
+   ┌────────────────────────────────────┐
+   │ Unlock Cloud Sync                  │
+   │                                    │
+   │ Email: user@example.com            │
+   │                                    │
+   │ Choose unlock method:              │
+   │ ( ) Pay $10 - Lifetime access      │
+   │ ( ) Enter promo code               │
+   │                                    │
+   │ [___________________________]      │
+   │                                    │
+   │ [Unlock]                           │
+   └────────────────────────────────────┘
+
+3a. If payment selected:
+    → Redirect to Stripe checkout
+    → On success: Send magic link for verification
+    → Click magic link → Sync enabled
+
+3b. If promo code entered:
+    → Validate code (single-use consumed, multi-use tracked)
+    → Send magic link for verification
+    → Click magic link → Sync enabled
+```
+
+### Multi-Device Setup
+
+```
+**Device 2:**
+1. Install app
+2. "What's your email?" → user@example.com
+3. Backend: "Account found! Sending magic link..."
+4. Check email, click magic link
+5. Check local IndexedDB:
+   → Empty or only defaults? → Silently sync down
+   → Has user data? → Show prompt:
+     ┌────────────────────────────────────┐
+     │ Sync Your Data                     │
+     │                                    │
+     │ You have local data that will be   │
+     │ replaced with your synced data.    │
+     │                                    │
+     │ [Replace & Sync] [Keep Local]      │
+     └────────────────────────────────────┘
+6. Sync completes, app ready
+```
+
+---
+
+## Authentication System
+
+### Magic Link Flow
+
+```typescript
+// Architecture:
+// 1. User enters email
+// 2. Server generates one-time token (JWT, 15min expiry)
+// 3. Email sent with link: https://app.com/auth/verify?token=...
+// 4. User clicks link
+// 5. Token validated, session created
+// 6. User redirected to app
+
+interface MagicLinkToken {
+  email: string;
+  userId: string; // GUID
+  purpose: 'onboarding' | 'login' | 'verify_payment';
+  expiresAt: Date;
+}
+```
+
+### Authentication API Endpoints
+
+```typescript
+// POST /api/auth/send-magic-link
+// Body: { email: string }
+// Response: { success: boolean, message: string }
+
+// GET /api/auth/verify?token=xxx
+// Response: Sets session cookie, redirects to app
+
+// POST /api/auth/logout
+// Response: Clears session cookie
+```
+
+### Session Management
+
+```typescript
+// Use Supabase Auth or custom JWT sessions
+// Store in httpOnly cookie for security
+// Validate on every sync request
+```
+
+---
+
+## Payment System
+
+### Payment Provider Abstraction
+
+```typescript
+// src/lib/services/payment/types.ts
+
+export interface PaymentSession {
+  id: string;
+  url: string; // Redirect URL for payment flow
+  status: 'pending' | 'complete' | 'failed';
+  amount: number;
+  currency: string;
+}
+
+export interface PaymentProvider {
+  name: string;
+
+  /**
+   * Initiate a payment session
+   */
+  createPaymentSession(
+    email: string,
+    amount: number,
+    metadata: Record<string, string>
+  ): Promise<PaymentSession>;
+
+  /**
+   * Verify a payment was completed
+   */
+  verifyPayment(sessionId: string): Promise<boolean>;
+
+  /**
+   * Handle webhook events
+   */
+  handleWebhook(payload: any, signature: string): Promise<void>;
+}
+```
+
+### Stripe Provider Implementation
+
+```typescript
+// src/lib/services/payment/stripe.ts
+
+import Stripe from 'stripe';
+
+export class StripePaymentProvider implements PaymentProvider {
+  name = 'stripe';
+  private stripe: Stripe;
+
+  constructor(apiKey: string) {
+    this.stripe = new Stripe(apiKey, { apiVersion: '2024-11-20.acacia' });
+  }
+
+  async createPaymentSession(
+    email: string,
+    amount: number,
+    metadata: Record<string, string>
+  ): Promise<PaymentSession> {
+    const session = await this.stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer_email: email,
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: metadata.product_name || 'Cloud Sync',
+            description: metadata.description
+          },
+          unit_amount: amount * 100 // Stripe uses cents
+        },
+        quantity: 1
+      }],
+      metadata,
+      success_url: `${process.env.APP_URL}/sync/activated?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.APP_URL}/settings`
+    });
+
+    return {
+      id: session.id,
+      url: session.url!,
+      status: 'pending',
+      amount,
+      currency: 'usd'
+    };
+  }
+
+  async verifyPayment(sessionId: string): Promise<boolean> {
+    const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+    return session.payment_status === 'paid';
+  }
+
+  async handleWebhook(payload: any, signature: string): Promise<void> {
+    const event = this.stripe.webhooks.constructEvent(
+      payload,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+
+    if (event.type === 'checkout.session.completed') {
+      // Handle payment completion
+      // - Update user record (sync enabled)
+      // - Send magic link for verification
+      // - Log transaction
+    }
+  }
+}
+```
+
+### L402 Provider (Future)
+
+```typescript
+// src/lib/services/payment/l402.ts
+// Placeholder for Lightning Network payments
+
+export class L402PaymentProvider implements PaymentProvider {
+  name = 'l402';
+
+  async createPaymentSession(email: string, amount: number): Promise<PaymentSession> {
+    // TODO: Generate Lightning invoice
+    // TODO: Return payment request
+    throw new Error('L402 not yet implemented');
+  }
+
+  async verifyPayment(sessionId: string): Promise<boolean> {
+    // TODO: Verify Lightning payment
+    throw new Error('L402 not yet implemented');
+  }
+
+  async handleWebhook(payload: any): Promise<void> {
+    // L402 may not use webhooks (poll instead)
+  }
+}
+```
+
+### Payment Service
+
+```typescript
+// src/lib/services/payment/service.ts
+
+import { StripePaymentProvider } from './stripe';
+import { L402PaymentProvider } from './l402';
+import type { PaymentProvider } from './types';
+
+export class PaymentService {
+  private providers: Map<string, PaymentProvider> = new Map();
+
+  constructor() {
+    // Register providers
+    this.providers.set('stripe', new StripePaymentProvider(process.env.STRIPE_SECRET_KEY!));
+    // this.providers.set('l402', new L402PaymentProvider());
+  }
+
+  getProvider(name: string): PaymentProvider {
+    const provider = this.providers.get(name);
+    if (!provider) {
+      throw new Error(`Payment provider "${name}" not found`);
+    }
+    return provider;
+  }
+
+  async unlockSync(email: string, method: 'stripe' | 'l402' | 'promo', code?: string) {
+    if (method === 'promo') {
+      return this.unlockWithPromoCode(email, code!);
+    }
+
+    const provider = this.getProvider(method);
+    return await provider.createPaymentSession(email, 10, {
+      product_name: 'Cloud Sync - Lifetime',
+      description: '100MB storage + future AI insights'
+    });
+  }
+
+  private async unlockWithPromoCode(email: string, code: string) {
+    // Validate promo code
+    // If valid, enable sync without payment
+    // Return success (no payment session needed)
+  }
+}
+```
+
+---
+
+## Promo Code System
+
+### Promo Code Schema
+
+```sql
+-- Promo codes for free sync access
+CREATE TABLE promo_codes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  code TEXT UNIQUE NOT NULL,
+  type TEXT CHECK (type IN ('single_use', 'multi_use')),
+  storage_quota_mb INTEGER DEFAULT 100,
+  max_redemptions INTEGER, -- NULL for unlimited (multi-use)
+  redemption_count INTEGER DEFAULT 0,
+
+  -- Optional metadata
+  description TEXT,
+  created_by TEXT, -- Admin/system identifier
+  valid_from TIMESTAMPTZ DEFAULT NOW(),
+  valid_until TIMESTAMPTZ,
+
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Track redemptions
+CREATE TABLE promo_code_redemptions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  promo_code_id UUID REFERENCES promo_codes(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  redeemed_at TIMESTAMPTZ DEFAULT NOW(),
+
+  UNIQUE(promo_code_id, user_id) -- Prevent duplicate redemptions
+);
+
+CREATE INDEX idx_promo_codes_active ON promo_codes(code) WHERE is_active = true;
+CREATE INDEX idx_promo_redemptions_user ON promo_code_redemptions(user_id);
+```
+
+### Promo Code Validation
+
+```typescript
+// src/lib/services/promoCode/validator.ts
+
+interface PromoCode {
+  id: string;
+  code: string;
+  type: 'single_use' | 'multi_use';
+  storageQuotaMb: number;
+  maxRedemptions: number | null;
+  redemptionCount: number;
+  validFrom: Date;
+  validUntil: Date | null;
+  isActive: boolean;
+}
+
+export class PromoCodeValidator {
+  async validate(code: string, userId: string): Promise<{ valid: boolean; error?: string; promo?: PromoCode }> {
+    // 1. Find promo code
+    const promo = await db.promoCodes.findUnique({ where: { code } });
+
+    if (!promo) {
+      return { valid: false, error: 'Invalid promo code' };
+    }
+
+    // 2. Check if active
+    if (!promo.isActive) {
+      return { valid: false, error: 'Promo code is no longer active' };
+    }
+
+    // 3. Check date validity
+    const now = new Date();
+    if (now < promo.validFrom || (promo.validUntil && now > promo.validUntil)) {
+      return { valid: false, error: 'Promo code is expired' };
+    }
+
+    // 4. Check if already redeemed by this user
+    const redemption = await db.promoCodeRedemptions.findFirst({
+      where: { promoCodeId: promo.id, userId }
+    });
+
+    if (redemption) {
+      return { valid: false, error: 'You have already used this promo code' };
+    }
+
+    // 5. Check redemption limit (single-use only)
+    if (promo.type === 'single_use' && promo.redemptionCount > 0) {
+      return { valid: false, error: 'Promo code has already been used' };
+    }
+
+    if (promo.maxRedemptions && promo.redemptionCount >= promo.maxRedemptions) {
+      return { valid: false, error: 'Promo code redemption limit reached' };
+    }
+
+    return { valid: true, promo };
+  }
+
+  async redeem(code: string, userId: string): Promise<void> {
+    const { valid, error, promo } = await this.validate(code, userId);
+
+    if (!valid) {
+      throw new Error(error);
+    }
+
+    // Transaction: record redemption + increment count + enable sync
+    await db.transaction(async (tx) => {
+      // Record redemption
+      await tx.promoCodeRedemptions.create({
+        data: {
+          promoCodeId: promo!.id,
+          userId,
+          redeemedAt: new Date()
+        }
+      });
+
+      // Increment redemption count
+      await tx.promoCodes.update({
+        where: { id: promo!.id },
+        data: { redemptionCount: { increment: 1 } }
+      });
+
+      // Enable sync for user
+      await tx.users.update({
+        where: { id: userId },
+        data: {
+          storageQuotaMb: promo!.storageQuotaMb,
+          syncEnabled: true,
+          syncEnabledAt: new Date()
+        }
+      });
+    });
+  }
+}
+```
+
+### Promo Code Admin API
+
+```typescript
+// src/app/api/admin/promo-codes/route.ts
+
+// POST /api/admin/promo-codes
+export async function POST(request: Request) {
+  // TODO: Add admin auth check
+
+  const { code, type, storageQuotaMb, maxRedemptions, description, validUntil } = await request.json();
+
+  const promo = await db.promoCodes.create({
+    data: {
+      code: code.toUpperCase(), // Normalize to uppercase
+      type,
+      storageQuotaMb: storageQuotaMb || 100,
+      maxRedemptions: type === 'single_use' ? 1 : maxRedemptions,
+      description,
+      validUntil: validUntil ? new Date(validUntil) : null,
+      createdBy: 'admin' // TODO: Get from auth session
+    }
+  });
+
+  return Response.json({ success: true, promo });
+}
+
+// Example usage:
+// Create single-use gift code:
+// POST { code: "GIFT-ABC123", type: "single_use", description: "Gift for friend" }
+
+// Create multi-use beta code:
+// POST { code: "BETA2025", type: "multi_use", maxRedemptions: null, description: "Beta testers" }
+```
+
+---
+
 ## Database Schema (Supabase)
 
 ### Core Tables (Mirror IndexedDB)
@@ -77,18 +560,30 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Users table
 CREATE TABLE users (
-  id UUID PRIMARY KEY,
-  email TEXT UNIQUE,
+  id UUID PRIMARY KEY, -- GUID generated server-side or passed from client
+  email TEXT UNIQUE NOT NULL,
   name TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   preferences JSONB DEFAULT '{}'::jsonb,
 
-  -- Sync metadata
+  -- Sync status
+  sync_enabled BOOLEAN DEFAULT false,
+  sync_enabled_at TIMESTAMPTZ,
+  sync_enabled_via TEXT CHECK (sync_enabled_via IN ('payment', 'promo_code')),
+
+  -- Storage management
   storage_used_mb NUMERIC DEFAULT 0,
   storage_quota_mb NUMERIC DEFAULT 100,
-  last_sync_at TIMESTAMPTZ
+  last_sync_at TIMESTAMPTZ,
+
+  -- Payment tracking
+  stripe_customer_id TEXT,
+  stripe_payment_id TEXT -- Latest payment ID
 );
+
+-- Add promo codes and redemptions tables after users table
+-- (Already defined in Promo Code System section above)
 
 -- Symptoms
 CREATE TABLE symptoms (
