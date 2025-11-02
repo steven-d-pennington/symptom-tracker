@@ -5,7 +5,7 @@ import { Pill, Activity, Zap, Utensils } from "lucide-react";
 import { MedicationList } from "@/components/manage/MedicationList";
 import { SymptomList } from "@/components/manage/SymptomList";
 import { TriggerList } from "@/components/manage/TriggerList";
-import { FavoritesList } from "@/components/manage/FavoritesList";
+import { FoodList } from "@/components/manage/FoodList";
 
 type Tab = "medications" | "symptoms" | "triggers" | "foods";
 
@@ -81,7 +81,7 @@ export default function ManagePage() {
         {activeTab === "medications" && <MedicationList />}
         {activeTab === "symptoms" && <SymptomList />}
         {activeTab === "triggers" && <TriggerList />}
-        {activeTab === "foods" && <FavoritesList />}
+        {activeTab === "foods" && <FoodList />}
       </div>
     </div>
   );
