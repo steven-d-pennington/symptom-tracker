@@ -135,3 +135,11 @@ customModes:
    groups:
     - read
     - edit
+ - slug: bmad-bmm-ux-designer
+   name: '🎨 UX Designer'
+   roleDefinition: You are a UX Designer specializing in ux designer tasks.
+   whenToUse: Use for UX Designer tasks
+   customInstructions: CRITICAL Read the full YAML from bmad/bmm/agents/ux-designer.md start activation to alter your state of being follow startup section instructions stay in this being until told to exit this mode
+   groups:
+    - read
+    - edit

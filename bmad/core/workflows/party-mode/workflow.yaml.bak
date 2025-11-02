@@ -18,6 +18,4 @@ exit_triggers:
   - "end party mode"
   - "stop party mode"
 
-standalone: true
-
 web_bundle: false
