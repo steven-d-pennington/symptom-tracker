@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-11-01
+- **Last Updated:** 2025-11-02
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** Phase 4: Implementation (In Progress)
-- **Current Workflow:** Ready to begin Epic 3.6 or Epic 4
-- **Overall Progress:** Epic 3.5 complete (including bug fix 3.5.10). Ready for new feature work.
-- **Next Action:** Implement Story 3.6.1 (Interactive Data Selection During Onboarding) OR begin Epic 4 stories
-- **Command to Run:** *dev-story OR *create-story
-- **Agent to Load:** dev (bmad/bmm/agents/dev.md) OR sm (bmad/bmm/agents/sm.md)
-- **Note:** Epic 3.5 fully complete. Story 3.6.1 drafted and ready. Epic 4 unblocked.
+- **Current Workflow:** Ready to begin Epic 4 or continue Epic 3.6
+- **Overall Progress:** Epic 3.5 complete. Story 3.6.1 complete with management enhancements. Ready for Epic 4.
+- **Next Action:** Begin Epic 4 stories (Photo Documentation) OR draft additional Epic 3.6 stories
+- **Command to Run:** *create-story (for Epic 4.1)
+- **Agent to Load:** sm (bmad/bmm/agents/sm.md) for story creation OR dev for implementation
+- **Note:** Story 3.6.1 (Interactive Onboarding) complete with post-story enhancement (food management). Epic 4 ready to start.
 
 ---
 
@@ -34,9 +34,7 @@
 
 #### DRAFTED (Story Created, Awaiting Context Generation)
 
-| Epic | Story | ID | Title | File | Points | Priority |
-|------|-------|-----|-------|------|--------|----------|
-| 3.6 | 1 | 3.6.1 | Interactive Data Selection During Onboarding | 3.6.1-onboarding-data-selection-flow.md | 13 | HIGH |
+*No stories currently in drafted state.*
 
 ---
 
@@ -62,6 +60,7 @@
 
 | Story ID | File | Completed Date | Points | Epic |
 |----------|------|----------------|--------|------|
+| 3.6.1 | docs/stories/3.6.1-onboarding-data-selection-flow.md | 2025-11-02 | 13 | Epic 3.6: Enhanced Onboarding |
 | 3.5.10 | docs/stories/story-3.5.10.md | 2025-11-01 | 1 | Epic 3.5: Production UX (Bug Fix) |
 | 3.5.9 | docs/stories/3-5-9-help-pages-and-landing-page.md | 2025-10-31 | 5 | Epic 3.5: Production UX |
 | 3.5.8 | docs/stories/3-5-8-add-keyboard-navigation-accessibility.md | 2025-10-31 | 5 | Epic 3.5: Production UX |
@@ -78,24 +77,23 @@
 
 ### Next Action Required
 
-**🎯 Epic 3.5 COMPLETE - Ready for New Features**
+**🎯 Story 3.6.1 COMPLETE - Ready for Epic 4**
 
-Story 3.5.10 (critical bug fix) has been completed. Epic 3.5 is now fully complete. The project is ready for new feature work.
+Story 3.6.1 (Interactive Data Selection During Onboarding) has been completed and enhanced with comprehensive food management capabilities. The project is ready to begin Epic 4 (Photo Documentation).
 
-**Available Options:**
-1. **Implement Story 3.6.1:** Interactive Data Selection During Onboarding (13 points, HIGH priority)
-   - Command: `*dev-story`
-   - Agent: `dev` (Developer)
-   - Enhances onboarding UX with user-selected defaults
-
-2. **Begin Epic 4:** Photo Documentation features
-   - Command: `*create-story` (to draft story 4.1)
+**Recommended Next Action:**
+**Begin Epic 4:** Photo Documentation features
+   - Command: `*create-story` (to draft story 4.1: Attach Photos to Flare Entities)
    - Agent: `sm` (Scrum Master)
-   - Start photo attachment and timeline features
+   - Start implementing photo attachment and timeline features for flare documentation
 
 ---
 
 ## Decision Log
+
+- **2025-11-02:** Enhanced food management capabilities post-Story 3.6.1. Added comprehensive food management to the manage page following user feedback. Created `useFoodManagement` hook, `FoodForm` component (with allergen multi-select), and `FoodList` component with full CRUD operations. Features include: enable/disable default foods, create/edit/delete custom foods, favorites toggle, collapsible categories (Favorites, Custom, Default by category), search and filter, usage count checking before delete. All 4 management tabs (medications, symptoms, triggers, foods) now have consistent functionality. Build passing. Committed to branch.
+
+- **2025-11-02:** Completed Story 3.6.1 (Interactive Data Selection During Onboarding) - 13 points. Implemented complete interactive onboarding flow allowing users to select symptoms, triggers, medications, and foods instead of auto-populating all defaults. Features delivered: (1) Reusable SelectionStep component with real-time search, collapsible categories, and custom item creation, (2) Four selection steps for symptoms/triggers/medications/foods with consistent UX, (3) OnboardingSelectionsContext for state management with sessionStorage persistence, (4) GUID-based user ID generation (cloud sync preparation), (5) Selection-based initialization with batch operations, (6) Fixed race condition in CompletionStep data flow. User confirmed functionality working: "Looks great 👍". All acceptance criteria met. Build passing. Story complete.
 
 - **2025-11-01:** Completed Story 3.5.10 (CRITICAL bug fix). Fixed calendar page crash caused by undefined severityScale in old data. Added conditional check in recordToSymptom method and comprehensive unit test. All tests passing. Epic 3.5 now fully complete with 10 stories (53 points total). Epic 4 unblocked and ready to begin.
 
