@@ -1,0 +1,275 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.7</epicId>
+    <storyId>4</storyId>
+    <title>Full-Screen Mode</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-7-4-full-screen-mode.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user who gets distracted easily</asA>
+    <iWant>to remove all UI clutter and focus only on the body map</iWant>
+    <soThat>I can concentrate on accurately tracking my symptoms</soThat>
+    <tasks>
+      <task id="1" acs="3.7.4.1">
+        <description>Create FullScreenControl component and toggle button</description>
+        <subtasks>
+          <subtask>Create new file src/components/body-mapping/FullScreenControl.tsx</subtask>
+          <subtask>Implement toggle button with ⛶ icon (maximize icon)</subtask>
+          <subtask>Add button to BodyMapViewer header or control area</subtask>
+          <subtask>Style button with clear visual indication (icon + label on hover)</subtask>
+          <subtask>Implement click handler to trigger full-screen mode</subtask>
+        </subtasks>
+      </task>
+      <task id="2" acs="3.7.4.8">
+        <description>Implement browser Fullscreen API integration</description>
+        <subtasks>
+          <subtask>Create utility hook useFullscreen() with enter/exit functions</subtask>
+          <subtask>Implement enterFullscreen() using document.documentElement.requestFullscreen()</subtask>
+          <subtask>Handle browser prefixes (webkit, moz, ms) for cross-browser support</subtask>
+          <subtask>Implement exitFullscreen() using document.exitFullscreen()</subtask>
+          <subtask>Add fullscreenchange event listener to track state changes</subtask>
+        </subtasks>
+      </task>
+      <task id="3" acs="3.7.4.8">
+        <description>Create fallback mode for unsupported browsers</description>
+        <subtasks>
+          <subtask>Detect Fullscreen API availability</subtask>
+          <subtask>Implement CSS-based fallback that hides UI chrome</subtask>
+          <subtask>Add fixed positioning and z-index to create fullscreen-like effect</subtask>
+          <subtask>Test fallback mode in browsers without Fullscreen API support</subtask>
+          <subtask>Ensure smooth transition between native and fallback modes</subtask>
+        </subtasks>
+      </task>
+      <task id="4" acs="3.7.4.3, 3.7.4.4">
+        <description>Create thin control bar component</description>
+        <subtasks>
+          <subtask>Create FullScreenControlBar.tsx component</subtask>
+          <subtask>Implement fixed positioning at top (40-50px height)</subtask>
+          <subtask>Add high contrast background (dark bg with light text or vice versa)</subtask>
+          <subtask>Ensure control bar stays above body map content (z-index management)</subtask>
+          <subtask>Make control bar responsive for mobile and desktop</subtask>
+        </subtasks>
+      </task>
+      <task id="5" acs="3.7.4.4">
+        <description>Add essential controls to control bar</description>
+        <subtasks>
+          <subtask>Add "Exit Full Screen" button with ⛶ (minimize) icon</subtask>
+          <subtask>Add Layer selector dropdown (conditionally visible based on feature availability)</subtask>
+          <subtask>Add "Back to Body Map" button (visible only in region view)</subtask>
+          <subtask>Add "Show History" toggle (visible only in region view)</subtask>
+          <subtask>Ensure all controls meet 44x44px touch target minimum</subtask>
+        </subtasks>
+      </task>
+      <task id="6" acs="3.7.4.2">
+        <description>Implement UI chrome hiding</description>
+        <subtasks>
+          <subtask>Add CSS class or state to hide main header</subtask>
+          <subtask>Hide navigation sidebar (desktop)</subtask>
+          <subtask>Hide bottom tabs (mobile)</subtask>
+          <subtask>Hide breadcrumbs and other chrome elements</subtask>
+          <subtask>Test that body map fills entire viewport when chrome hidden</subtask>
+        </subtasks>
+      </task>
+      <task id="7" acs="3.7.4.5">
+        <description>Implement ESC key handler</description>
+        <subtasks>
+          <subtask>Add keyboard event listener for ESC key</subtask>
+          <subtask>Trigger exitFullscreen() on ESC press</subtask>
+          <subtask>Ensure handler works in both full-body and region views</subtask>
+          <subtask>Prevent ESC key from conflicting with other ESC handlers (region back navigation)</subtask>
+          <subtask>Add ARIA announcement for screen readers when exiting full-screen</subtask>
+        </subtasks>
+      </task>
+      <task id="8" acs="3.7.4.6, 3.7.4.7">
+        <description>Implement full-screen state persistence across views</description>
+        <subtasks>
+          <subtask>Add fullscreen state to BodyMapViewer component state</subtask>
+          <subtask>Pass fullscreen state to RegionDetailView component</subtask>
+          <subtask>Maintain fullscreen mode when switching from full-body to region view</subtask>
+          <subtask>Maintain fullscreen mode when clicking "Back to Body Map" from region view</subtask>
+          <subtask>Test view transitions in fullscreen mode thoroughly</subtask>
+        </subtasks>
+      </task>
+      <task id="9" acs="All">
+        <description>Integration and testing</description>
+        <subtasks>
+          <subtask>Integrate FullScreenControl into BodyMapViewer</subtask>
+          <subtask>Test full-screen mode in Chrome, Safari, Firefox, Edge</subtask>
+          <subtask>Test fallback mode in browsers without Fullscreen API</subtask>
+          <subtask>Test mobile full-screen behavior (iOS Safari, Android Chrome)</subtask>
+          <subtask>Write unit tests for useFullscreen hook</subtask>
+          <subtask>Write integration tests for full-screen workflow</subtask>
+          <subtask>Test ESC key handling from all views</subtask>
+          <subtask>Test state persistence across view transitions</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC3.7.4.1">
+      <description>Full-screen toggle button available in normal view: Prominent full-screen toggle button (⛶ icon or "Full Screen" label) is accessible in normal body map view, positioned in header or control area. Button clearly indicates full-screen mode availability.</description>
+      <source>docs/epics.md#Story-3.7.4</source>
+    </criterion>
+    <criterion id="AC3.7.4.2">
+      <description>Full-screen removes all surrounding UI: Entering full-screen mode hides all surrounding UI elements including: main header, navigation sidebar, bottom tabs, page breadcrumbs, and any other chrome. Only body map and thin control bar remain visible, maximizing viewport space for tracking.</description>
+      <source>docs/epics.md#Story-3.7.4</source>
+    </criterion>
+    <criterion id="AC3.7.4.3">
+      <description>Thin control bar remains at top with essential controls: Control bar (40-50px height) persists at top of screen in full-screen mode, providing essential navigation and controls without obscuring body map. Bar has high contrast background for visibility against body map.</description>
+      <source>docs/epics.md#Story-3.7.4</source>
+    </criterion>
+    <criterion id="AC3.7.4.4">
+      <description>Control bar includes essential controls: Control bar contains: "Back to Body Map" button (visible in region view), Layer selector dropdown (flares/pain/mobility/inflammation), "Show History" toggle (visible in region view), "Exit Full Screen" button. Controls are thumb-friendly (44x44px minimum) and clearly labeled.</description>
+      <source>docs/epics.md#Story-3.7.4</source>
+    </criterion>
+    <criterion id="AC3.7.4.5">
+      <description>ESC key exits full-screen from any view: Pressing ESC key immediately exits full-screen mode and returns user to normal view with all UI restored. Works from both full-body view and region detail view. Keyboard shortcut documented in help/accessibility section.</description>
+      <source>docs/epics.md#Story-3.7.4</source>
+    </criterion>
+    <criterion id="AC3.7.4.6">
+      <description>Full-screen state persists when switching to region view: When user enters full-screen mode in full-body view, then clicks a region to switch to region detail view, full-screen mode is maintained. User doesn't exit full-screen when navigating between views.</description>
+      <source>docs/epics.md#Story-3.7.4</source>
+    </criterion>
+    <criterion id="AC3.7.4.7">
+      <description>Returning to body map maintains full-screen state: When user clicks "Back to Body Map" button from region detail view while in full-screen mode, system returns to full-body view while maintaining full-screen mode. Full-screen persists across view transitions until user explicitly exits.</description>
+      <source>docs/epics.md#Story-3.7.4</source>
+    </criterion>
+    <criterion id="AC3.7.4.8">
+      <description>Browser native full-screen API with fallback: System uses browser's native Fullscreen API (document.documentElement.requestFullscreen()) for true full-screen experience. If Fullscreen API unavailable or blocked, system provides fallback mode that hides UI chrome while remaining in browser window.</description>
+      <source>docs/epics.md#Story-3.7.4</source>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 3.7 - Body Map UX Enhancements</section>
+        <snippet>Epic 3.7 addresses viewport space limitations through full-screen mode. Story 3.7.4 implements full-screen toggle that removes all UI chrome (header, nav, sidebars), leaving only body map with thin control bar. Uses browser Fullscreen API with CSS fallback for unsupported browsers.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Body Map Enhancements</section>
+        <snippet>FR004: System shall display existing flare markers on the body map with visual indicators for flare status. Full-screen mode maximizes viewport space for precision tracking by removing competing UI elements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Testing Strategy and Accessibility</section>
+        <snippet>Testing standards: Jest + RTL for unit and integration tests. Accessibility requirements include ARIA labels, keyboard navigation, screen reader announcements, and focus management in modals. All controls must meet WCAG 2.1 Level AA standards.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-1-region-detail-view-infrastructure.md</path>
+        <title>Story 3.7.1 - Region Detail View Infrastructure</title>
+        <section>ESC Key Handler and View State Management</section>
+        <snippet>Story 3.7.1 established ESC key handler for back navigation from region view to full-body view. RegionDetailView component implements keyboard event listener that triggers onBack() on ESC press. Story 3.7.4 must coordinate ESC handling to prioritize fullscreen exit over region navigation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-2-marker-preview-and-positioning.md</path>
+        <title>Story 3.7.2 - Marker Preview and Positioning</title>
+        <section>Touch Target Accessibility</section>
+        <snippet>All interactive elements must meet WCAG 2.1 Level AA touch target size requirements (minimum 44x44px). Story 3.7.2 established this pattern for control buttons - Story 3.7.4 control bar buttons must follow same standards.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/body-mapping/RegionDetailView.tsx</path>
+        <kind>component</kind>
+        <symbol>RegionDetailView</symbol>
+        <lines>77-87</lines>
+        <reason>Existing ESC key handler for back navigation. Full-screen mode must coordinate with this handler to prioritize fullscreen exit over region navigation when in fullscreen mode.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>48-50</lines>
+        <reason>Main body map component with view mode state management. Full-screen state will be added here alongside existing viewMode and currentRegionId states.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>NormalizedCoordinates, RegionBounds</symbol>
+        <lines>1-16</lines>
+        <reason>Type definitions used throughout body mapping. Full-screen mode doesn't alter coordinate system but needs to understand existing coordinate types.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <react version="19.1.0">UI framework</react>
+        <next version="15.5.4">App framework with App Router</next>
+        <typescript version="5.x">Type safety</typescript>
+        <lucide-react version="0.544.0">Icons for fullscreen toggle (Maximize/Minimize)</lucide-react>
+      </node>
+      <testing>
+        <jest version="30.x">Unit test runner</jest>
+        <react-testing-library version="16.x">React component testing</react-testing-library>
+      </testing>
+      <browser-apis>
+        <fullscreen-api>Browser native Fullscreen API (document.requestFullscreen())</fullscreen-api>
+      </browser-apis>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use browser native Fullscreen API (document.documentElement.requestFullscreen()) for true fullscreen experience. Implement CSS-based fallback for browsers without Fullscreen API support.</constraint>
+    <constraint>ESC key handler priority: When in fullscreen mode, ESC must exit fullscreen FIRST before triggering region back navigation. Use event.stopPropagation() or handler ordering to coordinate with existing RegionDetailView ESC handler (lines 77-87).</constraint>
+    <constraint>Fullscreen state persists across view transitions. User entering fullscreen in full-body view stays in fullscreen when clicking region. User clicking "Back to Body Map" from region view stays in fullscreen.</constraint>
+    <constraint>Control bar must remain visible in fullscreen mode with fixed positioning (40-50px height) at top of screen. All control bar buttons must meet 44x44px touch target minimum (WCAG 2.1 Level AA).</constraint>
+    <constraint>UI chrome hiding: Hide ALL surrounding UI (main header, navigation sidebar, bottom tabs, breadcrumbs). Only body map and control bar visible in fullscreen mode.</constraint>
+    <constraint>Handle browser prefixes for older browser support: webkitRequestFullscreen (Safari/Chrome), mozRequestFullScreen (Firefox), msRequestFullscreen (Edge).</constraint>
+    <constraint>Testing: Jest + React Testing Library. Follow existing test patterns in src/components/body-mapping/__tests__/. Test cross-browser compatibility (Chrome, Safari, Firefox, Edge) and mobile behavior (iOS Safari, Android Chrome).</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>useFullscreen</name>
+      <kind>Custom React hook</kind>
+      <signature>function useFullscreen(): { isFullscreen: boolean; isSupported: boolean; enterFullscreen: () => void; exitFullscreen: () => void; }</signature>
+      <path>src/lib/hooks/useFullscreen.ts (NEW file)</path>
+    </interface>
+    <interface>
+      <name>FullScreenControlBarProps</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface FullScreenControlBarProps { onExit: () => void; onBack?: () => void; showBackButton: boolean; showHistoryToggle?: boolean; onHistoryToggle?: () => void; }</signature>
+      <path>src/components/body-mapping/FullScreenControlBar.tsx (NEW file)</path>
+    </interface>
+    <interface>
+      <name>FullscreenState</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface FullscreenState { isFullscreen: boolean; isSupported: boolean; isFallbackMode: boolean; }</signature>
+      <path>src/components/body-mapping/BodyMapViewer.tsx (MODIFY - add to existing types)</path>
+    </interface>
+    <interface>
+      <name>Fullscreen API Methods</name>
+      <kind>Browser API</kind>
+      <signature>document.documentElement.requestFullscreen(), document.exitFullscreen(), document.fullscreenElement, fullscreenchange event</signature>
+      <path>MDN Web Docs - Browser native API</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest 30.x with React Testing Library 16.x for all tests. Unit tests for useFullscreen hook in src/lib/hooks/__tests__/. Integration tests for FullScreenControl and FullScreenControlBar components in src/components/body-mapping/__tests__/. Cross-browser compatibility testing required (Chrome, Safari, Firefox, Edge). Mobile testing on iOS Safari and Android Chrome for fullscreen behavior quirks.</standards>
+    <locations>
+      <location>src/lib/hooks/__tests__/useFullscreen.test.ts - Unit tests for useFullscreen hook</location>
+      <location>src/components/body-mapping/__tests__/FullScreenControl.test.tsx - Unit tests for toggle button</location>
+      <location>src/components/body-mapping/__tests__/FullScreenControlBar.test.tsx - Integration tests for control bar</location>
+    </locations>
+    <ideas>
+      <test ac="AC3.7.4.1">Test fullscreen toggle button renders and is clickable. Verify ⛶ icon displays correctly with hover label.</test>
+      <test ac="AC3.7.4.2">Test UI chrome hiding: Verify all surrounding UI (header, nav, sidebar, tabs) hidden when fullscreen enabled.</test>
+      <test ac="AC3.7.4.3, AC3.7.4.4">Test control bar renders at top with 40-50px height, high contrast background, and all essential controls (Exit, Back, History Toggle).</test>
+      <test ac="AC3.7.4.4">Test all control bar buttons meet 44x44px touch target minimum. Test ARIA labels for accessibility.</test>
+      <test ac="AC3.7.4.5">Test ESC key exits fullscreen from both full-body and region views. Verify fullscreen exit takes priority over region back navigation.</test>
+      <test ac="AC3.7.4.6">Test fullscreen state persists when switching from full-body to region view. User stays in fullscreen after clicking region.</test>
+      <test ac="AC3.7.4.7">Test fullscreen state persists when clicking "Back to Body Map" from region view. User stays in fullscreen after navigation.</test>
+      <test ac="AC3.7.4.8">Test Fullscreen API detection. Test fallback mode activates when API unavailable. Verify smooth transition between native and fallback modes.</test>
+      <test ac="All">Test mobile fullscreen behavior on iOS Safari (Fullscreen API quirks) and Android Chrome. Verify viewport units (100vh) work correctly.</test>
+    </ideas>
+  </tests>
+</story-context>

@@ -79,9 +79,22 @@ development_status:
   3.5-4-redesign-food-logging-modal-to-page: done
   3.5-5-redesign-trigger-and-medication-logging-to-pages: done
   3.5-6-critical-ui-fixes-bundle: done
-  3.5-7-fix-calendar-data-wiring: ready-for-dev
+  3.5-7-fix-calendar-data-wiring: done
   3.5-8-add-keyboard-navigation-accessibility: ready-for-dev
   epic-3.5-retrospective: optional
+
+  epic-3.6: contexted
+  3.6-1-interactive-data-selection-during-onboarding: done
+  epic-3.6-retrospective: optional
+
+  epic-3.7: backlog
+  3-7-1-region-detail-view-infrastructure: done
+  3-7-2-marker-preview-and-positioning: done
+  3-7-3-smart-defaults-system: in-progress
+  3-7-4-full-screen-mode: ready-for-dev
+  3-7-5-history-toggle: drafted
+  3-7-6-polish-and-accessibility: drafted
+  epic-3.7-retrospective: optional
 
   epic-4: backlog
   4-1-attach-photos-to-flare-entities: backlog

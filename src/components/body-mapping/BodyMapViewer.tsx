@@ -5,6 +5,7 @@ import { BodyRegionSelector } from "./BodyRegionSelector";
 import { BodyMapZoom } from "@/components/body-map/BodyMapZoom";
 import { BodyMapLocation } from "@/lib/types/body-mapping";
 import { CoordinateMarker } from "@/components/body-map/CoordinateMarker";
+import { RegionDetailView } from "./RegionDetailView";
 import {
   denormalizeCoordinates,
   getRegionBounds,
@@ -12,6 +13,8 @@ import {
   NormalizedCoordinates,
   RegionBounds,
 } from "@/lib/utils/coordinates";
+
+export type BodyMapViewMode = 'full-body' | 'region-detail';
 
 interface BodyMapViewerProps {
   view: "front" | "back" | "left" | "right";
@@ -24,8 +27,10 @@ interface BodyMapViewerProps {
   readOnly?: boolean;
   multiSelect?: boolean;
   flareSeverityByRegion?: Record<string, number>;
-  onCoordinateMark?: (regionId: string, coordinates: NormalizedCoordinates) => void;
+  onCoordinateMark?: (regionId: string, coordinates: NormalizedCoordinates, details?: { severity: number; notes: string; timestamp: Date }) => void;
   showFlareMarkers?: boolean;
+  viewMode?: BodyMapViewMode;
+  onViewModeChange?: (mode: BodyMapViewMode) => void;
 }
 
 export function BodyMapViewer({
@@ -41,7 +46,23 @@ export function BodyMapViewer({
   flareSeverityByRegion = {},
   onCoordinateMark,
   showFlareMarkers = true,
+  viewMode: controlledViewMode,
+  onViewModeChange,
 }: BodyMapViewerProps) {
+  // View mode state management (Task 2) - can be controlled or uncontrolled
+  const [internalViewMode, setInternalViewMode] = useState<BodyMapViewMode>('full-body');
+  const [currentRegionId, setCurrentRegionId] = useState<string | null>(null);
+
+  // Use controlled mode if provided, otherwise use internal state
+  const viewMode = controlledViewMode ?? internalViewMode;
+  const setViewMode = useCallback((mode: BodyMapViewMode) => {
+    if (onViewModeChange) {
+      onViewModeChange(mode);
+    } else {
+      setInternalViewMode(mode);
+    }
+  }, [onViewModeChange]);
+
   // Calculate severity by region for visualization
   // Merge symptom severity and flare severity (flares take priority with red coloring)
   const symptomSeverityByRegion = symptoms.reduce(
@@ -88,6 +109,21 @@ export function BodyMapViewer({
     setZoomLevel(scale);
   }, []);
 
+  // Task 2.3: Handle region click to switch to region-detail mode
+  const handleRegionClick = useCallback((regionId: string) => {
+    console.log('Region clicked:', regionId); // Debug log
+    // Switch to region detail view when a region is clicked
+    setCurrentRegionId(regionId);
+    setViewMode('region-detail');
+    onRegionSelect(regionId);
+  }, [onRegionSelect]);
+
+  // Task 2.4: Handle back to body map navigation
+  const handleBackToBodyMap = useCallback(() => {
+    setViewMode('full-body');
+    setCurrentRegionId(null);
+  }, []);
+
   const handleCoordinateCapture = useCallback(
     (event: React.MouseEvent<SVGSVGElement>) => {
       if (readOnly) {
@@ -111,9 +147,10 @@ export function BodyMapViewer({
         return;
       }
 
-      // If this region isn't already selected, select it first
+      // If this region isn't already selected, don't capture the event
+      // Let it pass through to the region's onClick handler to switch to detail view
       if (selectedRegion !== regionId) {
-        onRegionSelect(regionId);
+        return;
       }
 
       const svgElement = event.currentTarget;
@@ -162,15 +199,6 @@ export function BodyMapViewer({
         return;
       }
 
-      // Prevent default to avoid mouse event synthesis which causes incorrect coordinates
-      event.preventDefault();
-
-      // Get touch coordinates from the first touch point
-      const touch = event.touches[0] || event.changedTouches[0];
-      if (!touch) {
-        return;
-      }
-
       const target = event.target as SVGElement | null;
       if (!target) {
         return;
@@ -188,9 +216,19 @@ export function BodyMapViewer({
         return;
       }
 
-      // If this region isn't already selected, select it first
+      // If this region isn't already selected, don't capture the event
+      // Let it pass through to the region's onClick handler to switch to detail view
       if (selectedRegion !== regionId) {
-        onRegionSelect(regionId);
+        return;
+      }
+
+      // Prevent default to avoid mouse event synthesis which causes incorrect coordinates
+      event.preventDefault();
+
+      // Get touch coordinates from the first touch point
+      const touch = event.touches[0] || event.changedTouches[0];
+      if (!touch) {
+        return;
       }
 
       const svgElement = event.currentTarget;
@@ -276,6 +314,24 @@ export function BodyMapViewer({
     );
   }, [view, zoomLevel, userId, showFlareMarkers]);
 
+  // Task 2.5: Conditionally render RegionDetailView or full body view
+  if (viewMode === 'region-detail' && currentRegionId) {
+    return (
+      <RegionDetailView
+        regionId={currentRegionId}
+        viewType={view}
+        userId={userId}
+        markers={symptoms}
+        onBack={handleBackToBodyMap}
+        onMarkerPlace={onCoordinateMark}
+        readOnly={readOnly}
+        showHistoricalMarkersDefault={true}
+        onMarkerClick={_onSymptomClick}
+      />
+    );
+  }
+
+  // Render full body view
   return (
     <div className="relative w-full h-full bg-gray-50 rounded-lg">
       {/* Hidden aria-live region for accessibility announcements */}
@@ -296,7 +352,7 @@ export function BodyMapViewer({
         <BodyRegionSelector
           view={view}
           selectedRegions={selectedRegion ? [selectedRegion] : []}
-          onRegionSelect={onRegionSelect}
+          onRegionSelect={handleRegionClick}
           multiSelect={multiSelect}
           severityByRegion={combinedSeverityByRegion}
           flareRegions={Object.keys(flareSeverityByRegion)}

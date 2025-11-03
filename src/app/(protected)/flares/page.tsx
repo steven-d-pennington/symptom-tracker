@@ -36,6 +36,7 @@ export default function FlaresPage() {
   } | null>(null);
   const [isFlareCreationModalOpen, setIsFlareCreationModalOpen] = useState(false);
   const [isBodyMapActive, setIsBodyMapActive] = useState(false);
+  const [bodyMapViewMode, setBodyMapViewMode] = useState<'full-body' | 'region-detail'>('full-body');
 
   // Calculate stats from flares data
   const stats = useMemo(() => {
@@ -155,16 +156,19 @@ export default function FlaresPage() {
   const handleCoordinateMark = (regionId: string, coordinates: { x: number; y: number }) => {
     // Get region name for display
     const regionName = regionId.replace(/-/g, ' ');
-    
+
     setSelectedCoordinates({
       bodyRegionId: regionId,
       bodyRegionName: regionName,
       coordinates,
     });
-    
+
     // Also select the region for consistency
     setSelectedRegion(regionId);
     setSelectedFlareId(null);
+
+    // Auto-open the modal for flare creation (Story 3.7.4 workflow)
+    setIsFlareCreationModalOpen(true);
   };
 
   const handleCreateFlareFromCoordinates = () => {
@@ -173,11 +177,19 @@ export default function FlaresPage() {
     }
   };
 
-  const handleFlareCreated = () => {
+  const handleFlareCreated = (_flare: unknown, stayInRegion?: boolean) => {
     // Clear coordinate selection after successful creation
     setSelectedCoordinates(null);
     // Refresh flares data
     refetchFlares();
+
+    // Handle view mode based on user's choice
+    if (!stayInRegion) {
+      // User clicked "Save" - return to full body view
+      setBodyMapViewMode('full-body');
+      setSelectedRegion(null);
+    }
+    // If stayInRegion is true, keep the current region-detail view open
   };
 
   const handleFlareCardClick = (flareId: string) => {
@@ -410,6 +422,8 @@ export default function FlaresPage() {
                   flareSeverityByRegion={flareSeverityByRegion}
                   readOnly={!isBodyMapActive}
                   onCoordinateMark={handleCoordinateMark}
+                  viewMode={bodyMapViewMode}
+                  onViewModeChange={setBodyMapViewMode}
                 />
 
                 {/* Create Flare Button - appears when coordinates are selected (map must be active) */}

@@ -350,10 +350,11 @@ function DashboardContent() {
           onClose={handleCloseQuickAction}
           userId={userId}
           selection={null}
-          onCreated={() => {
+          onCreated={(_flare, _stayInRegion) => {
             // Refresh the dashboard after flare creation
             setRefreshKey(prev => prev + 1);
             router.push("/dashboard");
+            // Note: stayInRegion doesn't apply in dashboard context
           }}
         />
       )}

@@ -44,7 +44,7 @@ interface FlareCreationModalProps {
     selection: FlareCreationSelection;
   }) => Promise<FlareRecord | void>;
   /** Invoked after a successful save with the created flare record */
-  onCreated?: (flare: FlareRecord) => void;
+  onCreated?: (flare: FlareRecord, stayInRegion?: boolean) => void;
 }
 
 const MAX_NOTES_LENGTH = 500;
@@ -93,6 +93,7 @@ export function FlareCreationModal({
   const [timestampValue, setTimestampValue] = useState<string>(formatDateTimeLocal(new Date()));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [submitAction, setSubmitAction] = useState<'save' | 'save-and-add-more'>('save');
 
   // Internal body map selection state (used when no external selection provided)
   const [internalSelection, setInternalSelection] = useState<FlareCreationSelection | null>(null);
@@ -155,15 +156,25 @@ export function FlareCreationModal({
     setSelectedRegion(regionId);
   };
 
-  const handleCoordinateMark = (regionId: string, coordinates: { x: number; y: number }) => {
+  const handleCoordinateMark = (
+    regionId: string,
+    coordinates: { x: number; y: number },
+    details?: { severity: number; notes: string; timestamp: Date }
+  ) => {
     const regionName = regionId.replace(/-/g, ' ');
-    
+
     setInternalSelection({
       bodyRegionId: regionId,
       bodyRegionName: regionName,
       coordinates,
     });
-    
+
+    // Story 3.7.2: In flare creation, details are not used
+    // The marker preview is just for positioning - severity/notes are entered in this modal
+    if (details) {
+      console.log('Marker details received (ignored for flare creation):', details);
+    }
+
     // Also select the region for consistency
     setSelectedRegion(regionId);
   };
@@ -273,7 +284,7 @@ export function FlareCreationModal({
             })
           );
         }
-        onCreated?.(createdFlare);
+        onCreated?.(createdFlare, submitAction === 'save-and-add-more');
       }
 
       onClose();
@@ -498,11 +509,21 @@ export function FlareCreationModal({
               </button>
               <button
                 type="submit"
+                onClick={() => setSubmitAction('save')}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-primary bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm transition hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!hasSelection || isSaving}
+              >
+                <Save className="h-4 w-4" />
+                {isSaving && submitAction === 'save' ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="submit"
+                onClick={() => setSubmitAction('save-and-add-more')}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={!hasSelection || isSaving}
               >
                 <Save className="h-4 w-4" />
-                {isSaving ? "Saving…" : "Save Flare (Enter)"}
+                {isSaving && submitAction === 'save-and-add-more' ? "Saving…" : "Save & Add More"}
               </button>
             </footer>
           </form>
