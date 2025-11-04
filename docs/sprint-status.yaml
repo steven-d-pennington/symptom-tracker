@@ -93,9 +93,13 @@ development_status:
   3-7-3-smart-defaults-system: done
   3-7-4-full-screen-mode: done
   3-7-5-history-toggle: review
-  3-7-6-polish-and-accessibility: ready-for-dev
+  3-7-6-polish-and-accessibility: review
   3-7-7-multi-location-flare-persistence: review
   epic-3.7-retrospective: optional
+
+  epic-3.8: contexted
+  3-8-1-critical-regression-bug-fixes: review
+  epic-3.8-retrospective: optional
 
   epic-4: backlog
   4-1-attach-photos-to-flare-entities: backlog

@@ -18,6 +18,7 @@ import { MarkerDetailsForm } from "@/components/body-mapping/MarkerDetailsForm";
 import { FullScreenControlBar } from "@/components/body-mapping/FullScreenControlBar";
 import { MarkerDetailsModal, MarkerDetails } from "@/components/body-mapping/MarkerDetailsModal";
 import { formatDistanceToNow } from "date-fns";
+import { announce } from "@/lib/utils/announce"; // Story 3.7.6: ARIA announcements
 
 export interface RegionDetailViewProps {
   /** The ID of the region being viewed in detail */
@@ -140,9 +141,20 @@ export function RegionDetailView({
     [markers, regionId]
   );
 
+  // AC 3.7.6.8: Announce when entering region detail view
+  useEffect(() => {
+    const regionName = regionId.replace(/-/g, ' ');
+    announce(`${regionName} region detail view opened`);
+  }, []); // Only announce on mount
+
   // Toggle historical markers visibility
   const toggleHistoricalMarkers = useCallback(() => {
-    setShowHistoricalMarkers(prev => !prev);
+    setShowHistoricalMarkers(prev => {
+      const newValue = !prev;
+      // AC 3.7.6.8: Announce history toggle state change
+      announce(newValue ? 'History markers visible' : 'History markers hidden');
+      return newValue;
+    });
   }, []);
 
   // Story 3.7.5: Handle historical marker click to show details
@@ -215,36 +227,13 @@ export function RegionDetailView({
     // Update ref for next render
     prevFullscreenRef.current = isFullscreen;
   }, [isFullscreen, showDetailsForm]);
-
-  // Handle ESC key to cancel preview, exit fullscreen, or return to full body view
-  // Story 3.7.4: ESC key priority - fullscreen exit takes priority
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        // Story 3.7.4 AC 3.7.4.5: Exit fullscreen first if active
-        if (isFullscreen && onExitFullscreen) {
-          onExitFullscreen();
-          event.stopPropagation();
-        }
-        // Story 3.7.2 AC 3.7.2.7: Cancel preview if active
-        else if (isPreviewActive) {
-          handleCancelPreview();
-        } else if (showDetailsForm) {
-          handleCancelForm();
-        } else {
-          onBack();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onBack, isPreviewActive, showDetailsForm, isFullscreen, onExitFullscreen, handleCancelPreview, handleCancelForm]);
-
   const handleConfirmPreview = useCallback(() => {
     if (previewCoordinates) {
       setConfirmedCoordinates(previewCoordinates);
       setIsPreviewActive(false);
+
+      // AC 3.7.6.8: Announce marker position confirmation
+      announce('Marker position confirmed');
 
       // Story 3.7.5: Removed SimplifiedMarkerForm to reduce confusion
       // Only show MarkerDetailsForm if symptomId is provided (symptom tracking in normal mode)
@@ -272,6 +261,36 @@ export function RegionDetailView({
       }
     }
   }, [previewCoordinates, symptomId, regionId, onMarkerPlace, isFullscreen]);
+
+  // Handle keyboard shortcuts: ESC and Enter keys
+  // Story 3.7.4: ESC key priority - fullscreen exit takes priority
+  // Story 3.7.6 AC 3.7.6.2: Enter key confirms marker position when preview active
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        // Story 3.7.4 AC 3.7.4.5: Exit fullscreen first if active
+        if (isFullscreen && onExitFullscreen) {
+          onExitFullscreen();
+          event.stopPropagation();
+        }
+        // Story 3.7.2 AC 3.7.2.7: Cancel preview if active
+        else if (isPreviewActive) {
+          handleCancelPreview();
+        } else if (showDetailsForm) {
+          handleCancelForm();
+        } else {
+          onBack();
+        }
+      } else if (event.key === "Enter" && isPreviewActive) {
+        // AC 3.7.6.2: Enter key confirms marker position when preview is active
+        event.preventDefault();
+        handleConfirmPreview();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onBack, isPreviewActive, showDetailsForm, isFullscreen, onExitFullscreen, handleCancelPreview, handleCancelForm, handleConfirmPreview]);
 
   const handleFormSubmit = useCallback(async (data: {
     severity: number;

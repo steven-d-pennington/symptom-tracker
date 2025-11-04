@@ -143,6 +143,16 @@ export function MarkerDetailsForm({
               max="10"
               value={severity}
               onChange={(e) => setSeverity(Number(e.target.value))}
+              onKeyDown={(e) => {
+                // AC 3.7.6.4: Arrow keys adjust severity slider
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setSeverity(prev => Math.max(1, prev - 1));
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setSeverity(prev => Math.min(10, prev + 1));
+                }
+              }}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               aria-label="Severity level from 1 to 10"
               aria-valuemin={1}

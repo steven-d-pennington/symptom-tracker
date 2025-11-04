@@ -230,6 +230,21 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
     );
   };
 
+  // Filter out favorites from "All Foods" section to prevent duplicates (Story 3.8.1 - Bug #4)
+  const nonFavoriteFoodsByCategory = useMemo(() => {
+    const filtered = new Map<string, FoodRecord[]>();
+    const favoriteIdsSet = new Set(favoriteIds);
+
+    for (const [category, foods] of allFoodsByCategory) {
+      const nonFavoriteFoods = foods.filter(food => !favoriteIdsSet.has(food.id));
+      if (nonFavoriteFoods.length > 0) {
+        filtered.set(category, nonFavoriteFoods);
+      }
+    }
+
+    return filtered;
+  }, [allFoodsByCategory, favoriteIds]);
+
   // Filter foods based on search query (AC3.5.4.4)
   const filteredFoodsByCategory = useMemo(() => {
     if (!searchQuery) {
@@ -411,7 +426,7 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
             <div className="mb-2">
               <h2 className="text-lg font-semibold text-foreground">All Foods</h2>
             </div>
-            {Array.from(allFoodsByCategory).map(([category, foods]) => (
+            {Array.from(nonFavoriteFoodsByCategory).map(([category, foods]) => (
               <FoodCategory
                 key={category}
                 name={category}

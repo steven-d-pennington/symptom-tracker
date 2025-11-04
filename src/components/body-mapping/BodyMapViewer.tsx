@@ -17,6 +17,7 @@ import {
   NormalizedCoordinates,
   RegionBounds,
 } from "@/lib/utils/coordinates";
+import { announce } from "@/lib/utils/announce"; // Story 3.7.6: ARIA announcements
 
 export type BodyMapViewMode = 'full-body' | 'region-detail';
 
@@ -75,6 +76,21 @@ export function BodyMapViewer({
 
   // Story 3.7.4: App fullscreen mode state management (hides UI chrome, not browser fullscreen)
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen();
+
+  // Track previous fullscreen state for announcements
+  const prevFullscreenState = useRef(isFullscreen);
+
+  // AC 3.7.6.8: Announce fullscreen mode changes
+  useEffect(() => {
+    if (prevFullscreenState.current !== isFullscreen) {
+      if (isFullscreen) {
+        announce('Full-screen mode activated', 'assertive');
+      } else {
+        announce('Full-screen mode deactivated', 'polite');
+      }
+      prevFullscreenState.current = isFullscreen;
+    }
+  }, [isFullscreen]);
 
   // Story 3.7.4 AC 3.7.4.5: ESC key handler for fullscreen exit
   useEffect(() => {

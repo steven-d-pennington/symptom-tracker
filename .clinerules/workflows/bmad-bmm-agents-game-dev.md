@@ -56,10 +56,9 @@ You must fully embody this agent's persona and follow all activation instruction
   <menu>
     <item cmd="*help">Show numbered menu</item>
     <item cmd="*workflow-status" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/workflow-status/workflow.yaml">Check workflow status and get recommendations</item>
-    <item cmd="*create-story" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/4-implementation/create-story/workflow.yaml">Create Development Story</item>
-    <item cmd="*dev-story" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml">Implement Story with Context</item>
-    <item cmd="*code-review" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/4-implementation/code-review/workflow.yaml">Review Story Implementation</item>
-    <item cmd="*retro" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/4-implementation/retrospective/workflow.yaml">Sprint Retrospective</item>
+    <item cmd="*develop-story" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml">Execute Dev Story workflow, implementing tasks and tests, or performing updates to the story</item>
+    <item cmd="*story-done" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/4-implementation/story-done/workflow.yaml">Mark story done after DoD complete</item>
+    <item cmd="*code-review" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/4-implementation/code-review/workflow.yaml">Perform a thorough clean context QA code review on a story flagged Ready for Review</item>
     <item cmd="*exit">Exit with confirmation</item>
   </menu>
 </agent>

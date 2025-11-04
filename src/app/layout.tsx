@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "@/styles/accessibility.css"; // Story 3.7.6: Accessibility styles
 import { OnboardingRedirectGate } from "./onboarding/components/OnboardingRedirectGate";
 import { OfflineIndicator, InstallPrompt, UpdateNotification } from "@/components/pwa";
 import { NavLayout } from "@/components/navigation/NavLayout";

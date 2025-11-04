@@ -7,7 +7,6 @@ import {
   ReactZoomPanPinchRef,
 } from 'react-zoom-pan-pinch';
 import { ZoomIn, ZoomOut, Home } from 'lucide-react';
-import { FlareMarkers } from './FlareMarkers';
 
 interface BodyMapZoomProps {
   children: React.ReactNode;
@@ -219,7 +218,6 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
                   data-testid="transform-wrapper"
                 >
                   {children}
-                  <FlareMarkers viewType={viewType} zoomLevel={currentZoom} userId={userId} />
                 </div>
               </TransformComponent>
 

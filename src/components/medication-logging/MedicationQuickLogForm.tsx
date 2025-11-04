@@ -328,6 +328,26 @@ export function MedicationQuickLogForm({ userId }: MedicationQuickLogFormProps) 
     );
   }
 
+  // Show empty state if no medications available
+  if (medications.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center max-w-md">
+          <p className="text-lg font-medium text-foreground mb-2">No Medications Available</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            You haven't added any medications yet. Add medications from your settings to start logging.
+          </p>
+          <button
+            onClick={() => router.push("/settings")}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors min-h-[44px]"
+          >
+            Go to Settings
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Get selected medication's recent notes for display
   const selectedMedicationData = selectedMedication
     ? medications.find(m => m.id === selectedMedication.id)
