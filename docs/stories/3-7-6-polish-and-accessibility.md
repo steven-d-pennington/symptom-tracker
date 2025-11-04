@@ -1,6 +1,6 @@
 # Story 3.7.6: Polish and Accessibility
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -281,7 +281,7 @@ src/styles/
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [docs/stories/3-7-6-polish-and-accessibility.context.xml](./3-7-6-polish-and-accessibility.context.xml)
 
 ### Agent Model Used
 

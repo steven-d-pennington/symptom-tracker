@@ -6,6 +6,7 @@ import {
   DailyEntryRecord,
   FlareRecord,
   FlareEventRecord, // Story 2.1
+  FlareBodyLocationRecord, // Story 3.7.7
   FoodCombinationRecord, // New
   FoodEventRecord,
   FoodRecord,
@@ -39,6 +40,7 @@ export class SymptomTrackerDatabase extends Dexie {
   photoComparisons!: Table<PhotoComparisonRecord, string>;
   flares!: Table<FlareRecord, string>;
   flareEvents!: Table<FlareEventRecord, string>; // Story 2.1
+  flareBodyLocations!: Table<FlareBodyLocationRecord, string>; // Story 3.7.7
   analysisResults!: Table<AnalysisResultRecord, string>;
   foods!: Table<FoodRecord, string>;
   foodEvents!: Table<FoodEventRecord, string>;
@@ -460,6 +462,32 @@ export class SymptomTrackerDatabase extends Dexie {
       uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
       moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt", // New - Story 3.5.2
       sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt", // New - Story 3.5.2
+    });
+
+    // Version 21: Add flareBodyLocations table for multi-location flare tracking (Story 3.7.7)
+    this.version(21).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, [userId+status], [userId+bodyRegionId], [userId+startDate], userId",
+      flareEvents: "id, [flareId+timestamp], [userId+timestamp], flareId, userId",
+      flareBodyLocations: "id, [flareId+bodyRegionId], [userId+flareId], flareId, userId", // New - Story 3.7.7
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+      moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
     });
   }
 }

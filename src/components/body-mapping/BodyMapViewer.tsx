@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { BodyRegionSelector } from "./BodyRegionSelector";
 import { BodyMapZoom } from "@/components/body-map/BodyMapZoom";
 import { BodyMapLocation } from "@/lib/types/body-mapping";
 import { CoordinateMarker } from "@/components/body-map/CoordinateMarker";
 import { RegionDetailView } from "./RegionDetailView";
+import { FullScreenControl } from "./FullScreenControl";
+import { FullScreenControlBar } from "./FullScreenControlBar";
+import { useFullscreen } from "@/lib/hooks/useFullscreen";
 import {
   denormalizeCoordinates,
   getRegionBounds,
@@ -31,6 +35,10 @@ interface BodyMapViewerProps {
   showFlareMarkers?: boolean;
   viewMode?: BodyMapViewMode;
   onViewModeChange?: (mode: BodyMapViewMode) => void;
+  /** Story 3.7.4: Callback when done marking locations in fullscreen */
+  onDoneMarking?: () => void;
+  /** Story 3.7.4: Number of markers placed (for display in control bar) */
+  markerCount?: number;
 }
 
 export function BodyMapViewer({
@@ -48,6 +56,8 @@ export function BodyMapViewer({
   showFlareMarkers = true,
   viewMode: controlledViewMode,
   onViewModeChange,
+  onDoneMarking,
+  markerCount = 0,
 }: BodyMapViewerProps) {
   // View mode state management (Task 2) - can be controlled or uncontrolled
   const [internalViewMode, setInternalViewMode] = useState<BodyMapViewMode>('full-body');
@@ -62,6 +72,23 @@ export function BodyMapViewer({
       setInternalViewMode(mode);
     }
   }, [onViewModeChange]);
+
+  // Story 3.7.4: App fullscreen mode state management (hides UI chrome, not browser fullscreen)
+  const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen();
+
+  // Story 3.7.4 AC 3.7.4.5: ESC key handler for fullscreen exit
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isFullscreen) {
+        // Exit fullscreen takes priority over other ESC handlers
+        exitFullscreen();
+        event.stopPropagation();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
+  }, [isFullscreen, exitFullscreen]);
 
   // Calculate severity by region for visualization
   // Merge symptom severity and flare severity (flares take priority with red coloring)
@@ -315,6 +342,8 @@ export function BodyMapViewer({
   }, [view, zoomLevel, userId, showFlareMarkers]);
 
   // Task 2.5: Conditionally render RegionDetailView or full body view
+  // Note: RegionDetailView handles its own portal rendering when in fullscreen
+  // so we don't wrap it in a portal here (would cause double portal and component remounting)
   if (viewMode === 'region-detail' && currentRegionId) {
     return (
       <RegionDetailView
@@ -327,13 +356,47 @@ export function BodyMapViewer({
         readOnly={readOnly}
         showHistoricalMarkersDefault={true}
         onMarkerClick={_onSymptomClick}
+        isFullscreen={isFullscreen}
+        onExitFullscreen={exitFullscreen}
+        onDoneMarking={onDoneMarking}
+        markerCount={markerCount}
       />
     );
   }
 
   // Render full body view
-  return (
-    <div className="relative w-full h-full bg-gray-50 rounded-lg">
+  const fullBodyView = (
+    <div
+      className={`${
+        isFullscreen
+          ? ''
+          : 'relative w-full h-full bg-gray-50 rounded-lg'
+      }`}
+      style={isFullscreen ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        backgroundColor: '#f9fafb',
+        transform: 'translateZ(0)'
+      } : undefined}
+      data-fullscreen={isFullscreen ? 'true' : 'false'}
+    >
+      {/* Story 3.7.4: Fullscreen control bar (shown when in fullscreen mode) */}
+      {isFullscreen && (
+        <FullScreenControlBar
+          onExit={exitFullscreen}
+          showBackButton={false}
+          showHistoryToggle={false}
+          onDoneMarking={onDoneMarking}
+          markerCount={markerCount}
+        />
+      )}
+
       {/* Hidden aria-live region for accessibility announcements */}
       <div
         aria-live="polite"
@@ -344,29 +407,41 @@ export function BodyMapViewer({
         {/* Announcements will be populated by accessibility hooks */}
       </div>
 
-      <BodyMapZoom
-        viewType={view}
-        userId={userId}
-        onZoomChange={handleZoomChange}
-      >
-        <BodyRegionSelector
-          view={view}
-          selectedRegions={selectedRegion ? [selectedRegion] : []}
-          onRegionSelect={handleRegionClick}
-          multiSelect={multiSelect}
-          severityByRegion={combinedSeverityByRegion}
-          flareRegions={Object.keys(flareSeverityByRegion)}
-          onCoordinateCapture={handleCoordinateCapture}
-          onTouchCoordinateCapture={handleTouchCoordinateCapture}
-          coordinateCursorActive={!readOnly && Boolean(selectedRegion)}
-          coordinateMarker={coordinateMarkerNode}
-          flareOverlay={flareMarkerOverlay}
+      {/* Story 3.7.4: Fullscreen toggle button (shown when NOT in fullscreen) */}
+      {!isFullscreen && (
+        <div className="absolute top-4 right-4 z-10">
+          <FullScreenControl
+            isFullscreen={false}
+            onToggle={enterFullscreen}
+          />
+        </div>
+      )}
+
+      <div className={isFullscreen ? 'pt-12 h-full' : ''}>
+        <BodyMapZoom
+          viewType={view}
           userId={userId}
-          zoomLevel={zoomLevel}
-          isZoomed={zoomLevel > 1}
-          onCoordinateMark={onCoordinateMark}
-        />
-      </BodyMapZoom>
+          onZoomChange={handleZoomChange}
+        >
+          <BodyRegionSelector
+            view={view}
+            selectedRegions={selectedRegion ? [selectedRegion] : []}
+            onRegionSelect={handleRegionClick}
+            multiSelect={multiSelect}
+            severityByRegion={combinedSeverityByRegion}
+            flareRegions={Object.keys(flareSeverityByRegion)}
+            onCoordinateCapture={handleCoordinateCapture}
+            onTouchCoordinateCapture={handleTouchCoordinateCapture}
+            coordinateCursorActive={!readOnly && Boolean(selectedRegion)}
+            coordinateMarker={coordinateMarkerNode}
+            flareOverlay={flareMarkerOverlay}
+            userId={userId}
+            zoomLevel={zoomLevel}
+            isZoomed={zoomLevel > 1}
+            onCoordinateMark={onCoordinateMark}
+          />
+        </BodyMapZoom>
+      </div>
 
       {/* Instructions */}
       <div
@@ -388,4 +463,11 @@ export function BodyMapViewer({
       </div>
     </div>
   );
+
+  // If in fullscreen mode, use portal to render outside layout
+  if (isFullscreen) {
+    return typeof window !== 'undefined' ? createPortal(fullBodyView, document.body) : fullBodyView;
+  }
+
+  return fullBodyView;
 }

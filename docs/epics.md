@@ -1002,7 +1002,46 @@ So I can use all features regardless of input method.
 
 ---
 
-**Total Epic Points:** 21 points (High complexity)
+**Story 3.7.7: Multi-Location Flare Persistence (5 pts)**
+
+As a user tracking flare-ups,
+I want all marked body locations to be saved when I create a flare,
+So that I can accurately record and review which areas were affected during a single flare episode.
+
+**Acceptance Criteria:**
+1. Create `flare_body_locations` IndexedDB table with schema: id, flareId, bodyRegionId, coordinates (x, y), createdAt
+2. When saving a flare with multiple locations, create one FlareRecord + multiple body location records
+3. flareRepository.createFlare() accepts array of body locations and persists all to database
+4. Flare queries join body locations so retrieved flares include all marked areas
+5. FlareCreationModal saves all accumulated locations (not just first)
+6. Flare detail view displays all body locations with coordinates
+7. Flare list/cards show location count badge (e.g., "3 locations") when multiple exist
+8. Body map visualization shows all marked locations when viewing a flare
+9. Existing flares with single location continue to work (backward compatibility)
+10. All body location data includes region ID and normalized coordinates (0-1 scale)
+
+**Technical Implementation:**
+- New IndexedDB object store: `flare_body_locations` with compound index [flareId+bodyRegionId]
+- Update flareRepository.createFlare() signature to accept `locations: FlareLocation[]`
+- Transaction-based atomic writes (flare + all locations in single transaction)
+- Update getFlareById/getActiveFlares to LEFT JOIN body locations
+- FlareCreationModal passes complete locations array to save handler
+- Update FlareRecord TypeScript interface to include `bodyLocations?: FlareBodyLocation[]`
+- Database migration strategy for adding new table to existing installations
+
+**Prerequisites:** Story 3.7.4 (fullscreen multi-marker UX complete)
+
+**⚠️ DEPENDENCY NOTE:** This story should be completed BEFORE Story 3.7.5 (History Toggle) to avoid rework. Story 3.7.5 queries markers from IndexedDB, and this story changes the schema. Implementing 3.7.5 first would require rewriting its data access logic after 3.7.7's schema change.
+
+**Current State:**
+- UX fully implemented: users can place multiple markers in fullscreen mode
+- "Done Marking" button accumulates all markers
+- FlareCreationModal displays all marked locations
+- Only first location currently persists to database (schema limitation)
+
+---
+
+**Total Epic Points:** 26 points (High complexity)
 
 **Dependencies:**
 - Epic 1 complete (body map foundation with regions and markers)

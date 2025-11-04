@@ -11,7 +11,7 @@
  */
 
 import { db } from "../db/client";
-import { FlareRecord, FlareEventRecord } from "../db/schema";
+import { FlareRecord, FlareEventRecord, FlareBodyLocationRecord } from "../db/schema";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -24,6 +24,25 @@ export interface CreateFlareInput extends Partial<FlareRecord> {
    * Stored on FlareEventRecord.notes to keep the main record lightweight.
    */
   initialEventNotes?: string;
+
+  /**
+   * Optional array of body locations for multi-location flares (Story 3.7.7).
+   * When provided, all locations are persisted atomically in a transaction.
+   * The first location should also be specified in bodyRegionId/coordinates
+   * for backward compatibility.
+   */
+  bodyLocations?: {
+    bodyRegionId: string;
+    coordinates: { x: number; y: number };
+  }[];
+}
+
+/**
+ * Extended FlareRecord with body locations array (Story 3.7.7).
+ * Returned by query methods when body locations are loaded.
+ */
+export interface FlareWithLocations extends FlareRecord {
+  bodyLocations: FlareBodyLocationRecord[];
 }
 
 /**
@@ -67,8 +86,9 @@ export async function createFlare(
 
   const initialEventNotes = data.initialEventNotes?.trim();
 
-  // Use transaction for atomic write (flare + initial event)
-  await db.transaction("rw", [db.flares, db.flareEvents], async () => {
+  // Use transaction for atomic write (flare + initial event + body locations)
+  // Story 3.7.7: Include flareBodyLocations table in transaction for multi-location support
+  await db.transaction("rw", [db.flares, db.flareEvents, db.flareBodyLocations], async () => {
     await db.flares.add(flare);
 
     // Create initial 'created' event for append-only history
@@ -83,6 +103,22 @@ export async function createFlare(
     };
 
     await db.flareEvents.add(createdEvent);
+
+    // Story 3.7.7: Persist body locations if provided
+    if (data.bodyLocations && data.bodyLocations.length > 0) {
+      for (const location of data.bodyLocations) {
+        const bodyLocationRecord: FlareBodyLocationRecord = {
+          id: uuidv4(),
+          flareId,
+          bodyRegionId: location.bodyRegionId,
+          coordinates: location.coordinates,
+          userId,
+          createdAt: startDate,
+          updatedAt: startDate,
+        };
+        await db.flareBodyLocations.add(bodyLocationRecord);
+      }
+    }
   });
 
   return flare;
@@ -130,17 +166,17 @@ export async function updateFlare(
 }
 
 /**
- * Retrieves a single flare by ID.
+ * Retrieves a single flare by ID with body locations (Story 3.7.7).
  * Enforces user isolation.
  *
  * @param userId - User ID for multi-user isolation
  * @param flareId - UUID of flare to retrieve
- * @returns Promise resolving to FlareRecord or null if not found
+ * @returns Promise resolving to FlareWithLocations or null if not found
  */
 export async function getFlareById(
   userId: string,
   flareId: string
-): Promise<FlareRecord | null> {
+): Promise<FlareWithLocations | null> {
   const flare = await db.flares.get(flareId);
 
   // Return null if not found or doesn't belong to user
@@ -148,18 +184,19 @@ export async function getFlareById(
     return null;
   }
 
-  return flare;
+  // Enrich with body locations (Story 3.7.7)
+  return enrichFlareWithLocations(flare);
 }
 
 /**
- * Retrieves all active flares for a user.
+ * Retrieves all active flares for a user with body locations (Story 3.7.7).
  * Active = status is not 'resolved'.
  * Uses compound index [userId+status] for performance.
  *
  * @param userId - User ID to query
- * @returns Promise resolving to array of active FlareRecords
+ * @returns Promise resolving to array of active FlareWithLocations
  */
-export async function getActiveFlares(userId: string): Promise<FlareRecord[]> {
+export async function getActiveFlares(userId: string): Promise<FlareWithLocations[]> {
   // Query using compound index for efficient lookup
   // Active flares have status: 'active', 'improving', or 'worsening'
   const flares = await db.flares
@@ -168,24 +205,26 @@ export async function getActiveFlares(userId: string): Promise<FlareRecord[]> {
     .filter((flare) => flare.status !== "resolved")
     .toArray();
 
-  return flares;
+  // Enrich each flare with body locations (Story 3.7.7)
+  return Promise.all(flares.map(enrichFlareWithLocations));
 }
 
 /**
- * Retrieves all resolved flares for a user.
+ * Retrieves all resolved flares for a user with body locations (Story 3.7.7).
  * Uses compound index [userId+status] for performance.
  *
  * @param userId - User ID to query
- * @returns Promise resolving to array of resolved FlareRecords
+ * @returns Promise resolving to array of resolved FlareWithLocations
  */
-export async function getResolvedFlares(userId: string): Promise<FlareRecord[]> {
+export async function getResolvedFlares(userId: string): Promise<FlareWithLocations[]> {
   // Query using compound index for efficient lookup
   const flares = await db.flares
     .where("[userId+status]")
     .equals([userId, "resolved"])
     .toArray();
 
-  return flares;
+  // Enrich each flare with body locations (Story 3.7.7)
+  return Promise.all(flares.map(enrichFlareWithLocations));
 }
 
 /**
@@ -266,6 +305,44 @@ export async function getFlareHistory(
 }
 
 /**
+ * Enriches a flare with its body locations (Story 3.7.7).
+ * Helper function used by query methods to populate the bodyLocations array.
+ *
+ * Backward compatibility strategy:
+ * - If no body locations exist in the table AND the flare has a bodyRegionId,
+ *   synthesize a single location from the FlareRecord fields
+ * - Otherwise, return empty bodyLocations array
+ *
+ * @param flare - FlareRecord to enrich
+ * @returns Promise resolving to FlareWithLocations
+ */
+async function enrichFlareWithLocations(
+  flare: FlareRecord
+): Promise<FlareWithLocations> {
+  // Query body locations using compound index for efficiency
+  const locations = await db.flareBodyLocations
+    .where("[userId+flareId]")
+    .equals([flare.userId, flare.id])
+    .sortBy("createdAt"); // Chronological order
+
+  // Backward compatibility: synthesize location from FlareRecord if none exist
+  if (locations.length === 0 && flare.bodyRegionId) {
+    const syntheticLocation: FlareBodyLocationRecord = {
+      id: `${flare.id}-primary`,
+      flareId: flare.id,
+      bodyRegionId: flare.bodyRegionId,
+      coordinates: flare.coordinates ?? { x: 0.5, y: 0.5 },
+      userId: flare.userId,
+      createdAt: flare.createdAt,
+      updatedAt: flare.updatedAt,
+    };
+    return { ...flare, bodyLocations: [syntheticLocation] };
+  }
+
+  return { ...flare, bodyLocations: locations };
+}
+
+/**
  * Deletes a flare and all associated events.
  * Enforces user isolation.
  *
@@ -287,10 +364,14 @@ export async function deleteFlare(
     throw new Error(`Access denied: Flare ${flareId} does not belong to user ${userId}`);
   }
 
-  // Use transaction to delete flare and all associated events atomically
-  await db.transaction("rw", [db.flares, db.flareEvents], async () => {
+  // Use transaction to delete flare and all associated events/locations atomically
+  // Story 3.7.7: Include flareBodyLocations in deletion
+  await db.transaction("rw", [db.flares, db.flareEvents, db.flareBodyLocations], async () => {
     // Delete all events associated with this flare
     await db.flareEvents.where("flareId").equals(flareId).delete();
+
+    // Delete all body locations associated with this flare (Story 3.7.7)
+    await db.flareBodyLocations.where("flareId").equals(flareId).delete();
 
     // Delete the flare itself
     await db.flares.delete(flareId);

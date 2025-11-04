@@ -31,8 +31,9 @@ interface FlareCreationModalProps {
   /**
    * Location data captured from the body map.
    * Save is disabled until a selection is provided.
+   * Story 3.7.4: Can be single selection or array for multiple locations (Model B - one flare with multiple locations)
    */
-  selection: FlareCreationSelection | null;
+  selection: FlareCreationSelection | FlareCreationSelection[] | null;
   /**
    * Optional override for persistence logic.
    * Defaults to flareRepository.createFlare when not provided.
@@ -100,9 +101,15 @@ export function FlareCreationModal({
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<"front" | "back" | "left" | "right">("front");
 
-  // Use external selection if provided, otherwise use internal selection
-  const effectiveSelection = selection || internalSelection;
-  const hasSelection = Boolean(effectiveSelection?.bodyRegionId && effectiveSelection?.coordinates);
+  // Story 3.7.4: Normalize selection to always work with array
+  const selectionsArray = useMemo(() => {
+    if (!selection) {
+      return internalSelection ? [internalSelection] : [];
+    }
+    return Array.isArray(selection) ? selection : [selection];
+  }, [selection, internalSelection]);
+
+  const hasSelection = selectionsArray.length > 0;
 
   useEffect(() => {
     if (!isOpen) {
@@ -141,15 +148,17 @@ export function FlareCreationModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const regionLabel = useMemo(() => {
-    if (!effectiveSelection?.bodyRegionId) {
+  // Story 3.7.4: Generate label for multiple locations
+  const locationsSummary = useMemo(() => {
+    if (selectionsArray.length === 0) {
       return "Select a region on the body map";
     }
-    if (effectiveSelection.bodyRegionName) {
-      return effectiveSelection.bodyRegionName;
+    if (selectionsArray.length === 1) {
+      const sel = selectionsArray[0];
+      return sel.bodyRegionName || sel.bodyRegionId.replace(/-/g, " ");
     }
-    return effectiveSelection.bodyRegionId.replace(/-/g, " ");
-  }, [effectiveSelection]);
+    return `${selectionsArray.length} locations marked`;
+  }, [selectionsArray]);
 
   // Internal body map handlers
   const handleRegionSelect = (regionId: string) => {
@@ -200,6 +209,13 @@ export function FlareCreationModal({
     selection: FlareCreationSelection;
   }): Promise<FlareRecord> => {
     const trimmedNotes = payload.notes?.trim();
+
+    // Story 3.7.7: Map all selections to bodyLocations array
+    const bodyLocations = selectionsArray.map(sel => ({
+      bodyRegionId: sel.bodyRegionId,
+      coordinates: sel.coordinates,
+    }));
+
     const createPayload: CreateFlareInput = {
       bodyRegionId: payload.selection.bodyRegionId,
       coordinates: payload.selection.coordinates,
@@ -209,6 +225,7 @@ export function FlareCreationModal({
       createdAt: payload.timestamp,
       updatedAt: payload.timestamp,
       initialEventNotes: trimmedNotes && trimmedNotes.length > 0 ? trimmedNotes : undefined,
+      bodyLocations, // Story 3.7.7: Pass all marked locations
     };
 
     return flareRepository.createFlare(userId, createPayload);
@@ -218,7 +235,7 @@ export function FlareCreationModal({
     event.preventDefault();
     setErrorMessage(null);
 
-    if (!hasSelection || !effectiveSelection) {
+    if (!hasSelection || selectionsArray.length === 0) {
       setErrorMessage("Body location not provided. Please tap a region on the body map first.");
       return;
     }
@@ -233,11 +250,14 @@ export function FlareCreationModal({
     try {
       const trimmedNotes = notes.trim();
       const saveHandler = onSave ?? defaultSave;
+
+      // Story 3.7.7: Create flare with all marked body locations
+      const primarySelection = selectionsArray[0];
       const result = await saveHandler({
         timestamp,
         severity,
         notes: trimmedNotes.length > 0 ? trimmedNotes : undefined,
-        selection: effectiveSelection!,
+        selection: primarySelection,
       });
 
       const createdFlare: FlareRecord | undefined =
@@ -245,8 +265,11 @@ export function FlareCreationModal({
 
       if (createdFlare) {
         // Show success toast with action buttons
+        const locationsText = selectionsArray.length === 1
+          ? (primarySelection.bodyRegionName || primarySelection.bodyRegionId)
+          : `${selectionsArray.length} locations`;
         toast.success("Flare created successfully", {
-          description: `Flare logged in ${effectiveSelection?.bodyRegionName || effectiveSelection?.bodyRegionId || 'selected area'}`,
+          description: `Flare logged in ${locationsText}`,
           actions: [
             {
               label: "View Details",
@@ -373,7 +396,7 @@ export function FlareCreationModal({
                 </div>
                 <div className="h-[300px] bg-gray-50 rounded-lg mb-3 overflow-visible relative">
                   <BodyMapViewer
-                    key={`${currentView}-${isOpen}`}
+                    key={currentView}
                     view={currentView}
                     userId={userId}
                     selectedRegion={selectedRegion || undefined}
@@ -392,21 +415,27 @@ export function FlareCreationModal({
 
             <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
               <section className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                <p className="text-sm font-medium text-gray-700">Body Location</p>
-                <p className="mt-1 text-base font-semibold text-gray-900">
-                  {regionLabel}
+                <p className="text-sm font-medium text-gray-700">
+                  Body Location{selectionsArray.length > 1 ? 's' : ''}
                 </p>
-                {effectiveSelection?.coordinates ? (
-                  <p className="mt-1 text-xs text-gray-600">
-                    Coordinates:{" "}
-                    <strong>
-                      {formatPercentage(effectiveSelection.coordinates.x)}, {formatPercentage(effectiveSelection.coordinates.y)}
-                    </strong>{" "}
-                    (normalized within the selected region)
-                  </p>
+                <p className="mt-1 text-base font-semibold text-gray-900">
+                  {locationsSummary}
+                </p>
+                {selectionsArray.length > 0 ? (
+                  <div className="mt-2 space-y-1">
+                    {selectionsArray.map((sel, index) => (
+                      <div key={`${sel.bodyRegionId}-${index}`} className="text-xs text-gray-600">
+                        {index + 1}. <strong>{sel.bodyRegionName || sel.bodyRegionId.replace(/-/g, ' ')}</strong>
+                        {' - '}
+                        <span className="font-mono">
+                          ({formatPercentage(sel.coordinates.x)}, {formatPercentage(sel.coordinates.y)})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <p className="mt-1 text-xs text-gray-500">
-                    Waiting for precise coordinates&hellip;
+                    Waiting for body location selection&hellip;
                   </p>
                 )}
               </section>

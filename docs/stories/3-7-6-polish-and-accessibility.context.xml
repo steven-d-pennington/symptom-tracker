@@ -1,0 +1,326 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.7</epicId>
+    <storyId>3.7.6</storyId>
+    <title>Polish and Accessibility</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-7-6-polish-and-accessibility.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user with accessibility needs</asA>
+    <iWant>full keyboard navigation and touch-optimized interactions</iWant>
+    <soThat>I can use all features regardless of input method</soThat>
+    <tasks>
+- Task 1: Implement keyboard navigation for marker positioning (AC: #3.7.6.2)
+  - 1.1: Add keydown event listener to marker preview component
+  - 1.2: Map Enter key to confirmPosition() function
+  - 1.3: Map ESC key to cancelPreview() function
+  - 1.4: Prevent default browser behavior for these keys when appropriate
+  - 1.5: Add ARIA announcements for keyboard actions
+
+- Task 2: Implement keyboard navigation for forms (AC: #3.7.6.3, #3.7.6.4)
+  - 2.1: Ensure logical tab order for all form fields
+  - 2.2: Implement arrow key handlers for severity slider
+  - 2.3: Add focus indicators (visible outline or border) for all focusable elements
+  - 2.4: Test Tab and Shift+Tab navigation flow
+  - 2.5: Verify focus doesn't get trapped in any modals or components
+
+- Task 3: Verify and enforce touch target sizes (AC: #3.7.6.5)
+  - 3.1: Audit all buttons, toggles, and controls for size
+  - 3.2: Update CSS to ensure minimum 44x44px for all interactive elements
+  - 3.3: Add padding or min-width/min-height CSS rules as needed
+  - 3.4: Test on actual mobile devices (iOS, Android)
+  - 3.5: Document touch target standards in style guide
+
+- Task 4: Implement smooth view transitions (AC: #3.7.6.6)
+  - 4.1: Add CSS transitions for view mode changes (full-body ↔ region detail)
+  - 4.2: Add CSS transitions for full-screen mode entry/exit
+  - 4.3: Use `transform` and `opacity` for GPU-accelerated animations
+  - 4.4: Set transition duration to 200-300ms
+  - 4.5: Add easing functions for natural motion (ease-in-out)
+  - 4.6: Test transition performance on lower-end devices
+
+- Task 5: Implement high contrast mode support (AC: #3.7.6.7)
+  - 5.1: Add @media (forced-colors: active) CSS rules
+  - 5.2: Use system colors (ButtonText, ButtonFace, Highlight, etc.) in forced-colors mode
+  - 5.3: Remove or simplify decorative gradients/shadows in high contrast
+  - 5.4: Ensure borders and outlines use `currentColor` or system colors
+  - 5.5: Test in Windows High Contrast mode and macOS Increase Contrast mode
+
+- Task 6: Add ARIA live region announcements (AC: #3.7.6.8)
+  - 6.1: Create ARIA live region component or utility
+  - 6.2: Add announcements for view mode changes
+  - 6.3: Add announcements for full-screen mode toggle
+  - 6.4: Add announcements for marker position confirmation
+  - 6.5: Add announcements for history toggle state
+  - 6.6: Test with screen readers (NVDA, JAWS, VoiceOver)
+
+- Task 7: Enhance visual feedback for all states (AC: #3.7.6.9)
+  - 7.1: Add :hover styles for all interactive elements (desktop)
+  - 7.2: Add :active styles for click/tap feedback
+  - 7.3: Add :focus-visible styles for keyboard navigation
+  - 7.4: Implement touch feedback (ripple effect or scale transform) on mobile
+  - 7.5: Ensure color contrast ratios meet WCAG AA standards (4.5:1 for text, 3:1 for large text/UI)
+
+- Task 8: Cross-device testing (AC: #3.7.6.10)
+  - 8.1: Test on iOS devices (iPhone, iPad) using Safari
+  - 8.2: Test on Android devices (phone, tablet) using Chrome
+  - 8.3: Test on desktop browsers (Chrome, Firefox, Safari, Edge)
+  - 8.4: Verify touch interactions on touch-enabled devices
+  - 8.5: Verify keyboard navigation on desktop
+  - 8.6: Verify screen reader compatibility (VoiceOver on iOS, TalkBack on Android, NVDA/JAWS on desktop)
+  - 8.7: Document any device-specific issues or limitations
+
+- Task 9: Accessibility audit and WCAG compliance (AC: All)
+  - 9.1: Run automated accessibility tests (axe, Lighthouse)
+  - 9.2: Verify WCAG 2.1 Level AA compliance
+  - 9.3: Test with keyboard-only navigation (no mouse)
+  - 9.4: Test with screen readers (VoiceOver, NVDA, JAWS)
+  - 9.5: Test with zoom levels up to 200%
+  - 9.6: Verify color contrast ratios
+  - 9.7: Document accessibility features and known limitations
+
+- Task 10: Performance optimization and polish (AC: #3.7.6.6)
+  - 10.1: Profile view transition performance
+  - 10.2: Optimize marker rendering for large numbers of markers
+  - 10.3: Implement virtualization if needed for marker lists
+  - 10.4: Add loading states for async operations
+  - 10.5: Polish visual design (spacing, alignment, colors)
+  - 10.6: Verify 60fps performance during interactions
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC3.7.6.1 — ESC key exits full-screen from any view:** Pressing ESC key while in full-screen mode (Story 3.7.4) immediately exits full-screen and returns to normal view, working from both full-body view and region detail view. ESC key handler prioritizes full-screen exit over region back navigation.
+
+2. **AC3.7.6.2 — Enter key confirms marker position:** When marker preview is active (Story 3.7.2), pressing Enter key has same effect as clicking "Confirm Position" button, allowing keyboard-only users to lock marker coordinates without mouse/touch interaction.
+
+3. **AC3.7.6.3 — Tab key navigates through form fields:** Tab key moves focus sequentially through all form fields (severity slider, notes input, confirm/cancel buttons) following logical DOM order. Shift+Tab navigates backwards. Focus indicators clearly show current field.
+
+4. **AC3.7.6.4 — Arrow keys adjust severity slider:** When severity slider has focus, Left/Down arrow keys decrease severity, Right/Up arrow keys increase severity by 1 point increment. Allows precise keyboard adjustment without requiring mouse drag.
+
+5. **AC3.7.6.5 — Touch targets minimum 44x44px (mobile):** All interactive elements (buttons, toggles, markers, controls) meet WCAG 2.1 Level AA minimum touch target size of 44x44 CSS pixels, ensuring usability for users with motor control challenges on mobile devices.
+
+6. **AC3.7.6.6 — Smooth transitions between views (< 300ms):** View transitions (full-body ↔ region detail, normal ↔ full-screen) complete within 300ms using CSS transitions, providing smooth visual feedback without perceived lag. Animations use `transform` and `opacity` for GPU acceleration.
+
+7. **AC3.7.6.7 — High contrast mode support:** All UI elements maintain sufficient contrast ratios in high contrast mode (forced-colors media query). Text, borders, and interactive elements remain visible and distinguishable. Decorative elements that would create confusion in high contrast mode are hidden or simplified.
+
+8. **AC3.7.6.8 — Screen reader announcements for state changes:** ARIA live regions announce significant state changes: "Region detail view opened", "Full-screen mode activated", "Marker position confirmed", "History toggle enabled/disabled". Announcements provide context without overwhelming screen reader users.
+
+9. **AC3.7.6.9 — Visual feedback for all interactions:** All interactive elements provide clear visual feedback for hover (desktop), active (click/tap), and focus (keyboard) states. Feedback includes color changes, border highlights, shadows, or scale transformations to indicate interactivity and current state.
+
+10. **AC3.7.6.10 — Tested across devices:** All Epic 3.7 features tested and verified working on: iOS (Safari), Android (Chrome), tablet (iPadOS/Android), and desktop (Chrome, Firefox, Safari, Edge). Touch interactions work smoothly on touch devices, keyboard navigation works on desktop, responsive layouts adapt appropriately.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3.7: Body Map UX Enhancements</title>
+        <section>Story 3.7.6: Polish and Accessibility</section>
+        <snippet>Final story in Epic 3.7 adds comprehensive accessibility and polish layer across all previous stories. Includes keyboard navigation (ESC, Enter, Tab, arrows), touch optimization (44x44px targets), smooth transitions (&lt;300ms), high contrast mode, ARIA announcements, and cross-device testing for WCAG 2.1 Level AA compliance.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>UX Principles - Accessibility</section>
+        <snippet>Touch targets mobile-optimized (minimum 44x44px). All body map interactions provide immediate visual feedback. Medical-grade accuracy without sacrificing usability. Support for keyboard navigation and screen readers essential for users with varying abilities.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-1-region-detail-view-infrastructure.md</path>
+        <title>Story 3.7.1: Foundation</title>
+        <section>Accessibility baseline</section>
+        <snippet>RegionDetailView includes ESC key handler for back navigation (Task 8.5). ARIA labels added for region selection and back navigation (Task 10.4). Keyboard navigation basics (Tab, Enter, ESC keys) implemented (Task 10.5). Touch targets verified at 44x44px minimum (Task 10.6).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-2-marker-preview-and-positioning.md</path>
+        <title>Story 3.7.2: Marker Preview</title>
+        <section>Interaction foundation</section>
+        <snippet>MarkerPreview component with confirm/cancel buttons. Position confirmation workflow ready for keyboard enhancement. Visual feedback for marker placement established.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-3-smart-defaults-system.md</path>
+        <title>Story 3.7.3: Smart Defaults</title>
+        <section>Form inputs</section>
+        <snippet>MarkerDetailsForm with severity slider and notes field. Form components ready for keyboard navigation enhancement (Tab order, arrow key support for slider).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-4-full-screen-mode.md</path>
+        <title>Story 3.7.4: Full-Screen Mode</title>
+        <section>Full-screen controls</section>
+        <snippet>FullScreenControl and FullScreenControlBar components with ESC key handler. Full-screen mode ready for enhanced ARIA announcements and cross-device testing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-5-history-toggle.md</path>
+        <title>Story 3.7.5: History Toggle</title>
+        <section>Toggle controls</section>
+        <snippet>HistoryToggle component in control bars. Toggle ready for keyboard control verification and ARIA announcements for state changes.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/body-mapping/RegionDetailView.tsx</path>
+        <kind>component</kind>
+        <symbol>RegionDetailView</symbol>
+        <lines>1-100</lines>
+        <reason>Main component requiring accessibility enhancements. Add/verify ESC key handler, ARIA labels, touch targets, transitions. Central integration point for all Epic 3.7 accessibility features.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/MarkerPreview.tsx</path>
+        <kind>component</kind>
+        <symbol>MarkerPreview</symbol>
+        <lines>1-50</lines>
+        <reason>Marker preview component needs Enter key handler for position confirmation (AC3.7.6.2). Add keyboard event listener and ARIA announcements.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/MarkerDetailsForm.tsx</path>
+        <kind>component</kind>
+        <symbol>MarkerDetailsForm</symbol>
+        <lines>1-100</lines>
+        <reason>Form component needs arrow key handler for severity slider (AC3.7.6.4), Tab order verification (AC3.7.6.3), and focus indicators. Critical for keyboard-only users.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-100</lines>
+        <reason>Parent component managing view transitions. Add CSS transitions for smooth view mode changes (AC3.7.6.6), ARIA live region for state change announcements (AC3.7.6.8).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>normalizeCoordinates, denormalizeCoordinates</symbol>
+        <lines>1-50</lines>
+        <reason>Coordinate utilities referenced for marker positioning. Context for keyboard-based marker placement.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <react>19.1.0</react>
+        <react-dom>19.1.0</react-dom>
+        <next>15.5.4</next>
+        <lucide-react>0.544.0 (Icons for UI elements)</lucide-react>
+      </node>
+      <testing>
+        <jest>30.2.0</jest>
+        <testing-library-react>16.3.0</testing-library-react>
+        <testing-library-jest-dom>6.9.1</testing-library-jest-dom>
+        <testing-library-user-event>14.6.1 (Simulate keyboard/mouse interactions)</testing-library-user-event>
+      </testing>
+      <accessibility>
+        <axe-core>(via Lighthouse or standalone for automated accessibility testing)</axe-core>
+        <wcag-guidelines>WCAG 2.1 Level AA compliance target</wcag-guidelines>
+      </accessibility>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **WCAG 2.1 Level AA Compliance**: All features must meet WCAG 2.1 Level AA standards - color contrast (4.5:1 text, 3:1 UI), keyboard navigation, ARIA labels, touch targets (44x44px)
+- **Keyboard Navigation**: Complete workflows must be achievable without mouse - Tab, Enter, ESC, arrow keys cover all interactions
+- **Focus Management**: Focus indicators must be visible, focus never trapped, logical tab order follows DOM structure
+- **Screen Reader Support**: ARIA labels, roles, live regions provide context - test with VoiceOver (iOS/macOS), TalkBack (Android), NVDA/JAWS (Windows)
+- **Touch Targets**: Minimum 44x44px CSS pixels for all interactive elements per WCAG 2.1 Level AA
+- **Performance**: View transitions &lt;300ms, 60fps during interactions, GPU-accelerated animations (transform/opacity only)
+- **High Contrast Mode**: Support forced-colors media query with system color keywords (ButtonText, ButtonFace, Highlight, etc.)
+- **Cross-Browser**: Test in Chrome, Firefox, Safari, Edge - verify all features work consistently
+- **Cross-Device**: Test on iOS, Android, tablets, desktop - touch interactions on mobile, keyboard on desktop
+- **Existing Foundation**: Build on accessibility work from Story 3.7.1 (ESC key, ARIA labels, touch targets) - enhance rather than replace
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>KeyboardEvent handlers</name>
+      <kind>Event handlers</kind>
+      <signature>onKeyDown(event: React.KeyboardEvent) => void</signature>
+      <path>All Epic 3.7 components</path>
+    </interface>
+    <interface>
+      <name>ARIA live region announcement utility</name>
+      <kind>Utility function</kind>
+      <signature>announce(message: string, priority?: 'polite' | 'assertive') => void</signature>
+      <path>src/lib/utils/announce.ts (new)</path>
+    </interface>
+    <interface>
+      <name>CSS Transition classes</name>
+      <kind>CSS classes</kind>
+      <signature>.view-transition, .view-transition-enter, .view-transition-enter-active</signature>
+      <path>src/styles/transitions.css (new)</path>
+    </interface>
+    <interface>
+      <name>High contrast media query</name>
+      <kind>CSS media query</kind>
+      <signature>@media (forced-colors: active) { ... }</signature>
+      <path>All component CSS</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing framework: Jest 30.2.0 with React Testing Library 16.3.0. Use @testing-library/user-event 14.6.1 for keyboard/mouse interaction simulation. Accessibility testing with axe-core (via Lighthouse). Manual testing with screen readers (VoiceOver, TalkBack, NVDA, JAWS) and various devices. Test files in __tests__ directories alongside source.</standards>
+    <locations>
+- src/components/body-mapping/__tests__/RegionDetailView.test.tsx (enhance with keyboard/accessibility tests)
+- src/components/body-mapping/__tests__/MarkerPreview.test.tsx (enhance with Enter key tests)
+- src/components/body-mapping/__tests__/MarkerDetailsForm.test.tsx (enhance with arrow key, Tab tests)
+- src/components/body-mapping/__tests__/BodyMapViewer.test.tsx (enhance with transition tests)
+- src/lib/utils/__tests__/announce.test.ts (new - ARIA announcement utility tests)
+    </locations>
+    <ideas>
+**AC3.7.6.1 (ESC key for full-screen):**
+- Test ESC exits full-screen mode
+- Test ESC prioritizes full-screen exit over region back nav
+- Test ESC works from both full-body and region views
+
+**AC3.7.6.2 (Enter key confirms position):**
+- Test Enter key confirms marker position when preview active
+- Test Enter key has same effect as clicking Confirm button
+- Test keyboard-only workflow: click → preview → Enter → form
+
+**AC3.7.6.3 (Tab navigation):**
+- Test Tab moves focus through form fields sequentially
+- Test Shift+Tab navigates backwards
+- Test focus indicators visible on all fields
+- Test focus never gets trapped
+
+**AC3.7.6.4 (Arrow keys for slider):**
+- Test Left/Down arrows decrease severity by 1
+- Test Right/Up arrows increase severity by 1
+- Test arrow keys work when slider has focus
+- Test keyboard adjustment provides same control as mouse drag
+
+**AC3.7.6.5 (Touch targets 44x44px):**
+- Test all buttons/toggles/controls meet minimum size
+- Test computed styles show min-width/min-height: 44px
+- Manual test on actual mobile devices
+
+**AC3.7.6.6 (Smooth transitions &lt;300ms):**
+- Test view transitions complete within 300ms
+- Test transitions use transform/opacity (GPU accelerated)
+- Profile performance on lower-end devices
+
+**AC3.7.6.7 (High contrast mode):**
+- Test forced-colors media query applied
+- Test system colors used (ButtonText, ButtonFace, etc.)
+- Manual test in Windows High Contrast, macOS Increase Contrast
+
+**AC3.7.6.8 (Screen reader announcements):**
+- Test ARIA live region announces view changes
+- Test announcements for full-screen toggle
+- Test announcements for marker confirmation
+- Manual test with VoiceOver, NVDA, JAWS
+
+**AC3.7.6.9 (Visual feedback):**
+- Test :hover styles on desktop
+- Test :active styles for clicks/taps
+- Test :focus-visible styles for keyboard
+- Test color contrast meets WCAG AA (4.5:1 text, 3:1 UI)
+
+**AC3.7.6.10 (Cross-device testing):**
+- Manual test on iOS (Safari), Android (Chrome)
+- Manual test on tablets (iPadOS, Android)
+- Manual test on desktop (Chrome, Firefox, Safari, Edge)
+- Verify touch, keyboard, screen reader on respective devices
+    </ideas>
+  </tests>
+</story-context>

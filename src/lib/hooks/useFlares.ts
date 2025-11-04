@@ -78,26 +78,61 @@ export function useFlares(options: UseFlaresOptions) {
         }
 
         // Fetch event history for each flare and calculate trends
+        // Story 3.7.5: Load body locations from flareBodyLocations table
         const flaresWithTrends = await Promise.all(
           flareRecords.map(async (flare) => {
             const events = await flareRepository.getFlareHistory(userId, flare.id);
             const trend = calculateTrend(flare, events);
 
-            // Convert FlareRecord to ActiveFlare format for backward compatibility
+            // Story 3.7.5: Enrich flare with body locations from flareBodyLocations table
+            const enrichedFlare = await flareRepository.getFlareById(userId, flare.id);
+
+            // If enrichedFlare is null (shouldn't happen but handle gracefully), use base flare data
+            if (!enrichedFlare) {
+              return {
+                id: flare.id,
+                userId: flare.userId,
+                symptomName: flare.bodyRegionId,
+                bodyRegions: [flare.bodyRegionId],
+                severity: flare.currentSeverity,
+                status: flare.status as ActiveFlare['status'],
+                startDate: new Date(flare.startDate),
+                coordinates: flare.coordinates ? [{
+                  locationId: `${flare.id}-legacy`,
+                  regionId: flare.bodyRegionId,
+                  x: flare.coordinates.x,
+                  y: flare.coordinates.y,
+                }] : undefined,
+                trend,
+              } as ActiveFlare & { trend: FlareTrend };
+            }
+
+            // Convert to ActiveFlare format with enriched body locations
             return {
               id: flare.id,
               userId: flare.userId,
               symptomName: flare.bodyRegionId, // Legacy field - bodyRegionId serves as symptomName
-              bodyRegions: [flare.bodyRegionId], // Wrap in array for legacy compatibility
+              bodyRegions: enrichedFlare.bodyLocations.length > 0
+                ? Array.from(new Set(enrichedFlare.bodyLocations.map(loc => loc.bodyRegionId)))
+                : [flare.bodyRegionId], // Fallback to legacy single region
               severity: flare.currentSeverity,
               status: flare.status as ActiveFlare['status'],
               startDate: new Date(flare.startDate),
-              // Convert single coordinate to legacy array format
-              coordinates: flare.coordinates ? [{
-                regionId: flare.bodyRegionId,
-                x: flare.coordinates.x,
-                y: flare.coordinates.y,
-              }] : undefined,
+              // Story 3.7.5: Use enriched body locations with full coordinate data
+              // Include location ID to ensure uniqueness when multiple markers in same region
+              coordinates: enrichedFlare.bodyLocations.length > 0
+                ? enrichedFlare.bodyLocations.map(loc => ({
+                    locationId: loc.id, // Story 3.7.5: Unique ID for each marker
+                    regionId: loc.bodyRegionId,
+                    x: loc.coordinates.x,
+                    y: loc.coordinates.y,
+                  }))
+                : flare.coordinates ? [{  // Fallback to legacy single coordinate
+                    locationId: `${flare.id}-legacy`, // Generate ID for legacy data
+                    regionId: flare.bodyRegionId,
+                    x: flare.coordinates.x,
+                    y: flare.coordinates.y,
+                  }] : undefined,
               trend,
             } as ActiveFlare & { trend: FlareTrend };
           })

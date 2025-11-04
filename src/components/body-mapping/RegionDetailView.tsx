@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useCallback, useEffect, useState, useRef } from "react";
-import { BodyMapLocation } from "@/lib/types/body-mapping";
+import React, { useCallback, useEffect, useState, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { BodyMapLocation, LayerType } from "@/lib/types/body-mapping";
 import { CoordinateMarker } from "@/components/body-map/CoordinateMarker";
 import { ArrowLeft, Eye, EyeOff, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { bodyMapLocationRepository } from "@/lib/repositories/bodyMapLocationRepository";
@@ -14,6 +15,9 @@ import {
 import { getRegionSVGDefinition, getRegionData } from "@/lib/utils/region-extraction";
 import { MarkerPreview } from "@/components/body-mapping/MarkerPreview";
 import { MarkerDetailsForm } from "@/components/body-mapping/MarkerDetailsForm";
+import { FullScreenControlBar } from "@/components/body-mapping/FullScreenControlBar";
+import { MarkerDetailsModal, MarkerDetails } from "@/components/body-mapping/MarkerDetailsModal";
+import { formatDistanceToNow } from "date-fns";
 
 export interface RegionDetailViewProps {
   /** The ID of the region being viewed in detail */
@@ -24,6 +28,9 @@ export interface RegionDetailViewProps {
 
   /** User ID for data filtering */
   userId: string;
+
+  /** Tracking layer type for smart defaults (Story 3.7.3) */
+  layer?: LayerType;
 
   /** Existing markers in this region */
   markers?: BodyMapLocation[];
@@ -45,12 +52,25 @@ export interface RegionDetailViewProps {
 
   /** Optional symptom ID - if provided, marker will be saved to database */
   symptomId?: string;
+
+  /** Story 3.7.4: Whether fullscreen mode is active */
+  isFullscreen?: boolean;
+
+  /** Story 3.7.4: Callback to exit fullscreen mode */
+  onExitFullscreen?: () => void;
+
+  /** Story 3.7.4: Callback when done marking locations (triggers flare creation form) */
+  onDoneMarking?: () => void;
+
+  /** Story 3.7.4: Number of markers placed for display in control bar */
+  markerCount?: number;
 }
 
 export function RegionDetailView({
   regionId,
   viewType,
   userId,
+  layer = 'flares', // Default to flares layer for backward compatibility
   markers = [],
   onBack,
   onMarkerPlace,
@@ -58,6 +78,10 @@ export function RegionDetailView({
   showHistoricalMarkersDefault = true,
   onMarkerClick,
   symptomId,
+  isFullscreen = false,
+  onExitFullscreen,
+  onDoneMarking,
+  markerCount = 0,
 }: RegionDetailViewProps) {
   // State for managing historical markers visibility
   const [showHistoricalMarkers, setShowHistoricalMarkers] = useState(showHistoricalMarkersDefault);
@@ -102,31 +126,66 @@ export function RegionDetailView({
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [confirmedCoordinates, setConfirmedCoordinates] = useState<NormalizedCoordinates | null>(null);
 
-  // Handle ESC key to cancel preview or return to full body view
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        // Story 3.7.2 AC 3.7.2.7: Cancel preview if active
-        if (isPreviewActive) {
-          handleCancelPreview();
-        } else if (showDetailsForm) {
-          handleCancelForm();
-        } else {
-          onBack();
-        }
-      }
-    };
+  // Story 3.7.5: Historical marker details modal
+  const [selectedMarker, setSelectedMarker] = useState<MarkerDetails | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onBack, isPreviewActive, showDetailsForm]);
+  // Track previous fullscreen state to detect transitions
+  const prevFullscreenRef = useRef(isFullscreen);
+
+  // Filter markers for this region (moved earlier for use in callbacks)
+  // Story 3.7.5: Use useMemo to ensure stable reference for callback dependencies
+  const regionMarkers = useMemo(() =>
+    markers.filter(m => m.bodyRegionId === regionId),
+    [markers, regionId]
+  );
 
   // Toggle historical markers visibility
   const toggleHistoricalMarkers = useCallback(() => {
     setShowHistoricalMarkers(prev => !prev);
   }, []);
 
-  // Story 3.7.2: Preview workflow handlers
+  // Story 3.7.5: Handle historical marker click to show details
+  const handleHistoricalMarkerClick = useCallback((marker: BodyMapLocation) => {
+    setSelectedMarker({
+      id: marker.id,
+      severity: marker.severity,
+      notes: marker.notes,
+      timestamp: marker.createdAt,
+      bodyRegionId: marker.bodyRegionId,
+      layer: 'flares', // Default layer - could be extended to support multiple layers
+      coordinates: marker.coordinates,
+    });
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedMarker(null);
+  }, []);
+
+  // Story 3.7.5 AC 3.7.5.7: Detect if preview marker is near existing markers
+  const findNearbyMarkers = useCallback((coords: NormalizedCoordinates | null) => {
+    if (!coords || !showHistoricalMarkers) return [];
+
+    const PROXIMITY_THRESHOLD = 0.05; // 5% of region size
+
+    return regionMarkers.filter(marker => {
+      if (!marker.coordinates) return false;
+
+      const distance = Math.sqrt(
+        Math.pow(marker.coordinates.x - coords.x, 2) +
+        Math.pow(marker.coordinates.y - coords.y, 2)
+      );
+
+      return distance < PROXIMITY_THRESHOLD;
+    });
+  }, [regionMarkers, showHistoricalMarkers]);
+
+  // Check for nearby markers when preview changes
+  const nearbyMarkers = findNearbyMarkers(previewCoordinates);
+
+  // Story 3.7.2: Preview workflow handlers (must be defined before useEffect that uses them)
   const handleCancelPreview = useCallback(() => {
     setIsPreviewActive(false);
     setPreviewCoordinates(null);
@@ -139,17 +198,62 @@ export function RegionDetailView({
     setPreviewCoordinates(null);
   }, []);
 
+  // Story 3.7.4: Clear form state when exiting fullscreen
+  // This prevents the full form from appearing after exiting fullscreen
+  useEffect(() => {
+    const wasFullscreen = prevFullscreenRef.current;
+
+    // Detect transition from fullscreen to non-fullscreen
+    if (wasFullscreen && !isFullscreen && showDetailsForm) {
+      console.log('Exited fullscreen - clearing form state');
+      setShowDetailsForm(false);
+      setConfirmedCoordinates(null);
+      setPreviewCoordinates(null);
+      setIsPreviewActive(false);
+    }
+
+    // Update ref for next render
+    prevFullscreenRef.current = isFullscreen;
+  }, [isFullscreen, showDetailsForm]);
+
+  // Handle ESC key to cancel preview, exit fullscreen, or return to full body view
+  // Story 3.7.4: ESC key priority - fullscreen exit takes priority
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        // Story 3.7.4 AC 3.7.4.5: Exit fullscreen first if active
+        if (isFullscreen && onExitFullscreen) {
+          onExitFullscreen();
+          event.stopPropagation();
+        }
+        // Story 3.7.2 AC 3.7.2.7: Cancel preview if active
+        else if (isPreviewActive) {
+          handleCancelPreview();
+        } else if (showDetailsForm) {
+          handleCancelForm();
+        } else {
+          onBack();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onBack, isPreviewActive, showDetailsForm, isFullscreen, onExitFullscreen, handleCancelPreview, handleCancelForm]);
+
   const handleConfirmPreview = useCallback(() => {
     if (previewCoordinates) {
       setConfirmedCoordinates(previewCoordinates);
       setIsPreviewActive(false);
 
-      // Only show the details form if we're doing symptom tracking (symptomId provided)
-      // For flare creation, just pass the coordinates to the parent
-      if (symptomId) {
+      // Story 3.7.5: Removed SimplifiedMarkerForm to reduce confusion
+      // Only show MarkerDetailsForm if symptomId is provided (symptom tracking in normal mode)
+      // For flare creation (fullscreen mode), skip form and just drop pins
+      if (!isFullscreen && symptomId) {
+        // Symptom tracking mode - show full details form
         setShowDetailsForm(true);
       } else {
-        // No form needed - just notify parent with coordinates
+        // Flare creation or no symptom tracking - just drop the pin
         // Parent context (e.g., flare creation) will handle data collection
         onMarkerPlace?.(regionId, previewCoordinates);
         setCurrentMarker(previewCoordinates);
@@ -167,7 +271,7 @@ export function RegionDetailView({
         setConfirmedCoordinates(null);
       }
     }
-  }, [previewCoordinates, symptomId, regionId, onMarkerPlace]);
+  }, [previewCoordinates, symptomId, regionId, onMarkerPlace, isFullscreen]);
 
   const handleFormSubmit = useCallback(async (data: {
     severity: number;
@@ -207,16 +311,24 @@ export function RegionDetailView({
           timestamp: data.timestamp,
         };
 
-        setSessionMarkers(prev => [...prev, newMarker]);
+        setSessionMarkers(prev => {
+          const updated = [...prev, newMarker];
+          console.log('Session markers updated:', updated.length, 'total markers');
+          return updated;
+        });
         setCurrentMarker(confirmedCoordinates);
 
         // Notify parent component with marker details including severity and notes
         onMarkerPlace?.(regionId, confirmedCoordinates, data);
 
-        // Reset state
+        // Story 3.7.4: Reset ALL form state immediately
+        // This ensures the form closes properly in both fullscreen and normal mode
         setShowDetailsForm(false);
         setConfirmedCoordinates(null);
         setPreviewCoordinates(null);
+        setIsPreviewActive(false);
+
+        console.log('Form state reset - form should be closed');
       } catch (error) {
         console.error('Failed to save marker:', error);
         alert('Failed to save marker. Please try again.');
@@ -311,12 +423,12 @@ export function RegionDetailView({
     [readOnly]
   );
 
-  // Filter markers for this region
-  const regionMarkers = markers.filter(m => m.bodyRegionId === regionId);
-
   // Get region SVG definition (Task 3.1)
   const regionSVGDef = getRegionSVGDefinition(regionId);
   const regionData = getRegionData(regionId, viewType);
+
+  // Debug: Log session markers at render time (disabled in production)
+  // console.log('RegionDetailView render - sessionMarkers:', sessionMarkers.length, 'markers', sessionMarkers);
 
   // Helper to render the actual region SVG element
   const renderRegionElement = () => {
@@ -349,68 +461,101 @@ export function RegionDetailView({
     }
   };
 
-  return (
-    <div className="relative w-full h-full bg-gray-50 rounded-lg flex flex-col">
-      {/* Header with Back button and controls */}
-      <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center">
-        {/* Back to Body Map button */}
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg shadow-md transition-colors"
-          aria-label="Back to Body Map"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Back to Body Map</span>
-        </button>
+  const regionDetailContent = (
+    <div
+      className={`${
+        isFullscreen
+          ? 'flex flex-col'
+          : 'relative w-full h-full bg-gray-50 rounded-lg flex flex-col'
+      }`}
+      style={isFullscreen ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        backgroundColor: '#f9fafb',
+        transform: 'translateZ(0)'
+      } : undefined}
+      data-fullscreen={isFullscreen ? 'true' : 'false'}
+    >
+      {/* Story 3.7.4: Fullscreen control bar (replaces normal header when in fullscreen) */}
+      {isFullscreen && onExitFullscreen ? (
+        <FullScreenControlBar
+          onExit={onExitFullscreen}
+          onBack={onBack}
+          showBackButton={true}
+          showHistoryToggle={true}
+          historyVisible={showHistoricalMarkers}
+          onHistoryToggle={toggleHistoricalMarkers}
+          onDoneMarking={onDoneMarking}
+          markerCount={markerCount}
+        />
+      ) : (
+        /* Normal header with Back button and controls (when NOT in fullscreen) */
+        <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center">
+          {/* Back to Body Map button */}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg shadow-md transition-colors"
+            aria-label="Back to Body Map"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm font-medium">Back to Body Map</span>
+          </button>
 
-        {/* Zoom and History controls */}
-        <div className="flex items-center gap-2">
-          {/* Zoom controls */}
-          <div className="flex items-center gap-1 bg-white rounded-lg shadow-lg p-1 border border-gray-200">
+          {/* Zoom and History controls */}
+          <div className="flex items-center gap-2">
+            {/* Zoom controls */}
+            <div className="flex items-center gap-1 bg-white rounded-lg shadow-lg p-1 border border-gray-200">
+              <button
+                onClick={handleZoomOut}
+                disabled={zoomLevel <= MIN_ZOOM}
+                className="p-2 hover:bg-blue-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-700"
+                aria-label="Zoom out"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleZoomReset}
+                className="px-4 py-2 hover:bg-blue-50 rounded transition-colors text-sm font-semibold text-gray-900 min-w-[60px]"
+                aria-label="Reset zoom"
+                title="Reset Zoom (1x)"
+              >
+                {Math.round(zoomLevel * 100)}%
+              </button>
+              <button
+                onClick={handleZoomIn}
+                disabled={zoomLevel >= MAX_ZOOM}
+                className="p-2 hover:bg-blue-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-700"
+                aria-label="Zoom in"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Historical markers toggle */}
             <button
-              onClick={handleZoomOut}
-              disabled={zoomLevel <= MIN_ZOOM}
-              className="p-2 hover:bg-blue-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-700"
-              aria-label="Zoom out"
-              title="Zoom Out"
+              onClick={toggleHistoricalMarkers}
+              className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg shadow-md transition-colors"
+              aria-label={showHistoricalMarkers ? "Hide historical markers" : "Show historical markers"}
+              aria-pressed={showHistoricalMarkers}
             >
-              <ZoomOut className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleZoomReset}
-              className="px-4 py-2 hover:bg-blue-50 rounded transition-colors text-sm font-semibold text-gray-900 min-w-[60px]"
-              aria-label="Reset zoom"
-              title="Reset Zoom (1x)"
-            >
-              {Math.round(zoomLevel * 100)}%
-            </button>
-            <button
-              onClick={handleZoomIn}
-              disabled={zoomLevel >= MAX_ZOOM}
-              className="p-2 hover:bg-blue-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-700"
-              aria-label="Zoom in"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-5 h-5" />
+              {showHistoricalMarkers ? (
+                <Eye className="w-5 h-5" />
+              ) : (
+                <EyeOff className="w-5 h-5" />
+              )}
+              <span className="text-sm font-medium">History</span>
             </button>
           </div>
-
-          {/* Historical markers toggle */}
-          <button
-            onClick={toggleHistoricalMarkers}
-            className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg shadow-md transition-colors"
-            aria-label={showHistoricalMarkers ? "Hide historical markers" : "Show historical markers"}
-            aria-pressed={showHistoricalMarkers}
-          >
-            {showHistoricalMarkers ? (
-              <Eye className="w-5 h-5" />
-            ) : (
-              <EyeOff className="w-5 h-5" />
-            )}
-            <span className="text-sm font-medium">History</span>
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Region SVG Container */}
       <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
@@ -435,7 +580,7 @@ export function RegionDetailView({
           {/* Task 3.3: Render the isolated region SVG */}
           {renderRegionElement()}
 
-          {/* Render historical markers if enabled */}
+          {/* Story 3.7.5: Render historical markers with enhanced visual distinction */}
           {showHistoricalMarkers && regionMarkers.map(marker => {
             if (!marker.coordinates) return null;
 
@@ -444,32 +589,94 @@ export function RegionDetailView({
             const x = viewBox[0] + marker.coordinates.x * viewBox[2];
             const y = viewBox[1] + marker.coordinates.y * viewBox[3];
 
+            // AC 3.7.5.3: Calculate age for date indicator
+            const ageText = marker.createdAt ? formatDistanceToNow(marker.createdAt, { addSuffix: false }) : '';
+
+            // AC 3.7.5.7: Check if this marker is near the preview position
+            const isNearPreview = nearbyMarkers.some(m => m.id === marker.id);
+
             return (
-              <g key={marker.id} className="historical-marker">
+              <g key={marker.id} className="historical-marker group">
+                {/* AC 3.7.5.7: Warning pulse animation for nearby markers */}
+                {isNearPreview && (
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r="4"
+                    fill="none"
+                    stroke="#fbbf24"
+                    strokeWidth="0.8"
+                    opacity="0.6"
+                    className="animate-ping"
+                  />
+                )}
+
+                {/* AC 3.7.5.5: Dashed circle border for historical markers */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="2.5"
+                  fill="none"
+                  stroke={isNearPreview ? "#fbbf24" : "#9ca3af"}
+                  strokeWidth={isNearPreview ? "0.8" : "0.5"}
+                  strokeDasharray="1,1"
+                  className="pointer-events-none"
+                  opacity={isNearPreview ? "1" : "0.7"}
+                />
+
+                {/* Main marker circle with reduced opacity */}
                 <circle
                   cx={x}
                   cy={y}
                   r="2"
-                  fill="#6b7280"
-                  fillOpacity="0.6"
-                  stroke="#374151"
-                  strokeWidth="0.5"
-                  className="cursor-pointer"
+                  fill={isNearPreview ? "#fbbf24" : "#6b7280"}
+                  fillOpacity={isNearPreview ? "0.8" : "0.5"}
+                  stroke={isNearPreview ? "#f59e0b" : "#4b5563"}
+                  strokeWidth="0.4"
+                  className="cursor-pointer transition-all hover:fillOpacity-0.8 hover:r-2.5"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onMarkerClick?.(marker.id);
+                    handleHistoricalMarkerClick(marker);
                   }}
                 />
+
                 {/* Severity indicator */}
                 <text
                   x={x}
-                  y={y - 3}
+                  y={y - 3.5}
                   textAnchor="middle"
-                  fontSize="3"
+                  fontSize="2.5"
                   fill="#374151"
+                  fillOpacity="0.7"
+                  fontWeight="600"
                   className="pointer-events-none"
                 >
                   {marker.severity}
+                </text>
+
+                {/* AC 3.7.5.3: Date/age indicator tooltip background */}
+                <rect
+                  x={x - 15}
+                  y={y + 3.5}
+                  width="30"
+                  height="4"
+                  rx="1"
+                  fill="#374151"
+                  fillOpacity="0"
+                  className="pointer-events-none group-hover:fillOpacity-0.8 transition-opacity"
+                />
+
+                {/* AC 3.7.5.3: Date/age indicator text */}
+                <text
+                  x={x}
+                  y={y + 6.5}
+                  textAnchor="middle"
+                  fontSize="1.8"
+                  fill="#ffffff"
+                  fillOpacity="0"
+                  className="pointer-events-none group-hover:fillOpacity-1 transition-opacity"
+                >
+                  {ageText}
                 </text>
               </g>
             );
@@ -516,7 +723,7 @@ export function RegionDetailView({
       </div>
 
       {/* Region name display */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm max-w-[90%]">
         <span className="uppercase tracking-wide">
           {regionId.replace(/-/g, ' ')} - Detail View
         </span>
@@ -528,17 +735,38 @@ export function RegionDetailView({
         {isPreviewActive && (
           <span className="ml-4 text-blue-300 text-xs">Preview - Tap to reposition or confirm</span>
         )}
+        {/* Story 3.7.5 AC 3.7.5.7: Duplicate prevention warning */}
+        {isPreviewActive && nearbyMarkers.length > 0 && (
+          <span className="ml-4 text-yellow-300 text-xs font-semibold">
+            ⚠️ Near {nearbyMarkers.length} existing marker{nearbyMarkers.length !== 1 ? 's' : ''}
+          </span>
+        )}
       </div>
 
-      {/* Story 3.7.2: Marker details form modal */}
+      {/* Story 3.7.5: Removed SimplifiedMarkerForm - only show full form for symptom tracking */}
       {showDetailsForm && confirmedCoordinates && (
         <MarkerDetailsForm
           coordinates={confirmedCoordinates}
           regionId={regionId}
+          layer={layer}
           onSubmit={handleFormSubmit}
           onCancel={handleCancelForm}
         />
       )}
+
+      {/* Story 3.7.5: Historical marker details modal (AC 3.7.5.8) */}
+      <MarkerDetailsModal
+        marker={selectedMarker}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
+
+  // If in fullscreen mode, use portal to render outside layout
+  if (isFullscreen) {
+    return typeof window !== 'undefined' ? createPortal(regionDetailContent, document.body) : regionDetailContent;
+  }
+
+  return regionDetailContent;
 }

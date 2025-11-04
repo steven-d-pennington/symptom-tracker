@@ -29,11 +29,12 @@ export default function FlaresPage() {
   const [selectedFlareId, setSelectedFlareId] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<"front" | "back" | "left" | "right">("front");
-  const [selectedCoordinates, setSelectedCoordinates] = useState<{
+  // Story 3.7.4: Changed to array to accumulate multiple marker locations for one flare event
+  const [selectedCoordinates, setSelectedCoordinates] = useState<Array<{
     bodyRegionId: string;
     bodyRegionName: string;
     coordinates: { x: number; y: number };
-  } | null>(null);
+  }>>([]);
   const [isFlareCreationModalOpen, setIsFlareCreationModalOpen] = useState(false);
   const [isBodyMapActive, setIsBodyMapActive] = useState(false);
   const [bodyMapViewMode, setBodyMapViewMode] = useState<'full-body' | 'region-detail'>('full-body');
@@ -84,7 +85,7 @@ export default function FlaresPage() {
       if (e.key === 'Escape' && isBodyMapActive) {
         setIsBodyMapActive(false);
         setSelectedRegion(null);
-        setSelectedCoordinates(null);
+        setSelectedCoordinates([]);
       }
     };
 
@@ -127,6 +128,25 @@ export default function FlaresPage() {
     ? flares.filter(f => f.bodyRegions.includes(selectedRegion))
     : flares;
 
+  // Story 3.7.5: Convert flare coordinates to BodyMapLocation format for display
+  const flareMarkers = useMemo(() => {
+    if (!userId) return [];
+
+    return flares.flatMap(flare =>
+      (flare.coordinates || []).map(coord => ({
+        id: coord.locationId || `${flare.id}-${coord.regionId}`, // Story 3.7.5: Use unique locationId
+        userId: userId,
+        bodyRegionId: coord.regionId,
+        symptomId: flare.id, // Use flare ID as symptom ID for compatibility
+        coordinates: { x: coord.x, y: coord.y },
+        severity: flare.severity,
+        notes: '', // Flares don't have per-marker notes
+        createdAt: flare.startDate,
+        updatedAt: flare.startDate,
+      }))
+    );
+  }, [flares, userId]);
+
   const handleRegionSelect = (regionId: string) => {
     // Activate map on first interaction
     if (!isBodyMapActive) {
@@ -136,10 +156,10 @@ export default function FlaresPage() {
 
     if (selectedRegion === regionId) {
       // Don't deselect if coordinates are marked (allows re-clicking to mark different coordinates)
-      if (!selectedCoordinates) {
+      if (selectedCoordinates.length === 0) {
         setSelectedRegion(null);
         setSelectedFlareId(null);
-        setSelectedCoordinates(null); // Clear coordinates when deselecting region
+        setSelectedCoordinates([]); // Clear coordinates when deselecting region
       }
     } else {
       setSelectedRegion(regionId);
@@ -157,29 +177,37 @@ export default function FlaresPage() {
     // Get region name for display
     const regionName = regionId.replace(/-/g, ' ');
 
-    setSelectedCoordinates({
+    // Story 3.7.4: Accumulate markers instead of replacing (Model B - one flare with multiple locations)
+    setSelectedCoordinates(prev => [...prev, {
       bodyRegionId: regionId,
       bodyRegionName: regionName,
       coordinates,
-    });
+    }]);
 
     // Also select the region for consistency
     setSelectedRegion(regionId);
     setSelectedFlareId(null);
 
-    // Auto-open the modal for flare creation (Story 3.7.4 workflow)
-    setIsFlareCreationModalOpen(true);
+    // Don't auto-open modal anymore - wait for user to click "Done Marking" or exit fullscreen
+    // setIsFlareCreationModalOpen(true); // Removed
   };
 
   const handleCreateFlareFromCoordinates = () => {
-    if (selectedCoordinates) {
+    if (selectedCoordinates.length > 0) {
+      setIsFlareCreationModalOpen(true);
+    }
+  };
+
+  // Story 3.7.4: Handle "Done Marking" button click or fullscreen exit
+  const handleDoneMarking = () => {
+    if (selectedCoordinates.length > 0) {
       setIsFlareCreationModalOpen(true);
     }
   };
 
   const handleFlareCreated = (_flare: unknown, stayInRegion?: boolean) => {
-    // Clear coordinate selection after successful creation
-    setSelectedCoordinates(null);
+    // Clear coordinate selections after successful creation
+    setSelectedCoordinates([]);
     // Refresh flares data
     refetchFlares();
 
@@ -404,7 +432,7 @@ export default function FlaresPage() {
                     onClick={() => {
                       setIsBodyMapActive(false);
                       setSelectedRegion(null);
-                      setSelectedCoordinates(null);
+                      setSelectedCoordinates([]);
                     }}
                     className="absolute top-4 left-4 z-20 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-medium transition-colors border border-primary/20"
                     aria-label="Deactivate body map"
@@ -420,21 +448,24 @@ export default function FlaresPage() {
                   selectedRegion={selectedRegion || undefined}
                   onRegionSelect={handleRegionSelect}
                   flareSeverityByRegion={flareSeverityByRegion}
+                  symptoms={flareMarkers}
                   readOnly={!isBodyMapActive}
                   onCoordinateMark={handleCoordinateMark}
                   viewMode={bodyMapViewMode}
                   onViewModeChange={setBodyMapViewMode}
+                  onDoneMarking={handleDoneMarking}
+                  markerCount={selectedCoordinates.length}
                 />
 
                 {/* Create Flare Button - appears when coordinates are selected (map must be active) */}
-                {isBodyMapActive && selectedCoordinates && (
+                {isBodyMapActive && selectedCoordinates.length > 0 && (
                   <button
                     onClick={handleCreateFlareFromCoordinates}
                     className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
                     aria-label="Create flare at marked location"
                   >
                     <Plus className="h-4 w-4" />
-                    Create Flare Here
+                    Create Flare ({selectedCoordinates.length} location{selectedCoordinates.length !== 1 ? 's' : ''})
                   </button>
                 )}
               </div>

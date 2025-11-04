@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NormalizedCoordinates } from "@/lib/utils/coordinates";
+import { LayerType } from "@/lib/types/body-mapping";
+import { getLayerDefaults, setLayerDefaults } from "@/lib/utils/layer-defaults";
 import { X } from "lucide-react";
 
 export interface MarkerDetailsFormProps {
@@ -10,6 +12,9 @@ export interface MarkerDetailsFormProps {
 
   /** The region ID where the marker is placed */
   regionId: string;
+
+  /** The tracking layer type for smart defaults (Story 3.7.3) */
+  layer: LayerType;
 
   /** Callback when form is submitted */
   onSubmit: (data: {
@@ -23,29 +28,64 @@ export interface MarkerDetailsFormProps {
 }
 
 /**
- * MarkerDetailsForm Component (Story 3.7.2)
+ * MarkerDetailsForm Component (Story 3.7.2, enhanced in Story 3.7.3)
  *
  * Form for capturing marker details after position is confirmed.
  * Includes severity slider, notes field, and timestamp.
  *
  * AC 3.7.2.6: Form appears for severity/notes entry with 1-10 slider,
  * notes text field, and timestamp (auto-populated, editable)
+ *
+ * AC 3.7.3.1-3.7.3.8: Smart defaults system with layer-aware persistence
  */
 export function MarkerDetailsForm({
   coordinates,
   regionId,
+  layer,
   onSubmit,
   onCancel,
 }: MarkerDetailsFormProps) {
-  const [severity, setSeverity] = useState(5);
+  // AC 3.7.3.1, 3.7.3.2: Initialize state from layer-specific defaults
+  const [severity, setSeverity] = useState(() => {
+    const defaults = getLayerDefaults(layer);
+    return defaults?.severity ?? 5;
+  });
+
   const [notes, setNotes] = useState("");
   const [timestamp, setTimestamp] = useState(new Date());
 
+  const [defaultNotesPlaceholder, setDefaultNotesPlaceholder] = useState(() => {
+    const defaults = getLayerDefaults(layer);
+    return defaults?.notes ?? "";
+  });
+
+  // Update when layer changes
+  useEffect(() => {
+    const defaults = getLayerDefaults(layer);
+    if (defaults) {
+      setSeverity(defaults.severity);
+      setDefaultNotesPlaceholder(defaults.notes);
+    } else {
+      setSeverity(5);
+      setDefaultNotesPlaceholder("");
+    }
+  }, [layer]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // AC 3.7.3.6: Only save actual typed notes, not placeholder
+    const trimmedNotes = notes.trim();
+
+    // AC 3.7.3.4: Save new values as updated defaults for next entry
+    setLayerDefaults(layer, {
+      severity,
+      notes: trimmedNotes, // Empty string if no notes entered
+    });
+
     onSubmit({
       severity,
-      notes: notes.trim(),
+      notes: trimmedNotes,
       timestamp,
     });
   };
@@ -64,8 +104,13 @@ export function MarkerDetailsForm({
     setTimestamp(new Date(e.target.value));
   };
 
+  console.log('🔴 MarkerDetailsForm RENDERING RETURN STATEMENT');
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      data-testid="marker-details-form-full"
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
@@ -110,7 +155,7 @@ export function MarkerDetailsForm({
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Notes - AC 3.7.3.2, 3.7.3.5: Last-used notes as gray placeholder */}
           <div>
             <label
               htmlFor="notes"
@@ -122,9 +167,11 @@ export function MarkerDetailsForm({
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any details about this symptom..."
+              placeholder={
+                defaultNotesPlaceholder || "Add any details about this symptom..."
+              }
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none placeholder:text-gray-400 placeholder:italic"
               aria-label="Additional notes about the symptom"
             />
           </div>

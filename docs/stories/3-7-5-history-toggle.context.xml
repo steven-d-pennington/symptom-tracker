@@ -1,0 +1,302 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.7</epicId>
+    <storyId>3.7.5</storyId>
+    <title>History Toggle</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-7-5-history-toggle.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user tracking patterns over time</asA>
+    <iWant>to see previous markers when adding new ones</iWant>
+    <soThat>I can identify recurring problem areas and avoid duplicates</soThat>
+    <tasks>
+- Task 1: Create HistoryToggle component (AC: #3.7.5.1)
+  - 1.1: Create new file `src/components/body-mapping/HistoryToggle.tsx`
+  - 1.2: Implement toggle switch or checkbox UI component
+  - 1.3: Add clear label: "Show History" or "Historical Markers"
+  - 1.4: Style toggle for visibility in control bar (consistent with other controls)
+  - 1.5: Implement onChange handler to update history visibility state
+
+- Task 2: Integrate HistoryToggle into control bars (AC: #3.7.5.1)
+  - 2.1: Add HistoryToggle to RegionDetailView control area
+  - 2.2: Add HistoryToggle to FullScreenControlBar (Story 3.7.4) when in region view
+  - 2.3: Conditionally display toggle only in region detail view (not full-body view)
+  - 2.4: Ensure toggle meets 44x44px touch target minimum
+  - 2.5: Test toggle visibility and functionality in both normal and fullscreen modes
+
+- Task 3: Implement history visibility state management (AC: #3.7.5.2, #3.7.5.6)
+  - 3.1: Add `showHistory` boolean state to BodyMapViewer or RegionDetailView
+  - 3.2: Initialize state to `true` (default ON)
+  - 3.3: Update state when toggle is clicked
+  - 3.4: Persist state in session storage or component state during session
+  - 3.5: DO NOT persist across app restarts (session-only persistence)
+
+- Task 4: Load and filter historical markers (AC: #3.7.5.3, #3.7.5.4)
+  - 4.1: Query existing markers for current region from IndexedDB
+  - 4.2: Filter markers by regionId to show only relevant history
+  - 4.3: Sort markers by timestamp (oldest to newest or vice versa)
+  - 4.4: Conditionally render historical markers based on `showHistory` state
+  - 4.5: Ensure performance with large number of historical markers (pagination if needed)
+
+- Task 5: Style historical markers distinctly (AC: #3.7.5.5)
+  - 5.1: Apply reduced opacity (50-70%) to historical markers
+  - 5.2: Use muted colors or outline-only styling for historical markers
+  - 5.3: Add visual indicator (icon, badge) showing marker age or date
+  - 5.4: Ensure historical markers don't obscure new marker previews
+  - 5.5: Test visual distinction across light and dark modes
+
+- Task 6: Implement historical marker details view (AC: #3.7.5.8)
+  - 6.1: Add onClick handler to historical markers
+  - 6.2: Create MarkerDetailsModal component for read-only marker display
+  - 6.3: Display marker details: severity, notes, timestamp, layer type
+  - 6.4: Add close button to modal
+  - 6.5: Ensure modal doesn't allow editing (read-only mode for now)
+
+- Task 7: Implement duplicate prevention logic (AC: #3.7.5.7)
+  - 7.1: Visual feedback when hovering near existing marker locations
+  - 7.2: Optional: Warning message if placing marker very close to existing marker
+  - 7.3: Allow user to proceed with placement despite proximity (warning only, not blocking)
+  - 7.4: Document duplicate prevention UX in dev notes
+
+- Task 8: Testing and integration (AC: All)
+  - 8.1: Write unit tests for HistoryToggle component
+  - 8.2: Write integration tests for history visibility state management
+  - 8.3: Test historical marker rendering with various marker counts
+  - 8.4: Test toggle persistence during session (across region switches)
+  - 8.5: Verify toggle does NOT persist across app restarts
+  - 8.6: Test historical marker visual distinction
+  - 8.7: Test marker details modal for historical markers
+  - 8.8: Test in both normal and fullscreen modes
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC3.7.5.1 — History toggle available in region view control bar:** "Show History" toggle switch or checkbox is prominently displayed in the region detail view control bar (or fullscreen control bar if in fullscreen mode). Toggle is clearly labeled and easy to access.
+
+2. **AC3.7.5.2 — Default state: History ON (shows existing markers):** When user first opens region detail view, history toggle defaults to ON state, displaying all existing markers from past sessions. This provides context for new marker placement without requiring user action.
+
+3. **AC3.7.5.3 — When ON: Shows all existing markers from past sessions with dates:** With history toggle ON, system displays all historical markers for the current region with visual indicators showing marker date/age. User can see complete history of markers in that region for pattern identification.
+
+4. **AC3.7.5.4 — When OFF: Clean workspace showing only preview and newly placed markers:** With history toggle OFF, system hides all historical markers, showing only the current preview marker (if positioning) and any newly placed markers from current session. Provides clean workspace for focused data entry.
+
+5. **AC3.7.5.5 — Historical markers visually distinct from new markers:** Historical markers use reduced opacity (50-70%) or different styling (outline-only, muted colors) to distinguish them from newly placed markers in current session. Clear visual differentiation prevents confusion about marker age.
+
+6. **AC3.7.5.6 — Toggle state persists during session:** History toggle state persists as user navigates between different regions and views during current session. If user turns history OFF in one region, it remains OFF when viewing other regions until user toggles it back ON. Session persistence only - does NOT persist across app restarts.
+
+7. **AC3.7.5.7 — Helps prevent duplicate marker placement:** By showing historical markers, users can visually identify if they've already placed a marker in a specific location, reducing duplicate entries. Historical markers serve as reference points for new marker placement.
+
+8. **AC3.7.5.8 — Tapping historical marker shows details:** When user taps a historical marker, system displays marker details in read-only view including: severity, notes, timestamp, associated layer. Details modal allows user to review past entries without editing (editing may be added in Story 3.7.6).
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3.7: Body Map UX Enhancements</title>
+        <section>Story 3.7.5: History Toggle</section>
+        <snippet>Epic enhances body map with precision-focused features for improved usability. Story 3.7.5 adds history toggle in region view control bar, showing/hiding historical markers with visual distinction. Default state ON to provide context and prevent duplicates. Toggle state persists during session.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Body Map Enhancements</section>
+        <snippet>FR004: System shall display existing flare markers on body map with visual indicators for flare status (active, improving, worsening, resolved). Body map should provide precision tracking with progressive disclosure - default overview shows all active flares, history/details expand on demand.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-1-region-detail-view-infrastructure.md</path>
+        <title>Story 3.7.1: Region Detail View Infrastructure</title>
+        <section>Foundation</section>
+        <snippet>RegionDetailView component exists with marker rendering capabilities. Region-relative coordinate system established. Existing markers already displayed in region view (AC4) with showHistoricalMarkers toggle state. Coordinate transformation between full-body and region views implemented.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-3-smart-defaults-system.md</path>
+        <title>Story 3.7.3: Smart Defaults System</title>
+        <section>Layer-aware defaults</section>
+        <snippet>Layer-specific defaults system using getLayerDefaults/setLayerDefaults. MarkerDetailsForm uses smart defaults for severity and notes based on layer type (flares, symptoms, interventions, etc.).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-4-full-screen-mode.md</path>
+        <title>Story 3.7.4: Full-Screen Mode</title>
+        <section>Control bar integration</section>
+        <snippet>FullScreenControlBar component created for fullscreen controls. History toggle should be integrated into this control bar when in fullscreen region view. Control bar includes: Back button, Layer selector, History toggle, Exit button.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/body-mapping/RegionDetailView.tsx</path>
+        <kind>component</kind>
+        <symbol>RegionDetailView</symbol>
+        <lines>1-80</lines>
+        <reason>Main component for region detail view. Already has showHistoricalMarkers state (line 67) and toggle functionality. Need to enhance toggle UI, add historical marker styling, and implement marker details modal.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/RegionDetailView.tsx</path>
+        <kind>component</kind>
+        <symbol>RegionDetailViewProps</symbol>
+        <lines>18-51</lines>
+        <reason>Props interface includes showHistoricalMarkersDefault prop (line 44) and onMarkerClick callback (line 47). Foundation for history toggle and marker interaction already exists.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-50</lines>
+        <reason>Parent component managing view mode state (full-body vs region-detail). May need to manage showHistory state at higher level for session persistence across region switches.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/MarkerDetailsForm.tsx</path>
+        <kind>component</kind>
+        <symbol>MarkerDetailsForm</symbol>
+        <lines>1-50</lines>
+        <reason>Form component for marker details entry. Reference for creating read-only MarkerDetailsModal for historical markers (AC3.7.5.8). Uses layer-aware smart defaults system.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/MarkerPreview.tsx</path>
+        <kind>component</kind>
+        <symbol>MarkerPreview</symbol>
+        <lines>1-50</lines>
+        <reason>Preview marker component. Reference for visual distinction pattern - follow similar approach for historical vs new marker styling (AC3.7.5.5).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>bodyMapLocationRepository</symbol>
+        <lines>1-100</lines>
+        <reason>Database repository for querying existing markers. Use to load historical markers filtered by regionId for history display (AC3.7.5.3).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>normalizeCoordinates, denormalizeCoordinates, NormalizedCoordinates</symbol>
+        <lines>1-50</lines>
+        <reason>Coordinate transformation utilities for region-relative positioning. Used for rendering historical markers in correct positions.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/types/body-mapping.ts</path>
+        <kind>type</kind>
+        <symbol>BodyMapLocation, LayerType</symbol>
+        <lines>1-50</lines>
+        <reason>Type definitions for body map locations and layer types. Historical markers use BodyMapLocation type with layer, severity, notes, timestamp fields.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <react>19.1.0</react>
+        <react-dom>19.1.0</react-dom>
+        <next>15.5.4</next>
+        <dexie>4.2.0 (IndexedDB wrapper for marker persistence)</dexie>
+        <lucide-react>0.544.0 (Icons: Eye, EyeOff for toggle, ArrowLeft for back)</lucide-react>
+        <date-fns>4.1.0 (Date formatting for marker timestamps)</date-fns>
+      </node>
+      <testing>
+        <jest>30.2.0</jest>
+        <testing-library-react>16.3.0</testing-library-react>
+        <testing-library-jest-dom>6.9.1</testing-library-jest-dom>
+        <fake-indexeddb>6.2.4 (Mock IndexedDB for testing)</fake-indexeddb>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **Component Architecture**: Follow existing pattern in RegionDetailView - state managed at component level, session persistence via useState, no cross-session persistence
+- **State Management**: showHistory boolean state, session-only persistence, no localStorage/IndexedDB persistence for toggle state
+- **Coordinate System**: Use region-relative normalized coordinates (0.0-1.0) for marker positioning
+- **Layer Context**: History toggle applies to current layer only - filter markers by both regionId AND layer type
+- **Database Queries**: Use bodyMapLocationRepository to query historical markers - filter by regionId and userId, sort by timestamp
+- **Visual Hierarchy**: Historical markers must have reduced prominence (50-70% opacity, muted colors) to avoid obscuring new markers
+- **Touch Targets**: Toggle control must meet 44x44px minimum for accessibility (AC from Story 3.7.1)
+- **Read-Only Details**: Historical marker details modal must be read-only - no editing allowed in this story (editing may come in Story 3.7.6)
+- **Session Boundary**: Toggle state persists during session across region switches but does NOT persist after app restart
+- **Testing Standards**: Use Jest + React Testing Library, mock IndexedDB with fake-indexeddb, test component behavior and user interactions
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>RegionDetailViewProps.showHistoricalMarkersDefault</name>
+      <kind>Component prop</kind>
+      <signature>showHistoricalMarkersDefault?: boolean</signature>
+      <path>src/components/body-mapping/RegionDetailView.tsx:44</path>
+    </interface>
+    <interface>
+      <name>RegionDetailViewProps.onMarkerClick</name>
+      <kind>Component callback</kind>
+      <signature>onMarkerClick?: (markerId: string) => void</signature>
+      <path>src/components/body-mapping/RegionDetailView.tsx:47</path>
+    </interface>
+    <interface>
+      <name>bodyMapLocationRepository.query</name>
+      <kind>Database query method</kind>
+      <signature>query(filters: { userId: string, regionId?: string, layer?: LayerType }) => Promise&lt;BodyMapLocation[]&gt;</signature>
+      <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+    </interface>
+    <interface>
+      <name>BodyMapLocation</name>
+      <kind>Type definition</kind>
+      <signature>interface BodyMapLocation { id: string; userId: string; regionId: string; layer: LayerType; coordinates: NormalizedCoordinates; severity: number; notes: string; timestamp: Date; }</signature>
+      <path>src/lib/types/body-mapping.ts</path>
+    </interface>
+    <interface>
+      <name>NormalizedCoordinates</name>
+      <kind>Type definition</kind>
+      <signature>interface NormalizedCoordinates { x: number; y: number; } // 0.0-1.0 normalized</signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing framework: Jest 30.2.0 with React Testing Library 16.3.0. Component tests use @testing-library/react for rendering and user interactions. Database tests use fake-indexeddb 6.2.4 to mock IndexedDB. Test files located alongside source files in __tests__ directories. Use userEvent for simulating user interactions, screen queries for finding elements, and jest-dom matchers for assertions. Mock external dependencies and repositories.</standards>
+    <locations>
+- src/components/body-mapping/__tests__/HistoryToggle.test.tsx (new)
+- src/components/body-mapping/__tests__/MarkerDetailsModal.test.tsx (new)
+- src/components/body-mapping/__tests__/RegionDetailView.test.tsx (existing - enhance with history toggle tests)
+    </locations>
+    <ideas>
+**AC3.7.5.1 (Toggle UI):**
+- Test HistoryToggle renders with "Show History" label
+- Test toggle appears in RegionDetailView control bar
+- Test toggle click updates showHistory state
+- Test toggle meets 44x44px minimum touch target
+
+**AC3.7.5.2 (Default ON):**
+- Test showHistory initializes to true by default
+- Test historical markers visible on initial render
+- Test showHistoricalMarkersDefault prop overrides default
+
+**AC3.7.5.3 (History ON - shows markers with dates):**
+- Test historical markers render when toggle ON
+- Test markers display date/timestamp indicators
+- Test markers filtered by regionId and userId
+
+**AC3.7.5.4 (History OFF - clean workspace):**
+- Test historical markers hidden when toggle OFF
+- Test preview markers still visible when history OFF
+- Test new session markers remain visible
+
+**AC3.7.5.5 (Visual distinction):**
+- Test historical markers have reduced opacity (50-70%)
+- Test historical markers use muted styling
+- Test new markers have full opacity
+- Test visual distinction in light and dark modes
+
+**AC3.7.5.6 (Session persistence):**
+- Test toggle state persists across region switches
+- Test toggle state does NOT persist after remount (simulating app restart)
+- Test session storage or component state used (not localStorage)
+
+**AC3.7.5.7 (Duplicate prevention):**
+- Test visual feedback when hovering near existing markers
+- Test warning message for proximity (optional)
+- Test user can proceed despite warning
+
+**AC3.7.5.8 (Historical marker details):**
+- Test clicking historical marker opens details modal
+- Test modal displays severity, notes, timestamp, layer
+- Test modal is read-only (no edit buttons)
+- Test modal close button works
+    </ideas>
+  </tests>
+</story-context>
