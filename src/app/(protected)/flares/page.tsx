@@ -19,7 +19,7 @@ export default function FlaresPage() {
   const { data: flares = [], isLoading: flaresLoading, refetch: refetchFlares } = useFlares({ userId: userId || '', includeResolved: false });
   const [selectedFlareId, setSelectedFlareId] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<"front" | "back">("front");
+  const [currentView, setCurrentView] = useState<"front" | "back" | "left" | "right">("front");
   const [selectedCoordinates, setSelectedCoordinates] = useState<Array<{
     bodyRegionId: string;
     bodyRegionName: string;
