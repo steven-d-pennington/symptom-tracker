@@ -284,46 +284,6 @@ function DashboardContent() {
       )}
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Header with refresh button (desktop) */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="mt-2 text-muted-foreground">
-              Your health overview for today
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {/* DEBUG: Export data button */}
-            <button
-              onClick={handleExportDebugData}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-orange-600 text-white hover:bg-orange-700",
-                "transition-colors"
-              )}
-              aria-label="Export debug data"
-              title="Export timeline data for debugging"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export Debug</span>
-            </button>
-            {/* Desktop refresh button */}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className={cn(
-                "hidden md:flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-primary text-primary-foreground hover:bg-primary/90",
-                "transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              )}
-              aria-label="Refresh dashboard"
-            >
-              <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-              <span>Refresh</span>
-            </button>
-          </div>
-        </div>
-
         {/* Quick Actions Module */}
         <TodayQuickActionsCard>
           <QuickLogButtons
@@ -350,10 +310,11 @@ function DashboardContent() {
           onClose={handleCloseQuickAction}
           userId={userId}
           selection={null}
-          onCreated={() => {
+          onCreated={(_flare, _stayInRegion) => {
             // Refresh the dashboard after flare creation
             setRefreshKey(prev => prev + 1);
             router.push("/dashboard");
+            // Note: stayInRegion doesn't apply in dashboard context
           }}
         />
       )}

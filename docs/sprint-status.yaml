@@ -79,9 +79,27 @@ development_status:
   3.5-4-redesign-food-logging-modal-to-page: done
   3.5-5-redesign-trigger-and-medication-logging-to-pages: done
   3.5-6-critical-ui-fixes-bundle: done
-  3.5-7-fix-calendar-data-wiring: ready-for-dev
+  3.5-7-fix-calendar-data-wiring: done
   3.5-8-add-keyboard-navigation-accessibility: ready-for-dev
   epic-3.5-retrospective: optional
+
+  epic-3.6: contexted
+  3.6-1-interactive-data-selection-during-onboarding: done
+  epic-3.6-retrospective: optional
+
+  epic-3.7: backlog
+  3-7-1-region-detail-view-infrastructure: done
+  3-7-2-marker-preview-and-positioning: done
+  3-7-3-smart-defaults-system: done
+  3-7-4-full-screen-mode: done
+  3-7-5-history-toggle: review
+  3-7-6-polish-and-accessibility: review
+  3-7-7-multi-location-flare-persistence: review
+  epic-3.7-retrospective: optional
+
+  epic-3.8: contexted
+  3-8-1-critical-regression-bug-fixes: review
+  epic-3.8-retrospective: optional
 
   epic-4: backlog
   4-1-attach-photos-to-flare-entities: backlog
@@ -89,3 +107,12 @@ development_status:
   4-3-before-after-photo-comparison: backlog
   4-4-photo-annotation-simple: backlog
   epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-add-layer-field-to-data-model-and-indexeddb-schema: ready-for-dev
+  5-2-implement-layer-preferences-and-persistence: drafted
+  5-3-create-layer-selector-component-for-tracking-mode: drafted
+  5-4-implement-layer-aware-marker-rendering: drafted
+  5-5-add-multi-layer-view-controls-and-filtering: drafted
+  5-6-create-layer-legend-and-accessibility-features: drafted
+  epic-5-retrospective: optional

@@ -16,8 +16,6 @@ export function BodyViewSwitcher({
   const views = [
     { id: "front" as const, label: "Front", icon: User, key: "F" },
     { id: "back" as const, label: "Back", icon: UserSquare, key: "B" },
-    { id: "left" as const, label: "Left", icon: User, key: "L" },
-    { id: "right" as const, label: "Right", icon: User, key: "R" },
   ];
 
   React.useEffect(() => {
@@ -62,8 +60,8 @@ export function BodyViewSwitcher({
               flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
               ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-lg"
-                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                  ? "btn-primary"
+                  : "btn-secondary"
               }
             `}
             aria-label={`Switch to ${view.label} view`}

@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-11-01
+- **Last Updated:** 2025-11-02 (Story 3.7.1 Complete)
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** Phase 4: Implementation (In Progress)
-- **Current Workflow:** Ready to begin Epic 3.6 or Epic 4
-- **Overall Progress:** Epic 3.5 complete (including bug fix 3.5.10). Ready for new feature work.
-- **Next Action:** Implement Story 3.6.1 (Interactive Data Selection During Onboarding) OR begin Epic 4 stories
-- **Command to Run:** *dev-story OR *create-story
-- **Agent to Load:** dev (bmad/bmm/agents/dev.md) OR sm (bmad/bmm/agents/sm.md)
-- **Note:** Epic 3.5 fully complete. Story 3.6.1 drafted and ready. Epic 4 unblocked.
+- **Current Workflow:** Epic 3.7 Story 3.7.1 complete
+- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7 (Body Map UX Enhancements) Story 3.7.1 done.
+- **Next Action:** Continue with remaining Epic 3.7 stories or move to Epic 4
+- **Command to Run:** *create-story (for next story) or consult epics.md for next steps
+- **Agent to Load:** sm (Scrum Master) or pm (Product Manager)
+- **Note:** Story 3.7.1 (Region Detail View Infrastructure) successfully implemented with region click functionality working.
 
 ---
 
@@ -32,11 +32,9 @@
 
 ## Implementation Progress (Phase 4 Only)
 
-#### DRAFTED (Story Created, Awaiting Context Generation)
+#### DRAFTED (Story Created, Context Generated, Ready for Development)
 
-| Epic | Story | ID | Title | File | Points | Priority |
-|------|-------|-----|-------|------|--------|----------|
-| 3.6 | 1 | 3.6.1 | Interactive Data Selection During Onboarding | 3.6.1-onboarding-data-selection-flow.md | 13 | HIGH |
+*No stories currently drafted.*
 
 ---
 
@@ -62,6 +60,8 @@
 
 | Story ID | File | Completed Date | Points | Epic |
 |----------|------|----------------|--------|------|
+| 3.7.1 | docs/stories/3-7-1-region-detail-view-infrastructure.md | 2025-11-02 | 5 | Epic 3.7: Body Map UX Enhancements |
+| 3.6.1 | docs/stories/3.6.1-onboarding-data-selection-flow.md | 2025-11-02 | 13 | Epic 3.6: Onboarding Enhancement |
 | 3.5.10 | docs/stories/story-3.5.10.md | 2025-11-01 | 1 | Epic 3.5: Production UX (Bug Fix) |
 | 3.5.9 | docs/stories/3-5-9-help-pages-and-landing-page.md | 2025-10-31 | 5 | Epic 3.5: Production UX |
 | 3.5.8 | docs/stories/3-5-8-add-keyboard-navigation-accessibility.md | 2025-10-31 | 5 | Epic 3.5: Production UX |
@@ -78,24 +78,27 @@
 
 ### Next Action Required
 
-**🎯 Epic 3.5 COMPLETE - Ready for New Features**
+**🎯 Story 3.7.1 Complete — Ready for Next Story**
 
-Story 3.5.10 (critical bug fix) has been completed. Epic 3.5 is now fully complete. The project is ready for new feature work.
+Story 3.7.1 (Region Detail View Infrastructure) has been successfully implemented and tested. Region click functionality is working as expected.
 
-**Available Options:**
-1. **Implement Story 3.6.1:** Interactive Data Selection During Onboarding (13 points, HIGH priority)
-   - Command: `*dev-story`
-   - Agent: `dev` (Developer)
-   - Enhances onboarding UX with user-selected defaults
+**Next Step:**
+- **Command:** `*create-story` (to draft next Epic 3.7 story) or consult epics.md for story planning
+- **Agent:** `sm` (Scrum Master) or `pm` (Product Manager)
+- **Epic:** Continue Epic 3.7 or move to Epic 4 (Photo Documentation)
+- **Status:** Story 3.7.1 complete (5 points delivered)
 
-2. **Begin Epic 4:** Photo Documentation features
-   - Command: `*create-story` (to draft story 4.1)
-   - Agent: `sm` (Scrum Master)
-   - Start photo attachment and timeline features
+The implemented infrastructure provides the foundation for additional body map UX enhancements. Consult epics.md to determine the next story in Epic 3.7 or whether to proceed with Epic 4.
 
 ---
 
 ## Decision Log
+
+- **2025-11-02 (Updated):** Completed Story 3.7.1: Region Detail View Infrastructure (5 points). Successfully implemented isolated region views that fill the viewport for maximum precision when placing body map markers. Features include: RegionDetailView component with isolated region rendering, view mode state management (full-body vs region-detail), region-relative coordinate system (0-1 normalized), coordinate transformations between views, historical marker display with toggle, ESC key navigation, and back button. Fixed region click event handling to properly trigger detail view. Epic 3.7 in progress.
+
+- **2025-11-02:** Story 3.7.1 (Region Detail View Infrastructure) created and context generated. This is the first story of Epic 3.7: Body Map UX Enhancements. The story is ready for development and focuses on implementing isolated region views that fill the viewport for better precision in marker placement. (5 points)
+
+- **2025-11-02:** Completed Story 3.6.1: Interactive Data Selection During Onboarding (13 points). This story transformed the onboarding flow from auto-populating all defaults to allowing users to interactively select symptoms, triggers, medications, and foods. Features include: reusable SelectionStep component, real-time search across all data types, custom item creation during onboarding, skip functionality, GUID-based user ID generation for cloud sync preparation. Epic 3.6 now complete. Next priority: Add body map UX enhancements epic or begin Epic 4.
 
 - **2025-11-01:** Completed Story 3.5.10 (CRITICAL bug fix). Fixed calendar page crash caused by undefined severityScale in old data. Added conditional check in recordToSymptom method and comprehensive unit test. All tests passing. Epic 3.5 now fully complete with 10 stories (53 points total). Epic 4 unblocked and ready to begin.
 

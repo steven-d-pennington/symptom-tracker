@@ -52,6 +52,42 @@ export interface BodyView {
 }
 
 /**
+ * Tracking layer types for body map markers
+ * Each layer maintains independent defaults for severity and notes
+ */
+export type LayerType = 'flares' | 'pain' | 'mobility' | 'inflammation';
+
+/**
+ * Default values for a specific tracking layer
+ * Used for smart defaults when placing new markers
+ */
+export interface LayerDefaultValue {
+  severity: number; // 1-10 scale
+  notes: string;    // Last-used notes text
+}
+
+/**
+ * Smart defaults stored per tracking layer
+ * Allows independent defaults for each symptom type
+ * Persisted in localStorage across sessions
+ */
+export interface LayerDefaults {
+  flares: LayerDefaultValue;
+  pain: LayerDefaultValue;
+  mobility: LayerDefaultValue;
+  inflammation: LayerDefaultValue;
+}
+
+/**
+ * Validates that a severity value is within the valid range
+ * @param severity - Severity value to validate
+ * @returns true if severity is between 1-10 inclusive
+ */
+export function isValidSeverity(severity: number): boolean {
+  return Number.isInteger(severity) && severity >= 1 && severity <= 10;
+}
+
+/**
  * Severity color mapping for visual representation
  */
 export const SEVERITY_COLORS = {

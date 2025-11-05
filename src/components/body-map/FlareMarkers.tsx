@@ -18,6 +18,7 @@ interface MarkerPosition {
   flare: ActiveFlare & { trend: 'worsening' | 'stable' | 'improving' };
   x: number;
   y: number;
+  locationId?: string; // Story 3.7.5: Unique ID for each marker location
 }
 
 export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps) {
@@ -99,20 +100,25 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
       const fallbackFlares: Array<MarkerPosition['flare']> = [];
 
       flaresInRegion.forEach((flare) => {
-        const coordinateEntry = flare.coordinates?.find(
+        // Story 3.7.5: Filter to get ALL coordinates for this region, not just first one
+        const coordinatesInRegion = flare.coordinates?.filter(
           (coordinate) => coordinate.regionId === regionId
-        );
+        ) || [];
 
-        if (coordinateEntry && bounds) {
-          const { x, y } = denormalizeCoordinates(
-            { x: coordinateEntry.x, y: coordinateEntry.y },
-            bounds
-          );
+        if (coordinatesInRegion.length > 0 && bounds) {
+          // Add a marker for each coordinate
+          coordinatesInRegion.forEach((coordinateEntry) => {
+            const { x, y } = denormalizeCoordinates(
+              { x: coordinateEntry.x, y: coordinateEntry.y },
+              bounds
+            );
 
-          coordinatePositions.push({
-            flare,
-            x,
-            y,
+            coordinatePositions.push({
+              flare,
+              x,
+              y,
+              locationId: coordinateEntry.locationId, // Story 3.7.5: Track unique location ID
+            });
           });
           return;
         }
@@ -151,7 +157,7 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
 
   return (
     <g data-testid="flare-markers" ref={markerGroupRef}>
-      {markerPositions.map(({ flare, x, y }) => {
+      {markerPositions.map(({ flare, x, y, locationId }) => {
         // Use gray color for resolved flares, otherwise color by severity
         const markerColor = flare.status === 'resolved'
           ? 'fill-gray-400'
@@ -159,9 +165,12 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
 
         const statusLabel = flare.status === 'resolved' ? 'Resolved flare' : `${flare.symptomName} flare - severity ${flare.severity}`;
 
+        // Story 3.7.5: Use locationId for unique keys when multiple markers per flare
+        const markerKey = locationId || flare.id;
+
         return (
           <circle
-            key={flare.id}
+            key={markerKey}
             cx={x}
             cy={y}
             r={markerRadius}

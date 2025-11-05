@@ -1,9 +1,9 @@
 # Pocket Symptom Tracker - Database Schema Reference
 
-**Last Updated**: October 12, 2025  
-**Database**: Dexie 4.2.0 (IndexedDB wrapper)  
-**Schema Version**: 8 (current)  
-**Total Tables**: 12
+**Last Updated**: November 3, 2025
+**Database**: Dexie 4.2.0 (IndexedDB wrapper)
+**Schema Version**: 21 (current)
+**Total Tables**: 15
 
 ---
 
@@ -45,7 +45,25 @@ The Pocket Symptom Tracker uses **Dexie.js** as a wrapper over the browser's nat
 
 ## Schema Version History
 
-### Version 8 (Current) - October 2025
+### Version 21 (Current) - November 2025
+**Changes**: Added `flareBodyLocations` table for multi-location flare tracking (Story 3.7.7)
+- Implements "Model B" architecture: one flare episode with multiple body locations
+- Each `FlareRecord` can have multiple `FlareBodyLocationRecord` entries
+- Compound indexes: `[flareId+bodyRegionId]`, `[userId+flareId]` for efficient queries
+- No migration needed: new table only, existing flares unaffected
+
+### Version 20 - November 2025
+**Changes**: Added `moodEntries` and `sleepEntries` tables (Story 3.5.2)
+- Basic mood tracking (1-10 scale with optional emotion type)
+- Sleep tracking (hours + quality rating)
+- Compound index: `[userId+timestamp]` for timeline queries
+
+### Version 19 - November 2025
+**Changes**: Added `isDefault` and `isEnabled` fields for medications (Story 3.5.1)
+- Supports predefined medication libraries with user toggles
+- Migration: Marks all existing medications as custom (`isDefault=false`, `isEnabled=true`)
+
+### Version 8 - October 2025
 **Changes**: Added `isDefault` and `isEnabled` fields for symptoms/triggers
 - Supports predefined symptom/trigger libraries with user toggles
 - Migration: Marks all existing items as custom (`isDefault=false`, `isEnabled=true`)
@@ -709,6 +727,129 @@ await db.analysisResults
 
 ---
 
+### 13. `flareBodyLocations` Table
+
+**Purpose**: Multi-location tracking for flare episodes (Story 3.7.7)
+
+**Schema**:
+```typescript
+interface FlareBodyLocationRecord {
+  id: string;                    // UUID, primary key
+  flareId: string;               // Foreign key to flares.id
+  bodyRegionId: string;          // Body region ID (e.g., "left-shoulder")
+  coordinates: {                 // Normalized coordinates (0-1 scale)
+    x: number;
+    y: number;
+  };
+  userId: string;                // User ID for multi-user support
+  createdAt: number;             // Unix timestamp (epoch ms)
+  updatedAt: number;             // Unix timestamp (epoch ms)
+}
+```
+
+**Indexes**:
+- Primary: `id`
+- Compound: `[flareId+bodyRegionId]`, `[userId+flareId]`
+- Simple: `flareId`, `userId`
+
+**Notes**:
+- Implements "Model B" architecture: one flare episode with multiple body locations
+- Each `FlareRecord` can have 0-N `FlareBodyLocationRecord` entries
+- Coordinates are normalized (0-1 scale) for responsive body map rendering
+- Backward compatibility: Legacy flares (pre-Story 3.7.7) have no entries in this table
+- Created atomically with `FlareRecord` using Dexie transactions (ADR-003)
+
+**Architecture Diagram**:
+```
+FlareRecord (1) ──┬─→ FlareBodyLocationRecord (N)
+                  │   - id
+                  │   - flareId (FK)
+                  │   - bodyRegionId
+                  │   - coordinates
+                  │   - userId
+                  │   - createdAt/updatedAt
+                  │
+                  └─→ FlareEventRecord (N)
+                      - eventType='created', 'severity_update', etc.
+```
+
+**Typical Queries**:
+```typescript
+// Get all body locations for a flare
+const locations = await db.flareBodyLocations
+  .where('[userId+flareId]')
+  .equals(['user-123', 'flare-456'])
+  .sortBy('createdAt'); // Chronological order
+
+// Get all flares affecting a specific body region
+const flareIds = await db.flareBodyLocations
+  .where('[userId+bodyRegionId]')
+  .equals(['user-123', 'left-shoulder'])
+  .toArray();
+
+// Enrich flare with body locations (used by flareRepository)
+async function enrichFlareWithLocations(flare: FlareRecord) {
+  const locations = await db.flareBodyLocations
+    .where('[userId+flareId]')
+    .equals([flare.userId, flare.id])
+    .sortBy('createdAt');
+
+  return { ...flare, bodyLocations: locations };
+}
+```
+
+---
+
+### 14. `moodEntries` Table
+
+**Purpose**: Mood tracking for correlation analysis (Story 3.5.2)
+
+**Schema**:
+```typescript
+interface MoodEntryRecord {
+  id: string;                    // UUID, primary key
+  userId: string;
+  mood: number;                  // 1-10 scale
+  moodType?: 'happy' | 'neutral' | 'sad' | 'anxious' | 'stressed';
+  notes?: string;
+  timestamp: number;             // Unix timestamp (epoch ms)
+  createdAt: number;
+  updatedAt: number;
+}
+```
+
+**Indexes**:
+- Primary: `id`
+- Compound: `[userId+timestamp]`
+- Simple: `userId`, `timestamp`, `createdAt`
+
+---
+
+### 15. `sleepEntries` Table
+
+**Purpose**: Sleep quality tracking for correlation analysis (Story 3.5.2)
+
+**Schema**:
+```typescript
+interface SleepEntryRecord {
+  id: string;                    // UUID, primary key
+  userId: string;
+  hours: number;                 // Fractional hours (7.5, 8.25)
+  quality: number;               // 1-10 scale
+  notes?: string;
+  timestamp: number;             // Unix timestamp (epoch ms) - date of sleep
+  createdAt: number;
+  updatedAt: number;
+}
+```
+
+**Indexes**:
+- Primary: `id`
+- Compound: `[userId+timestamp]`
+- Simple: `userId`, `timestamp`, `createdAt`
+
+---
+
 ## Relationships
 
 ### Entity Relationship Diagram
@@ -722,8 +863,11 @@ users (1) ──┬── (∞) symptoms
             │                      └── (∞) photoAttachments
             ├── (∞) photoAttachments ──┬── (2) photoComparisons
             │                          └── (∞) annotations
-            ├── (∞) flares
-            └── (∞) analysisResults
+            ├── (∞) flares ──┬── (∞) flareEvents
+            │                └── (∞) flareBodyLocations
+            ├── (∞) analysisResults
+            ├── (∞) moodEntries
+            └── (∞) sleepEntries
 
 dailyEntries.symptoms[] ──> symptoms.id (reference)
 dailyEntries.medications[] ──> medications.id (reference)

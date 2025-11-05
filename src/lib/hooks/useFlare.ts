@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { flareRepository } from '@/lib/repositories/flareRepository';
+import { flareRepository, FlareWithLocations } from '@/lib/repositories/flareRepository';
 import { FlareRecord } from '@/lib/db/schema';
 
 export function useFlare(flareId: string, userId: string) {
-  const [data, setData] = useState<FlareRecord | null>(null);
+  const [data, setData] = useState<FlareWithLocations | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

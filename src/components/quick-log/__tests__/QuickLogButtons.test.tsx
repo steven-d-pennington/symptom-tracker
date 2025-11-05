@@ -69,18 +69,21 @@ describe("QuickLogButtons", () => {
   it("applies expected color classes to each button", () => {
     renderComponent();
 
-    actionConfig.forEach(({ aria, color }) => {
-      expect(screen.getByLabelText(aria)).toHaveClass(color);
+    // The new design uses card-based styling instead of specific background colors
+    actionConfig.forEach(({ aria }) => {
+      const button = screen.getByLabelText(aria);
+      expect(button).toHaveClass("bg-card");
+      expect(button).toHaveClass("border-border");
     });
   });
 
   it("enforces minimum tap target size", () => {
     renderComponent();
 
+    // The new design uses larger card buttons with min-h-[140px]
     actionConfig.forEach(({ aria }) => {
       const button = screen.getByLabelText(aria);
-      expect(button).toHaveClass("min-h-[44px]");
-      expect(button).toHaveClass("min-w-[44px]");
+      expect(button).toHaveClass("min-h-[140px]");
     });
   });
 
@@ -117,7 +120,8 @@ describe("QuickLogButtons", () => {
   it("exposes accessible region and labels", () => {
     renderComponent();
 
-    expect(screen.getByRole("region", { name: "Quick log event buttons" })).toBeInTheDocument();
+    // The region is now labeled "Quick log actions" instead of "Quick log event buttons"
+    expect(screen.getByRole("region", { name: "Quick log actions" })).toBeInTheDocument();
 
     actionConfig.forEach(({ aria }) => {
       expect(screen.getByLabelText(aria)).toBeInTheDocument();

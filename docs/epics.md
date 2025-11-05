@@ -768,6 +768,292 @@ So that I can use the app without a mouse.
 
 ---
 
+## Epic 3.6: Interactive Onboarding Enhancement _(COMPLETE)_
+
+### Expanded Goal
+
+Transform the onboarding experience from passive auto-population to active user engagement by allowing users to select which symptoms, triggers, medications, and foods are relevant to them. This creates a personalized, intentional first-use experience that reduces overwhelm and improves data quality.
+
+### Value Proposition
+
+The original onboarding auto-populated ALL defaults (50+ items), which felt overwhelming and impersonal. This enhancement:
+- **Empowers users** to actively choose relevant items from day one
+- **Reduces cognitive load** by showing only items they selected
+- **Improves data quality** through intentional selection vs passive acceptance
+- **Enables customization** by allowing custom item creation during onboarding
+- **Prepares for cloud sync** with GUID-based user ID generation
+
+### Story Breakdown
+
+**Story 3.6.1: Interactive Data Selection During Onboarding** _(COMPLETE - 13 points)_
+
+As a new user going through onboarding,
+I want to select which symptoms, triggers, medications, and foods are relevant to me,
+So that my dashboard only shows items I actually use and I feel in control of my data from day one.
+
+**Acceptance Criteria:**
+1. Add symptom selection step with collapsible categories and checkboxes
+2. Add real-time search functionality across ALL selection steps (symptoms, triggers, medications, foods)
+3. Allow adding custom items during onboarding with inline form
+4. Add trigger selection step with same UX pattern
+5. Add medication selection step with same UX pattern
+6. Add food selection step with same UX pattern
+7. Update progress indicator for new steps
+8. Add skip functionality for each selection step
+9. Preserve selections when using back button
+10. Batch creation on onboarding completion (only selected items)
+11. Responsive design for mobile, tablet, desktop
+12. Analytics tracking for selection patterns
+13. Use GUID for user ID generation (cloud sync preparation)
+
+**Technical Implementation:**
+- Created reusable `SelectionStep` component for all 4 data types
+- Implemented `OnboardingSelectionsContext` for state management
+- Added search with debouncing (300ms) for performance
+- Batch creation reduces DB operations from 100+ to 4
+- sessionStorage persistence for refresh resilience
+- GUID/UUID v4 format for user IDs
+
+**Prerequisites:** Story 3.5.1 (defaults data structure)
+
+**Completed:** 2025-11-02
+
+---
+
+## Epic 3.7: Body Map UX Enhancements - Region Focus & Full-Screen _(HIGH PRIORITY)_
+
+### Expanded Goal
+
+Enhance the body map with precision-focused features that improve usability for all users, particularly those with motor control challenges or larger body types. This epic addresses two key UX challenges: precision in marker placement and viewport space limitations through dedicated region-focused views and full-screen mode.
+
+### Value Proposition
+
+Current body map limitations create barriers for accurate symptom tracking:
+- **Precision challenges:** Small regions make precise marker placement difficult, especially for users with motor control issues
+- **Limited viewport space:** Body map competes with navigation, header, and UI elements
+- **Repetitive data entry:** Users re-enter the same severity/notes repeatedly
+- **Visual clutter:** Hard to focus on specific regions without distraction
+
+This epic transforms the body map into a precision tool through:
+- **Region Detail View:** Isolated regions fill viewport for maximum precision
+- **Smart Defaults:** Last-used severity/notes reduce repetitive input
+- **Full-Screen Mode:** Removes all UI chrome for focused work
+- **History Toggle:** Show/hide past markers for context or clean workspace
+
+### Story Breakdown
+
+**Story 3.7.1: Region Detail View Infrastructure (5 pts)**
+
+As a user with a larger body type,
+I want body regions to fill my screen when placing markers,
+So I have enough surface area for comfortable, precise interaction.
+
+**Acceptance Criteria:**
+1. Clicking any body region switches to isolated region view
+2. Region fills viewport (maximum space, isolated from full body)
+3. Cannot navigate to adjacent regions without returning to full body first
+4. Shows existing markers on that region (toggleable via History)
+5. Can place multiple markers before returning to full body
+6. "Back to Body Map" button returns to full body view
+7. Region-relative coordinate system (0.0-1.0 scale) for responsive positioning
+8. Coordinates transform correctly between full body and region views
+
+**Technical Implementation:**
+- RegionDetailView component
+- View switching state management (full-body ↔ region-detail)
+- Coordinate transformation: region-relative to viewport
+- Back navigation with state preservation
+
+**Prerequisites:** Epic 1 complete (body map foundation)
+
+---
+
+**Story 3.7.2: Marker Preview and Positioning (5 pts)**
+
+As a user with shaky hands,
+I want to preview and adjust marker position before confirming,
+So I can place markers exactly where I intend despite motor control challenges.
+
+**Acceptance Criteria:**
+1. Tapping region surface shows translucent preview marker
+2. Tapping elsewhere on region moves preview (no drag gestures required)
+3. Can tap multiple times to adjust position before confirming
+4. "Confirm Position" button explicitly locks marker position
+5. Preview marker visually distinct from final markers (outlined/translucent)
+6. After confirm, form appears for severity/notes entry
+7. Can cancel to remove preview and try again
+8. Touch targets meet accessibility standards (44x44px minimum)
+
+**Technical Implementation:**
+- MarkerPreview component with distinct styling
+- Tap-only interaction (no drag required)
+- ConfirmPositionButton floating action button
+- Sequential flow: position → confirm → details form
+
+**Prerequisites:** Story 3.7.1 (region view exists)
+
+---
+
+**Story 3.7.3: Smart Defaults System (3 pts)**
+
+As a user tracking frequent symptoms,
+I want severity pre-filled from my last entry,
+So I can quickly place markers without repetitive input.
+
+**Acceptance Criteria:**
+1. Form remembers last-used severity per layer (pain, flares, etc.)
+2. Last-used notes shown as placeholder (gray text, not auto-filled)
+3. User can tap "Save" immediately to accept defaults (quick entry)
+4. User can override defaults for specific markers
+5. Placeholder disappears when user starts typing
+6. Placeholder NOT saved unless user explicitly keeps it
+7. Defaults persist across sessions (localStorage)
+8. Layer-aware: Pain defaults don't affect flare defaults
+
+**Technical Implementation:**
+- LayerDefaults interface with per-layer storage
+- localStorage persistence: 'pocket:layerDefaults'
+- Form pre-population logic in MarkerDetailsForm
+- Placeholder behavior vs actual value distinction
+
+**Prerequisites:** Story 3.7.2 (marker form exists)
+
+---
+
+**Story 3.7.4: Full-Screen Mode (3 pts)**
+
+As a user who gets distracted easily,
+I want to remove all UI clutter and focus only on the body map,
+So I can concentrate on accurately tracking my symptoms.
+
+**Acceptance Criteria:**
+1. Full-screen toggle button (⛶) available in normal view
+2. Full-screen removes all surrounding UI (header, nav, sidebars)
+3. Thin control bar remains at top with essential controls
+4. Control bar includes: Back button (region view), Layer selector, History toggle (region view), Exit button
+5. ESC key exits full-screen from any view
+6. Full-screen state persists when switching to region view
+7. Returning to body map maintains full-screen state
+8. Browser native full-screen API with fallback
+
+**Technical Implementation:**
+- Browser Fullscreen API integration
+- Persistent control bar component (40-50px height)
+- State persistence through view transitions
+- ESC key listener and fullscreenchange event handler
+- High contrast control bar for accessibility
+
+**Prerequisites:** Story 3.7.1 (region view), Story 3.7.2 (marker placement)
+
+---
+
+**Story 3.7.5: History Toggle (2 pts)**
+
+As a user tracking patterns over time,
+I want to see previous markers when adding new ones,
+So I can identify recurring problem areas and avoid duplicates.
+
+**Acceptance Criteria:**
+1. History toggle available in region view control bar
+2. Default state: History ON (shows existing markers)
+3. When ON: Shows all existing markers from past sessions with dates
+4. When OFF: Clean workspace showing only preview and newly placed markers
+5. Historical markers visually distinct from new markers (opacity/styling)
+6. Toggle state persists during session
+7. Helps prevent duplicate marker placement
+8. Tapping historical marker shows details (read-only or edit if Story 3.7.6)
+
+**Technical Implementation:**
+- Toggle component in control bar
+- Filter existing markers by showHistory state
+- Visual styling for historical vs new markers
+- Session state persistence
+
+**Prerequisites:** Story 3.7.1 (region view), Story 3.7.2 (markers exist)
+
+---
+
+**Story 3.7.6: Polish and Accessibility (3 pts)**
+
+As a user with accessibility needs,
+I want full keyboard navigation and touch-optimized interactions,
+So I can use all features regardless of input method.
+
+**Acceptance Criteria:**
+1. ESC key exits full-screen from any view
+2. Enter key confirms marker position
+3. Tab key navigates through form fields
+4. Arrow keys adjust severity slider
+5. Touch targets minimum 44x44px (mobile)
+6. Smooth transitions between views (< 300ms)
+7. High contrast mode support
+8. Screen reader announcements for state changes
+9. Visual feedback for all interactions (hover, active, focus)
+10. Tested across devices: mobile (iOS/Android), tablet, desktop
+
+**Technical Implementation:**
+- Keyboard event handlers for all interactions
+- CSS transitions for view changes
+- ARIA labels and roles
+- Touch target size verification
+- Cross-device testing suite
+
+**Prerequisites:** Stories 3.7.1-3.7.5 (all features exist)
+
+---
+
+**Story 3.7.7: Multi-Location Flare Persistence (5 pts)**
+
+As a user tracking flare-ups,
+I want all marked body locations to be saved when I create a flare,
+So that I can accurately record and review which areas were affected during a single flare episode.
+
+**Acceptance Criteria:**
+1. Create `flare_body_locations` IndexedDB table with schema: id, flareId, bodyRegionId, coordinates (x, y), createdAt
+2. When saving a flare with multiple locations, create one FlareRecord + multiple body location records
+3. flareRepository.createFlare() accepts array of body locations and persists all to database
+4. Flare queries join body locations so retrieved flares include all marked areas
+5. FlareCreationModal saves all accumulated locations (not just first)
+6. Flare detail view displays all body locations with coordinates
+7. Flare list/cards show location count badge (e.g., "3 locations") when multiple exist
+8. Body map visualization shows all marked locations when viewing a flare
+9. Existing flares with single location continue to work (backward compatibility)
+10. All body location data includes region ID and normalized coordinates (0-1 scale)
+
+**Technical Implementation:**
+- New IndexedDB object store: `flare_body_locations` with compound index [flareId+bodyRegionId]
+- Update flareRepository.createFlare() signature to accept `locations: FlareLocation[]`
+- Transaction-based atomic writes (flare + all locations in single transaction)
+- Update getFlareById/getActiveFlares to LEFT JOIN body locations
+- FlareCreationModal passes complete locations array to save handler
+- Update FlareRecord TypeScript interface to include `bodyLocations?: FlareBodyLocation[]`
+- Database migration strategy for adding new table to existing installations
+
+**Prerequisites:** Story 3.7.4 (fullscreen multi-marker UX complete)
+
+**⚠️ DEPENDENCY NOTE:** This story should be completed BEFORE Story 3.7.5 (History Toggle) to avoid rework. Story 3.7.5 queries markers from IndexedDB, and this story changes the schema. Implementing 3.7.5 first would require rewriting its data access logic after 3.7.7's schema change.
+
+**Current State:**
+- UX fully implemented: users can place multiple markers in fullscreen mode
+- "Done Marking" button accumulates all markers
+- FlareCreationModal displays all marked locations
+- Only first location currently persists to database (schema limitation)
+
+---
+
+**Total Epic Points:** 26 points (High complexity)
+
+**Dependencies:**
+- Epic 1 complete (body map foundation with regions and markers)
+- No blocking dependencies on other in-progress work
+
+**Enables:**
+- Better accessibility for motor control challenges
+- Improved precision for all users
+- Foundation for future enhancements (zoom within region, multi-marker editing)
+
+---
+
 ## Epic 4: Photo Documentation Integration _(Lower Priority)_
 
 ### Expanded Goal

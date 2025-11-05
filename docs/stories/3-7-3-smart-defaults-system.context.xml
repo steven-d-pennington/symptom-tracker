@@ -1,0 +1,263 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.7</epicId>
+    <storyId>3</storyId>
+    <title>Smart Defaults System</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-7-3-smart-defaults-system.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user tracking frequent symptoms</asA>
+    <iWant>severity pre-filled from my last entry</iWant>
+    <soThat>I can quickly place markers without repetitive input</soThat>
+    <tasks>
+      <task id="1" acs="3.7.3.1, 3.7.3.8">
+        <description>Define LayerDefaults data model and interface</description>
+        <subtasks>
+          <subtask>Create TypeScript interface LayerDefaults with layer-specific fields</subtask>
+          <subtask>Define structure: { flares: { severity: number, notes: string }, pain: {...}, mobility: {...}, inflammation: {...} }</subtask>
+          <subtask>Add validation for severity range (1-10)</subtask>
+          <subtask>Export interface from @/lib/types/body-mapping</subtask>
+          <subtask>Document layer keys and default values</subtask>
+        </subtasks>
+      </task>
+      <task id="2" acs="3.7.3.7">
+        <description>Implement localStorage persistence</description>
+        <subtasks>
+          <subtask>Create utility functions for reading/writing layer defaults to localStorage</subtask>
+          <subtask>Use storage key: 'pocket:layerDefaults' or similar namespaced key</subtask>
+          <subtask>Implement getLayerDefaults(layer: LayerType) function</subtask>
+          <subtask>Implement setLayerDefaults(layer: LayerType, defaults: { severity: number, notes: string }) function</subtask>
+          <subtask>Handle JSON serialization/deserialization with error handling</subtask>
+        </subtasks>
+      </task>
+      <task id="3" acs="3.7.3.1, 3.7.3.2, 3.7.3.3">
+        <description>Update MarkerDetailsForm to load and display defaults</description>
+        <subtasks>
+          <subtask>Modify MarkerDetailsForm component (created in Story 3.7.2) to accept layer prop</subtask>
+          <subtask>Load layer-specific defaults on form mount using getLayerDefaults()</subtask>
+          <subtask>Pre-populate severity slider with default value</subtask>
+          <subtask>Display last-used notes as placeholder text (gray color, italic styling)</subtask>
+          <subtask>Enable "Save" button immediately without requiring user input</subtask>
+        </subtasks>
+      </task>
+      <task id="4" acs="3.7.3.5, 3.7.3.6">
+        <description>Implement placeholder behavior for notes field</description>
+        <subtasks>
+          <subtask>Use HTML placeholder attribute or custom placeholder component</subtask>
+          <subtask>Ensure placeholder disappears when user focuses and types</subtask>
+          <subtask>Implement logic to distinguish between empty field (placeholder) vs typed text</subtask>
+          <subtask>Add visual distinction: placeholder in gray/italic, actual input in black/normal</subtask>
+          <subtask>Test placeholder behavior across browsers (Chrome, Safari, Firefox)</subtask>
+        </subtasks>
+      </task>
+      <task id="5" acs="3.7.3.4">
+        <description>Implement override and update logic</description>
+        <subtasks>
+          <subtask>Detect when user changes severity slider from default value</subtask>
+          <subtask>Detect when user types new notes (overriding placeholder)</subtask>
+          <subtask>On form submission, save new values as updated defaults for that layer</subtask>
+          <subtask>Call setLayerDefaults() with new severity/notes after successful save</subtask>
+          <subtask>Test that defaults update correctly for subsequent markers</subtask>
+        </subtasks>
+      </task>
+      <task id="6" acs="3.7.3.8">
+        <description>Ensure layer isolation</description>
+        <subtasks>
+          <subtask>Pass current layer type to MarkerDetailsForm component</subtask>
+          <subtask>Verify that changing flare defaults doesn't affect pain defaults</subtask>
+          <subtask>Test all layer combinations to ensure independence</subtask>
+          <subtask>Add unit tests for layer-specific default retrieval</subtask>
+          <subtask>Document layer isolation in code comments</subtask>
+        </subtasks>
+      </task>
+      <task id="7" acs="All">
+        <description>Integration with marker placement workflow</description>
+        <subtasks>
+          <subtask>Integrate smart defaults into marker preview-confirm-form workflow (Story 3.7.2)</subtask>
+          <subtask>Ensure defaults load when form appears after position confirmation</subtask>
+          <subtask>Test quick entry workflow: tap → confirm → save (no manual input)</subtask>
+          <subtask>Test override workflow: tap → confirm → adjust severity → save</subtask>
+          <subtask>Verify defaults persist after app restart</subtask>
+        </subtasks>
+      </task>
+      <task id="8" acs="All">
+        <description>Testing and edge cases</description>
+        <subtasks>
+          <subtask>Write unit tests for getLayerDefaults and setLayerDefaults utilities</subtask>
+          <subtask>Write unit tests for placeholder behavior</subtask>
+          <subtask>Write integration tests for complete default workflow</subtask>
+          <subtask>Test first-time user experience (no defaults exist yet)</subtask>
+          <subtask>Test localStorage quota limits and error handling</subtask>
+          <subtask>Test across multiple sessions to verify persistence</subtask>
+          <subtask>Test layer independence thoroughly</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC3.7.3.1">
+      <description>Form remembers last-used severity per layer: System remembers and pre-fills the most recently used severity value (1-10) for each tracking layer (flares, pain, mobility, inflammation) independently. When user places a new marker on a specific layer, the severity slider defaults to their last entry for that layer type.</description>
+      <source>docs/epics.md#Story-3.7.3</source>
+    </criterion>
+    <criterion id="AC3.7.3.2">
+      <description>Last-used notes shown as placeholder (gray text): System displays last-used notes text as gray placeholder text in the notes field, visually distinct from actual entered text. Placeholder provides context without auto-filling the field, allowing user to reference previous entry while typing fresh notes.</description>
+      <source>docs/epics.md#Story-3.7.3</source>
+    </criterion>
+    <criterion id="AC3.7.3.3">
+      <description>User can save immediately to accept defaults: "Save" button is enabled immediately when form loads with defaults, allowing user to complete marker placement with a single tap if default severity is appropriate. No manual input required for quick entry workflow.</description>
+      <source>docs/epics.md#Story-3.7.3</source>
+    </criterion>
+    <criterion id="AC3.7.3.4">
+      <description>User can override defaults for specific markers: User can adjust severity slider or type different notes to override defaults for current marker. Overriding defaults for one marker does not affect future defaults - new value becomes the updated default for subsequent entries.</description>
+      <source>docs/epics.md#Story-3.7.3</source>
+    </criterion>
+    <criterion id="AC3.7.3.5">
+      <description>Placeholder disappears when user starts typing: When user clicks into notes field and begins typing, placeholder text immediately disappears, replaced by user's input. Placeholder reappears only if field is emptied again.</description>
+      <source>docs/epics.md#Story-3.7.3</source>
+    </criterion>
+    <criterion id="AC3.7.3.6">
+      <description>Placeholder NOT saved unless explicitly kept: Empty notes field (showing only placeholder) does NOT save placeholder text as actual notes. Only explicitly typed text or explicit user action to "keep placeholder" results in saved notes. Prevents accidental duplication of notes across markers.</description>
+      <source>docs/epics.md#Story-3.7.3</source>
+    </criterion>
+    <criterion id="AC3.7.3.7">
+      <description>Defaults persist across sessions: Last-used severity and notes for each layer persist in localStorage, surviving app restarts and browser refreshes. User's workflow preferences maintained across sessions without requiring re-entry.</description>
+      <source>docs/epics.md#Story-3.7.3</source>
+    </criterion>
+    <criterion id="AC3.7.3.8">
+      <description>Layer-aware defaults (independent per layer): Pain layer defaults do not affect flare layer defaults, and vice versa. Each tracking layer (flares, pain, mobility, inflammation) maintains separate default values, preventing cross-contamination of unrelated tracking types.</description>
+      <source>docs/epics.md#Story-3.7.3</source>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements - Body Map Enhancements</section>
+        <snippet>FR004: System shall display existing flare markers on the body map with visual indicators for flare status (active, improving, worsening, resolved). FR005: System shall enable users to create a new flare entity with: body location, initial severity (1-10), optional notes, and timestamp.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 3.7 - Body Map UX Enhancements</section>
+        <snippet>Epic 3.7 addresses repetitive data entry through smart defaults. Story 3.7.3 implements layer-aware defaults where last-used severity and notes pre-fill for quick marker placement. Uses localStorage for cross-session persistence with independent defaults per tracking layer (flares, pain, mobility, inflammation).</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Technology Stack and Testing Strategy</section>
+        <snippet>Testing: Jest + RTL for unit and integration tests. IndexedDB mocked with fake-indexeddb. Architecture follows existing Next.js App Router patterns with TypeScript strict typing. Utility functions in lib/utils/ follow established patterns.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-2-marker-preview-and-positioning.md</path>
+        <title>Story 3.7.2 - Marker Preview and Positioning</title>
+        <section>MarkerDetailsForm Component</section>
+        <snippet>Story 3.7.2 creates MarkerDetailsForm component for severity/notes entry after position confirmation. Form appears as modal or inline after user confirms marker position. This story (3.7.3) extends MarkerDetailsForm to load and save layer-specific defaults.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/types/body-mapping.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>BodyMapLocation</symbol>
+        <lines>28-42</lines>
+        <reason>Defines structure for body map locations including severity (1-10) and notes fields that will be defaulted by this story's smart defaults system.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>normalizeCoordinates, denormalizeCoordinates</symbol>
+        <lines>22-51</lines>
+        <reason>Existing coordinate transformation utilities. Smart defaults will work alongside coordinate system established in Story 3.7.1.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-100</lines>
+        <reason>Main body map component. Defines BodyMapViewMode and coordinates marker placement workflow that smart defaults will enhance. Component already supports layer-based tracking.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/RegionDetailView.tsx</path>
+        <kind>component</kind>
+        <symbol>RegionDetailView</symbol>
+        <lines>all</lines>
+        <reason>Region detail view component created in Story 3.7.1. Marker placement in region detail view will use smart defaults from this story.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <react version="19.1.0">UI framework</react>
+        <next version="15.5.4">App framework with App Router</next>
+        <typescript version="5.x">Type safety</typescript>
+        <dexie version="4.2.0">IndexedDB wrapper (not directly used for localStorage, but project standard)</dexie>
+        <uuid version="13.0.0">Unique identifiers</uuid>
+      </node>
+      <testing>
+        <jest version="30.x">Unit test runner</jest>
+        <react-testing-library version="16.x">React component testing</react-testing-library>
+        <fake-indexeddb version="6.2.4">Database mocking</fake-indexeddb>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use localStorage (NOT IndexedDB/Dexie) for layer defaults persistence. Storage key pattern: 'pocket:layerDefaults'</constraint>
+    <constraint>Layer independence: Each tracking layer (flares, pain, mobility, inflammation) maintains completely separate defaults. Changing flare defaults must NOT affect pain defaults.</constraint>
+    <constraint>Integrate with MarkerDetailsForm component created in Story 3.7.2. Extend this component to load defaults on mount.</constraint>
+    <constraint>Follow existing coordinate normalization patterns from src/lib/utils/coordinates.ts. Do not reinvent coordinate handling.</constraint>
+    <constraint>TypeScript strict typing required. Define LayerDefaults interface in src/lib/types/body-mapping.ts following existing patterns.</constraint>
+    <constraint>Placeholder text must be visually distinct (gray, italic) from actual input. User must be able to clearly distinguish placeholder from typed text.</constraint>
+    <constraint>Placeholder text must NOT be saved to database unless user explicitly types it. Empty field with placeholder = no notes saved.</constraint>
+    <constraint>Testing: Jest + React Testing Library. Follow existing test patterns in __tests__ directories. Use fake-indexeddb for any database mocking (though localStorage doesn't need it).</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>LayerDefaults</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface LayerDefaults { flares: { severity: number; notes: string }; pain: { severity: number; notes: string }; mobility: { severity: number; notes: string }; inflammation: { severity: number; notes: string }; }</signature>
+      <path>src/lib/types/body-mapping.ts (NEW - to be added)</path>
+    </interface>
+    <interface>
+      <name>getLayerDefaults</name>
+      <kind>Utility function</kind>
+      <signature>function getLayerDefaults(layer: LayerType): { severity: number; notes: string } | null</signature>
+      <path>src/lib/utils/layer-defaults.ts (NEW file)</path>
+    </interface>
+    <interface>
+      <name>setLayerDefaults</name>
+      <kind>Utility function</kind>
+      <signature>function setLayerDefaults(layer: LayerType, defaults: { severity: number; notes: string }): void</signature>
+      <path>src/lib/utils/layer-defaults.ts (NEW file)</path>
+    </interface>
+    <interface>
+      <name>BodyMapLocation</name>
+      <kind>TypeScript interface (existing)</kind>
+      <signature>interface BodyMapLocation { severity: number; notes?: string; ... }</signature>
+      <path>src/lib/types/body-mapping.ts (EXISTING - lines 28-42)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest 30.x with React Testing Library 16.x for all tests. Unit tests for utility functions in __tests__ directories adjacent to source files. Integration tests for component workflows in component __tests__ folders. Follow existing patterns from src/components/body-mapping/__tests__/ and src/lib/utils/__tests__/. No IndexedDB needed for localStorage testing - use built-in browser localStorage mock.</standards>
+    <locations>
+      <location>src/lib/utils/__tests__/layer-defaults.test.ts - Unit tests for getLayerDefaults and setLayerDefaults</location>
+      <location>src/components/body-mapping/__tests__/MarkerDetailsForm.test.tsx - Integration tests for form with defaults</location>
+    </locations>
+    <ideas>
+      <test ac="AC3.7.3.1, AC3.7.3.8">Test layer-specific default retrieval: Set pain defaults, verify flare defaults are unaffected and return null or default values</test>
+      <test ac="AC3.7.3.2, AC3.7.3.5">Test placeholder behavior: Verify placeholder text appears gray/italic, disappears on typing, reappears when field emptied</test>
+      <test ac="AC3.7.3.3">Test save button enabled with defaults: Form should enable save immediately on mount when defaults are loaded</test>
+      <test ac="AC3.7.3.4">Test override workflow: Change severity from default, submit, verify new value becomes updated default for next marker</test>
+      <test ac="AC3.7.3.6">Test placeholder NOT saved: Submit form with empty notes field (only placeholder showing), verify notes field is null/empty in saved data</test>
+      <test ac="AC3.7.3.7">Test persistence across sessions: Set defaults, reload page/app, verify defaults still present from localStorage</test>
+      <test ac="All">Test first-time user: No defaults exist in localStorage, form should handle gracefully with sensible initial values</test>
+      <test ac="All">Test localStorage quota: Simulate localStorage full, verify error handling and user feedback</test>
+    </ideas>
+  </tests>
+</story-context>

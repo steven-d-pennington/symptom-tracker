@@ -7,7 +7,6 @@ import {
   ReactZoomPanPinchRef,
 } from 'react-zoom-pan-pinch';
 import { ZoomIn, ZoomOut, Home } from 'lucide-react';
-import { FlareMarkers } from './FlareMarkers';
 
 interface BodyMapZoomProps {
   children: React.ReactNode;
@@ -37,28 +36,26 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
   const handleInit = useCallback(
     (ref: ReactZoomPanPinchRef) => {
       apiRef.current = ref;
-      // Manually center the content
+      // Manually calculate center position
       setTimeout(() => {
-        if (ref.setTransform) {
-          // Get the wrapper element size
+        if (ref.setTransform && ref.instance?.wrapperComponent) {
           const wrapperElement = ref.instance.wrapperComponent;
-          if (wrapperElement) {
-            const wrapperWidth = wrapperElement.offsetWidth;
-            const wrapperHeight = wrapperElement.offsetHeight;
+          const wrapperWidth = wrapperElement.offsetWidth;
+          const wrapperHeight = wrapperElement.offsetHeight;
 
-            // SVG is 400x800, at 0.6 scale = 240x480
-            const scaledWidth = 400 * 0.6;
-            const scaledHeight = 800 * 0.6;
+          // SVG is 400x800, at scale 0.45 = 180x360
+          const scale = 0.45;
+          const scaledWidth = 400 * scale;
+          const scaledHeight = 800 * scale;
 
-            // Center it
-            const x = (wrapperWidth - scaledWidth) / 2;
-            const y = (wrapperHeight - scaledHeight) / 2;
+          // Calculate centered position
+          const x = (wrapperWidth - scaledWidth) / 2;
+          const y = (wrapperHeight - scaledHeight) / 2;
 
-            ref.setTransform(x, y, 0.6, 0);
-          }
+          ref.setTransform(x, y, scale, 0, CENTER_EASE);
+          onZoomChange?.(scale);
         }
-      }, 50);
-      onZoomChange?.(0.6);
+      }, 100);
     },
     [onZoomChange]
   );
@@ -79,7 +76,7 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
   return (
     <div className="relative w-full h-full">
       <TransformWrapper
-        initialScale={0.6}
+        initialScale={0.45}
         initialPositionX={0}
         initialPositionY={0}
         minScale={0.3}
@@ -112,8 +109,20 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
           };
 
           const handleReset = () => {
-            resetTransform();
-            scheduleRecenter();
+            // Reset to initial centered position
+            if (apiRef.current?.setTransform && apiRef.current?.instance?.wrapperComponent) {
+              const wrapperElement = apiRef.current.instance.wrapperComponent;
+              const wrapperWidth = wrapperElement.offsetWidth;
+              const wrapperHeight = wrapperElement.offsetHeight;
+              const scale = 0.45;
+              const scaledWidth = 400 * scale;
+              const scaledHeight = 800 * scale;
+              const x = (wrapperWidth - scaledWidth) / 2;
+              const y = (wrapperHeight - scaledHeight) / 2;
+              apiRef.current.setTransform(x, y, scale, 200, CENTER_EASE);
+            } else {
+              resetTransform();
+            }
           };
 
           // Keyboard shortcuts
@@ -193,7 +202,18 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
                   break;
                 case "Escape":
                   event.preventDefault();
-                  handleReset();
+                  // Reset to initial centered position
+                  if (apiRef.current?.setTransform && apiRef.current?.instance?.wrapperComponent) {
+                    const wrapperElement = apiRef.current.instance.wrapperComponent;
+                    const wrapperWidth = wrapperElement.offsetWidth;
+                    const wrapperHeight = wrapperElement.offsetHeight;
+                    const scale = 0.45;
+                    const scaledWidth = 400 * scale;
+                    const scaledHeight = 800 * scale;
+                    const x = (wrapperWidth - scaledWidth) / 2;
+                    const y = (wrapperHeight - scaledHeight) / 2;
+                    apiRef.current.setTransform(x, y, scale, 200, CENTER_EASE);
+                  }
                   setShowHelp(false);
                   break;
                 case "?":
@@ -210,17 +230,14 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
           return (
             <>
               <TransformComponent
-                wrapperClass="!w-full !h-full !flex !items-center !justify-center"
+                wrapperClass="!w-full !h-full"
                 contentClass="cursor-grab active:cursor-grabbing select-none"
-                wrapperStyle={{ width: '100%', height: '100%' }}
+                wrapperStyle={{
+                  width: '100%',
+                  height: '100%'
+                }}
               >
-                <div
-                  className="flex items-center justify-center w-full h-full"
-                  data-testid="transform-wrapper"
-                >
-                  {children}
-                  <FlareMarkers viewType={viewType} zoomLevel={currentZoom} userId={userId} />
-                </div>
+                {children}
               </TransformComponent>
 
               <div className="absolute top-4 right-4 flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">

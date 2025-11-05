@@ -1,0 +1,252 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.7</epicId>
+    <storyId>3.7.2</storyId>
+    <title>Marker Preview and Positioning</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-7-2-marker-preview-and-positioning.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user with shaky hands or motor control challenges</asA>
+    <iWant>to preview and adjust marker position before confirming</iWant>
+    <soThat>I can place markers exactly where I intend despite motor control challenges</soThat>
+    <tasks>
+      - Task 1: Create MarkerPreview component (AC: #3.7.2.1, #3.7.2.5)
+        - Create new file src/components/body-mapping/MarkerPreview.tsx
+        - Define TypeScript interface for MarkerPreviewProps
+        - Implement translucent marker visual styling (outline-based, 50% opacity)
+        - Add optional pulse animation for preview marker visibility
+
+      - Task 2: Implement tap-to-position workflow (AC: #3.7.2.2, #3.7.2.3)
+        - Add tap event handler to region surface
+        - Capture tap coordinates and convert to normalized format
+        - Update preview marker position state on each tap
+        - Prevent event propagation conflicts
+
+      - Task 3: Add Confirm Position button (AC: #3.7.2.4, #3.7.2.8)
+        - Create floating action button component for "Confirm Position"
+        - Ensure button meets 44x44px minimum touch target size
+        - Add ARIA labels for screen reader accessibility
+
+      - Task 4: Add Cancel functionality (AC: #3.7.2.7, #3.7.2.8)
+        - Add "Cancel" or "X" button alongside Confirm button
+        - Implement cancel handler to clear preview state
+        - Add keyboard shortcut (ESC key) for cancel action
+
+      - Task 5: Create marker details entry form (AC: #3.7.2.6)
+        - Create MarkerDetailsForm component
+        - Add severity slider (1-10 scale) with visual feedback
+        - Add optional notes text area
+        - Add timestamp field (auto-populated, editable)
+
+      - Task 6: Integrate with existing BodyMapViewer and RegionDetailView (AC: All)
+        - Update BodyMapViewer to support preview mode state
+        - Update RegionDetailView to support marker preview workflow
+        - Handle state transitions: normal → preview → confirm → form → saved
+
+      - Task 7: Accessibility and testing (AC: #3.7.2.8, All)
+        - Verify all touch targets meet 44x44px minimum
+        - Add keyboard navigation (Tab to buttons, Enter to confirm, ESC to cancel)
+        - Write unit tests for MarkerPreview component
+        - Test on mobile devices (iOS and Android)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="3.7.2.1">Tapping region surface shows translucent preview marker at tapped location, providing visual feedback before committing to placement</criterion>
+    <criterion id="3.7.2.2">Tapping elsewhere on region moves preview (no drag required), making positioning accessible to users with limited fine motor control</criterion>
+    <criterion id="3.7.2.3">Can tap multiple times to adjust position before confirming, with each tap updating the preview location until user explicitly confirms</criterion>
+    <criterion id="3.7.2.4">"Confirm Position" button explicitly locks marker position and proceeds to detail entry form</criterion>
+    <criterion id="3.7.2.5">Preview marker visually distinct from final markers using outlined/translucent appearance</criterion>
+    <criterion id="3.7.2.6">After confirm, form appears for severity/notes entry (1-10 slider, notes text field, timestamp)</criterion>
+    <criterion id="3.7.2.7">Can cancel to remove preview and try again without saving any data</criterion>
+    <criterion id="3.7.2.8">All interactive elements meet WCAG 2.1 Level AA touch target size (minimum 44x44px)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3.7: Body Map UX Enhancements - Region Focus &amp; Full-Screen</title>
+        <section>Story 3.7.2: Marker Preview and Positioning</section>
+        <snippet>Enable users with motor control challenges to preview and adjust marker position before confirming. Tap-only interaction (no drag required). Sequential flow: position → confirm → details form.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>symptom-tracker Product Requirements Document</title>
+        <section>FR004: Display flare markers on body map</section>
+        <snippet>System shall display existing flare markers on the body map with visual indicators for flare status (active, improving, worsening, resolved)</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-1-region-detail-view-infrastructure.md</path>
+        <title>Story 3.7.1: Region Detail View Infrastructure</title>
+        <section>Completion Notes List</section>
+        <snippet>Coordinate System Working: Region-relative coordinate system (0-1 normalized) implemented with proper transformations between full body and region views. RegionDetailView component fills viewport for maximum precision.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/components/body-mapping/RegionDetailView.tsx</path>
+        <kind>component</kind>
+        <symbol>RegionDetailView</symbol>
+        <lines>1-223</lines>
+        <reason>Primary integration point for marker preview in region detail view. Existing component that handles isolated region rendering and marker placement workflow.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-300</lines>
+        <reason>Manages view mode state and coordinates marker preview in full-body view. Needs extension to support preview mode state management.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>normalizeCoordinates, denormalizeCoordinates, transformRegionToFullBody, transformFullBodyToRegion</symbol>
+        <lines>1-150</lines>
+        <reason>Coordinate normalization and transformation utilities (0-1 scale). Reuse for preview marker positioning across views. Critical for accurate marker placement.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/SymptomMarker.tsx</path>
+        <kind>component</kind>
+        <symbol>SymptomMarker</symbol>
+        <lines>all</lines>
+        <reason>Existing marker component for reference. Preview marker should follow similar visual patterns but with distinct styling (translucent, outlined).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/types/body-mapping.ts</path>
+        <kind>types</kind>
+        <symbol>NormalizedCoordinates, BodyMapLocation</symbol>
+        <lines>all</lines>
+        <reason>Type definitions for coordinates and body map data structures. Extend with MarkerPreviewState interface.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <framework>React 19.1.0</framework>
+      <framework>Next.js 15.5.4</framework>
+      <framework>TypeScript 5</framework>
+      <library name="lucide-react" version="^0.544.0" purpose="Icon components for confirm/cancel buttons"/>
+      <library name="@radix-ui/react-tooltip" version="^1.2.8" purpose="Accessible tooltip components for UI hints"/>
+      <testing name="@testing-library/react" version="^16.3.0" purpose="Component testing"/>
+      <testing name="@testing-library/jest-dom" version="^6.9.1" purpose="DOM assertions"/>
+      <testing name="@testing-library/user-event" version="^14.6.1" purpose="User interaction simulation"/>
+      <testing name="jest" version="^30.2.0" purpose="Test framework"/>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Component must follow existing pattern in src/components/body-mapping/ directory</constraint>
+    <constraint>Reuse existing NormalizedCoordinates type from @/lib/types/body-mapping</constraint>
+    <constraint>Extend coordinate utilities rather than duplicating logic</constraint>
+    <constraint>Maintain consistency with existing component naming conventions (MarkerPreview.tsx, MarkerDetailsForm.tsx)</constraint>
+    <constraint>All touch targets must meet WCAG 2.1 Level AA minimum of 44x44 CSS pixels</constraint>
+    <constraint>Preview marker styling must be visually distinct: 50% opacity, outlined border (2-3px), optional pulse animation</constraint>
+    <constraint>Coordinate transformations must use existing normalizeCoordinates and denormalizeCoordinates functions</constraint>
+    <constraint>ESC key handler must not conflict with existing ESC handler from Story 3.7.1 (region back navigation)</constraint>
+    <constraint>State transitions must follow: normal → preview → confirm → form → saved</constraint>
+    <constraint>Backward compatibility with existing BodyMapViewer API required</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>MarkerPreviewProps</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface MarkerPreviewProps {
+  coordinates: NormalizedCoordinates | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isActive: boolean;
+}
+      </signature>
+      <path>src/components/body-mapping/MarkerPreview.tsx (NEW)</path>
+    </interface>
+
+    <interface>
+      <name>MarkerDetailsFormProps</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface MarkerDetailsFormProps {
+  coordinates: NormalizedCoordinates;
+  regionId: string;
+  onSubmit: (data: { severity: number; notes: string; timestamp: Date }) => void;
+  onCancel: () => void;
+}
+      </signature>
+      <path>src/components/body-mapping/MarkerDetailsForm.tsx (NEW)</path>
+    </interface>
+
+    <interface>
+      <name>MarkerPreviewState</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface MarkerPreviewState {
+  isActive: boolean;
+  coordinates: NormalizedCoordinates | null;
+  regionId: string | null;
+}
+      </signature>
+      <path>src/components/body-mapping/BodyMapViewer.tsx (EXTEND)</path>
+    </interface>
+
+    <interface>
+      <name>normalizeCoordinates</name>
+      <kind>function</kind>
+      <signature>
+export const normalizeCoordinates = (
+  point: SvgCoordinates,
+  bounds: RegionBounds
+): NormalizedCoordinates
+      </signature>
+      <path>src/lib/utils/coordinates.ts (REUSE)</path>
+    </interface>
+
+    <interface>
+      <name>denormalizeCoordinates</name>
+      <kind>function</kind>
+      <signature>
+export const denormalizeCoordinates = (
+  coordinate: NormalizedCoordinates,
+  bounds: RegionBounds
+): SvgCoordinates
+      </signature>
+      <path>src/lib/utils/coordinates.ts (REUSE)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Tests use Jest with React Testing Library (@testing-library/react). Unit tests located in __tests__ directories or co-located .test.tsx files. Integration tests verify complete workflows. Follow existing patterns in src/components/body-mapping/__tests__/ and src/lib/utils/__tests__/. Use @testing-library/user-event for simulating user interactions. Accessibility testing uses jest-dom matchers for ARIA attributes and focus management.
+    </standards>
+
+    <locations>
+      - src/components/body-mapping/__tests__/
+      - src/components/body-mapping/*.test.tsx
+      - src/lib/utils/__tests__/
+    </locations>
+
+    <ideas>
+      <test ac="3.7.2.1">Test that tapping region surface displays preview marker at correct coordinates</test>
+      <test ac="3.7.2.2">Test that subsequent taps move preview marker to new positions</test>
+      <test ac="3.7.2.3">Test multiple rapid taps update preview position without lag</test>
+      <test ac="3.7.2.4">Test confirm button locks coordinates and triggers form display</test>
+      <test ac="3.7.2.5">Test preview marker has distinct visual styling (opacity, outline)</test>
+      <test ac="3.7.2.6">Test form appears with severity slider, notes field, and timestamp after confirm</test>
+      <test ac="3.7.2.7">Test cancel button clears preview state and returns to normal view</test>
+      <test ac="3.7.2.8">Test all interactive elements meet 44x44px touch target size</test>
+      <test>Test ESC key triggers cancel action</test>
+      <test>Test Enter key on confirm button locks position</test>
+      <test>Test coordinate accuracy across transformations (preview → confirmed → saved)</test>
+      <test>Test integration with RegionDetailView component</test>
+      <test>Test integration with BodyMapViewer component</test>
+      <test>Test state transitions: normal → preview → confirm → form → saved</test>
+      <test>Test ARIA labels for screen reader accessibility</test>
+      <test>Test keyboard navigation (Tab to buttons)</test>
+    </ideas>
+  </tests>
+</story-context>

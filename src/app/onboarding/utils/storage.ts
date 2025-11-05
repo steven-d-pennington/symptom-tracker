@@ -210,23 +210,47 @@ export const persistUserSettings = async (data: OnboardingData) => {
     const { userRepository } = await import("@/lib/repositories/userRepository");
     const { initializeUserDefaults } = await import("@/lib/services/userInitialization");
 
-    // Create user record in IndexedDB with all onboarding data
-    const userId = await userRepository.create({
-      name: data.userProfile.name,
-      email: data.userProfile.email,
-      preferences: {
-        theme: "system",
-        notifications: {
-          remindersEnabled: data.trackingPreferences.notificationsEnabled,
-          reminderTime: data.trackingPreferences.reminderTime,
-        },
-        privacy: data.privacySettings,
-        exportFormat: "json",
-        symptomFilterPresets: [],
-      },
-    });
+    // Check if user already exists (prevents duplicate creation in React Strict Mode)
+    const existingUser = await userRepository.getCurrentUser();
+    let userId: string;
 
-    console.log("[Onboarding] User created in IndexedDB:", userId);
+    if (existingUser) {
+      console.log("[Onboarding] User already exists in IndexedDB:", existingUser.id);
+      userId = existingUser.id;
+
+      // Update existing user with onboarding data
+      await userRepository.update(userId, {
+        name: data.userProfile.name,
+        email: data.userProfile.email,
+        preferences: {
+          ...existingUser.preferences,
+          notifications: {
+            remindersEnabled: data.trackingPreferences.notificationsEnabled,
+            reminderTime: data.trackingPreferences.reminderTime,
+          },
+          privacy: data.privacySettings,
+        },
+      });
+      console.log("[Onboarding] Updated existing user preferences");
+    } else {
+      // Create user record in IndexedDB with all onboarding data
+      userId = await userRepository.create({
+        name: data.userProfile.name,
+        email: data.userProfile.email,
+        preferences: {
+          theme: "system",
+          notifications: {
+            remindersEnabled: data.trackingPreferences.notificationsEnabled,
+            reminderTime: data.trackingPreferences.reminderTime,
+          },
+          privacy: data.privacySettings,
+          exportFormat: "json",
+          symptomFilterPresets: [],
+        },
+      });
+
+      console.log("[Onboarding] User created in IndexedDB:", userId);
+    }
 
     // Story 3.6.1 - AC3.6.1.10: Initialize with selections if provided
     if (data.selections) {

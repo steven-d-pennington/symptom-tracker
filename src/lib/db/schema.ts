@@ -374,6 +374,42 @@ export interface FlareEventRecord {
   userId: string;
 }
 
+/**
+ * Flare body location record for multi-location flare tracking (Story 3.7.7).
+ * Implements "Model B" architecture: one flare episode with multiple body locations.
+ * Each record represents a single body location affected during a flare episode.
+ *
+ * References:
+ * - ADR-003: Append-only event history pattern (events are immutable)
+ * - Story 3.7.4: Full-screen mode UX allowing multiple marker placement
+ * - Story 3.7.7: Multi-location persistence implementation
+ */
+export interface FlareBodyLocationRecord {
+  /** UUID v4 primary key */
+  id: string;
+
+  /** Foreign key to flares.id */
+  flareId: string;
+
+  /** Body region ID (e.g., "left-shoulder", "right-knee") */
+  bodyRegionId: string;
+
+  /** Normalized coordinates (0-1 scale) within the body region */
+  coordinates: {
+    x: number;
+    y: number;
+  };
+
+  /** User ID for multi-user support */
+  userId: string;
+
+  /** Unix timestamp when record was created */
+  createdAt: number;
+
+  /** Unix timestamp when record was last updated */
+  updatedAt: number;
+}
+
 // Food Logging Models (Epic E1)
 
 export interface FoodRecord {

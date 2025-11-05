@@ -82,3 +82,72 @@ export const getRegionBounds = (
     return null;
   }
 };
+
+// Task 5.1: Transform coordinates from region view to full body view
+export const transformRegionToFullBody = (
+  regionCoords: NormalizedCoordinates,
+  regionId: string,
+  fullBodySvgElement: SVGSVGElement | null
+): NormalizedCoordinates | null => {
+  // Get the region bounds in the full body SVG
+  const regionBounds = getRegionBounds(fullBodySvgElement, regionId);
+  if (!regionBounds) {
+    return null;
+  }
+
+  // Get the full body SVG viewBox
+  const viewBox = fullBodySvgElement?.viewBox.baseVal;
+  if (!viewBox) {
+    return null;
+  }
+
+  // Convert region-normalized coords to absolute SVG coordinates
+  const absoluteX = regionBounds.x + regionCoords.x * regionBounds.width;
+  const absoluteY = regionBounds.y + regionCoords.y * regionBounds.height;
+
+  // Normalize to full body viewBox
+  return {
+    x: clamp((absoluteX - viewBox.x) / viewBox.width, 0, 1),
+    y: clamp((absoluteY - viewBox.y) / viewBox.height, 0, 1),
+  };
+};
+
+// Task 5.2: Transform coordinates from full body view to region view
+export const transformFullBodyToRegion = (
+  fullBodyCoords: NormalizedCoordinates,
+  regionId: string,
+  fullBodySvgElement: SVGSVGElement | null
+): NormalizedCoordinates | null => {
+  // Get the region bounds in the full body SVG
+  const regionBounds = getRegionBounds(fullBodySvgElement, regionId);
+  if (!regionBounds) {
+    return null;
+  }
+
+  // Get the full body SVG viewBox
+  const viewBox = fullBodySvgElement?.viewBox.baseVal;
+  if (!viewBox) {
+    return null;
+  }
+
+  // Convert full-body normalized coords to absolute SVG coordinates
+  const absoluteX = viewBox.x + fullBodyCoords.x * viewBox.width;
+  const absoluteY = viewBox.y + fullBodyCoords.y * viewBox.height;
+
+  // Check if the point is within the region bounds
+  if (
+    absoluteX < regionBounds.x ||
+    absoluteX > regionBounds.x + regionBounds.width ||
+    absoluteY < regionBounds.y ||
+    absoluteY > regionBounds.y + regionBounds.height
+  ) {
+    // Point is outside the region
+    return null;
+  }
+
+  // Normalize to region bounds
+  return {
+    x: clamp((absoluteX - regionBounds.x) / regionBounds.width, 0, 1),
+    y: clamp((absoluteY - regionBounds.y) / regionBounds.height, 0, 1),
+  };
+};

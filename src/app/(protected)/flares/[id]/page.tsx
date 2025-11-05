@@ -121,7 +121,30 @@ export default function FlareDetailPage() {
               <span className="text-gray-600">Started:</span>
               <span className="ml-2">{new Date(flare.startDate).toLocaleDateString()}</span>
             </div>
-            {/* More flare details... */}
+
+            {/* Story 3.7.5: Display all marked body locations */}
+            {flare.bodyLocations && flare.bodyLocations.length > 0 && (
+              <div className="mb-4">
+                <span className="text-gray-600 block mb-2">Affected Locations:</span>
+                <div className="ml-2 space-y-2">
+                  {flare.bodyLocations.map((location, index) => (
+                    <div key={location.id} className="flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">
+                        {index + 1}
+                      </span>
+                      <span className="capitalize">
+                        {location.bodyRegionId.replace(/-/g, ' ')}
+                      </span>
+                      {location.coordinates && (
+                        <span className="text-xs text-gray-500 font-mono">
+                          ({location.coordinates.x.toFixed(2)}, {location.coordinates.y.toFixed(2)})
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons (hidden for resolved flares) */}

@@ -16,19 +16,19 @@ import { medicationRepository } from "@/lib/repositories/medicationRepository";
 import { medicationEventRepository } from "@/lib/repositories/medicationEventRepository";
 import { toast } from "@/components/common/Toast";
 
+const mockRouter = {
+  push: jest.fn(),
+  back: jest.fn(),
+};
+
 // Mock dependencies
 jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
+  useRouter: () => mockRouter,
 }));
 
 jest.mock("@/lib/repositories/medicationRepository");
 jest.mock("@/lib/repositories/medicationEventRepository");
 jest.mock("@/components/common/Toast");
-
-const mockRouter = {
-  push: jest.fn(),
-  back: jest.fn(),
-};
 
 const mockMedications = [
   {
@@ -61,7 +61,6 @@ const mockMedications = [
 describe("MedicationQuickLogForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
     (medicationRepository.getActive as jest.Mock).mockResolvedValue(mockMedications);
     (medicationEventRepository.findByMedicationId as jest.Mock).mockResolvedValue([]);
     (medicationEventRepository.getRecentNotes as jest.Mock).mockResolvedValue([]);
@@ -296,6 +295,36 @@ describe("MedicationQuickLogForm", () => {
       render(<MedicationQuickLogForm userId="user-1" />);
 
       expect(screen.getByText(/Loading medications/i)).toBeInTheDocument();
+    });
+
+    // Story 3.8.1 - Bug #1: Test for empty state rendering fix
+    it("should show empty state when no medications are available", async () => {
+      (medicationRepository.getActive as jest.Mock).mockResolvedValue([]);
+
+      render(<MedicationQuickLogForm userId="user-1" />);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Loading medications/i)).not.toBeInTheDocument();
+      });
+
+      // Should show empty state message
+      expect(screen.getByText("No Medications Available")).toBeInTheDocument();
+      expect(screen.getByText(/You haven't added any medications yet/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Go to Settings/i })).toBeInTheDocument();
+    });
+
+    it("should not show empty state when medications are available", async () => {
+      render(<MedicationQuickLogForm userId="user-1" />);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Loading medications/i)).not.toBeInTheDocument();
+      });
+
+      // Should NOT show empty state
+      expect(screen.queryByText("No Medications Available")).not.toBeInTheDocument();
+
+      // Should show medication categories
+      expect(screen.getByText(/Ibuprofen/i)).toBeInTheDocument();
     });
 
     it("should show error toast when loading fails", async () => {

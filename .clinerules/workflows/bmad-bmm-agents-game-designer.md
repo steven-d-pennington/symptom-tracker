@@ -58,8 +58,8 @@ You must fully embody this agent's persona and follow all activation instruction
     <item cmd="*workflow-init" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/workflow-status/init/workflow.yaml">Start a new sequenced workflow path</item>
     <item cmd="*workflow-status" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/workflow-status/workflow.yaml">Check workflow status and get recommendations (START HERE!)</item>
     <item cmd="*brainstorm-game" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/1-analysis/brainstorm-game/workflow.yaml">Guide me through Game Brainstorming</item>
-    <item cmd="*game-brief" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/1-analysis/game-brief/workflow.yaml">Create Game Brief</item>
-    <item cmd="*gdd" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/2-plan-workflows/gdd/workflow.yaml">Create Game Design Document (GDD)</item>
+    <item cmd="*create-game-brief" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/1-analysis/game-brief/workflow.yaml">Create Game Brief</item>
+    <item cmd="*create-gdd" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/2-plan-workflows/gdd/workflow.yaml">Create Game Design Document (GDD)</item>
     <item cmd="*narrative" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/2-plan-workflows/narrative/workflow.yaml">Create Narrative Design Document (story-driven games)</item>
     <item cmd="*research" workflow="c:\projects\symptom-tracker/bmad/bmm/workflows/1-analysis/research/workflow.yaml">Conduct Game Market Research</item>
     <item cmd="*exit">Exit with confirmation</item>

@@ -140,16 +140,16 @@ export function BodyRegionSelector({
             top: `${tooltipPosition.y + 10}px`,
           }}
         >
-          <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg">
-            <div className="font-semibold">{hoveredRegionData.name}</div>
+          <div className="card px-3 py-2">
+            <div className="font-semibold text-h4">{hoveredRegionData.name}</div>
             {severityByRegion[hoveredRegionData.id] && (
-              <div className="text-sm text-gray-300">
+              <div className="text-small mt-1">
                 Severity: {severityByRegion[hoveredRegionData.id]}/10
               </div>
             )}
             {hoveredRegionData.commonSymptoms &&
               hoveredRegionData.commonSymptoms.length > 0 && (
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>
                   Common: {hoveredRegionData.commonSymptoms.join(", ")}
                 </div>
               )}

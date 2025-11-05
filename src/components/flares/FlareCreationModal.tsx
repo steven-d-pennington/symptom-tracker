@@ -31,8 +31,9 @@ interface FlareCreationModalProps {
   /**
    * Location data captured from the body map.
    * Save is disabled until a selection is provided.
+   * Story 3.7.4: Can be single selection or array for multiple locations (Model B - one flare with multiple locations)
    */
-  selection: FlareCreationSelection | null;
+  selection: FlareCreationSelection | FlareCreationSelection[] | null;
   /**
    * Optional override for persistence logic.
    * Defaults to flareRepository.createFlare when not provided.
@@ -44,7 +45,7 @@ interface FlareCreationModalProps {
     selection: FlareCreationSelection;
   }) => Promise<FlareRecord | void>;
   /** Invoked after a successful save with the created flare record */
-  onCreated?: (flare: FlareRecord) => void;
+  onCreated?: (flare: FlareRecord, stayInRegion?: boolean) => void;
 }
 
 const MAX_NOTES_LENGTH = 500;
@@ -93,15 +94,22 @@ export function FlareCreationModal({
   const [timestampValue, setTimestampValue] = useState<string>(formatDateTimeLocal(new Date()));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [submitAction, setSubmitAction] = useState<'save' | 'save-and-add-more'>('save');
 
   // Internal body map selection state (used when no external selection provided)
   const [internalSelection, setInternalSelection] = useState<FlareCreationSelection | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<"front" | "back" | "left" | "right">("front");
 
-  // Use external selection if provided, otherwise use internal selection
-  const effectiveSelection = selection || internalSelection;
-  const hasSelection = Boolean(effectiveSelection?.bodyRegionId && effectiveSelection?.coordinates);
+  // Story 3.7.4: Normalize selection to always work with array
+  const selectionsArray = useMemo(() => {
+    if (!selection) {
+      return internalSelection ? [internalSelection] : [];
+    }
+    return Array.isArray(selection) ? selection : [selection];
+  }, [selection, internalSelection]);
+
+  const hasSelection = selectionsArray.length > 0;
 
   useEffect(() => {
     if (!isOpen) {
@@ -140,30 +148,42 @@ export function FlareCreationModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const regionLabel = useMemo(() => {
-    if (!effectiveSelection?.bodyRegionId) {
+  // Story 3.7.4: Generate label for multiple locations
+  const locationsSummary = useMemo(() => {
+    if (selectionsArray.length === 0) {
       return "Select a region on the body map";
     }
-    if (effectiveSelection.bodyRegionName) {
-      return effectiveSelection.bodyRegionName;
+    if (selectionsArray.length === 1) {
+      const sel = selectionsArray[0];
+      return sel.bodyRegionName || sel.bodyRegionId.replace(/-/g, " ");
     }
-    return effectiveSelection.bodyRegionId.replace(/-/g, " ");
-  }, [effectiveSelection]);
+    return `${selectionsArray.length} locations marked`;
+  }, [selectionsArray]);
 
   // Internal body map handlers
   const handleRegionSelect = (regionId: string) => {
     setSelectedRegion(regionId);
   };
 
-  const handleCoordinateMark = (regionId: string, coordinates: { x: number; y: number }) => {
+  const handleCoordinateMark = (
+    regionId: string,
+    coordinates: { x: number; y: number },
+    details?: { severity: number; notes: string; timestamp: Date }
+  ) => {
     const regionName = regionId.replace(/-/g, ' ');
-    
+
     setInternalSelection({
       bodyRegionId: regionId,
       bodyRegionName: regionName,
       coordinates,
     });
-    
+
+    // Story 3.7.2: In flare creation, details are not used
+    // The marker preview is just for positioning - severity/notes are entered in this modal
+    if (details) {
+      console.log('Marker details received (ignored for flare creation):', details);
+    }
+
     // Also select the region for consistency
     setSelectedRegion(regionId);
   };
@@ -189,6 +209,13 @@ export function FlareCreationModal({
     selection: FlareCreationSelection;
   }): Promise<FlareRecord> => {
     const trimmedNotes = payload.notes?.trim();
+
+    // Story 3.7.7: Map all selections to bodyLocations array
+    const bodyLocations = selectionsArray.map(sel => ({
+      bodyRegionId: sel.bodyRegionId,
+      coordinates: sel.coordinates,
+    }));
+
     const createPayload: CreateFlareInput = {
       bodyRegionId: payload.selection.bodyRegionId,
       coordinates: payload.selection.coordinates,
@@ -198,6 +225,7 @@ export function FlareCreationModal({
       createdAt: payload.timestamp,
       updatedAt: payload.timestamp,
       initialEventNotes: trimmedNotes && trimmedNotes.length > 0 ? trimmedNotes : undefined,
+      bodyLocations, // Story 3.7.7: Pass all marked locations
     };
 
     return flareRepository.createFlare(userId, createPayload);
@@ -207,7 +235,7 @@ export function FlareCreationModal({
     event.preventDefault();
     setErrorMessage(null);
 
-    if (!hasSelection || !effectiveSelection) {
+    if (!hasSelection || selectionsArray.length === 0) {
       setErrorMessage("Body location not provided. Please tap a region on the body map first.");
       return;
     }
@@ -222,11 +250,14 @@ export function FlareCreationModal({
     try {
       const trimmedNotes = notes.trim();
       const saveHandler = onSave ?? defaultSave;
+
+      // Story 3.7.7: Create flare with all marked body locations
+      const primarySelection = selectionsArray[0];
       const result = await saveHandler({
         timestamp,
         severity,
         notes: trimmedNotes.length > 0 ? trimmedNotes : undefined,
-        selection: effectiveSelection!,
+        selection: primarySelection,
       });
 
       const createdFlare: FlareRecord | undefined =
@@ -234,8 +265,11 @@ export function FlareCreationModal({
 
       if (createdFlare) {
         // Show success toast with action buttons
+        const locationsText = selectionsArray.length === 1
+          ? (primarySelection.bodyRegionName || primarySelection.bodyRegionId)
+          : `${selectionsArray.length} locations`;
         toast.success("Flare created successfully", {
-          description: `Flare logged in ${effectiveSelection?.bodyRegionName || effectiveSelection?.bodyRegionId || 'selected area'}`,
+          description: `Flare logged in ${locationsText}`,
           actions: [
             {
               label: "View Details",
@@ -273,7 +307,7 @@ export function FlareCreationModal({
             })
           );
         }
-        onCreated?.(createdFlare);
+        onCreated?.(createdFlare, submitAction === 'save-and-add-more');
       }
 
       onClose();
@@ -327,22 +361,23 @@ export function FlareCreationModal({
           aria-modal="true"
           aria-labelledby="flare-creation-title"
           aria-describedby="flare-creation-description"
-          className="relative w-full max-w-xl max-h-[90vh] rounded-2xl bg-white shadow-xl focus:outline-none flex flex-col"
+          className="card relative w-full max-w-xl max-h-[90vh] focus:outline-none flex flex-col"
+          style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-xl)' }}
         >
           <form id="flare-creation-form" onSubmit={handleSubmit} className="flex flex-col h-full min-h-0" noValidate>
-            <header className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-5">
+            <header className="flex items-start justify-between gap-4 px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
               <div>
-                <h2 id="flare-creation-title" className="text-xl font-semibold text-gray-900">
+                <h2 id="flare-creation-title" className="text-h2">
                   Create New Flare
                 </h2>
-                <p id="flare-creation-description" className="mt-1 text-sm text-gray-600">
+                <p id="flare-creation-description" className="mt-1 text-small">
                   {selection ? "Confirm details for the flare you just marked on the body map." : "Select a location on the body map and confirm flare details."}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-transparent p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="icon-btn"
                 aria-label="Close"
                 disabled={isSaving}
               >
@@ -352,17 +387,17 @@ export function FlareCreationModal({
 
             {/* Body Map Selection (only shown when no external selection provided) */}
             {!selection && (
-              <div className="border-b border-gray-200 px-6 py-4 flex-shrink-0">
+              <div className="px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900">Select Body Location</h3>
+                  <h3 className="text-h3">Select Body Location</h3>
                   <BodyViewSwitcher
                     currentView={currentView}
                     onViewChange={setCurrentView}
                   />
                 </div>
-                <div className="h-[300px] bg-gray-50 rounded-lg mb-3 overflow-visible relative">
+                <div className="h-[300px] rounded-lg mb-3 overflow-visible relative" style={{ backgroundColor: 'var(--muted)' }}>
                   <BodyMapViewer
-                    key={`${currentView}-${isOpen}`}
+                    key={currentView}
                     view={currentView}
                     userId={userId}
                     selectedRegion={selectedRegion || undefined}
@@ -374,28 +409,34 @@ export function FlareCreationModal({
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <BodyMapLegend />
-                  <p className="text-xs text-gray-500">💡 Click region, then click again to mark exact location</p>
+                  <p className="text-tiny">💡 Click region, then click again to mark exact location</p>
                 </div>
               </div>
             )}
 
             <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
-              <section className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                <p className="text-sm font-medium text-gray-700">Body Location</p>
-                <p className="mt-1 text-base font-semibold text-gray-900">
-                  {regionLabel}
+              <section className="card px-4 py-3" style={{ backgroundColor: 'var(--muted)' }}>
+                <p className="text-small font-medium">
+                  Body Location{selectionsArray.length > 1 ? 's' : ''}
                 </p>
-                {effectiveSelection?.coordinates ? (
-                  <p className="mt-1 text-xs text-gray-600">
-                    Coordinates:{" "}
-                    <strong>
-                      {formatPercentage(effectiveSelection.coordinates.x)}, {formatPercentage(effectiveSelection.coordinates.y)}
-                    </strong>{" "}
-                    (normalized within the selected region)
-                  </p>
+                <p className="mt-1 text-h4">
+                  {locationsSummary}
+                </p>
+                {selectionsArray.length > 0 ? (
+                  <div className="mt-2 space-y-1">
+                    {selectionsArray.map((sel, index) => (
+                      <div key={`${sel.bodyRegionId}-${index}`} className="text-tiny">
+                        {index + 1}. <strong>{sel.bodyRegionName || sel.bodyRegionId.replace(/-/g, ' ')}</strong>
+                        {' - '}
+                        <span className="font-mono">
+                          ({formatPercentage(sel.coordinates.x)}, {formatPercentage(sel.coordinates.y)})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Waiting for precise coordinates&hellip;
+                  <p className="mt-1 text-tiny" style={{ color: 'var(--text-muted)' }}>
+                    Waiting for body location selection&hellip;
                   </p>
                 )}
               </section>
@@ -403,13 +444,13 @@ export function FlareCreationModal({
               <section>
                 <label
                   htmlFor="flare-severity"
-                  className="mb-2 block text-sm font-medium text-gray-700"
+                  className="mb-2 block text-small font-medium"
                 >
-                  Initial severity <span className="text-red-500">*</span>
+                  Initial severity <span style={{ color: 'var(--error)' }}>*</span>
                 </label>
 
-                <div className="rounded-lg border border-gray-200 px-4 py-3">
-                  <div className="flex items-center justify-between text-xs uppercase tracking-wide text-gray-500">
+                <div className="card px-4 py-3">
+                  <div className="flex items-center justify-between text-tiny">
                     <span>1 · Minimal</span>
                     <span>10 · Excruciating</span>
                   </div>
@@ -422,14 +463,15 @@ export function FlareCreationModal({
                       step={1}
                       value={severity}
                       onChange={(event) => setSeverity(Number(event.target.value))}
-                      className="flex-1 accent-red-500"
+                      className="flex-1"
+                      style={{ accentColor: 'var(--error)' }}
                       aria-valuemin={1}
                       aria-valuemax={10}
                       aria-valuenow={severity}
                     />
-                    <div className="flex min-w-[88px] flex-col items-center rounded-md bg-red-50 px-3 py-2">
-                      <span className="text-lg font-semibold text-red-600">{severity}/10</span>
-                      <span className="text-[11px] font-medium uppercase tracking-wide text-red-500">
+                    <div className="flex min-w-[88px] flex-col items-center rounded-md px-3 py-2" style={{ backgroundColor: '#FEE2E2' }}>
+                      <span className="text-lg font-semibold" style={{ color: 'var(--error)' }}>{severity}/10</span>
+                      <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: 'var(--error)' }}>
                         {severityLabel(severity)}
                       </span>
                     </div>
@@ -439,10 +481,10 @@ export function FlareCreationModal({
 
               <section>
                 <div className="flex items-center justify-between">
-                  <label htmlFor="flare-notes" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="flare-notes" className="text-small font-medium">
                     Notes (optional)
                   </label>
-                  <span className="text-xs text-gray-500">{notes.length}/{MAX_NOTES_LENGTH}</span>
+                  <span className="text-tiny">{notes.length}/{MAX_NOTES_LENGTH}</span>
                 </div>
                 <textarea
                   id="flare-notes"
@@ -450,35 +492,45 @@ export function FlareCreationModal({
                   onChange={(event) => handleNotesChange(event.target.value)}
                   rows={4}
                   maxLength={MAX_NOTES_LENGTH}
-                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="mt-2 w-full rounded-lg px-3 py-2 text-small"
+                  style={{
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--card)',
+                    color: 'var(--foreground)'
+                  }}
                   placeholder="Add context, triggers, or symptom details…"
                   aria-describedby="flare-notes-helper"
                 />
-                <p id="flare-notes-helper" className="mt-1 text-xs text-gray-500">
+                <p id="flare-notes-helper" className="mt-1 text-tiny" style={{ color: 'var(--text-muted)' }}>
                   Notes are stored with the initial event and help explain flare context later.
                 </p>
               </section>
 
               <section>
-                <label htmlFor="flare-timestamp" className="mb-2 block text-sm font-medium text-gray-700">
-                  Timestamp <span className="text-red-500">*</span>
+                <label htmlFor="flare-timestamp" className="mb-2 block text-small font-medium">
+                  Timestamp <span style={{ color: 'var(--error)' }}>*</span>
                 </label>
                 <input
                   id="flare-timestamp"
                   type="datetime-local"
                   value={timestampValue}
                   onChange={(event) => setTimestampValue(event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="w-full rounded-lg px-3 py-2 text-small"
+                  style={{
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--card)',
+                    color: 'var(--foreground)'
+                  }}
                   required
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-tiny" style={{ color: 'var(--text-muted)' }}>
                   Adjust if the flare started earlier. We store times in local time and convert to epoch milliseconds.
                 </p>
               </section>
 
               {errorMessage && (
                 <div
-                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                  className="badge-error rounded-md px-3 py-2 text-small"
                   role="alert"
                   aria-live="assertive"
                 >
@@ -487,22 +539,32 @@ export function FlareCreationModal({
               )}
             </div>
 
-            <footer className="flex flex-col gap-3 border-t border-gray-200 px-6 py-5 sm:flex-row sm:justify-end">
+            <footer className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:justify-end" style={{ borderTop: '1px solid var(--border)' }}>
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-secondary"
                 disabled={isSaving}
               >
                 Cancel (Esc)
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => setSubmitAction('save')}
+                className="btn-secondary inline-flex items-center justify-center gap-2"
                 disabled={!hasSelection || isSaving}
               >
                 <Save className="h-4 w-4" />
-                {isSaving ? "Saving…" : "Save Flare (Enter)"}
+                {isSaving && submitAction === 'save' ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="submit"
+                onClick={() => setSubmitAction('save-and-add-more')}
+                className="btn-primary inline-flex items-center justify-center gap-2"
+                disabled={!hasSelection || isSaving}
+              >
+                <Save className="h-4 w-4" />
+                {isSaving && submitAction === 'save-and-add-more' ? "Saving…" : "Save & Add More"}
               </button>
             </footer>
           </form>

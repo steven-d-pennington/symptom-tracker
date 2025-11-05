@@ -1,0 +1,363 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.8</epicId>
+    <storyId>1</storyId>
+    <title>Critical Regression Bug Fixes</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-8-1-critical-regression-bug-fixes.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user of the symptom tracker application</asA>
+    <iWant>all core logging features to function correctly</iWant>
+    <soThat>I can successfully track medications, triggers, food, and complete onboarding without encountering blank pages or duplicate data</soThat>
+    <tasks>
+- Task 1: Fix Medication Page Blank Issue (AC: #1)
+  - 1.1: Investigate medication log page component (src/app/(protected)/log/medication/page.tsx)
+  - 1.2: Check for missing return statement, empty JSX, or conditional rendering issues
+  - 1.3: Verify medication data retrieval from IndexedDB works correctly
+  - 1.4: Implement proper empty state if no medications available
+  - 1.5: Test medication page renders content in all scenarios (empty, with data)
+  - 1.6: Add unit test for medication page rendering
+- Task 2: Fix Trigger Page Blank Issue (AC: #2)
+  - 2.1: Investigate trigger log page component (src/app/(protected)/log/trigger/page.tsx)
+  - 2.2: Check for missing return statement, empty JSX, or conditional rendering issues
+  - 2.3: Verify trigger data retrieval from IndexedDB works correctly
+  - 2.4: Implement proper empty state if no triggers available
+  - 2.5: Test trigger page renders content in all scenarios (empty, with data)
+  - 2.6: Add unit test for trigger page rendering
+- Task 3: Fix Duplicate User Creation (AC: #3)
+  - 3.1: Review onboarding user creation logic in onboarding components
+  - 3.2: Identify why user creation is triggered 3 times (likely React strict mode or multiple renders)
+  - 3.3: Add conditional check to prevent duplicate user creation (check if user already exists)
+  - 3.4: Consider using React.useEffect with empty dependency array or useRef flag
+  - 3.5: Test onboarding with fresh storage and verify single user creation
+  - 3.6: Add unit test to ensure idempotent user creation
+- Task 4: Fix Duplicate Food Items (AC: #4)
+  - 4.1: Review food list rendering component in food logging page
+  - 4.2: Check for duplicate map() calls or double rendering in component tree
+  - 4.3: Verify data query returns 210 items (not duplicated at data layer)
+  - 4.4: Add deduplication logic before rendering if needed (e.g., [...new Set(foods)] or unique key filtering)
+  - 4.5: Inspect React component hierarchy for duplicate parent renders
+  - 4.6: Test food page displays exactly 210 unique items
+  - 4.7: Add unit test to verify unique food rendering
+- Task 5: Integration Testing & Verification (AC: All)
+  - 5.1: Run smoke test for medication page (navigate, verify content, log entry)
+  - 5.2: Run smoke test for trigger page (navigate, verify content, log entry)
+  - 5.3: Clear storage and complete full onboarding flow, verify single user in console
+  - 5.4: Navigate to food page and count unique items (should be 210)
+  - 5.5: Run full regression test suite to ensure no new issues introduced
+  - 5.6: Update regression test documentation with fixes applied
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+### P1 Bug #1: Medication Page Blank (BLOCKER)
+1. Medication logging page (/log/medication) displays proper content below header
+2. Users can select medications from their list
+3. Users can log medication entries successfully
+4. Medication form or appropriate empty state message is visible
+5. No console errors when navigating to medication page
+6. Logged medications appear in dashboard and history views
+
+### P1 Bug #2: Trigger Page Blank (BLOCKER)
+1. Trigger logging page (/log/trigger) displays proper content below header
+2. Users can select triggers from their list
+3. Users can log trigger entries successfully
+4. Trigger form or appropriate empty state message is visible
+5. No console errors when navigating to trigger page
+6. Logged triggers appear in dashboard and history views
+
+### P2 Bug #3: Duplicate User Creation (DATA QUALITY)
+1. Onboarding flow creates exactly ONE user record in IndexedDB
+2. Console shows single "User created in IndexedDB" log message
+3. All onboarding steps use the same user ID consistently
+4. No duplicate user records with different UUIDs
+5. Onboarding completion flow still functions correctly
+6. User data properly associated with single user ID
+
+### P2 Bug #4: Duplicate Food Items (UX ISSUE)
+1. Food logging page displays each food item exactly once
+2. 210 unique food items displayed (not 420 duplicates)
+3. No duplicate buttons for same food item
+4. Food selection list renders cleanly without duplication
+5. Food logging functionality continues to work correctly
+6. Unit tests added to prevent duplicate rendering regression
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/regression-test-issues-2025-11-03.md</path>
+        <title>Regression Test Issues Report</title>
+        <section>Bug Descriptions and Reproduction Steps</section>
+        <snippet>Comprehensive report documenting 4 bugs found during regression testing: 2 P1 blockers (medication/trigger pages blank) and 2 P2 quality issues (duplicate users, duplicate food items). Includes detailed reproduction steps, evidence, and fix recommendations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 3.5.4 and 3.5.5</title>
+        <section>Epic 3.5: Production-Ready UI/UX Enhancement</section>
+        <snippet>Story 3.5.4 redesigned food logging to use dedicated pages with collapsible categories. Story 3.5.5 redesigned medication and trigger logging to follow the same pattern. These provide reference implementations for the blank page fixes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-5-4-redesign-food-logging-modal-to-page.md</path>
+        <title>Food Logging Page Design Reference</title>
+        <section>Implementation Details</section>
+        <snippet>Completed story showing how food logging should be structured with dedicated page route, collapsible categories, smart defaults, and proper empty states.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-5-5-redesign-trigger-and-medication-logging-to-pages.md</path>
+        <title>Medication/Trigger Logging Page Design Reference</title>
+        <section>Implementation Details</section>
+        <snippet>Completed story showing how medication and trigger logging pages should be structured, following the same patterns as food logging.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/app/(protected)/log/medication/page.tsx</path>
+        <kind>page</kind>
+        <symbol>LogMedicationPage</symbol>
+        <lines>1-90</lines>
+        <reason>P1 Bug #1 location - page renders header but MedicationQuickLogForm component may not be rendering or exporting correctly</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/log/trigger/page.tsx</path>
+        <kind>page</kind>
+        <symbol>LogTriggerPage</symbol>
+        <lines>1-90</lines>
+        <reason>P1 Bug #2 location - page renders header but TriggerQuickLogForm component may not be rendering or exporting correctly</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/medication-logging/MedicationQuickLogForm.tsx</path>
+        <kind>component</kind>
+        <symbol>MedicationQuickLogForm</symbol>
+        <lines>1-526</lines>
+        <reason>Medication form component implementation - verify exports and runtime rendering</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/trigger-logging/TriggerQuickLogForm.tsx</path>
+        <kind>component</kind>
+        <symbol>TriggerQuickLogForm</symbol>
+        <lines>1-481</lines>
+        <reason>Trigger form component implementation - verify exports and runtime rendering</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/medication-logging/MedicationCategory.tsx</path>
+        <kind>component</kind>
+        <symbol>MedicationCategory</symbol>
+        <lines>unknown</lines>
+        <reason>Sub-component used by MedicationQuickLogForm - may be missing or have rendering issues</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/log/food/page.tsx</path>
+        <kind>page</kind>
+        <symbol>LogFoodPage</symbol>
+        <lines>1-90</lines>
+        <reason>P2 Bug #4 context - food page uses FoodQuickLogForm which shows duplicate items</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/food-logging/FoodQuickLogForm.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodQuickLogForm</symbol>
+        <lines>1-542</lines>
+        <reason>P2 Bug #4 location - renders food categories that show duplicates. Review rendering logic in lines 410-425</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/food-logging/FoodCategory.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodCategory</symbol>
+        <lines>unknown</lines>
+        <reason>Sub-component that renders individual food items - may have duplicate rendering issue</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/onboarding/hooks/useOnboarding.tsx</path>
+        <kind>hook</kind>
+        <symbol>useOnboarding</symbol>
+        <lines>1-200</lines>
+        <reason>P2 Bug #3 context - manages onboarding state and step progression. Review markStepComplete function.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/onboarding/components/CompletionStep.tsx</path>
+        <kind>component</kind>
+        <symbol>CompletionStep</symbol>
+        <lines>1-138</lines>
+        <reason>P2 Bug #3 location - triggers user creation on completion via onContinue callback (line 79). Likely causes multiple user creation events.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/onboarding/components/OnboardingFlow.tsx</path>
+        <kind>component</kind>
+        <symbol>OnboardingFlow</symbol>
+        <lines>unknown</lines>
+        <reason>Handles onContinue callback from CompletionStep - investigate user creation logic</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/medicationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>medicationRepository</symbol>
+        <lines>unknown</lines>
+        <reason>Data layer for medications - verify getActive() method returns correct data</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/triggerRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>triggerRepository</symbol>
+        <lines>unknown</lines>
+        <reason>Data layer for triggers - verify getActive() method returns correct data</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>foodRepository</symbol>
+        <lines>unknown</lines>
+        <reason>Data layer for food - verify getAllByCategory() returns 210 unique items</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/userRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>userRepository</symbol>
+        <lines>unknown</lines>
+        <reason>User creation logic - add existence check to prevent duplicate user creation</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>next</package>
+        <version>15.5.4</version>
+        <usage>Framework - App Router, page routes, navigation</usage>
+      </node>
+      <node>
+        <package>react</package>
+        <version>19.1.0</version>
+        <usage>UI library - Component rendering, hooks, effects</usage>
+      </node>
+      <node>
+        <package>react-dom</package>
+        <version>19.1.0</version>
+        <usage>DOM rendering</usage>
+      </node>
+      <node>
+        <package>dexie</package>
+        <version>4.2.0</version>
+        <usage>IndexedDB wrapper - Data persistence layer</usage>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>0.544.0</version>
+        <usage>Icon library</usage>
+      </node>
+      <node>
+        <package>@testing-library/react</package>
+        <version>16.3.0</version>
+        <usage>Testing - Component testing</usage>
+      </node>
+      <node>
+        <package>@testing-library/jest-dom</package>
+        <version>6.9.1</version>
+        <usage>Testing - DOM matchers</usage>
+      </node>
+      <node>
+        <package>jest</package>
+        <version>30.2.0</version>
+        <usage>Testing framework</usage>
+      </node>
+      <node>
+        <package>fake-indexeddb</package>
+        <version>6.2.4</version>
+        <usage>Testing - IndexedDB mocking</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- All logging pages must follow the same architectural pattern: Page component → Form component → Category components → Selection UI
+- Form components must handle both empty state (no data available) and populated state (data available for selection)
+- All IndexedDB operations must follow offline-first pattern (NFR002)
+- React 19 Strict Mode causes double-rendering in development - must use guards (useRef or conditional checks) to prevent duplicate operations
+- Component exports must use named exports: "export function ComponentName"
+- Pages must handle loading states with proper UI feedback
+- Empty states must provide clear guidance to users
+- All touch targets must be minimum 44x44px (NFR001)
+- User creation must be idempotent - check for existing user before creating new one
+- Food rendering must deduplicate data before display to prevent UI duplicates
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>medicationRepository.getActive()</name>
+      <kind>Repository method</kind>
+      <signature>async getActive(userId: string): Promise&lt;MedicationRecord[]&gt;</signature>
+      <path>src/lib/repositories/medicationRepository.ts</path>
+    </interface>
+    <interface>
+      <name>triggerRepository.getActive()</name>
+      <kind>Repository method</kind>
+      <signature>async getActive(userId: string): Promise&lt;TriggerRecord[]&gt;</signature>
+      <path>src/lib/repositories/triggerRepository.ts</path>
+    </interface>
+    <interface>
+      <name>foodRepository.getAllByCategory()</name>
+      <kind>Repository method</kind>
+      <signature>async getAllByCategory(userId: string): Promise&lt;Map&lt;string, FoodRecord[]&gt;&gt;</signature>
+      <path>src/lib/repositories/foodRepository.ts</path>
+    </interface>
+    <interface>
+      <name>userRepository.getOrCreateCurrentUser()</name>
+      <kind>Repository method</kind>
+      <signature>async getOrCreateCurrentUser(): Promise&lt;UserRecord&gt;</signature>
+      <path>src/lib/repositories/userRepository.ts</path>
+      <note>Must be made idempotent - should check if user exists before creating</note>
+    </interface>
+    <interface>
+      <name>MedicationQuickLogForm component export</name>
+      <kind>React component</kind>
+      <signature>export function MedicationQuickLogForm({ userId }: MedicationQuickLogFormProps)</signature>
+      <path>src/components/medication-logging/MedicationQuickLogForm.tsx</path>
+      <note>Verify this is properly exported and importable</note>
+    </interface>
+    <interface>
+      <name>TriggerQuickLogForm component export</name>
+      <kind>React component</kind>
+      <signature>export function TriggerQuickLogForm({ userId }: TriggerQuickLogFormProps)</signature>
+      <path>src/components/trigger-logging/TriggerQuickLogForm.tsx</path>
+      <note>Verify this is properly exported and importable</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Use Jest with React Testing Library for component tests. Test files located in `__tests__` directories adjacent to components. Use fake-indexeddb for mocking IndexedDB operations. Follow existing test patterns: render component, verify DOM output, simulate user interactions, assert expected behavior. All tests must handle async operations properly with waitFor and findBy queries.
+    </standards>
+    <locations>
+- src/components/**/__tests__/*.test.tsx
+- src/app/**/__tests__/*.test.tsx
+- src/lib/**/__tests__/*.test.ts
+    </locations>
+    <ideas>
+AC #1 (Medication Page):
+- Test MedicationQuickLogForm renders with medications available
+- Test MedicationQuickLogForm shows proper empty state when no medications
+- Test medication page integration (page → form → data)
+- Test that MedicationCategory sub-component renders correctly
+
+AC #2 (Trigger Page):
+- Test TriggerQuickLogForm renders with triggers available
+- Test TriggerQuickLogForm shows proper empty state when no triggers
+- Test trigger page integration (page → form → data)
+- Test that TriggerCategory sub-component renders correctly
+
+AC #3 (Duplicate Users):
+- Test onboarding completion creates exactly one user
+- Test user creation is idempotent (calling twice creates only one user)
+- Test userRepository.getOrCreateCurrentUser() checks existence before creation
+- Test React Strict Mode double-render doesn't create duplicate users
+
+AC #4 (Duplicate Foods):
+- Test FoodQuickLogForm renders 210 unique food items
+- Test no duplicate food buttons in rendered output
+- Test foodRepository.getAllByCategory() returns correct unique data
+- Test FoodCategory component doesn't double-render items
+    </ideas>
+  </tests>
+</story-context>

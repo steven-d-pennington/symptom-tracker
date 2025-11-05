@@ -210,6 +210,52 @@ These enhancements will transform the body map from a general location indicator
 
 ---
 
+### Epic 3.5: Production-Ready UI/UX Enhancement _(COMPLETE)_
+**Goal:** Transform symptom-tracker from development build to production-ready application by fixing critical UX issues and implementing essential missing features.
+
+**Scope:**
+- Fix critical empty state and default data issues
+- Redesign logging workflows (symptom, food, trigger, medication)
+- Add mood and sleep tracking
+- Implement help system and accessibility features
+- Comprehensive UI/UX polish
+
+**Status:** Complete (9 stories, 52 points)
+**Completed:** 2025-10-31
+
+---
+
+### Epic 3.6: Interactive Onboarding Enhancement _(COMPLETE)_
+**Goal:** Transform onboarding from passive auto-population to active user engagement through interactive data selection.
+
+**Scope:**
+- Interactive selection for symptoms, triggers, medications, foods
+- Real-time search across all data types
+- Custom item creation during onboarding
+- Smart skip functionality
+- GUID-based user ID generation for cloud sync
+
+**Status:** Complete (1 story, 13 points)
+**Completed:** 2025-11-02
+
+---
+
+### Epic 3.7: Body Map UX Enhancements - Region Focus & Full-Screen _(HIGH PRIORITY - Next)_
+**Goal:** Enhance body map with precision-focused features for improved usability, particularly for users with motor control challenges or larger body types.
+
+**Scope:**
+- Region detail view (isolated region fills viewport)
+- Marker preview and tap-based positioning
+- Smart defaults system (last-used severity/notes)
+- Full-screen mode with minimal UI
+- History toggle for showing/hiding past markers
+- Accessibility and polish
+
+**Estimated Stories:** 6 stories (21 points total)
+**Priority:** HIGH - addresses core UX issues for precision tracking
+
+---
+
 ### Epic 4: Photo Documentation Integration _(Lower Priority)_
 **Goal:** Enable visual flare documentation through photo attachments with timeline views for progression tracking.
 
