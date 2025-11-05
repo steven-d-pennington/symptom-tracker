@@ -219,7 +219,7 @@ export const persistUserSettings = async (data: OnboardingData) => {
   });
 
   // Create a promise that we'll resolve when done
-  let resolveLock: (() => void) | null = null;
+  let resolveLock!: () => void;
   userCreationLock = new Promise<void>((resolve) => {
     resolveLock = resolve;
   });
@@ -297,9 +297,7 @@ export const persistUserSettings = async (data: OnboardingData) => {
     console.error("[Onboarding] Failed to persist user settings", error);
   } finally {
     // Release the lock
-    if (resolveLock) {
-      resolveLock();
-    }
+    resolveLock();
     userCreationLock = null;
   }
 };
