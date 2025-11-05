@@ -86,6 +86,11 @@ export function MarkerPreview({
             e.stopPropagation();
             onConfirm();
           }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onConfirm();
+          }}
           aria-label="Confirm marker position"
           role="button"
           tabIndex={0}
@@ -121,6 +126,11 @@ export function MarkerPreview({
           strokeWidth="0.3"
           className="cursor-pointer hover:fill-red-600 transition-colors"
           onClick={(e) => {
+            e.stopPropagation();
+            onCancel();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             onCancel();
           }}
