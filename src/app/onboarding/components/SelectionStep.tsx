@@ -150,13 +150,19 @@ export function SelectionStep({
   }, [customName, customCategory, customDescription, addItem, type]);
 
   const handleNext = useCallback(() => {
-    // Validation (AC3.6.1.9)
+    // If nothing selected, auto-select all defaults
     if (selectedItems.length === 0) {
-      alert(`Please select at least one item or click "Skip for now"`);
-      return;
+      const allItems: SelectionItem[] = defaultItems.map(item => ({
+        name: item.name,
+        category: item.category,
+        description: item.description,
+        isDefault: true,
+        isCustom: false,
+      }));
+      selectAll(type, allItems);
     }
     onNext();
-  }, [selectedItems.length, onNext]);
+  }, [selectedItems.length, defaultItems, selectAll, type, onNext]);
 
   return (
     <div className="flex flex-col gap-6">

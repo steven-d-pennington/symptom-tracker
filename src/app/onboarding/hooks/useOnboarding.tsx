@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { ONBOARDING_STEPS } from "../utils/onboardingConfig";
@@ -56,6 +57,8 @@ export const OnboardingProvider = ({
   children: React.ReactNode;
 }) => {
   const [state, setState] = useState<OnboardingState>(getInitialState);
+  // Track if we've already called persistUserSettings to prevent multiple calls
+  const hasPersistedSettings = useRef(false);
 
   useEffect(() => {
     setState((prev) => (prev.hydrated ? prev : { ...prev, hydrated: true }));
@@ -68,7 +71,9 @@ export const OnboardingProvider = ({
 
     persistOnboardingState(state);
 
-    if (state.isComplete) {
+    // Only call persistUserSettings ONCE when onboarding completes
+    if (state.isComplete && !hasPersistedSettings.current) {
+      hasPersistedSettings.current = true;
       persistUserSettings(state.data);
     }
   }, [state]);
@@ -146,6 +151,7 @@ export const OnboardingProvider = ({
   const reset = useCallback(() => {
     clearOnboardingStorage();
     resetUserSettings();
+    hasPersistedSettings.current = false; // Reset the flag
     setState({ ...createInitialState(), hydrated: true });
   }, []);
 
