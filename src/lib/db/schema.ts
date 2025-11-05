@@ -187,6 +187,54 @@ export interface AttachmentRecord {
   updatedAt: Date;
 }
 
+/**
+ * Layer type for categorizing body map markers by tracking purpose.
+ * - flares: HS flare tracking (default for existing markers)
+ * - pain: General body pain tracking
+ * - inflammation: Swelling and inflammation tracking
+ */
+export type LayerType = 'flares' | 'pain' | 'inflammation';
+
+/**
+ * Layer metadata configuration for UI rendering and organization.
+ * Includes visual properties (icon, color) and descriptive information.
+ */
+export interface LayerMetadata {
+  id: LayerType;
+  label: string;
+  icon: string; // Emoji icon
+  color: string; // Tailwind color class
+  description: string;
+}
+
+/**
+ * Configuration object for all supported layer types.
+ * Used throughout the application for consistent layer representation.
+ */
+export const LAYER_CONFIG: Record<LayerType, LayerMetadata> = {
+  flares: {
+    id: 'flares',
+    label: 'Flares',
+    icon: '🔥',
+    color: 'text-red-500',
+    description: 'HS flare tracking'
+  },
+  pain: {
+    id: 'pain',
+    label: 'Pain',
+    icon: '⚡',
+    color: 'text-yellow-500',
+    description: 'General body pain'
+  },
+  inflammation: {
+    id: 'inflammation',
+    label: 'Inflammation',
+    icon: '🟣',
+    color: 'text-purple-500',
+    description: 'Swelling and inflammation'
+  }
+};
+
 export interface BodyMapLocationRecord {
   id: string;
   userId: string;
@@ -198,6 +246,11 @@ export interface BodyMapLocationRecord {
     y: number;
   };
   severity: number;
+  /**
+   * Layer categorization for multi-layer tracking (Story 5.1)
+   * Defaults to 'flares' for backward compatibility
+   */
+  layer?: LayerType;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;

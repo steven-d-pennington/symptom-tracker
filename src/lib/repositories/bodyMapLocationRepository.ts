@@ -1,5 +1,5 @@
 import { db } from "../db/client";
-import { BodyMapLocationRecord } from "../db/schema";
+import { BodyMapLocationRecord, LayerType } from "../db/schema";
 import { generateId } from "../utils/idGenerator";
 
 export class BodyMapLocationRepository {
@@ -94,6 +94,8 @@ export class BodyMapLocationRepository {
 
     await db.bodyMapLocations.add({
       ...locationData,
+      // Default to 'flares' layer if not specified (Story 5.1 backward compatibility)
+      layer: locationData.layer || 'flares',
       id,
       createdAt: now,
       updatedAt: now,
@@ -131,6 +133,8 @@ export class BodyMapLocationRepository {
     const now = new Date();
     const locationsWithIds = locations.map((location) => ({
       ...location,
+      // Default to 'flares' layer if not specified (Story 5.1 backward compatibility)
+      layer: location.layer || 'flares',
       id: generateId(),
       createdAt: now,
       updatedAt: now,
@@ -217,6 +221,91 @@ export class BodyMapLocationRepository {
         count: group.count,
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /**
+   * Get markers filtered by a specific layer (Story 5.1)
+   * Uses compound index [userId+layer+createdAt] for efficient queries
+   *
+   * @param userId - User ID to filter by
+   * @param layer - Layer type ('flares', 'pain', or 'inflammation')
+   * @param options - Optional filters: limit, startTime, endTime
+   * @returns Array of body map location records for the specified layer
+   */
+  async getMarkersByLayer(
+    userId: string,
+    layer: LayerType,
+    options?: { limit?: number; startTime?: Date; endTime?: Date }
+  ): Promise<BodyMapLocationRecord[]> {
+    const startTime = options?.startTime || new Date(0);
+    const endTime = options?.endTime || new Date();
+
+    let query = db.bodyMapLocations
+      .where('[userId+layer+createdAt]')
+      .between(
+        [userId, layer, startTime],
+        [userId, layer, endTime],
+        true,
+        true
+      );
+
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+
+    return query.reverse().toArray();
+  }
+
+  /**
+   * Get markers from multiple layers (Story 5.1)
+   * Performs parallel queries for each layer and combines results
+   *
+   * @param userId - User ID to filter by
+   * @param layers - Array of layer types to retrieve
+   * @param options - Optional filters: limit (per layer), startTime, endTime
+   * @returns Combined and sorted array of markers from all specified layers
+   */
+  async getMarkersByLayers(
+    userId: string,
+    layers: LayerType[],
+    options?: { limit?: number; startTime?: Date; endTime?: Date }
+  ): Promise<BodyMapLocationRecord[]> {
+    const results = await Promise.all(
+      layers.map(layer => this.getMarkersByLayer(userId, layer, options))
+    );
+
+    return results
+      .flat()
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  /**
+   * Get count of markers per layer for a user (Story 5.1)
+   * Uses compound index for efficient counting
+   *
+   * @param userId - User ID to filter by
+   * @returns Object with counts for each layer type
+   */
+  async getMarkerCountsByLayer(userId: string): Promise<Record<LayerType, number>> {
+    const counts: Record<LayerType, number> = {
+      flares: 0,
+      pain: 0,
+      inflammation: 0
+    };
+
+    for (const layer of Object.keys(counts) as LayerType[]) {
+      counts[layer] = await db.bodyMapLocations
+        .where('[userId+layer+createdAt]')
+        .between(
+          [userId, layer, new Date(0)],
+          [userId, layer, new Date()],
+          true,
+          true
+        )
+        .count();
+    }
+
+    return counts;
   }
 }
 
