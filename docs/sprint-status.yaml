@@ -107,3 +107,12 @@ development_status:
   4-3-before-after-photo-comparison: backlog
   4-4-photo-annotation-simple: backlog
   epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-add-layer-field-to-data-model-and-indexeddb-schema: ready-for-dev
+  5-2-implement-layer-preferences-and-persistence: drafted
+  5-3-create-layer-selector-component-for-tracking-mode: drafted
+  5-4-implement-layer-aware-marker-rendering: drafted
+  5-5-add-multi-layer-view-controls-and-filtering: drafted
+  5-6-create-layer-legend-and-accessibility-features: drafted
+  epic-5-retrospective: optional

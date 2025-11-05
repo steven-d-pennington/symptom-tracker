@@ -4,6 +4,7 @@ import { type ElementType, useCallback } from "react";
 import { Utensils } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
+import { useQuickActionsData } from "@/lib/hooks/useQuickActionsData";
 
 interface QuickLogButtonsProps {
   onLogFlare: () => void;
@@ -81,9 +82,55 @@ export function QuickLogButtons({
 }: QuickLogButtonsProps) {
   const isDisabled = disabled || loading;
   const { recordUxEvent } = useUxInstrumentation();
+  const quickActionsData = useQuickActionsData();
 
-  // TODO: Replace with real data from hooks/queries
-  // For now, using placeholder data to demonstrate the design
+  // Calculate progress rings based on real data
+  // Flare: 0-100% based on active flares (capped at 5 for 100%)
+  const flareProgress = Math.min((quickActionsData.activeFlares / 5) * 100, 100);
+
+  // Medication: 0-100% based on doses today (capped at 4 for 100%)
+  const medicationProgress = Math.min((quickActionsData.todayMedicationLogs / 4) * 100, 100);
+
+  // Symptom: 0-100% based on last severity (out of 10)
+  const symptomProgress = quickActionsData.lastSymptomSeverity
+    ? (quickActionsData.lastSymptomSeverity / 10) * 100
+    : 0;
+
+  // Food: 0-100% based on meals today (capped at 3 for 100%)
+  const foodProgress = Math.min((quickActionsData.todayFoodLogs / 3) * 100, 100);
+
+  // Trigger: 0-100% based on triggers today (capped at 3 for 100%)
+  const triggerProgress = Math.min((quickActionsData.todayTriggerLogs / 3) * 100, 100);
+
+  // Generate stat text based on real data
+  const flareStat = quickActionsData.activeFlares === 0
+    ? "No active flares"
+    : quickActionsData.activeFlares === 1
+    ? "1 active flare"
+    : `${quickActionsData.activeFlares} active`;
+
+  const medicationStat = quickActionsData.todayMedicationLogs === 0
+    ? "Not logged today"
+    : quickActionsData.todayMedicationLogs === 1
+    ? "Logged 1x today"
+    : `Logged ${quickActionsData.todayMedicationLogs}x today`;
+
+  const symptomStat = quickActionsData.lastSymptomSeverity !== null
+    ? `Last: ${quickActionsData.lastSymptomSeverity}/10 severity`
+    : "No symptoms logged";
+
+  const foodStat = quickActionsData.todayFoodLogs === 0
+    ? "Log your meal"
+    : quickActionsData.todayFoodLogs === 1
+    ? "1 meal logged"
+    : `${quickActionsData.todayFoodLogs} meals logged`;
+
+  const triggerStat = quickActionsData.todayTriggerLogs === 0
+    ? "Log trigger"
+    : quickActionsData.todayTriggerLogs === 1
+    ? "Logged 1x today"
+    : `Logged ${quickActionsData.todayTriggerLogs}x today`;
+
   const buttons: QuickLogButtonConfig[] = [
     {
       id: "flare",
@@ -91,8 +138,8 @@ export function QuickLogButtons({
       label: "New Flare",
       onClick: onLogFlare,
       ariaLabel: "Log new flare",
-      stat: "2 active",
-      progress: 25, // Example: 2 active flares
+      stat: flareStat,
+      progress: flareProgress,
     },
     {
       id: "medication",
@@ -100,8 +147,8 @@ export function QuickLogButtons({
       label: "Medication",
       onClick: onLogMedication,
       ariaLabel: "Log medication",
-      stat: "Logged 3x today",
-      progress: 75, // Example: 3 doses today
+      stat: medicationStat,
+      progress: medicationProgress,
     },
     {
       id: "symptom",
@@ -109,8 +156,8 @@ export function QuickLogButtons({
       label: "Symptom",
       onClick: onLogSymptom,
       ariaLabel: "Log symptom",
-      stat: "Last: 6/10 severity",
-      progress: 50, // Example: last severity was 6/10
+      stat: symptomStat,
+      progress: symptomProgress,
     },
     {
       id: "food",
@@ -118,8 +165,17 @@ export function QuickLogButtons({
       onClick: onLogFood,
       ariaLabel: "Log food",
       icon: Utensils,
-      stat: "Log your meal",
-      progress: 0, // No meals logged today
+      stat: foodStat,
+      progress: foodProgress,
+    },
+    {
+      id: "trigger",
+      emoji: "⚠️",
+      label: "Trigger",
+      onClick: onLogTrigger,
+      ariaLabel: "Log trigger",
+      stat: triggerStat,
+      progress: triggerProgress,
     },
   ];
 
@@ -151,7 +207,7 @@ export function QuickLogButtons({
       aria-label="Quick log actions"
     >
       {/* Redesigned: Streaks-inspired card grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         {buttons.map((button) => (
           <button
             key={button.id}
@@ -198,7 +254,15 @@ export function QuickLogButtons({
                 {button.progress !== undefined && button.progress > 0 && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-xs font-semibold text-primary">
-                      {button.id === "flare" ? "2" : button.id === "medication" ? "3" : button.id === "symptom" ? "6" : ""}
+                      {button.id === "flare"
+                        ? quickActionsData.activeFlares
+                        : button.id === "medication"
+                        ? quickActionsData.todayMedicationLogs
+                        : button.id === "symptom"
+                        ? quickActionsData.lastSymptomSeverity
+                        : button.id === "food"
+                        ? quickActionsData.todayFoodLogs
+                        : quickActionsData.todayTriggerLogs || ""}
                     </span>
                   </div>
                 )}
