@@ -30,6 +30,18 @@ export default function FlaresPage() {
   const [isMapCollapsed, setIsMapCollapsed] = useState(false);
   const bodyMapRef = useRef<BodyMapViewerRef>(null);
 
+  // Collapse body map by default on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobile = window.innerWidth < 1024; // lg breakpoint
+      setIsMapCollapsed(isMobile);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Calculate stats from flares data
   const stats = useMemo(() => {
     const worsening = flares.filter(f => f.trend === "worsening").length;
@@ -227,9 +239,9 @@ export default function FlaresPage() {
           </div>
         </div>
 
-        {/* Body Map Sidebar */}
+        {/* Body Map Sidebar - Full screen on mobile, sidebar on desktop */}
         {!isMapCollapsed && (
-          <div className="w-[450px] border-l border-border bg-muted flex flex-col">
+          <div className="fixed lg:relative inset-0 lg:inset-auto lg:w-[450px] border-l border-border bg-muted flex flex-col z-40 lg:z-auto">
             <div className="p-4 border-b border-border flex items-center justify-between">
               <h3 className="text-h4">Body Map</h3>
               <div className="flex items-center gap-2">
@@ -251,7 +263,7 @@ export default function FlaresPage() {
             </div>
 
             <div className="p-4 flex-1 flex flex-col min-h-0">
-              <div className="flex-1 bg-card border border-border rounded-xl overflow-hidden mb-4 flex items-center justify-center" style={{ minHeight: '600px' }}>
+              <div className="flex-1 bg-card border border-border rounded-xl overflow-hidden mb-4 flex items-center justify-center" style={{ minHeight: '400px' }}>
                 <BodyMapViewer
                   ref={bodyMapRef}
                   view={currentView}
@@ -278,21 +290,25 @@ export default function FlaresPage() {
           </div>
         )}
 
-        {/* Show Map Button (when collapsed) */}
+        {/* Show Map Button (when collapsed) - Bottom left on mobile, centered on desktop */}
         {isMapCollapsed && (
           <button
             onClick={() => setIsMapCollapsed(false)}
-            className="fixed bottom-8 left-1/2 transform -translate-x-1/2 btn-primary shadow-xl z-50"
+            className="fixed bottom-20 lg:bottom-8 left-6 lg:left-1/2 lg:transform lg:-translate-x-1/2 btn-primary z-50 inline-flex items-center gap-2"
+            style={{ boxShadow: 'var(--shadow-lg)' }}
           >
-            🗺️ Show Body Map
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            Body Map
           </button>
         )}
       </div>
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button - Above bottom nav on mobile */}
       <button
         onClick={() => setIsFlareCreationModalOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary-dark hover:scale-105 transition-all flex items-center justify-center z-50"
+        className="fixed bottom-20 lg:bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary-dark hover:scale-105 transition-all flex items-center justify-center z-50"
         style={{ boxShadow: 'var(--shadow-lg)' }}
         title="Create New Flare"
       >
