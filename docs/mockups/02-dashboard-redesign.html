@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Redesign - Pocket Symptom Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #F5F5F5;
+            padding: 20px;
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 32px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            color: #78716C;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .version {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .version-label {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .current-label {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .new-label {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .dashboard-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #E7E5E4;
+        }
+
+        .dashboard-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 4px;
+        }
+
+        .dashboard-subtitle {
+            font-size: 14px;
+            color: #78716C;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 16px;
+        }
+
+        /* Current Quick Actions */
+        .quick-actions-current {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        .action-button-current {
+            flex: 1;
+            min-width: 120px;
+            background: #6366F1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .action-button-current:hover {
+            background: #4F46E5;
+        }
+
+        .action-button-current .emoji {
+            font-size: 32px;
+        }
+
+        .action-button-current .label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* New Quick Actions - Streaks-inspired */
+        .quick-actions-new {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .action-card-new {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .action-card-new:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+            border-color: #0F9D91;
+        }
+
+        .action-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .action-icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .progress-ring {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 3;
+        }
+
+        .progress-ring .ring-bg {
+            stroke: #E7E5E4;
+        }
+
+        .progress-ring .ring-progress {
+            stroke: #0F9D91;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.3s;
+        }
+
+        .action-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 4px;
+        }
+
+        .action-stat {
+            font-size: 13px;
+            color: #78716C;
+        }
+
+        .action-stat strong {
+            color: #0F9D91;
+            font-weight: 600;
+        }
+
+        /* Timeline section */
+        .timeline-section {
+            background: #FAFAF9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .timeline-empty {
+            text-align: center;
+            padding: 32px;
+            color: #78716C;
+            font-size: 14px;
+        }
+
+        .notes-section {
+            margin-top: 32px;
+            padding: 20px;
+            background: #E0F5F3;
+            border-radius: 12px;
+            border-left: 4px solid #0F9D91;
+        }
+
+        .notes-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0A7A70;
+            margin-bottom: 8px;
+        }
+
+        .notes-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .notes-section li {
+            font-size: 13px;
+            color: #0A7A70;
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .notes-section li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1024px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .quick-actions-new {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📱 Dashboard Redesign</h1>
+        <p class="subtitle">Transforming emoji buttons into elegant, Streaks-inspired action cards</p>
+    </div>
+
+    <div class="comparison">
+        <!-- Current Dashboard -->
+        <div class="version">
+            <span class="version-label current-label">Current - Generic</span>
+
+            <div class="dashboard-header">
+                <h2 class="dashboard-title">Dashboard</h2>
+                <p class="dashboard-subtitle">Your health overview for today</p>
+            </div>
+
+            <h3 class="section-title">Quick Actions</h3>
+            <p style="font-size: 13px; color: #78716C; margin-bottom: 16px;">Log events quickly to keep your health timeline up to date.</p>
+
+            <div class="quick-actions-current">
+                <button class="action-button-current">
+                    <span class="emoji">🔥</span>
+                    <span class="label">New Flare</span>
+                </button>
+                <button class="action-button-current">
+                    <span class="emoji">💊</span>
+                    <span class="label">Medication</span>
+                </button>
+                <button class="action-button-current">
+                    <span class="emoji">😐</span>
+                    <span class="label">Symptom</span>
+                </button>
+                <button class="action-button-current">
+                    <span class="emoji">🍽️</span>
+                    <span class="label">Food</span>
+                </button>
+                <button class="action-button-current">
+                    <span class="emoji">⚠️</span>
+                    <span class="label">Trigger</span>
+                </button>
+            </div>
+
+            <h3 class="section-title">Today's Timeline</h3>
+            <div class="timeline-section">
+                <div class="timeline-empty">
+                    No events today yet. Use quick-log buttons above to get started!
+                </div>
+            </div>
+
+            <div class="notes-section" style="background: #FEF3C7; border-left-color: #D97706;">
+                <h3 style="color: #92400E;">Issues with Current Design</h3>
+                <ul>
+                    <li style="color: #92400E;">Emoji buttons feel juvenile, not medical-grade</li>
+                    <li style="color: #92400E;">No visual feedback or progress indication</li>
+                    <li style="color: #92400E;">All buttons look identical (no hierarchy)</li>
+                    <li style="color: #92400E;">Generic blue doesn't feel unique</li>
+                    <li style="color: #92400E;">Too many buttons (trigger is rarely used)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- New Dashboard -->
+        <div class="version">
+            <span class="version-label new-label">New - Refined & Calm</span>
+
+            <div class="dashboard-header">
+                <h2 class="dashboard-title">Dashboard</h2>
+                <p class="dashboard-subtitle">Your health at a glance</p>
+            </div>
+
+            <h3 class="section-title">Quick Log</h3>
+
+            <div class="quick-actions-new">
+                <!-- Flare Card -->
+                <div class="action-card-new">
+                    <div class="action-card-header">
+                        <span class="action-icon">🔥</span>
+                        <div class="progress-ring">
+                            <svg width="40" height="40">
+                                <circle class="ring-bg" cx="20" cy="20" r="18"></circle>
+                                <circle class="ring-progress" cx="20" cy="20" r="18"
+                                        stroke-dasharray="113"
+                                        stroke-dashoffset="84"></circle>
+                            </svg>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 11px; font-weight: 600; color: #0F9D91;">2</div>
+                        </div>
+                    </div>
+                    <h4 class="action-title">New Flare</h4>
+                    <p class="action-stat"><strong>2 active</strong> flares</p>
+                </div>
+
+                <!-- Medication Card -->
+                <div class="action-card-new">
+                    <div class="action-card-header">
+                        <span class="action-icon">💊</span>
+                        <div class="progress-ring">
+                            <svg width="40" height="40">
+                                <circle class="ring-bg" cx="20" cy="20" r="18"></circle>
+                                <circle class="ring-progress" cx="20" cy="20" r="18"
+                                        stroke-dasharray="113"
+                                        stroke-dashoffset="37"></circle>
+                            </svg>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 11px; font-weight: 600; color: #0F9D91;">3</div>
+                        </div>
+                    </div>
+                    <h4 class="action-title">Medication</h4>
+                    <p class="action-stat">Logged <strong>3x today</strong></p>
+                </div>
+
+                <!-- Symptom Card -->
+                <div class="action-card-new">
+                    <div class="action-card-header">
+                        <span class="action-icon">😐</span>
+                        <div class="progress-ring">
+                            <svg width="40" height="40">
+                                <circle class="ring-bg" cx="20" cy="20" r="18"></circle>
+                                <circle class="ring-progress" cx="20" cy="20" r="18"
+                                        stroke-dasharray="113"
+                                        stroke-dashoffset="56"></circle>
+                            </svg>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 11px; font-weight: 600; color: #0F9D91;">6</div>
+                        </div>
+                    </div>
+                    <h4 class="action-title">Symptom</h4>
+                    <p class="action-stat">Last: <strong>6/10 severity</strong></p>
+                </div>
+
+                <!-- Food Card -->
+                <div class="action-card-new">
+                    <div class="action-card-header">
+                        <span class="action-icon">🍽️</span>
+                        <div class="progress-ring">
+                            <svg width="40" height="40">
+                                <circle class="ring-bg" cx="20" cy="20" r="18"></circle>
+                                <circle class="ring-progress" cx="20" cy="20" r="18"
+                                        stroke-dasharray="113"
+                                        stroke-dashoffset="113"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                    <h4 class="action-title">Food</h4>
+                    <p class="action-stat">Log your meal</p>
+                </div>
+            </div>
+
+            <h3 class="section-title" style="margin-top: 8px;">Today's Timeline</h3>
+            <div class="timeline-section">
+                <div class="timeline-empty">
+                    No events logged yet today
+                </div>
+            </div>
+
+            <div class="notes-section">
+                <h3>✨ Design Improvements</h3>
+                <ul>
+                    <li>Progress rings show today's activity (Streaks-style)</li>
+                    <li>Cards feel premium with subtle shadows & hover effects</li>
+                    <li>Quick stats provide context without clicking</li>
+                    <li>Calm teal color scheme feels medical-grade</li>
+                    <li>Removed trigger button (less clutter, still accessible)</li>
+                    <li>Larger touch targets, better mobile experience</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add hover animation to new cards
+        document.querySelectorAll('.action-card-new').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.borderColor = '#0F9D91';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.borderColor = 'transparent';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 import { BodyRegionSelector } from "./BodyRegionSelector";
 import { BodyMapZoom } from "@/components/body-map/BodyMapZoom";
@@ -21,6 +21,12 @@ import { announce } from "@/lib/utils/announce"; // Story 3.7.6: ARIA announceme
 
 export type BodyMapViewMode = 'full-body' | 'region-detail';
 
+export interface BodyMapViewerRef {
+  enterFullscreen: () => void;
+  exitFullscreen: () => void;
+  isFullscreen: boolean;
+}
+
 interface BodyMapViewerProps {
   view: "front" | "back" | "left" | "right";
   userId: string;
@@ -40,9 +46,11 @@ interface BodyMapViewerProps {
   onDoneMarking?: () => void;
   /** Story 3.7.4: Number of markers placed (for display in control bar) */
   markerCount?: number;
+  /** Hide the built-in fullscreen button (when parent handles fullscreen) */
+  hideFullscreenButton?: boolean;
 }
 
-export function BodyMapViewer({
+export const BodyMapViewer = forwardRef<BodyMapViewerRef, BodyMapViewerProps>(function BodyMapViewer({
   view,
   userId,
   symptoms = [],
@@ -59,7 +67,8 @@ export function BodyMapViewer({
   onViewModeChange,
   onDoneMarking,
   markerCount = 0,
-}: BodyMapViewerProps) {
+  hideFullscreenButton = false,
+}: BodyMapViewerProps, ref) {
   // View mode state management (Task 2) - can be controlled or uncontrolled
   const [internalViewMode, setInternalViewMode] = useState<BodyMapViewMode>('full-body');
   const [currentRegionId, setCurrentRegionId] = useState<string | null>(null);
@@ -76,6 +85,13 @@ export function BodyMapViewer({
 
   // Story 3.7.4: App fullscreen mode state management (hides UI chrome, not browser fullscreen)
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen();
+
+  // Expose fullscreen methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    enterFullscreen,
+    exitFullscreen,
+    isFullscreen,
+  }), [enterFullscreen, exitFullscreen, isFullscreen]);
 
   // Track previous fullscreen state for announcements
   const prevFullscreenState = useRef(isFullscreen);
@@ -386,7 +402,7 @@ export function BodyMapViewer({
       className={`${
         isFullscreen
           ? ''
-          : 'relative w-full h-full bg-gray-50 rounded-lg'
+          : 'relative w-full h-full rounded-lg'
       }`}
       style={isFullscreen ? {
         position: 'fixed',
@@ -397,9 +413,9 @@ export function BodyMapViewer({
         width: '100vw',
         height: '100vh',
         zIndex: 99999,
-        backgroundColor: '#f9fafb',
+        backgroundColor: 'var(--muted)',
         transform: 'translateZ(0)'
-      } : undefined}
+      } : { backgroundColor: 'var(--muted)' }}
       data-fullscreen={isFullscreen ? 'true' : 'false'}
     >
       {/* Story 3.7.4: Fullscreen control bar (shown when in fullscreen mode) */}
@@ -424,7 +440,7 @@ export function BodyMapViewer({
       </div>
 
       {/* Story 3.7.4: Fullscreen toggle button (shown when NOT in fullscreen) */}
-      {!isFullscreen && (
+      {!isFullscreen && !hideFullscreenButton && (
         <div className="absolute top-4 right-4 z-10">
           <FullScreenControl
             isFullscreen={false}
@@ -463,14 +479,15 @@ export function BodyMapViewer({
       <div
         ref={instructionsRef}
         data-body-map-instructions="true"
-        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm"
+        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 card px-4 py-2 text-small"
+        style={{ backgroundColor: 'var(--card)', boxShadow: 'var(--shadow-md)' }}
       >
         <div className="flex items-center gap-4">
-          <span>Touch or click regions to select</span>
+          <span style={{ color: 'var(--text-secondary)' }}>Touch or click regions to select</span>
           {activeMarker && selectedRegion && (
-            <span className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1 text-xs font-medium">
-              <span className="uppercase tracking-wide text-white/80">{selectedRegion.replace(/-/g, " ")}</span>
-              <span className="font-mono text-white">
+            <span className="badge-primary inline-flex items-center gap-2 px-3 py-1 text-xs font-medium">
+              <span className="uppercase tracking-wide">{selectedRegion.replace(/-/g, " ")}</span>
+              <span className="font-mono">
                 x: {activeMarker.normalized.x.toFixed(2)} y: {activeMarker.normalized.y.toFixed(2)}
               </span>
             </span>
@@ -486,4 +503,4 @@ export function BodyMapViewer({
   }
 
   return fullBodyView;
-}
+});

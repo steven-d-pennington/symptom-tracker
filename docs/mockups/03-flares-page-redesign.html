@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flares Page Redesign - Pocket Symptom Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #FAFAF9;
+            padding: 20px;
+        }
+
+        .header {
+            max-width: 1400px;
+            margin: 0 auto 32px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            color: #78716C;
+        }
+
+        .mockup-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* New Flares Page Layout */
+        .flares-page {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .page-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid #E7E5E4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1C1917;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 11px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #0F9D91;
+            border: 1px solid #E7E5E4;
+        }
+
+        .btn-secondary:hover {
+            background: #E0F5F3;
+            border-color: #0F9D91;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            padding: 20px 32px;
+            background: #FAFAF9;
+            border-bottom: 1px solid #E7E5E4;
+            display: flex;
+            gap: 32px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .stat-icon.active {
+            background: #E0F5F3;
+        }
+
+        .stat-icon.worsening {
+            background: #FEE2E2;
+        }
+
+        .stat-icon.improving {
+            background: #D1FAE5;
+        }
+
+        .stat-content h4 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1C1917;
+        }
+
+        .stat-content p {
+            font-size: 12px;
+            color: #78716C;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            min-height: 700px;
+        }
+
+        .main-content.map-collapsed {
+            grid-template-columns: 1fr;
+        }
+
+        /* Cards Column */
+        .cards-column {
+            padding: 32px;
+            overflow-y: auto;
+            max-height: 700px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1C1917;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: #F5F5F4;
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: #78716C;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #0F9D91;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        /* Flare Cards */
+        .flare-card {
+            background: white;
+            border: 1px solid #E7E5E4;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .flare-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+            border-color: #0F9D91;
+        }
+
+        .flare-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .flare-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 4px;
+        }
+
+        .flare-location {
+            font-size: 13px;
+            color: #78716C;
+        }
+
+        .severity-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .severity-high {
+            background: #FCA5A5;
+            color: #7F1D1D;
+        }
+
+        .severity-medium {
+            background: #FDE047;
+            color: #713F12;
+        }
+
+        .flare-meta {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #F5F5F4;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #78716C;
+        }
+
+        .trend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .trend-improving {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .trend-worsening {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* Body Map Sidebar */
+        .map-sidebar {
+            background: #FAFAF9;
+            border-left: 1px solid #E7E5E4;
+            padding: 24px;
+            overflow-y: auto;
+            max-height: 700px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .map-sidebar.collapsed {
+            display: none;
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .map-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1C1917;
+        }
+
+        .map-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #E7E5E4;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .icon-btn:hover {
+            background: #E0F5F3;
+            border-color: #0F9D91;
+        }
+
+        .body-map-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #E7E5E4;
+            position: relative;
+        }
+
+        .body-map-placeholder {
+            text-align: center;
+            color: #78716C;
+        }
+
+        .body-svg {
+            font-size: 120px;
+            opacity: 0.3;
+        }
+
+        .view-switcher {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #E7E5E4;
+            background: white;
+            font-size: 13px;
+            font-weight: 500;
+            color: #78716C;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: #0F9D91;
+            color: white;
+            border-color: #0F9D91;
+        }
+
+        /* FAB */
+        .fab {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #0F9D91;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(15, 157, 145, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .fab:hover {
+            background: #0A7A70;
+            box-shadow: 0 6px 20px rgba(15, 157, 145, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* Toggle Button */
+        .toggle-map-btn {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid #E7E5E4;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0F9D91;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 99;
+        }
+
+        .toggle-map-btn:hover {
+            background: #E0F5F3;
+            border-color: #0F9D91;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        /* Design Notes */
+        .design-notes {
+            margin-top: 32px;
+            padding: 24px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #0F9D91;
+        }
+
+        .design-notes h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 16px;
+        }
+
+        .design-notes ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .design-notes li {
+            padding: 10px 0;
+            padding-left: 24px;
+            font-size: 14px;
+            color: #1C1917;
+            position: relative;
+            border-bottom: 1px solid #F5F5F4;
+        }
+
+        .design-notes li:last-child {
+            border-bottom: none;
+        }
+
+        .design-notes li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #0F9D91;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .map-sidebar {
+                border-left: none;
+                border-top: 1px solid #E7E5E4;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗺️ Flares Page Redesign</h1>
+        <p class="subtitle">Solving the scroll problem with collapsible sidebar + clear boundaries</p>
+    </div>
+
+    <div class="mockup-container">
+        <div class="flares-page">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2 class="page-title">Flares</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">
+                        📊 Analytics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-icon active">🔥</div>
+                    <div class="stat-content">
+                        <h4>4</h4>
+                        <p>Active Flares</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon worsening">↗</div>
+                    <div class="stat-content">
+                        <h4>2</h4>
+                        <p>Worsening</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon improving">↘</div>
+                    <div class="stat-content">
+                        <h4>1</h4>
+                        <p>Improving</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content" id="mainContent">
+                <!-- Cards Column -->
+                <div class="cards-column">
+                    <div class="section-header">
+                        <h3 class="section-title">Active Flares</h3>
+                        <div class="tabs">
+                            <button class="tab active">Active</button>
+                            <button class="tab">Resolved</button>
+                        </div>
+                    </div>
+
+                    <!-- Flare Cards -->
+                    <div class="flare-card">
+                        <div class="flare-card-header">
+                            <div>
+                                <h4 class="flare-title">Left Groin Area</h4>
+                                <p class="flare-location">Groin (Left) • Precise coordinates</p>
+                            </div>
+                            <div class="severity-badge severity-high">7/10</div>
+                        </div>
+                        <div class="flare-meta">
+                            <span class="meta-item">📅 3 days active</span>
+                            <span class="trend-badge trend-improving">↗ Improving</span>
+                        </div>
+                    </div>
+
+                    <div class="flare-card">
+                        <div class="flare-card-header">
+                            <div>
+                                <h4 class="flare-title">Right Armpit</h4>
+                                <p class="flare-location">Armpit (Right) • Upper quadrant</p>
+                            </div>
+                            <div class="severity-badge severity-medium">4/10</div>
+                        </div>
+                        <div class="flare-meta">
+                            <span class="meta-item">📅 1 day active</span>
+                            <span class="trend-badge trend-improving">→ Stable</span>
+                        </div>
+                    </div>
+
+                    <div class="flare-card">
+                        <div class="flare-card-header">
+                            <div>
+                                <h4 class="flare-title">Left Shoulder</h4>
+                                <p class="flare-location">Shoulder (Left) • Back region</p>
+                            </div>
+                            <div class="severity-badge severity-high">8/10</div>
+                        </div>
+                        <div class="flare-meta">
+                            <span class="meta-item">📅 5 days active</span>
+                            <span class="trend-badge trend-worsening">↘ Worsening</span>
+                        </div>
+                    </div>
+
+                    <div class="flare-card">
+                        <div class="flare-card-header">
+                            <div>
+                                <h4 class="flare-title">Lower Back</h4>
+                                <p class="flare-location">Back (Lower) • Central</p>
+                            </div>
+                            <div class="severity-badge severity-medium">5/10</div>
+                        </div>
+                        <div class="flare-meta">
+                            <span class="meta-item">📅 2 days active</span>
+                            <span class="trend-badge trend-worsening">↘ Worsening</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body Map Sidebar -->
+                <div class="map-sidebar" id="mapSidebar">
+                    <div class="map-header">
+                        <h3 class="map-title">Body Map</h3>
+                        <div class="map-controls">
+                            <button class="icon-btn" title="Expand full-screen" onclick="expandMap()">⤢</button>
+                            <button class="icon-btn" title="Collapse map" onclick="toggleMap()">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="body-map-container">
+                        <div class="body-map-placeholder">
+                            <div class="body-svg">🧍</div>
+                            <p style="margin-top: 16px; font-size: 14px; font-weight: 500;">Interactive body map</p>
+                            <p style="font-size: 12px; margin-top: 4px;">Fixed height prevents scroll conflict</p>
+                        </div>
+                    </div>
+
+                    <div class="view-switcher">
+                        <button class="view-btn active">Front</button>
+                        <button class="view-btn">Back</button>
+                    </div>
+
+                    <div style="margin-top: 16px; padding: 12px; background: #E0F5F3; border-radius: 8px; font-size: 12px; color: #0A7A70;">
+                        💡 <strong>Scroll Solution:</strong> Fixed 500px height with clear boundaries. Zoom/pan within this container. Click expand for full-screen mode.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggle button when map is collapsed -->
+        <button class="toggle-map-btn" id="toggleBtn" style="display: none;" onclick="toggleMap()">
+            🗺️ Show Body Map
+        </button>
+
+        <!-- Floating Action Button -->
+        <button class="fab" title="Create New Flare">+</button>
+
+        <!-- Design Notes -->
+        <div class="design-notes">
+            <h3>✨ Key Design Solutions</h3>
+            <ul>
+                <li><strong>Collapsible Sidebar Layout:</strong> Body map in fixed sidebar (not tabs). Cards take 60%, map takes 40%.</li>
+                <li><strong>Body Map Scroll Fix:</strong> Fixed 500px height with clear visual boundaries. Scroll-lock within container prevents page scroll conflict.</li>
+                <li><strong>Expand Button:</strong> Big ⤢ button opens full-screen body map mode when precision is needed. ESC or "Done" returns to sidebar.</li>
+                <li><strong>No More View Modes:</strong> Removed confusing cards/map/both toggle. Default shows both, map is collapsible.</li>
+                <li><strong>No "Activation" Concept:</strong> Map is always interactive within its container. Clear boundaries make it obvious.</li>
+                <li><strong>FAB for New Flare:</strong> Floating Action Button (bottom right) opens flare creation. Always accessible, no context needed.</li>
+                <li><strong>Stats in Header:</strong> Quick summary replaces collapsible panel. Less clutter, same info.</li>
+                <li><strong>Active/Resolved Tabs:</strong> Simple toggle replaces complex filtering. Cleaner interface.</li>
+                <li><strong>Better Card Design:</strong> Hover lift, clear hierarchy, trend badges integrated naturally.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function toggleMap() {
+            const sidebar = document.getElementById('mapSidebar');
+            const mainContent = document.getElementById('mainContent');
+            const toggleBtn = document.getElementById('toggleBtn');
+
+            if (sidebar.classList.contains('collapsed')) {
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('map-collapsed');
+                toggleBtn.style.display = 'none';
+            } else {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('map-collapsed');
+                toggleBtn.style.display = 'block';
+            }
+        }
+
+        function expandMap() {
+            alert('Full-screen body map mode would open here.\n\nFeatures:\n• Entire screen dedicated to body map\n• Large zoom controls\n• Click regions to mark flares\n• ESC or "Done" button returns to sidebar view\n\nThis solves the scroll problem completely!');
+        }
+    </script>
+</body>
+</html>

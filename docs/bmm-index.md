@@ -589,6 +589,34 @@ Start with these documents in order:
 
 ---
 
+## 🔍 Code Quality & Maintenance
+
+### Code Audit Report
+
+**[CODE-AUDIT-REPORT.md](./CODE-AUDIT-REPORT.md)** - Comprehensive audit of orphaned files and dead code (Generated 2025-11-04)
+
+**Key Findings**:
+- **41 unused component files** (20% of components)
+- **26 unused utility exports**
+- **9 unused CSS animation classes**
+- **0 unused npm dependencies** ✅
+
+**Cleanup Impact**: ~3,100 lines of dead code, ~7% bundle size reduction
+
+### Phase 1 Cleanup - COMPLETED ✅
+
+**[CLEANUP-PHASE1-SUMMARY.md](./CLEANUP-PHASE1-SUMMARY.md)** - Phase 1 execution report (2025-11-04)
+
+**Completed**:
+- ✅ 31 files deleted (27 components + 4 test files)
+- ✅ 2 entire folders removed (landing/, empty-states/)
+- ✅ Build verified - compiles successfully
+- ✅ ~1,500+ lines of dead code removed
+
+**Remaining**: Phase 2 (utilities) and Phase 3 (CSS) pending roadmap review
+
+---
+
 ## 📦 Historical Documentation
 
 ### ARCHIVE Folder

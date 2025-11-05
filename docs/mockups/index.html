@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Symptom Tracker - UI Beautification Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #FAFAF9 0%, #F5F5F4 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .hero-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .tagline {
+            font-size: 18px;
+            color: #78716C;
+            margin-bottom: 32px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: #D1FAE5;
+            color: #065F46;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .overview {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 48px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .overview h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 20px;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .overview-card {
+            padding: 24px;
+            background: #FAFAF9;
+            border-radius: 12px;
+            border-left: 4px solid #0F9D91;
+        }
+
+        .overview-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 12px;
+        }
+
+        .overview-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .overview-card li {
+            font-size: 14px;
+            color: #78716C;
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .overview-card li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #0F9D91;
+            font-weight: bold;
+        }
+
+        .mockups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .mockup-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .mockup-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            transform: translateY(-4px);
+        }
+
+        .mockup-preview {
+            height: 240px;
+            background: linear-gradient(135deg, #0F9D91 0%, #06B6D4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mockup-preview::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.2) 0%, transparent 60%);
+        }
+
+        .mockup-content {
+            padding: 24px;
+        }
+
+        .mockup-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: #E0F5F3;
+            color: #0F9D91;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .mockup-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 8px;
+        }
+
+        .mockup-description {
+            font-size: 14px;
+            color: #78716C;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .mockup-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #0F9D91;
+            color: white;
+            text-decoration: none;
+            border-radius: 11px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .mockup-link:hover {
+            background: #0A7A70;
+            box-shadow: 0 4px 12px rgba(15, 157, 145, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .implementation-plan {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 48px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .implementation-plan h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1C1917;
+            margin-bottom: 24px;
+        }
+
+        .phase {
+            padding: 24px;
+            background: #FAFAF9;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border-left: 4px solid #0F9D91;
+        }
+
+        .phase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .phase-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1C1917;
+        }
+
+        .phase-duration {
+            font-size: 13px;
+            color: #78716C;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .phase-tasks {
+            list-style: none;
+            padding: 0;
+        }
+
+        .phase-tasks li {
+            padding: 8px 0;
+            padding-left: 24px;
+            font-size: 14px;
+            color: #1C1917;
+            position: relative;
+        }
+
+        .phase-tasks li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #0F9D91;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #78716C;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .mockups-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="hero-icon">🎨</div>
+            <h1>Pocket Symptom Tracker<br>UI Beautification Plan</h1>
+            <p class="tagline">From Generic SaaS → Calm & Empowering Health App</p>
+            <span class="status-badge">✓ Design Ready for Implementation</span>
+        </div>
+
+        <!-- Overview -->
+        <div class="overview">
+            <h2>Design Philosophy</h2>
+            <p style="font-size: 16px; color: #78716C; line-height: 1.6; margin-bottom: 32px;">
+                Transforming the UI from a generic blue SaaS interface into a calm, medical-grade health tracking app.
+                Inspired by <strong>Notion's</strong> warm neutrals and thoughtful spacing, plus <strong>Streaks'</strong>
+                beautiful progress visualization, this redesign targets users who want to feel <strong>calm & in control</strong>
+                and <strong>empowered</strong> when managing their chronic condition.
+            </p>
+
+            <div class="overview-grid">
+                <div class="overview-card">
+                    <h3>Visual Foundation</h3>
+                    <ul>
+                        <li>Calm teal primary (#0F9D91)</li>
+                        <li>Warm neutral grays</li>
+                        <li>Medical-grade feel</li>
+                        <li>System-native typography</li>
+                    </ul>
+                </div>
+
+                <div class="overview-card">
+                    <h3>Key Improvements</h3>
+                    <ul>
+                        <li>Solved body map scroll issue</li>
+                        <li>Streaks-style progress cards</li>
+                        <li>Collapsible sidebar layout</li>
+                        <li>Premium hover interactions</li>
+                    </ul>
+                </div>
+
+                <div class="overview-card">
+                    <h3>Design Approach</h3>
+                    <ul>
+                        <li>Moderate-to-bold changes</li>
+                        <li>Focus on /flares page</li>
+                        <li>Phased implementation</li>
+                        <li>Fully responsive</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mockups -->
+        <h2 style="font-size: 28px; font-weight: 600; color: #1C1917; margin-bottom: 32px; text-align: center;">
+            Interactive Mockups
+        </h2>
+
+        <div class="mockups-grid">
+            <!-- Mockup 1 -->
+            <div class="mockup-card" onclick="window.location.href='01-color-system-comparison.html'">
+                <div class="mockup-preview" style="background: linear-gradient(135deg, #6366F1 0%, #0F9D91 100%);">
+                    🎨
+                </div>
+                <div class="mockup-content">
+                    <div style="display: inline-block; width: 32px; height: 32px; background: #E0F5F3; color: #0F9D91; border-radius: 50%; text-align: center; line-height: 32px; font-weight: 600; font-size: 14px; margin-bottom: 12px;">1</div>
+                    <h3 class="mockup-title">Color System Comparison</h3>
+                    <p class="mockup-description">
+                        Side-by-side comparison of current generic blue vs. new calm teal palette with warm neutrals.
+                        See the difference in buttons, cards, and components.
+                    </p>
+                    <a href="01-color-system-comparison.html" class="mockup-link" onclick="event.stopPropagation()">
+                        View Mockup →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mockup 2 -->
+            <div class="mockup-card" onclick="window.location.href='02-dashboard-redesign.html'">
+                <div class="mockup-preview" style="background: linear-gradient(135deg, #10B981 0%, #0F9D91 100%);">
+                    📱
+                </div>
+                <div class="mockup-content">
+                    <div style="display: inline-block; width: 32px; height: 32px; background: #E0F5F3; color: #0F9D91; border-radius: 50%; text-align: center; line-height: 32px; font-weight: 600; font-size: 14px; margin-bottom: 12px;">2</div>
+                    <h3 class="mockup-title">Dashboard Redesign</h3>
+                    <p class="mockup-description">
+                        Transforming emoji buttons into elegant Streaks-inspired cards with progress rings.
+                        Premium feel with actionable quick stats.
+                    </p>
+                    <a href="02-dashboard-redesign.html" class="mockup-link" onclick="event.stopPropagation()">
+                        View Mockup →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mockup 3 -->
+            <div class="mockup-card" onclick="window.location.href='03-flares-page-redesign.html'">
+                <div class="mockup-preview" style="background: linear-gradient(135deg, #06B6D4 0%, #0F9D91 100%);">
+                    🗺️
+                </div>
+                <div class="mockup-content">
+                    <div style="display: inline-block; width: 32px; height: 32px; background: #E0F5F3; color: #0F9D91; border-radius: 50%; text-align: center; line-height: 32px; font-weight: 600; font-size: 14px; margin-bottom: 12px;">3</div>
+                    <h3 class="mockup-title">Flares Page Redesign</h3>
+                    <p class="mockup-description">
+                        Complete redesign solving the body map scroll problem with collapsible sidebar,
+                        fixed-height container, and FAB for new flares.
+                    </p>
+                    <a href="03-flares-page-redesign.html" class="mockup-link" onclick="event.stopPropagation()">
+                        View Mockup →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Implementation Plan -->
+        <div class="implementation-plan">
+            <h2>📋 Implementation Plan</h2>
+            <p style="font-size: 15px; color: #78716C; margin-bottom: 24px;">
+                Phased rollout to minimize risk and allow for feedback at each stage.
+            </p>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <h3 class="phase-title">Phase 1: Visual Foundation</h3>
+                    <span class="phase-duration">1-2 days</span>
+                </div>
+                <ul class="phase-tasks">
+                    <li>Update Tailwind config with new color system</li>
+                    <li>Change typography scale (system fonts, new sizes)</li>
+                    <li>Update spacing/shadows across all components</li>
+                    <li>Replace orange "Export Debug" button</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <h3 class="phase-title">Phase 2: Dashboard Polish</h3>
+                    <span class="phase-duration">1 day</span>
+                </div>
+                <ul class="phase-tasks">
+                    <li>Redesign Quick Actions cards with progress rings</li>
+                    <li>Update Today's Timeline section</li>
+                    <li>Improve empty states</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <h3 class="phase-title">Phase 3: /Flares Page Redesign</h3>
+                    <span class="phase-duration">2-3 days</span>
+                </div>
+                <ul class="phase-tasks">
+                    <li>Implement collapsible sidebar layout</li>
+                    <li>Fix body map scroll with container boundaries</li>
+                    <li>Add expand/collapse functionality</li>
+                    <li>Replace view mode toggles</li>
+                    <li>Create FAB for "New Flare"</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <h3 class="phase-title">Phase 4: Body Map Visual Upgrade</h3>
+                    <span class="phase-duration">1-2 days</span>
+                </div>
+                <ul class="phase-tasks">
+                    <li>Soften body illustration style</li>
+                    <li>Add gradient severity overlays</li>
+                    <li>Polish zoom/pan interactions</li>
+                    <li>Improve marker visuals</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <h3 class="phase-title">Phase 5: Component Library Polish</h3>
+                    <span class="phase-duration">1-2 days</span>
+                </div>
+                <ul class="phase-tasks">
+                    <li>Update all cards, buttons, modals</li>
+                    <li>Add smooth transitions</li>
+                    <li>Create empty state illustrations</li>
+                    <li>Polish micro-interactions</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Created for <strong>Pocket Symptom Tracker</strong></p>
+            <p style="margin-top: 8px; font-size: 13px;">Design Goal: Calm & In Control + Empowered</p>
+        </div>
+    </div>
+
+    <script>
+        // Add keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '1' && e.key <= '3') {
+                const mockupNumber = parseInt(e.key);
+                const mockups = [
+                    '01-color-system-comparison.html',
+                    '02-dashboard-redesign.html',
+                    '03-flares-page-redesign.html'
+                ];
+                window.location.href = mockups[mockupNumber - 1];
+            }
+        });
+    </script>
+</body>
+</html>
