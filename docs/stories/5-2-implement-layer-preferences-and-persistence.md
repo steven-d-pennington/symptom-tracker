@@ -1,6 +1,6 @@
 # Story 5.2: Implement Layer Preferences and Persistence
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -372,7 +372,7 @@ describe('BodyMapPreferencesRepository', () => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/5-2-implement-layer-preferences-and-persistence.context.xml
 
 ### Agent Model Used
 
