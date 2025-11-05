@@ -489,6 +489,50 @@ export class SymptomTrackerDatabase extends Dexie {
       moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
       sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
     });
+
+    // Version 22: Add layer field to bodyMapLocations for multi-layer tracking (Story 5.1)
+    this.version(22).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], [userId+layer+createdAt], createdAt",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, [userId+status], [userId+bodyRegionId], [userId+startDate], userId",
+      flareEvents: "id, [flareId+timestamp], [userId+timestamp], flareId, userId",
+      flareBodyLocations: "id, [flareId+bodyRegionId], [userId+flareId], flareId, userId",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+      moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+    }).upgrade(async (trans) => {
+      // Backward compatibility: Assign layer='flares' to all existing body map location markers
+      // This ensures existing flare tracking data continues to work seamlessly
+      console.log('[Migration v22] Starting: Adding layer field to bodyMapLocations...');
+
+      try {
+        await trans.table('bodyMapLocations').toCollection().modify((marker: any) => {
+          if (!marker.layer) {
+            marker.layer = 'flares';
+          }
+        });
+
+        const count = await trans.table('bodyMapLocations').count();
+        console.log(`[Migration v22] Successfully migrated ${count} body map location markers to layer='flares'`);
+      } catch (error) {
+        console.error('[Migration v22] Error during migration:', error);
+        throw error;
+      }
+    });
   }
 }
 
