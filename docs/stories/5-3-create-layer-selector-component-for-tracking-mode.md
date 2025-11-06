@@ -1,6 +1,6 @@
 # Story 5.3: Create Layer Selector Component for Tracking Mode
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -479,7 +479,7 @@ describe('LayerSelector', () => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/5-3-create-layer-selector-component-for-tracking-mode.context.xml`
 
 ### Agent Model Used
 

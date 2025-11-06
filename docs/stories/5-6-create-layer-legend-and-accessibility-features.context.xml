@@ -1,0 +1,240 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>6</storyId>
+    <title>Create Layer Legend and Accessibility Features</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-6-create-layer-legend-and-accessibility-features.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user viewing multi-layer body maps</asA>
+    <iWant>a clear legend explaining what each marker represents</iWant>
+    <soThat>I can quickly interpret the visualization without confusion</soThat>
+    <tasks>
+- Task 1: Create LayerLegend component structure (AC: #5.6.1, #5.6.2)
+- Task 2: Implement responsive collapsible design (AC: #5.6.3)
+- Task 3: Make legend items interactive (AC: #5.6.4)
+- Task 4: Verify color contrast compliance (AC: #5.6.5)
+- Task 5: Implement screen reader support (AC: #5.6.6)
+- Task 6: Add keyboard navigation (AC: #5.6.7)
+- Task 7: Add help tooltip (AC: #5.6.8)
+- Task 8: Position legend on body map (AC: #5.6.3)
+- Task 9: Document future export integration (AC: #5.6.9)
+- Task 10: Component testing (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. AC5.6.1 — LayerLegend component displays all layer types: New LayerLegend component created showing icon, color, label, and brief description for each layer type. Uses LAYER_CONFIG from Story 5.1. Component props: visibleLayers (to show only active layers).
+
+2. AC5.6.2 — Dynamic legend updates with visible layers: Legend shows only currently visible layers in multi-layer view. Auto-updates when user toggles layer visibility in LayerToggle component. If single-layer mode, shows only current tracking layer.
+
+3. AC5.6.3 — Responsive mobile design: Legend positioned prominently but non-intrusively. Collapsible on mobile viewports to save screen space. Expand/collapse animation smooth (< 300ms). Default state: expanded on desktop, collapsed on mobile.
+
+4. AC5.6.4 — Interactive legend items: Each legend item clickable to toggle that layer's visibility (if in multi-layer mode). Click calls same onToggleLayer handler as LayerToggle checkboxes. Provides alternative interaction method.
+
+5. AC5.6.5 — WCAG AA color contrast compliance: All legend colors verified for WCAG 2.1 Level AA contrast ratios in both light and dark themes. Text meets 4.5:1 minimum contrast. Icons supplement color for colorblind accessibility.
+
+6. AC5.6.6 — Screen reader support: Legend has proper ARIA structure: role="region", aria-label="Layer legend", list semantics for items. Screen reader announces: "Legend: Flares shown as red flame icons (3 markers), Pain shown as yellow lightning icons (5 markers)..."
+
+7. AC5.6.7 — Keyboard navigation: Tab key navigates through legend items. Enter key toggles layer visibility (if interactive mode). Focus indicators clearly visible. Keyboard shortcuts from Story 5.5 work alongside legend.
+
+8. AC5.6.8 — Help tooltip with layer system explanation: Help icon/button near legend opens tooltip or popover explaining: "Layers separate different tracking types. Switch layers to log different conditions, or view all layers to see comprehensive patterns." Dismissible with ESC or click outside.
+
+9. AC5.6.9 — Future integration point for medical exports: Legend structure designed to support future screenshot export feature (Story 4.x). Legend included in body map screenshots for medical consultations. Note as integration point in documentation.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5 Technical Specification</title>
+        <section>Story 5.6: Layer Legend</section>
+        <snippet>File: src/components/body-map/LayerLegend.tsx. Purpose: Provide clear visual guide to layer meanings. Deliverables: LayerLegend component, auto-updating based on visible layers, collapsible mobile design, accessibility features.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Multi-layer Body Map Tracking</section>
+        <snippet>Product vision and requirements for symptom tracking application including multi-layer body map functionality.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Component Architecture</section>
+        <snippet>Overall application architecture including component patterns, data flow, and testing standards.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/5-5-add-multi-layer-view-controls-and-filtering.md</path>
+        <title>Story 5.5: Multi-Layer View Controls</title>
+        <section>Dev Notes</section>
+        <snippet>Establishes visibleLayers state management, toggleLayerVisibility function, keyboard shortcuts, and marker count queries that LayerLegend will integrate with.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/5-1-add-layer-field-to-data-model-and-indexeddb-schema.md</path>
+        <title>Story 5.1: Layer Data Model</title>
+        <section>LAYER_CONFIG Definition</section>
+        <snippet>Defines LayerType enum and LAYER_CONFIG with metadata (id, label, icon, color, description) for flares, pain, and inflammation layers.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>LAYER_CONFIG</symbol>
+        <lines>214-235</lines>
+        <reason>Source of layer metadata (id, label, icon, color, description) that LayerLegend will display. Referenced in AC5.6.1.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>LayerType</symbol>
+        <lines>196</lines>
+        <reason>Type definition for layer categories (flares, pain, inflammation) used in component props.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>LayerMetadata</symbol>
+        <lines>202-208</lines>
+        <reason>Interface defining structure of layer metadata used by LAYER_CONFIG.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/CoordinateMarker.tsx</path>
+        <kind>component</kind>
+        <symbol>CoordinateMarker</symbol>
+        <lines>all</lines>
+        <reason>Example of existing body map component with accessibility features and marker rendering patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/FlareMarkers.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareMarkers</symbol>
+        <lines>all</lines>
+        <reason>Existing marker rendering component showing patterns for body map integration.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/__tests__/CoordinateMarker.test.tsx</path>
+        <kind>test</kind>
+        <symbol>CoordinateMarker tests</symbol>
+        <lines>1-50</lines>
+        <reason>Example test patterns using @testing-library/react, showing component testing structure for LayerLegend tests.</reason>
+      </artifact>
+      <artifact>
+        <path>src/styles/accessibility.css</path>
+        <kind>styles</kind>
+        <symbol>accessibility styles</symbol>
+        <lines>all</lines>
+        <reason>Existing accessibility CSS patterns for WCAG compliance referenced in AC5.6.5.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/announce.ts</path>
+        <kind>utility</kind>
+        <symbol>announce utilities</symbol>
+        <lines>all</lines>
+        <reason>Screen reader announcement utilities for implementing AC5.6.6 ARIA support.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="next" version="15.5.4" />
+        <package name="lucide-react" version="^0.544.0" reason="Icon library for UI elements (HelpCircle, ChevronDown, ChevronUp)" />
+        <package name="@radix-ui/react-tooltip" version="^1.2.8" reason="Tooltip component for help functionality (AC5.6.8)" />
+        <package name="tailwindcss" version="^4" reason="CSS framework for styling and responsive design" />
+      </node>
+      <testing>
+        <package name="jest" version="^30.2.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+        <package name="@testing-library/user-event" version="^14.6.1" reason="User interaction testing for keyboard and click events" />
+        <package name="jest-environment-jsdom" version="^30.2.0" />
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- Component must use LAYER_CONFIG from src/lib/db/schema.ts as single source of truth for layer metadata
+- Legend must filter displayed layers based on visibleLayers prop (no hardcoded layer lists)
+- WCAG 2.1 Level AA compliance required: text contrast 4.5:1, large text 3:1, UI components 3:1
+- Responsive breakpoint at 768px: expanded above, collapsed below by default
+- Collapse/expand animation must complete in &lt; 300ms for smooth UX
+- Interactive mode only enabled when onToggleLayer prop provided (explicit opt-in)
+- Must integrate with existing keyboard shortcuts from Story 5.5 without conflicts
+- All focusable elements must have visible focus indicators meeting WCAG standards
+- Screen reader announcements must use semantic HTML and ARIA attributes
+- Component positioning must not obscure body map markers or other critical UI
+- Test coverage required for all acceptance criteria using Jest and @testing-library/react
+- Future-proof design: legend structure must support screenshot export integration
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>LayerLegendProps</name>
+      <kind>React component props interface</kind>
+      <signature>
+interface LayerLegendProps {
+  visibleLayers: LayerType[];              // Layers to show in legend (from Story 5.5)
+  onToggleLayer?: (layer: LayerType) =&gt; void; // Optional toggle handler (from Story 5.5)
+  markerCounts?: Record&lt;LayerType, number&gt;;   // Optional counts per layer (from Story 5.5)
+  interactive?: boolean;                    // Enable click to toggle (default: false)
+  className?: string;                       // Additional styles
+}
+      </signature>
+      <path>src/components/body-map/LayerLegend.tsx</path>
+    </interface>
+    <interface>
+      <name>LAYER_CONFIG</name>
+      <kind>Configuration object</kind>
+      <signature>const LAYER_CONFIG: Record&lt;LayerType, LayerMetadata&gt;</signature>
+      <path>src/lib/db/schema.ts</path>
+    </interface>
+    <interface>
+      <name>LayerType</name>
+      <kind>Type definition</kind>
+      <signature>type LayerType = 'flares' | 'pain' | 'inflammation'</signature>
+      <path>src/lib/db/schema.ts</path>
+    </interface>
+    <interface>
+      <name>LayerMetadata</name>
+      <kind>Interface</kind>
+      <signature>
+interface LayerMetadata {
+  id: LayerType;
+  label: string;
+  icon: string;        // Emoji icon
+  color: string;       // Tailwind color class
+  description: string;
+}
+      </signature>
+      <path>src/lib/db/schema.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Project uses Jest 30.2.0 with @testing-library/react 16.3.0 for component testing. Test files use .test.tsx extension and are colocated in __tests__ directories. Testing patterns include render helpers, screen queries, fireEvent/userEvent for interactions, and expect assertions with jest-dom matchers. Accessibility testing should verify ARIA attributes, keyboard navigation, focus management, and screen reader compatibility. Tests should cover all acceptance criteria with descriptive test names following "should [behavior]" pattern.
+    </standards>
+    <locations>
+- src/components/body-map/__tests__/LayerLegend.test.tsx (NEW - primary test file)
+- src/components/body-map/__tests__/ (existing test directory for body map components)
+- Package.json scripts: "test" runs Jest, "test:watch" for development, "test:coverage" for coverage reports
+    </locations>
+    <ideas>
+AC5.6.1: Test LayerLegend renders all items from visibleLayers prop with correct icon, color, label, description from LAYER_CONFIG
+AC5.6.2: Test legend updates when visibleLayers prop changes, showing only active layers (rerender pattern)
+AC5.6.3: Test mobile collapse behavior - default collapsed on mobile viewport, expanded on desktop (mock window.innerWidth)
+AC5.6.3: Test collapse/expand animation completes smoothly and toggle button works
+AC5.6.4: Test interactive legend items - clicking item calls onToggleLayer with correct layer ID when interactive=true
+AC5.6.4: Test legend items NOT interactive when interactive=false or onToggleLayer undefined
+AC5.6.5: Test color contrast compliance - verify all text/color combinations meet WCAG AA 4.5:1 ratio (automated accessibility testing)
+AC5.6.6: Test ARIA structure - role="region", aria-label="Layer legend", list semantics, item labels
+AC5.6.7: Test keyboard navigation - Tab moves focus through items, Enter toggles layer, focus indicators visible
+AC5.6.8: Test help tooltip - clicking help button shows/hides explanation text, ESC key dismisses, click outside dismisses
+AC5.6.9: Test legend structure includes data-testid or similar for future export integration
+Integration: Test LayerLegend integrates correctly with parent component receiving visibleLayers and onToggleLayer props
+    </ideas>
+  </tests>
+</story-context>

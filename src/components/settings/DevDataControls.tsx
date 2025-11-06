@@ -6,7 +6,7 @@ import { generateComprehensiveData } from "@/lib/dev/generators/orchestrator";
 import { getScenarioConfig, getAllScenarios, ScenarioType } from "@/lib/dev/config/scenarios";
 
 export function DevDataControls() {
-  const { userId, isLoading: userLoading } = useCurrentUser();
+  const { userId, userName, isLoading: userLoading } = useCurrentUser();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +14,9 @@ export function DevDataControls() {
   const [selectedYears, setSelectedYears] = useState<number>(1);
 
   const scenarios = getAllScenarios();
+
+  // Only show dev controls if user's name is "Steven"
+  const isAuthorized = userName === "Steven";
 
   const handleGenerateScenario = async (scenarioId: ScenarioType, years?: number) => {
     if (!userId) {
@@ -440,12 +443,12 @@ export function DevDataControls() {
   };
 
   if (userLoading) {
-    return (
-      <div className="mt-10 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-6">
-        <h3 className="text-lg font-semibold text-primary">Developer Utilities</h3>
-        <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
-      </div>
-    );
+    return null; // Don't show anything while loading
+  }
+
+  // Hide dev controls if user is not authorized (name is not "Steven")
+  if (!isAuthorized) {
+    return null;
   }
 
   if (!userId) {

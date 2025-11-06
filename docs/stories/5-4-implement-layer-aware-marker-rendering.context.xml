@@ -1,0 +1,367 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>4</storyId>
+    <title>Implement Layer-Aware Marker Rendering</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\5-4-implement-layer-aware-marker-rendering.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user viewing marked body areas</asA>
+    <iWant>to see different visual markers for each layer type</iWant>
+    <soThat>I can instantly distinguish between flares, pain, and inflammation</soThat>
+    <tasks>
+      <task id="1" status="pending" ac="5.4.1">Refactor FlareMarker to BodyMapMarker
+        <subtask id="1.1">Locate existing FlareMarker component</subtask>
+        <subtask id="1.2">Rename to BodyMapMarker or create new generalized component</subtask>
+        <subtask id="1.3">Add layer prop to component interface</subtask>
+        <subtask id="1.4">Import LAYER_CONFIG from schema</subtask>
+        <subtask id="1.5">Map layer to icon/color using LAYER_CONFIG</subtask>
+        <subtask id="1.6">Update all references from FlareMarker to BodyMapMarker</subtask>
+        <subtask id="1.7">Ensure backward compatibility with existing flare displays</subtask>
+      </task>
+      <task id="2" status="pending" ac="5.4.2">Implement severity-based sizing
+        <subtask id="2.1">Create getSeveritySize(severity) utility function</subtask>
+        <subtask id="2.2">Return size based on ranges: 1-3 → 16px, 4-7 → 24px, 8-10 → 32px</subtask>
+        <subtask id="2.3">Apply size to marker wrapper element</subtask>
+        <subtask id="2.4">Add transparent padding for markers &lt; 32px to meet touch target</subtask>
+        <subtask id="2.5">Test touch target accessibility with DevTools</subtask>
+        <subtask id="2.6">Ensure icon scales proportionally with marker size</subtask>
+      </task>
+      <task id="3" status="pending" ac="5.4.3">Implement recency-based opacity
+        <subtask id="3.1">Create getMarkerOpacity(timestamp) utility function</subtask>
+        <subtask id="3.2">Calculate days since marker created (now - timestamp)</subtask>
+        <subtask id="3.3">Return opacity: &lt; 7 days → 1.0, 7-30 days → 0.7, &gt; 30 days → 0.5</subtask>
+        <subtask id="3.4">Apply opacity to marker wrapper or use Tailwind opacity classes</subtask>
+        <subtask id="3.5">Test opacity calculation with various timestamps</subtask>
+        <subtask id="3.6">Ensure opacity works with color contrast (WCAG AA)</subtask>
+      </task>
+      <task id="4" status="pending" ac="5.4.4">Implement overlap prevention algorithm
+        <subtask id="4.1">Create calculateMarkerOffset(markers, currentIndex) utility</subtask>
+        <subtask id="4.2">Implement circular distribution pattern (angle = index / count * 2π)</subtask>
+        <subtask id="4.3">Calculate x/y offsets using cos/sin (radius * cos/sin(angle))</subtask>
+        <subtask id="4.4">Use 8-12px radius for offset</subtask>
+        <subtask id="4.5">Group markers by bodyRegionId before calculating offsets</subtask>
+        <subtask id="4.6">Apply offset to marker positioning (CSS transform or x/y props)</subtask>
+        <subtask id="4.7">Test with 2, 3, 4+ markers at same location</subtask>
+        <subtask id="4.8">Ensure offsets don't push markers outside region bounds</subtask>
+      </task>
+      <task id="5" status="pending" ac="5.4.5">Layer-filtered marker queries
+        <subtask id="5.1">Update body map data-fetching logic</subtask>
+        <subtask id="5.2">Use bodyMapRepository.getMarkersByLayer(userId, currentLayer)</subtask>
+        <subtask id="5.3">Pass currentLayer from LayerSelector state</subtask>
+        <subtask id="5.4">Test query performance with 50+ markers</subtask>
+        <subtask id="5.5">Verify compound index [userId+layer+timestamp] used</subtask>
+        <subtask id="5.6">Add loading state while markers fetch</subtask>
+      </task>
+      <task id="6" status="pending" ac="5.4.6">Performance optimization
+        <subtask id="6.1">Wrap BodyMapMarker with React.memo</subtask>
+        <subtask id="6.2">Define memo comparison function (check id, layer, severity)</subtask>
+        <subtask id="6.3">Test re-render count with React DevTools Profiler</subtask>
+        <subtask id="6.4">Measure frame rate with 50+ markers rendered</subtask>
+        <subtask id="6.5">If &lt; 60fps, implement virtualization (react-window)</subtask>
+        <subtask id="6.6">Consider marker clustering for 100+ markers</subtask>
+        <subtask id="6.7">Benchmark before/after optimization</subtask>
+      </task>
+      <task id="7" status="pending" ac="5.4.7">Colorblind-friendly design
+        <subtask id="7.1">Ensure each layer has unique icon shape (🔥 ⚡ 🟣)</subtask>
+        <subtask id="7.2">Test appearance in grayscale mode</subtask>
+        <subtask id="7.3">Verify icons distinguishable without color</subtask>
+        <subtask id="7.4">Check color contrast ratios (WCAG AA: 4.5:1 minimum)</subtask>
+        <subtask id="7.5">Test with color blindness simulation tools</subtask>
+        <subtask id="7.6">Add optional pattern/texture if colors too similar</subtask>
+      </task>
+      <task id="8" status="pending" ac="5.4.8">Interactive marker behavior
+        <subtask id="8.1">Add onClick handler to marker component</subtask>
+        <subtask id="8.2">Determine detail view based on layer type</subtask>
+        <subtask id="8.3">Navigate to appropriate detail page/modal</subtask>
+        <subtask id="8.4">Add hover state styling (scale, brightness, border)</subtask>
+        <subtask id="8.5">Add focus state for keyboard navigation</subtask>
+        <subtask id="8.6">Add active state feedback on click</subtask>
+        <subtask id="8.7">Test touch interactions on mobile</subtask>
+        <subtask id="8.8">Ensure cursor changes to pointer on hover</subtask>
+      </task>
+      <task id="9" status="pending" ac="5.4.9">Real-time marker updates
+        <subtask id="9.1">Implement useEffect hook to refetch markers on layer change</subtask>
+        <subtask id="9.2">Subscribe to marker data changes (if using state management)</subtask>
+        <subtask id="9.3">Update markers without full page reload</subtask>
+        <subtask id="9.4">Add optimistic UI update when new marker created</subtask>
+        <subtask id="9.5">Test marker updates across different layer views</subtask>
+        <subtask id="9.6">Verify smooth transitions when markers appear/disappear</subtask>
+      </task>
+      <task id="10" status="pending" ac="all">Component testing
+        <subtask id="10.1">Create __tests__/BodyMapMarker.test.tsx</subtask>
+        <subtask id="10.2">Write test: renders correct icon for each layer</subtask>
+        <subtask id="10.3">Write test: applies correct color for each layer</subtask>
+        <subtask id="10.4">Write test: scales size based on severity</subtask>
+        <subtask id="10.5">Write test: applies opacity based on recency</subtask>
+        <subtask id="10.6">Write test: calculates offset for overlapping markers</subtask>
+        <subtask id="10.7">Write test: renders with React.memo optimization</subtask>
+        <subtask id="10.8">Write test: meets 32px minimum touch target</subtask>
+        <subtask id="10.9">Write test: calls detail handler on click</subtask>
+        <subtask id="10.10">Write integration test: body map shows filtered markers by layer</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="5.4.1" priority="high">
+      <title>Generalized BodyMapMarker component</title>
+      <description>Refactor existing FlareMarker component into generalized BodyMapMarker that renders layer-specific icons and colors. Component accepts layer prop and renders appropriate visual style using LAYER_CONFIG. Supports all 3 layers: Flares (🔥 red/orange), Pain (⚡ yellow/amber), Inflammation (🟣 purple).</description>
+      <source>docs/epics.md#Story-5.4, docs/epic-5-tech-spec.md#Layer-Aware-Marker-Rendering</source>
+    </criterion>
+    <criterion id="5.4.2" priority="high">
+      <title>Severity-based size scaling</title>
+      <description>Marker size scales with severity (1-10): Severity 1-3 renders small (16px), severity 4-7 renders medium (24px), severity 8-10 renders large (32px). Minimum touch target maintained at 32px with transparent padding for small markers (NFR001).</description>
+      <source>docs/epic-5-tech-spec.md#Size-Scaling</source>
+    </criterion>
+    <criterion id="5.4.3" priority="high">
+      <title>Recency-based opacity</title>
+      <description>Marker opacity indicates age: markers &lt; 7 days render 100% opaque, 7-30 days render 70% opaque, &gt; 30 days render 50% opaque. Calculation based on marker timestamp vs current date. Applies to all layers consistently.</description>
+      <source>docs/epics.md#Story-5.4, docs/epic-5-tech-spec.md#Visual-Specifications</source>
+    </criterion>
+    <criterion id="5.4.4" priority="high">
+      <title>Smart overlap prevention</title>
+      <description>Multiple markers at same body region position with smart offset algorithm preventing complete overlap. Offset calculation uses circular distribution pattern (calculateMarkerOffset function). Markers stagger in radius around central point.</description>
+      <source>docs/epics.md#Story-5.4, docs/epic-5-tech-spec.md#Overlap-Prevention</source>
+    </criterion>
+    <criterion id="5.4.5" priority="high">
+      <title>Layer-filtered marker queries</title>
+      <description>Body map queries filter markers by active layer in tracking mode (single layer view). Uses bodyMapRepository.getMarkersByLayer() from Story 5.1. Query performance maintained with compound index [userId+layer+timestamp].</description>
+      <source>docs/epics.md#Story-5.4</source>
+    </criterion>
+    <criterion id="5.4.6" priority="high">
+      <title>Performance optimization for 50+ markers</title>
+      <description>Marker rendering handles 50+ markers without lag (NFR001). Uses React.memo for marker components preventing unnecessary re-renders. Consider virtualization if marker count exceeds 100. Target: 60fps interactions.</description>
+      <source>docs/epics.md#Story-5.4, docs/epic-5-tech-spec.md#Performance-Optimization</source>
+    </criterion>
+    <criterion id="5.4.7" priority="medium">
+      <title>Colorblind-friendly design</title>
+      <description>All marker types use distinct shapes/icons AND colors ensuring accessibility for colorblind users. Icons alone distinguish layer types even without color. Meets WCAG 2.1 Level AA standards.</description>
+      <source>docs/epics.md#Story-5.4</source>
+    </criterion>
+    <criterion id="5.4.8" priority="medium">
+      <title>Interactive marker behavior</title>
+      <description>Tapping/clicking marker opens layer-appropriate detail view (flare detail, pain log, inflammation log). Hover state provides visual feedback. Active/focus states support keyboard navigation.</description>
+      <source>docs/epics.md#Story-5.4</source>
+    </criterion>
+    <criterion id="5.4.9" priority="high">
+      <title>Real-time marker updates</title>
+      <description>Markers update immediately when new data logged or layer switched. Body map subscribes to marker data changes and re-renders affected markers. No full page reload required.</description>
+      <source>docs/epics.md#Story-5.4</source>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>Story 5.4: Layer-Aware Marker Rendering</section>
+        <snippet>Defines marker visual specifications (icons, colors, opacity rules), size scaling based on severity (16px/24px/32px), smart overlap prevention algorithm using circular distribution pattern, and performance optimization requirements (React.memo, virtualization for 50+ markers, 60fps target).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5 Technical Specification</title>
+        <section>Data Architecture - LAYER_CONFIG</section>
+        <snippet>LAYER_CONFIG provides metadata for all layers: flares (🔥 red), pain (⚡ yellow), inflammation (🟣 purple). Each layer has id, label, icon, color (Tailwind classes), and description. Component must import this config for consistent visual rendering.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Product Epics</title>
+        <section>Story 5.4 Acceptance Criteria</section>
+        <snippet>Comprehensive acceptance criteria covering: generalized BodyMapMarker component, severity-based sizing, recency-based opacity, smart overlap prevention, layer-filtered queries, performance optimization for 50+ markers, colorblind-friendly design, interactive behavior, and real-time updates.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Component Architecture</section>
+        <snippet>Body map uses React component architecture with SVG rendering. Components follow separation of concerns: data fetching via repositories, state management via hooks, presentation via components. Performance critical components use React.memo.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/5-1-add-layer-field-to-data-model-and-indexeddb-schema.md</path>
+        <title>Story 5.1: Add Layer Field to Data Model</title>
+        <section>LAYER_CONFIG and LayerType definitions</section>
+        <snippet>Established LayerType enum and LAYER_CONFIG constant in schema.ts. Layer field added to BodyMapLocationRecord with backward compatibility (defaults to 'flares'). Compound index [userId+layer+timestamp] enables efficient layer-filtered queries.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/5-3-create-layer-selector-component-for-tracking-mode.md</path>
+        <title>Story 5.3: Create Layer Selector Component</title>
+        <section>Layer Selection Context</section>
+        <snippet>LayerSelector manages currentLayer state which will be passed to body map for marker filtering. LAYER_CONFIG imported for consistent icon/color rendering. Accessibility standards (WCAG 2.1 Level AA) and touch target requirements (44x44px minimum) apply to all interactive components.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>LayerType, LAYER_CONFIG, BodyMapLocationRecord</symbol>
+        <lines>196-257</lines>
+        <reason>Defines LayerType enum ('flares' | 'pain' | 'inflammation'), LAYER_CONFIG with metadata (icon, color, label), and BodyMapLocationRecord interface with layer field. Essential for layer-aware marker rendering.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/FlareMarkers.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareMarkers</symbol>
+        <lines>1-195</lines>
+        <reason>Existing marker rendering component to be refactored into BodyMapMarker. Shows current pattern: marker positioning with offsets, severity-based colors via getFlareMarkerColor, click handlers, accessibility attributes (aria-label, role, tabIndex). Provides template for generalized implementation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>BodyMapLocationRepository</symbol>
+        <lines>1-100</lines>
+        <reason>Data access layer for body map locations. Story 5.1 added getMarkersByLayer() method for layer-filtered queries using compound index. Story 5.4 will use this method to fetch markers for current layer in tracking mode.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/flareMarkers.ts</path>
+        <kind>utility</kind>
+        <symbol>getFlareMarkerColor, calculateRadialOffsets</symbol>
+        <lines>unknown</lines>
+        <reason>Utility functions for marker color mapping and radial offset calculation. getFlareMarkerColor provides severity-to-color mapping. calculateRadialOffsets implements circular distribution for overlapping markers. May need adaptation for layer-aware rendering.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>denormalizeCoordinates, getRegionBounds</symbol>
+        <lines>unknown</lines>
+        <reason>Coordinate transformation utilities used by FlareMarkers for positioning markers within SVG regions. Essential for calculating marker positions with offsets in BodyMapMarker component.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="19.1.0">Core React library for component implementation, React.memo for performance optimization</package>
+        <package name="next" version="15.5.4">Next.js framework with routing (useRouter for navigation)</package>
+        <package name="dexie" version="^4.2.0">IndexedDB wrapper for querying markers by layer using compound indexes</package>
+        <package name="lucide-react" version="^0.544.0">Icon library (may be used alongside emoji icons)</package>
+      </node>
+      <frameworks>
+        <framework name="TypeScript">Strong typing for LayerType, marker props interfaces, utility functions</framework>
+        <framework name="Tailwind CSS">Utility-first CSS framework - LAYER_CONFIG uses Tailwind color classes (text-red-500, text-yellow-500, text-purple-500)</framework>
+        <framework name="Jest + Testing Library">Unit testing framework for marker component tests, integration tests</framework>
+      </frameworks>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="performance">
+      <title>NFR001: Response Time &lt; 100ms</title>
+      <description>Marker rendering and layer switching must complete within 100ms. React.memo prevents unnecessary re-renders. Layer-filtered queries use compound index [userId+layer+timestamp] for O(log n) performance. Target 60fps with 50+ markers.</description>
+    </constraint>
+    <constraint type="accessibility">
+      <title>WCAG 2.1 Level AA Compliance</title>
+      <description>All markers must have distinct shapes/icons AND colors for colorblind accessibility. Minimum touch target 32px (transparent padding for smaller markers). Keyboard navigation support (Tab, Enter/Space). ARIA labels and roles for screen readers.</description>
+    </constraint>
+    <constraint type="backward-compatibility">
+      <title>Existing Flare Display Compatibility</title>
+      <description>Refactoring FlareMarker to BodyMapMarker must not break existing flare displays. All existing flare markers default to layer='flares'. Component must support both old and new calling patterns during transition.</description>
+    </constraint>
+    <constraint type="visual">
+      <title>Layer-Specific Visual Consistency</title>
+      <description>All layer rendering must use LAYER_CONFIG for icons, colors, labels. No hardcoded colors or icons outside config. Ensures consistency with LayerSelector (Story 5.3) and future layer components.</description>
+    </constraint>
+    <constraint type="architecture">
+      <title>Component Reusability via Props</title>
+      <description>Single BodyMapMarker component handles all tracking types through configuration-driven rendering. Layer, severity, timestamp passed as props. No layer-specific marker components (no FlareMarker, PainMarker, etc).</description>
+    </constraint>
+    <constraint type="performance">
+      <title>Marker Overlap Prevention</title>
+      <description>Circular distribution algorithm prevents complete overlap of markers at same body region. Radius 8-12px offset. Offset calculation must not push markers outside region bounds. Test with 2, 3, 4+ markers at same location.</description>
+    </constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>BodyMapMarkerProps</name>
+      <kind>Component Props Interface</kind>
+      <signature>
+interface BodyMapMarkerProps {
+  id: string;
+  layer: LayerType;
+  bodyRegionId: string;
+  coordinates?: { x: number; y: number };
+  severity: number;
+  timestamp: number;
+  position: { x: number; y: number };
+  onClick?: () => void;
+  className?: string;
+}
+      </signature>
+      <path>src/components/body-map/markers/BodyMapMarker.tsx</path>
+    </interface>
+    <interface>
+      <name>bodyMapLocationRepository.getMarkersByLayer</name>
+      <kind>Repository Method</kind>
+      <signature>
+async getMarkersByLayer(
+  userId: string,
+  layer: LayerType,
+  options?: { limit?: number; startTime?: number; endTime?: number }
+): Promise&lt;BodyMapLocationRecord[]&gt;
+      </signature>
+      <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+    </interface>
+    <interface>
+      <name>Utility Functions</name>
+      <kind>Function Signatures</kind>
+      <signature>
+// Marker size calculation
+export function getSeveritySize(severity: number): number
+
+// Opacity based on age
+export function getMarkerOpacity(timestamp: number): number
+
+// Circular offset for overlapping markers
+export function calculateMarkerOffset(
+  markers: Marker[],
+  currentIndex: number
+): { x: number; y: number }
+      </signature>
+      <path>src/lib/utils/markerCalculations.ts</path>
+    </interface>
+    <interface>
+      <name>LAYER_CONFIG</name>
+      <kind>Configuration Constant</kind>
+      <signature>
+export const LAYER_CONFIG: Record&lt;LayerType, LayerMetadata&gt; = {
+  flares: { id, label, icon: '🔥', color: 'text-red-500', description },
+  pain: { id, label, icon: '⚡', color: 'text-yellow-500', description },
+  inflammation: { id, label, icon: '🟣', color: 'text-purple-500', description }
+}
+      </signature>
+      <path>src/lib/db/schema.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing follows Jest + React Testing Library patterns. Component tests use render(), screen queries, fireEvent/userEvent for interactions. Integration tests verify multi-component workflows. Performance tests use performance.now() benchmarks. All tests run via 'npm test' command. Coverage target: 80% for new marker components. Accessibility tests verify ARIA attributes, keyboard navigation, screen reader compatibility.
+    </standards>
+    <locations>
+      <location>src/components/body-map/__tests__/BodyMapMarker.test.tsx - Component unit tests</location>
+      <location>src/lib/utils/__tests__/markerCalculations.test.ts - Utility function tests</location>
+      <location>src/components/body-map/__tests__/multi-layer-integration.test.tsx - Integration tests</location>
+    </locations>
+    <ideas>
+      <idea ac="5.4.1">Test BodyMapMarker renders correct icon for each layer type (🔥, ⚡, 🟣)</idea>
+      <idea ac="5.4.1">Test BodyMapMarker applies correct color class for each layer (text-red-500, text-yellow-500, text-purple-500)</idea>
+      <idea ac="5.4.2">Test getSeveritySize returns correct values: 1-3→16px, 4-7→24px, 8-10→32px</idea>
+      <idea ac="5.4.2">Test marker maintains 32px minimum touch target with transparent padding</idea>
+      <idea ac="5.4.3">Test getMarkerOpacity calculates correct opacity: &lt;7days→1.0, 7-30days→0.7, &gt;30days→0.5</idea>
+      <idea ac="5.4.3">Test opacity calculation with various timestamps (recent, week old, month old)</idea>
+      <idea ac="5.4.4">Test calculateMarkerOffset produces circular distribution for 2, 3, 4 markers</idea>
+      <idea ac="5.4.4">Test markers at same location stagger without overlap</idea>
+      <idea ac="5.4.5">Test layer-filtered queries using bodyMapRepository.getMarkersByLayer()</idea>
+      <idea ac="5.4.5">Test query performance with 50+ markers (should use compound index)</idea>
+      <idea ac="5.4.6">Test React.memo prevents re-renders when props unchanged</idea>
+      <idea ac="5.4.6">Performance test: render 50+ markers in &lt;100ms</idea>
+      <idea ac="5.4.7">Test marker icons distinguishable in grayscale mode (colorblind simulation)</idea>
+      <idea ac="5.4.7">Test color contrast ratios meet WCAG AA standards (4.5:1 minimum)</idea>
+      <idea ac="5.4.8">Test marker onClick handler navigates to appropriate detail view based on layer</idea>
+      <idea ac="5.4.8">Test hover, focus, active states for keyboard navigation</idea>
+      <idea ac="5.4.9">Test markers update when layer switched (useEffect refetch)</idea>
+      <idea ac="5.4.9">Integration test: body map displays filtered markers for selected layer</idea>
+    </ideas>
+  </tests>
+</story-context>

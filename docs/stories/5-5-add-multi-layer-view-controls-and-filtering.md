@@ -1,6 +1,6 @@
 # Story 5.5: Add Multi-Layer View Controls and Filtering
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -585,7 +585,7 @@ describe('Multi-Layer Body Map', () => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [Story 5.5 Context](5-5-add-multi-layer-view-controls-and-filtering.context.xml)
 
 ### Agent Model Used
 

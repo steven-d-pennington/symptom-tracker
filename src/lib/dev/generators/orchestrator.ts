@@ -130,28 +130,27 @@ export async function generateComprehensiveData(
   let foodEvents: any[] = [];
   let patternSymptomInstances: any[] = [];
 
+  // ALWAYS generate baseline daily meals (2-3 meals per day)
+  const baselineFoodEvents = generateBaselineFoodEvents(context);
+  foodEvents.push(...baselineFoodEvents);
+  console.log(`[Orchestrator] Generated ${baselineFoodEvents.length} baseline food events (daily meals)`);
+
   if (config.foodPatterns.repeatCombinations) {
-    // Generate intentional patterns
+    // Generate intentional patterns IN ADDITION to baseline
     const foodPatternResult = generateAllFoodCombinationPatterns(config, context);
-    foodEvents = foodPatternResult.foodEvents;
+    foodEvents.push(...foodPatternResult.foodEvents);
     patternSymptomInstances = foodPatternResult.symptomInstances;
 
-    // Also generate individual food correlations for baseline
+    // Also generate individual food correlations
     const individualResult = generateIndividualFoodCorrelations(context, 3);
     foodEvents.push(...individualResult.foodEvents);
     patternSymptomInstances.push(...individualResult.symptomInstances);
 
-    console.log(`[Orchestrator] Generated ${foodEvents.length} food events with patterns`);
+    console.log(`[Orchestrator] Generated ${foodPatternResult.foodEvents.length} pattern food events`);
     console.log(`[Orchestrator] Generated ${patternSymptomInstances.length} pattern-triggered symptoms`);
-  } else {
-    // Generate random food events (original behavior)
-    const randomFoodPreset = context.daysToGenerate < 30 ? "one-week" :
-                             context.daysToGenerate < 180 ? "heavy-user" :
-                             "one-year-heavy";
-    // Note: We would need to import and adapt the original food generation here
-    // For now, skip random food events if no patterns requested
-    console.log(`[Orchestrator] Skipping random food events (patterns not requested)`);
   }
+
+  console.log(`[Orchestrator] Total food events: ${foodEvents.length}`);
 
   if (foodEvents.length > 0) {
     await db.foodEvents!.bulkAdd(foodEvents);
@@ -754,21 +753,100 @@ async function generateFlaresWithClustering(
 }
 
 /**
+ * Generate baseline food events (2-3 meals per day)
+ * Creates realistic daily meal patterns across the entire time range
+ */
+function generateBaselineFoodEvents(context: GenerationContext) {
+  const { userId, startDate, foods } = context;
+  const events: any[] = [];
+  const now = Date.now();
+
+  if (foods.length === 0) return events;
+
+  // Common meal times
+  const mealTimes = [
+    { name: 'breakfast', hour: 8, variance: 2 },  // 6-10 AM
+    { name: 'lunch', hour: 13, variance: 2 },     // 11 AM - 3 PM
+    { name: 'dinner', hour: 19, variance: 2 },    // 5-9 PM
+  ];
+
+  // Generate 2-3 meals per day with 70-85% adherence
+  for (let dayOffset = 0; dayOffset < context.daysToGenerate; dayOffset++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + dayOffset);
+
+    // Determine how many meals this day (2 or 3)
+    const mealsToday = Math.random() < 0.7 ? 3 : 2;
+    const selectedMeals = mealsToday === 3
+      ? mealTimes
+      : Math.random() < 0.5
+        ? [mealTimes[0], mealTimes[2]]  // Breakfast + dinner
+        : [mealTimes[0], mealTimes[1]]; // Breakfast + lunch
+
+    for (const mealTime of selectedMeals) {
+      // 70-85% chance of logging this meal
+      if (Math.random() > 0.15) {
+        const mealDate = new Date(date);
+        const hourVariance = Math.floor(Math.random() * (mealTime.variance * 2 + 1)) - mealTime.variance;
+        mealDate.setHours(mealTime.hour + hourVariance, Math.floor(Math.random() * 60));
+
+        // Skip future events
+        if (mealDate.getTime() > now) continue;
+
+        // Select 1-4 foods for this meal (varied meal complexity)
+        const foodsInMeal = Math.floor(Math.random() * 4) + 1;
+        const selectedFoods: string[] = [];
+
+        for (let f = 0; f < foodsInMeal; f++) {
+          const food = foods[Math.floor(Math.random() * foods.length)];
+          if (!selectedFoods.includes(food.id)) {
+            selectedFoods.push(food.id);
+          }
+        }
+
+        events.push({
+          id: generateId(),
+          userId,
+          foodIds: selectedFoods,
+          mealType: mealTime.name,
+          notes: undefined,
+          timestamp: mealDate.getTime(),
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+  }
+
+  return events;
+}
+
+/**
  * Generate mood entries (Story 3.5.2)
- * Creates 15-20 mood entries distributed across the time range
+ * Creates mood entries for 30-40% of days (realistic tracking frequency)
  */
 function generateMoodEntries(context: GenerationContext) {
   const { userId, startDate, endDate } = context;
   const entries: any[] = [];
-  const count = Math.floor(Math.random() * 6) + 15; // 15-20 entries
+
+  // Target 30-40% coverage for realistic mood tracking
+  const coveragePercent = 0.30 + Math.random() * 0.10; // 30-40%
+  const targetDays = Math.floor(context.daysToGenerate * coveragePercent);
 
   const moodTypes = ['happy', 'neutral', 'sad', 'anxious', 'stressed'];
 
-  for (let i = 0; i < count; i++) {
-    // Distribute entries across the time range
-    const dayOffset = Math.floor((i / count) * context.daysToGenerate);
+  // Generate entries for random days
+  const selectedDays = new Set<number>();
+  while (selectedDays.size < targetDays) {
+    selectedDays.add(Math.floor(Math.random() * context.daysToGenerate));
+  }
+
+  const sortedDays = Array.from(selectedDays).sort((a, b) => a - b);
+
+  for (const dayOffset of sortedDays) {
     const date = new Date(startDate);
     date.setDate(date.getDate() + dayOffset);
+    // Random time throughout the day
     date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
 
     const mood = Math.floor(Math.random() * 10) + 1; // 1-10
@@ -780,7 +858,7 @@ function generateMoodEntries(context: GenerationContext) {
       userId,
       mood,
       moodType,
-      notes: hasNotes ? `Sample mood note ${i + 1}` : undefined,
+      notes: hasNotes ? `Sample mood note ${selectedDays.size}` : undefined,
       timestamp: date.getTime(),
       createdAt: date.getTime(),
       updatedAt: date.getTime(),
@@ -792,16 +870,25 @@ function generateMoodEntries(context: GenerationContext) {
 
 /**
  * Generate sleep entries (Story 3.5.2)
- * Creates 15-20 sleep entries distributed across the time range
+ * Creates sleep entries for 50-70% of days (realistic consistent tracking)
  */
 function generateSleepEntries(context: GenerationContext) {
   const { userId, startDate, endDate } = context;
   const entries: any[] = [];
-  const count = Math.floor(Math.random() * 6) + 15; // 15-20 entries
 
-  for (let i = 0; i < count; i++) {
-    // Distribute entries across the time range
-    const dayOffset = Math.floor((i / count) * context.daysToGenerate);
+  // Target 50-70% coverage for realistic sleep tracking (more consistent than mood)
+  const coveragePercent = 0.50 + Math.random() * 0.20; // 50-70%
+  const targetDays = Math.floor(context.daysToGenerate * coveragePercent);
+
+  // Generate entries for random days
+  const selectedDays = new Set<number>();
+  while (selectedDays.size < targetDays) {
+    selectedDays.add(Math.floor(Math.random() * context.daysToGenerate));
+  }
+
+  const sortedDays = Array.from(selectedDays).sort((a, b) => a - b);
+
+  for (const dayOffset of sortedDays) {
     const date = new Date(startDate);
     date.setDate(date.getDate() + dayOffset);
     // Set to morning time (6-10 AM) when users typically log sleep
@@ -823,7 +910,7 @@ function generateSleepEntries(context: GenerationContext) {
       userId,
       hours: Math.round(hours * 2) / 2, // Round to nearest 0.5
       quality,
-      notes: hasNotes ? `Sample sleep note ${i + 1}` : undefined,
+      notes: hasNotes ? `Sample sleep note ${selectedDays.size}` : undefined,
       timestamp: date.getTime() - (12 * 60 * 60 * 1000), // Previous night
       createdAt: date.getTime(),
       updatedAt: date.getTime(),

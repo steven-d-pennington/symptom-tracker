@@ -1,6 +1,6 @@
 # Story 5.4: Implement Layer-Aware Marker Rendering
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -569,7 +569,7 @@ describe('Performance: Marker Rendering', () => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/5-4-implement-layer-aware-marker-rendering.context.xml
 
 ### Agent Model Used
 

@@ -3,9 +3,10 @@
  *
  * Generates BodyMapLocationRecord entries for symptom instances,
  * linking symptoms to specific body regions with coordinate precision.
+ * Includes layer categorization support (Story 5.x).
  */
 
-import { BodyMapLocationRecord, SymptomInstanceRecord } from "@/lib/db/schema";
+import { BodyMapLocationRecord, SymptomInstanceRecord, LayerType } from "@/lib/db/schema";
 import { generateId } from "@/lib/utils/idGenerator";
 import { GenerationContext } from "./base/types";
 
@@ -36,6 +37,34 @@ const BODY_REGIONS = [
   'ankle-left',
   'ankle-right',
 ];
+
+/**
+ * Map symptom names to appropriate layer (Story 5.x)
+ */
+function getLayerForSymptom(symptomName: string): LayerType {
+  switch (symptomName) {
+    case 'Painful Nodules':
+    case 'Draining Lesions':
+    case 'Drainage':
+    case 'Skin Tenderness':
+    case 'Skin Tunneling':
+      // HS-specific symptoms → flares layer
+      return 'flares';
+
+    case 'Joint Pain':
+    case 'Headache':
+      // Pain symptoms → pain layer
+      return 'pain';
+
+    case 'Inflammation':
+      // Inflammation → inflammation layer
+      return 'inflammation';
+
+    default:
+      // Default to flares layer for backward compatibility
+      return 'flares';
+  }
+}
 
 /**
  * Map symptom names to likely body regions
@@ -145,6 +174,7 @@ export function generateBodyMapLocations(
         bodyRegionId: region,
         coordinates,
         severity: symptom.severity,
+        layer: getLayerForSymptom(symptom.name), // Story 5.x: Layer support
         notes: coordinates
           ? `Precise location marked on body map`
           : `General ${region.replace(/-/g, ' ')} area`,
@@ -182,6 +212,7 @@ export function generateFlareBodyMapLocations(
           bodyRegionId: flare.bodyRegionId,
           coordinates: generateCoordinates(),
           severity: flare.currentSeverity,
+          layer: 'flares', // Flares always use 'flares' layer
           notes: `Flare location detail`,
           createdAt: now,
           updatedAt: now,

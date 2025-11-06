@@ -1,0 +1,393 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5</storyId>
+    <title>Add Multi-Layer View Controls and Filtering</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-5-add-multi-layer-view-controls-and-filtering.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user analyzing my overall health patterns</asA>
+    <iWant>to view multiple layers simultaneously with toggle controls</iWant>
+    <soThat>I can see the complete picture of all my tracked conditions</soThat>
+    <tasks>
+- Task 1: Create LayerToggle component structure (AC: #5.5.1, #5.5.2)
+  - 1.1: Create `src/components/body-map/LayerToggle.tsx`
+  - 1.2: Define LayerToggleProps interface
+  - 1.3: Render view mode selector (Single Layer / All Layers)
+  - 1.4: Map over LAYER_CONFIG to generate layer checkboxes
+  - 1.5: Display layer icon, label, and marker count for each
+  - 1.6: Apply styling for light/dark theme support
+  - 1.7: Add responsive layout (collapsible on mobile if needed)
+
+- Task 2: Implement view mode toggle (AC: #5.5.2, #5.5.5)
+  - 2.1: Add radio buttons or toggle for Single/All view modes
+  - 2.2: Call onViewModeChange(mode) when user selects
+  - 2.3: Parent component calls bodyMapPreferencesRepository.setViewMode()
+  - 2.4: Verify optimistic UI update (no loading delay)
+  - 2.5: Test view mode persistence across browser refresh
+
+- Task 3: Implement layer visibility toggles (AC: #5.5.3, #5.5.5)
+  - 3.1: Add checkbox inputs for each layer
+  - 3.2: Set checked state from visibleLayers prop
+  - 3.3: Call onToggleLayer(layerId) when checkbox toggled
+  - 3.4: Parent component updates visibleLayers state
+  - 3.5: Parent component calls bodyMapPreferencesRepository.setVisibleLayers()
+  - 3.6: Verify toggles work independently of lastUsedLayer
+  - 3.7: Test visibility persistence across sessions
+
+- Task 4: Multi-layer marker fetching (AC: #5.5.4)
+  - 4.1: Update body map data fetching logic
+  - 4.2: Check viewMode: if 'single', fetch currentLayer only
+  - 4.3: If 'all', fetch markers for all visibleLayers
+  - 4.4: Use bodyMapRepository.getMarkersByLayers(userId, visibleLayers)
+  - 4.5: Merge results maintaining layer distinction
+  - 4.6: Test query performance with multiple layers
+  - 4.7: Add loading state during fetch
+
+- Task 5: Multi-layer marker rendering (AC: #5.5.4, #5.5.6)
+  - 5.1: Update body map rendering to accept markers from multiple layers
+  - 5.2: Group markers by body region for overlap calculation
+  - 5.3: Apply calculateMarkerOffset considering all layers at location
+  - 5.4: Render each marker with correct layer-specific styling
+  - 5.5: Test rendering with 2, 3 layers visible
+  - 5.6: Verify markers distinguishable by icon/color
+  - 5.7: Measure frame rate with all layers visible (target: 60fps)
+
+- Task 6: Keyboard shortcuts (AC: #5.5.7)
+  - 6.1: Add global keydown listener to body map component
+  - 6.2: Implement handler for keys '1', '2', '3' to toggle layers
+  - 6.3: Implement handler for 'A' key to toggle view mode
+  - 6.4: Prevent shortcuts when user typing in input field
+  - 6.5: Add visual feedback when shortcut triggered
+  - 6.6: Document shortcuts in help/accessibility section
+  - 6.7: Test keyboard shortcuts across browsers
+
+- Task 7: Empty state messaging (AC: #5.5.8)
+  - 7.1: Calculate if any enabled layers have markers
+  - 7.2: If viewMode='all' and no visible markers, show empty state
+  - 7.3: Display message: "No markers on enabled layers..."
+  - 7.4: Add link or button to switch to tracking mode
+  - 7.5: Style empty state consistently with app design
+  - 7.6: Test empty state with various layer combinations
+
+- Task 8: Real-time marker count updates (AC: #5.5.9)
+  - 8.1: Fetch marker counts using bodyMapRepository.getMarkerCountsByLayer()
+  - 8.2: Pass counts to LayerToggle via markerCounts prop
+  - 8.3: Update counts when markers added/deleted
+  - 8.4: Use useEffect to refetch counts on marker changes
+  - 8.5: Consider debouncing count updates if performance issue
+  - 8.6: Display "0" counts for layers with no markers
+  - 8.7: Test count accuracy with various marker operations
+
+- Task 9: Integration with body map and preferences (AC: All)
+  - 9.1: Import LayerToggle into body map page/component
+  - 9.2: Position LayerToggle near LayerSelector
+  - 9.3: Wire up viewMode state
+  - 9.4: Wire up visibleLayers state
+  - 9.5: Implement onViewModeChange handler with persistence
+  - 9.6: Implement onToggleLayer handler with persistence
+  - 9.7: Test full integration: layer selection, view mode, visibility toggles
+  - 9.8: Verify preferences load correctly on app start
+
+- Task 10: Component testing (AC: All)
+  - 10.1: Create `__tests__/LayerToggle.test.tsx`
+  - 10.2: Write test: "renders all layer checkboxes with counts"
+  - 10.3: Write test: "toggles layer visibility on checkbox click"
+  - 10.4: Write test: "switches view mode on radio button change"
+  - 10.5: Write test: "displays correct checked state from props"
+  - 10.6: Write test: "keyboard shortcuts toggle layers"
+  - 10.7: Write test: "shows empty state when no markers"
+  - 10.8: Write integration test: "multi-layer markers render correctly"
+  - 10.9: Write test: "marker counts update when data changes"
+
+- Task 11: Performance testing (AC: #5.5.6)
+  - 11.1: Create performance test with 60+ markers across 3 layers
+  - 11.2: Measure render time for multi-layer view
+  - 11.3: Measure frame rate during pan/zoom with all layers visible
+  - 11.4: Verify < 100ms response time (NFR001)
+  - 11.5: Optimize if performance issues found
+  - 11.6: Document performance benchmarks
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC5.5.1 — LayerToggle component with checkboxes:** New LayerToggle component created displaying checkboxes for each layer with current marker counts: "☑ Flares (3) ☑ Pain (5) ☐ Inflammation (0)". Component props: visibleLayers, onToggleLayer, markerCounts, viewMode, onViewModeChange. [Source: docs/epics.md#Story-5.5, docs/epic-5-tech-spec.md#Multi-Layer-View-Controls]
+
+2. **AC5.5.2 — View mode selector:** Component includes view mode radio buttons: "Single Layer" (shows active layer only from LayerSelector) and "All Layers" (shows all enabled layers). Mode selection updates immediately with optimistic UI. Persists via bodyMapPreferencesRepository.setViewMode() from Story 5.2. [Source: docs/epics.md#Story-5.5]
+
+3. **AC5.5.3 — Individual layer visibility toggles:** Users can toggle individual layer visibility via checkboxes without affecting layer persistence. Checked layers render on body map, unchecked layers hidden. Changes don't alter lastUsedLayer preference (tracking mode layer). [Source: docs/epics.md#Story-5.5]
+
+4. **AC5.5.4 — Multi-layer simultaneous rendering:** When All Layers view active with multiple enabled layers, body map renders markers from all checked layers using distinct styles from Story 5.4. Uses bodyMapRepository.getMarkersByLayers() to fetch multiple layers efficiently. [Source: docs/epics.md#Story-5.5]
+
+5. **AC5.5.5 — Visible layers preference persistence:** Layer visibility state (visibleLayers array) persists to IndexedDB via bodyMapPreferencesRepository.setVisibleLayers() from Story 5.2. Loads on app start maintaining user's preferred layer combination. [Source: docs/epics.md#Story-5.5]
+
+6. **AC5.5.6 — Smart marker positioning for multiple layers:** Overlap prevention algorithm from Story 5.4 extended to handle markers from different layers at same location. Stagger positions using circular distribution. Performance maintained at 60fps with all layers visible (NFR001). [Source: docs/epics.md#Story-5.5]
+
+7. **AC5.5.7 — Keyboard shortcuts for layer toggles:** Implement keyboard shortcuts: Numbers 1-3 toggle individual layers (1=Flares, 2=Pain, 3=Inflammation), 'A' key toggles between Single/All view modes. Shortcuts work globally when body map focused. [Source: docs/epics.md#Story-5.5]
+
+8. **AC5.5.8 — Empty state messaging:** When All Layers view active but no layers have markers, display message: "No markers on enabled layers. Switch to tracking mode to add data." Provides clear user guidance. [Source: docs/epics.md#Story-5.5]
+
+9. **AC5.5.9 — Real-time marker count updates:** Marker counts in LayerToggle update automatically when new markers added or deleted. Counts reflect current userId's markers only. Uses efficient count queries from bodyMapRepository.getMarkerCountsByLayer(). [Source: docs/epics.md#Story-5.5]
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Epic 5 Technical Specification -->
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>Story 5.5: Multi-Layer View Controls</section>
+        <snippet>LayerToggle component provides visibility toggles for individual layers in multi-layer view. Props: visibleLayers, onToggleLayer, markerCounts, viewMode, onViewModeChange. Keyboard shortcuts: 1-4 toggle layers, 'A' toggles view mode. State management separates visibility from active tracking layer.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>State Management - useBodyMapLayers hook</section>
+        <snippet>Custom hook centralizes layer state logic and preferences persistence. Manages currentLayer, visibleLayers, viewMode states. Methods: changeLayer, toggleLayerVisibility, changeViewMode, getVisibleMarkers. Persists changes to bodyMapPreferencesRepository.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>Performance Considerations - NFR001</section>
+        <snippet>Target: &lt;100ms response time. Strategies: Indexed queries with compound index [userId+layer+timestamp], marker virtualization for &gt;50 markers, React.memo for markers, debounce layer switches. Multi-layer fetch uses Promise.all for parallel queries.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Body Map Location Repository -->
+      <artifact>
+        <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getMarkersByLayers</symbol>
+        <lines>268-280</lines>
+        <reason>Method to fetch markers from multiple layers in parallel. Used for multi-layer view rendering.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getMarkerCountsByLayer</symbol>
+        <lines>289-309</lines>
+        <reason>Method to get count of markers per layer. Used for displaying counts in LayerToggle component.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getMarkersByLayer</symbol>
+        <lines>235-257</lines>
+        <reason>Single-layer fetch method. Used as building block for multi-layer queries.</reason>
+      </artifact>
+
+      <!-- Schema and Types -->
+      <artifact>
+        <path>src/lib/types/body-mapping.ts</path>
+        <kind>types</kind>
+        <symbol>LayerType</symbol>
+        <lines>58</lines>
+        <reason>Type definition for tracking layers: 'flares' | 'pain' | 'mobility' | 'inflammation'. Used throughout layer components.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>BodyMapLocationRecord</symbol>
+        <lines>1-100</lines>
+        <reason>Database schema for body map markers. Includes layer field for multi-layer support.</reason>
+      </artifact>
+
+      <!-- Existing Body Map Components -->
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-50</lines>
+        <reason>Main body map component. Integration point for LayerToggle and multi-layer rendering.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/BodyMapZoom.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapZoom</symbol>
+        <lines>1-50</lines>
+        <reason>Zoom and pan controls for body map. May interact with multi-layer view performance.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapLegend.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapLegend</symbol>
+        <lines>1-50</lines>
+        <reason>Existing legend component. May need updates for multi-layer legend display (Story 5.6 reference).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <react>19.1.0</react>
+        <react-dom>19.1.0</react-dom>
+        <next>15.5.4</next>
+        <dexie>^4.2.0</dexie>
+        <lucide-react>^0.544.0</lucide-react>
+        <react-zoom-pan-pinch>^3.6.1</react-zoom-pan-pinch>
+      </node>
+      <testing>
+        <jest>^30.2.0</jest>
+        <jest-environment-jsdom>^30.2.0</jest-environment-jsdom>
+        <testing-library-react>^16.3.0</testing-library-react>
+        <testing-library-jest-dom>^6.9.1</testing-library-jest-dom>
+        <testing-library-user-event>^14.6.1</testing-library-user-event>
+        <fake-indexeddb>^6.2.4</fake-indexeddb>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Development Constraints from Epic 5 Tech Spec -->
+    <constraint>Component must use React.memo for performance optimization to prevent unnecessary re-renders when unrelated layers toggle</constraint>
+    <constraint>All layer state changes must persist immediately to IndexedDB via bodyMapPreferencesRepository</constraint>
+    <constraint>View mode toggle must use optimistic UI updates (no loading delay)</constraint>
+    <constraint>Keyboard shortcuts must not trigger when user is typing in input fields</constraint>
+    <constraint>Touch targets must be minimum 44x44px for mobile accessibility</constraint>
+    <constraint>Component must support WCAG AA accessibility: ARIA labels, keyboard navigation, screen reader compatibility</constraint>
+    <constraint>Multi-layer queries must use Promise.all for parallel fetching to meet &lt;100ms performance target</constraint>
+    <constraint>Empty state must display when All Layers view active but no visible markers exist</constraint>
+    <constraint>Marker counts must reflect current userId's markers only using efficient indexed queries</constraint>
+    <constraint>Layer visibility toggles must NOT affect lastUsedLayer preference (tracking mode layer)</constraint>
+  </constraints>
+  <interfaces>
+    <!-- LayerToggle Component Props -->
+    <interface>
+      <name>LayerToggleProps</name>
+      <kind>React component props</kind>
+      <signature>
+        interface LayerToggleProps {
+          visibleLayers: LayerType[];
+          onToggleLayer: (layer: LayerType) => void;
+          markerCounts: Record&lt;LayerType, number&gt;;
+          viewMode: 'single' | 'all';
+          onViewModeChange: (mode: 'single' | 'all') => void;
+        }
+      </signature>
+      <path>src/components/body-map/LayerToggle.tsx</path>
+    </interface>
+
+    <!-- useBodyMapLayers Hook Return Type -->
+    <interface>
+      <name>useBodyMapLayers</name>
+      <kind>React custom hook</kind>
+      <signature>
+        function useBodyMapLayers(userId: string): {
+          currentLayer: LayerType;
+          visibleLayers: LayerType[];
+          viewMode: 'single' | 'all';
+          markerCounts: Record&lt;LayerType, number&gt;;
+          isLoading: boolean;
+          changeLayer: (layer: LayerType) => Promise&lt;void&gt;;
+          toggleLayerVisibility: (layer: LayerType) => Promise&lt;void&gt;;
+          changeViewMode: (mode: 'single' | 'all') => Promise&lt;void&gt;;
+          getVisibleMarkers: () => Promise&lt;BodyMapLocationRecord[]&gt;;
+        }
+      </signature>
+      <path>src/lib/hooks/useBodyMapLayers.ts</path>
+    </interface>
+
+    <!-- Repository Methods -->
+    <interface>
+      <name>bodyMapLocationRepository.getMarkersByLayers</name>
+      <kind>Repository method</kind>
+      <signature>
+        async getMarkersByLayers(
+          userId: string,
+          layers: LayerType[],
+          options?: { limit?: number; startTime?: Date; endTime?: Date }
+        ): Promise&lt;BodyMapLocationRecord[]&gt;
+      </signature>
+      <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+    </interface>
+
+    <interface>
+      <name>bodyMapLocationRepository.getMarkerCountsByLayer</name>
+      <kind>Repository method</kind>
+      <signature>
+        async getMarkerCountsByLayer(userId: string): Promise&lt;Record&lt;LayerType, number&gt;&gt;
+      </signature>
+      <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+    </interface>
+
+    <!-- Preferences Repository Methods (Story 5.2) -->
+    <interface>
+      <name>bodyMapPreferencesRepository.setVisibleLayers</name>
+      <kind>Repository method</kind>
+      <signature>
+        async setVisibleLayers(userId: string, layers: LayerType[]): Promise&lt;void&gt;
+      </signature>
+      <path>src/lib/repositories/bodyMapPreferencesRepository.ts</path>
+    </interface>
+
+    <interface>
+      <name>bodyMapPreferencesRepository.setViewMode</name>
+      <kind>Repository method</kind>
+      <signature>
+        async setViewMode(userId: string, mode: 'single' | 'all'): Promise&lt;void&gt;
+      </signature>
+      <path>src/lib/repositories/bodyMapPreferencesRepository.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Project uses Jest 30.2.0 with React Testing Library 16.3.0 for component testing. Test files located in __tests__ subdirectories alongside components. Use @testing-library/jest-dom for DOM assertions, @testing-library/user-event for user interactions. Mock IndexedDB using fake-indexeddb. Follow pattern: describe component, nest describe for features, use it() for test cases. Test accessibility with ARIA queries and keyboard interactions.
+    </standards>
+    <locations>
+      <location>src/components/body-map/__tests__/LayerToggle.test.tsx</location>
+      <location>src/lib/hooks/__tests__/useBodyMapLayers.test.ts</location>
+      <location>src/components/body-mapping/__tests__/multi-layer-integration.test.tsx</location>
+    </locations>
+    <ideas>
+      <!-- AC 5.5.1 Tests -->
+      <test ac="5.5.1">LayerToggle component renders with all layer checkboxes showing icons, labels, and marker counts</test>
+      <test ac="5.5.1">Component displays correct props: visibleLayers, markerCounts, viewMode</test>
+
+      <!-- AC 5.5.2 Tests -->
+      <test ac="5.5.2">View mode selector renders radio buttons for Single Layer and All Layers</test>
+      <test ac="5.5.2">View mode changes immediately on selection (optimistic UI)</test>
+      <test ac="5.5.2">onViewModeChange callback invoked with correct mode value</test>
+
+      <!-- AC 5.5.3 Tests -->
+      <test ac="5.5.3">Individual layer checkboxes toggle visibility independently</test>
+      <test ac="5.5.3">onToggleLayer callback invoked with correct layer ID</test>
+      <test ac="5.5.3">Checked state reflects visibleLayers prop accurately</test>
+
+      <!-- AC 5.5.4 Tests -->
+      <test ac="5.5.4">Multi-layer view fetches and renders markers from all enabled layers</test>
+      <test ac="5.5.4">Markers from different layers display with distinct layer-specific styles</test>
+      <test ac="5.5.4">getMarkersByLayers called with correct userId and layer array</test>
+
+      <!-- AC 5.5.5 Tests -->
+      <test ac="5.5.5">Visibility state persists to IndexedDB via setVisibleLayers</test>
+      <test ac="5.5.5">Preferences load correctly on component mount</test>
+
+      <!-- AC 5.5.6 Tests -->
+      <test ac="5.5.6">Markers from different layers at same location use offset positioning</test>
+      <test ac="5.5.6">Overlap prevention algorithm handles multi-layer markers correctly</test>
+      <test ac="5.5.6">Performance test: 60fps maintained with all layers visible (60+ markers)</test>
+
+      <!-- AC 5.5.7 Tests -->
+      <test ac="5.5.7">Keyboard shortcuts: keys 1, 2, 3 toggle respective layers</test>
+      <test ac="5.5.7">Keyboard shortcut: 'A' key toggles between Single/All view modes</test>
+      <test ac="5.5.7">Shortcuts do not trigger when user typing in input field</test>
+      <test ac="5.5.7">Visual feedback displayed when shortcut activated</test>
+
+      <!-- AC 5.5.8 Tests -->
+      <test ac="5.5.8">Empty state message displays when All Layers view active but no markers visible</test>
+      <test ac="5.5.8">Empty state includes guidance text and link to tracking mode</test>
+
+      <!-- AC 5.5.9 Tests -->
+      <test ac="5.5.9">Marker counts update in real-time when markers added or deleted</test>
+      <test ac="5.5.9">Counts reflect only current userId's markers</test>
+      <test ac="5.5.9">getMarkerCountsByLayer uses efficient indexed queries</test>
+
+      <!-- Integration Tests -->
+      <test>Full integration: layer selection, view mode toggle, visibility persistence work together</test>
+      <test>Multi-layer rendering with simultaneous markers from flares, pain, and inflammation</test>
+      <test>Performance benchmark: &lt;100ms response time for layer toggle operations</test>
+    </ideas>
+  </tests>
+</story-context>

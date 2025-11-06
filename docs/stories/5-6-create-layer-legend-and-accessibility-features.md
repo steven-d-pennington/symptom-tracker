@@ -1,6 +1,6 @@
 # Story 5.6: Create Layer Legend and Accessibility Features
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -560,7 +560,7 @@ describe('LayerLegend Accessibility', () => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/5-6-create-layer-legend-and-accessibility-features.context.xml
 
 ### Agent Model Used
 
