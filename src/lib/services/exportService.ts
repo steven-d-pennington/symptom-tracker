@@ -27,6 +27,7 @@ import type {
   FoodCombinationRecord,
   UxEventRecord,
   BodyMapLocationRecord,
+  BodyMapPreferences,
   PhotoComparisonRecord,
   AnalysisResultRecord,
   MoodEntryRecord,
@@ -115,6 +116,7 @@ export interface ExportData {
   uxEvents?: UxEventRecord[];
   // Body map and photo comparisons
   bodyMapLocations?: BodyMapLocationRecord[];
+  bodyMapPreferences?: BodyMapPreferences; // Story 5.2
   photoComparisons?: PhotoComparisonRecord[];
   // Raw analysis results
   analysisResults?: AnalysisResultRecord[];
@@ -482,6 +484,10 @@ export class ExportService {
         .equals(userId)
         .toArray();
     }
+
+    // Body Map Preferences (Story 5.2)
+    // Preferences are not date-range filtered - always export current preferences
+    data.bodyMapPreferences = await db.bodyMapPreferences.get(userId);
 
     return data;
   }

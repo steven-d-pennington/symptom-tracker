@@ -235,6 +235,36 @@ export const LAYER_CONFIG: Record<LayerType, LayerMetadata> = {
   }
 };
 
+/**
+ * User preferences for body map layer selection and view mode (Story 5.2).
+ * Persists layer preferences between sessions for consistent user experience.
+ * Each user has their own isolated preferences keyed by userId.
+ */
+export interface BodyMapPreferences {
+  /** User ID - primary key for preference isolation */
+  userId: string;
+  /** Last layer used by this user (defaults to 'flares' for backward compatibility) */
+  lastUsedLayer: LayerType;
+  /** Array of layers visible in multi-layer view mode */
+  visibleLayers: LayerType[];
+  /** Preferred view mode: single layer or all layers visible */
+  defaultViewMode: 'single' | 'all';
+  /** Unix timestamp when preferences were last updated */
+  updatedAt: number;
+}
+
+/**
+ * Default body map preferences for new users (Story 5.2).
+ * Maintains backward compatibility by defaulting to 'flares' layer only.
+ * Applied when user has no existing preferences in IndexedDB.
+ */
+export const DEFAULT_BODY_MAP_PREFERENCES: Omit<BodyMapPreferences, 'userId'> = {
+  lastUsedLayer: 'flares',
+  visibleLayers: ['flares'],
+  defaultViewMode: 'single',
+  updatedAt: Date.now()
+};
+
 export interface BodyMapLocationRecord {
   id: string;
   userId: string;
