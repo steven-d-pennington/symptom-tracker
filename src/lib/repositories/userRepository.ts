@@ -91,26 +91,41 @@ export class UserRepository {
     return users[0];
   }
 
+  // Lock to prevent concurrent user creation
+  private static userCreationLock: Promise<UserRecord> | null = null;
+
   /**
    * Create or get current user
    * Story 3.5.1: Now initializes default data for new users
    */
   async getOrCreateCurrentUser(): Promise<UserRecord> {
-    const currentUser = await this.getCurrentUser();
-    if (currentUser) {
-      // Ensure the current user ID is stored in localStorage
-      if (typeof window !== 'undefined') {
-        const storedId = window.localStorage.getItem('pocket:currentUserId');
-        if (storedId !== currentUser.id) {
-          console.log(`[getOrCreateCurrentUser] Updating localStorage with current user ID: ${currentUser.id}`);
-          window.localStorage.setItem('pocket:currentUserId', currentUser.id);
-        }
-      }
-      return currentUser;
+    // If user creation is already in progress, wait for it
+    if (UserRepository.userCreationLock) {
+      console.log('[getOrCreateCurrentUser] User creation already in progress, waiting...');
+      return await UserRepository.userCreationLock;
     }
 
-    // Create default user
-    const id = await this.create({
+    // Set lock IMMEDIATELY before any async work to prevent race condition
+    // Multiple calls can get past the lock check above during the await below
+    const creationPromise = (async () => {
+      // Check again inside the lock to prevent duplicate creation
+      const currentUser = await this.getCurrentUser();
+      if (currentUser) {
+        console.log('[getOrCreateCurrentUser] User already exists (checked inside lock):', currentUser.id);
+        // Ensure the current user ID is stored in localStorage
+        if (typeof window !== 'undefined') {
+          const storedId = window.localStorage.getItem('pocket:currentUserId');
+          if (storedId !== currentUser.id) {
+            console.log(`[getOrCreateCurrentUser] Updating localStorage with current user ID: ${currentUser.id}`);
+            window.localStorage.setItem('pocket:currentUserId', currentUser.id);
+          }
+        }
+        return currentUser;
+      }
+
+      // No user exists - create one
+      // Create default user
+      const id = await this.create({
       name: "User",
       preferences: {
         theme: "system",
@@ -153,7 +168,19 @@ export class UserRepository {
       // Don't throw - let user proceed even if defaults fail
     }
 
-    return user;
+      return user;
+    })();
+
+    // Store the lock IMMEDIATELY (synchronously) to block all concurrent calls
+    UserRepository.userCreationLock = creationPromise;
+
+    try {
+      const newUser = await creationPromise;
+      return newUser;
+    } finally {
+      // Clear the lock when done
+      UserRepository.userCreationLock = null;
+    }
   }
 
   /**

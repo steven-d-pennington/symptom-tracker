@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { ActiveFlare } from '@/lib/types/flare';
 import { useFlares } from '@/lib/hooks/useFlares';
 import { getRegionsForView } from '@/lib/data/bodyRegions';
-import { getFlareMarkerColor, calculateRadialOffsets } from '@/lib/utils/flareMarkers';
+import { calculateRadialOffsets } from '@/lib/utils/flareMarkers';
 import { denormalizeCoordinates, getRegionBounds, RegionBounds } from '@/lib/utils/coordinates';
+import { BodyMapMarker } from '@/components/body-map/markers/BodyMapMarker';
+import { calculateMarkerOffset } from '@/lib/utils/markerCalculations';
 
 interface FlareMarkersProps {
   viewType: 'front' | 'back' | 'left' | 'right';
@@ -73,6 +75,7 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
   }, [viewRegions]);
 
   // Group flares by body region and calculate positions with offsets
+  // Story 5.4: Updated to support smart overlap prevention with circular distribution
   const markerPositions = useMemo(() => {
     const positions: MarkerPosition[] = [];
 
@@ -96,7 +99,8 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
         return;
       }
 
-      const coordinatePositions: MarkerPosition[] = [];
+      // Story 5.4: Group markers by precise coordinates for overlap prevention
+      const coordinateGroups = new Map<string, MarkerPosition[]>();
       const fallbackFlares: Array<MarkerPosition['flare']> = [];
 
       flaresInRegion.forEach((flare) => {
@@ -113,7 +117,13 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
               bounds
             );
 
-            coordinatePositions.push({
+            // Group by rounded coordinates for overlap detection
+            const coordKey = `${Math.round(x)},${Math.round(y)}`;
+            if (!coordinateGroups.has(coordKey)) {
+              coordinateGroups.set(coordKey, []);
+            }
+
+            coordinateGroups.get(coordKey)!.push({
               flare,
               x,
               y,
@@ -126,7 +136,22 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
         fallbackFlares.push(flare);
       });
 
-      positions.push(...coordinatePositions);
+      // Apply offsets to grouped markers (Story 5.4: AC5.4.4)
+      coordinateGroups.forEach((group) => {
+        if (group.length === 1) {
+          positions.push(group[0]);
+        } else {
+          // Multiple markers at same location - apply circular offsets
+          group.forEach((marker, index) => {
+            const offset = calculateMarkerOffset(group, index, 10);
+            positions.push({
+              ...marker,
+              x: marker.x + offset.x,
+              y: marker.y + offset.y
+            });
+          });
+        }
+      });
 
       if (fallbackFlares.length > 0 && region.center) {
         const offsets = calculateRadialOffsets(fallbackFlares.length, 20);
@@ -147,9 +172,6 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
     router.push(`/flares/${flareId}`);
   };
 
-  // Marker size scales inversely with zoom to maintain consistent screen size
-  const markerRadius = 8 / Math.sqrt(zoomLevel);
-
   // Always render the <g> element to establish the ref, even if we don't have markers yet
   if (isLoading || markerPositions.length === 0) {
     return <g data-testid="flare-markers" ref={markerGroupRef} />;
@@ -158,34 +180,23 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
   return (
     <g data-testid="flare-markers" ref={markerGroupRef}>
       {markerPositions.map(({ flare, x, y, locationId }) => {
-        // Use gray color for resolved flares, otherwise color by severity
-        const markerColor = flare.status === 'resolved'
-          ? 'fill-gray-400'
-          : getFlareMarkerColor(flare.severity);
-
-        const statusLabel = flare.status === 'resolved' ? 'Resolved flare' : `${flare.symptomName} flare - severity ${flare.severity}`;
-
         // Story 3.7.5: Use locationId for unique keys when multiple markers per flare
         const markerKey = locationId || flare.id;
 
+        // Story 5.4: Use BodyMapMarker component for layer-aware rendering
+        // Flares use the 'flares' layer by default (backward compatibility)
         return (
-          <circle
+          <BodyMapMarker
             key={markerKey}
-            cx={x}
-            cy={y}
-            r={markerRadius}
-            className={`${markerColor} stroke-white stroke-2 cursor-pointer hover:opacity-80 transition-opacity`}
+            id={markerKey}
+            layer="flares"
+            bodyRegionId={flare.bodyRegions[0] || 'unknown'}
+            severity={flare.severity}
+            timestamp={flare.startDate.getTime()}
+            position={{ x, y }}
             onClick={() => handleMarkerClick(flare.id)}
-            aria-label={statusLabel}
-            role="button"
-            tabIndex={0}
-            data-testid={`flare-marker-${flare.id}`}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleMarkerClick(flare.id);
-              }
-            }}
+            isResolved={flare.status === 'resolved'}
+            testId={`flare-marker-${flare.id}`}
           />
         );
       })}

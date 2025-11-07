@@ -8,10 +8,6 @@ import type {
 export const ONBOARDING_STORAGE_KEY = "pocket:onboarding-state";
 export const CURRENT_USER_ID_KEY = "pocket:currentUserId";
 
-// Session-level lock to prevent concurrent user creation
-// This prevents React Strict Mode or multiple effect triggers from creating duplicate users
-let userCreationLock: Promise<void> | null = null;
-
 export const createInitialData = (): OnboardingData => ({
   condition: "Hidradenitis Suppurativa",
   experience: "new",
@@ -198,14 +194,6 @@ export const persistUserSettings = async (data: OnboardingData) => {
     return;
   }
 
-  // Wait for any in-progress user creation to complete
-  // This prevents React Strict Mode or multiple effect triggers from creating duplicate users
-  if (userCreationLock) {
-    console.log("[Onboarding] User creation already in progress, waiting...");
-    await userCreationLock;
-    console.log("[Onboarding] Previous user creation completed, proceeding with settings update");
-  }
-
   // DEBUG: Check if selections are present
   console.log("[Onboarding] persistUserSettings called with data:", {
     hasUserProfile: !!data.userProfile,
@@ -218,57 +206,32 @@ export const persistUserSettings = async (data: OnboardingData) => {
     } : null
   });
 
-  // Create a promise that we'll resolve when done
-  let resolveLock!: () => void;
-  userCreationLock = new Promise<void>((resolve) => {
-    resolveLock = resolve;
-  });
-
   try {
     const { userRepository } = await import("@/lib/repositories/userRepository");
     const { initializeUserDefaults } = await import("@/lib/services/userInitialization");
 
-    // Check if user already exists (prevents duplicate creation in React Strict Mode)
-    const existingUser = await userRepository.getCurrentUser();
-    let userId: string;
+    // Use getOrCreateCurrentUser() to ensure we use the same lock mechanism as dashboard components
+    // This prevents race conditions where multiple components try to create users simultaneously
+    const user = await userRepository.getOrCreateCurrentUser();
+    console.log("[Onboarding] Got user from getOrCreateCurrentUser():", user.id);
 
-    if (existingUser) {
-      console.log("[Onboarding] User already exists in IndexedDB:", existingUser.id);
-      userId = existingUser.id;
-
-      // Update existing user with onboarding data
-      await userRepository.update(userId, {
-        name: data.userProfile.name,
-        email: data.userProfile.email,
-        preferences: {
-          ...existingUser.preferences,
-          notifications: {
-            remindersEnabled: data.trackingPreferences.notificationsEnabled,
-            reminderTime: data.trackingPreferences.reminderTime,
-          },
-          privacy: data.privacySettings,
+    // Always update the user with onboarding data
+    // (getOrCreateCurrentUser creates a default "User" if none exists, so we need to update it)
+    await userRepository.update(user.id, {
+      name: data.userProfile.name,
+      email: data.userProfile.email,
+      preferences: {
+        ...user.preferences,
+        notifications: {
+          remindersEnabled: data.trackingPreferences.notificationsEnabled,
+          reminderTime: data.trackingPreferences.reminderTime,
         },
-      });
-      console.log("[Onboarding] Updated existing user preferences");
-    } else {
-      // Create user record in IndexedDB with all onboarding data
-      userId = await userRepository.create({
-        name: data.userProfile.name,
-        email: data.userProfile.email,
-        preferences: {
-          theme: "system",
-          notifications: {
-            remindersEnabled: data.trackingPreferences.notificationsEnabled,
-            reminderTime: data.trackingPreferences.reminderTime,
-          },
-          privacy: data.privacySettings,
-          exportFormat: "json",
-          symptomFilterPresets: [],
-        },
-      });
+        privacy: data.privacySettings,
+      },
+    });
+    console.log("[Onboarding] Updated user with onboarding data");
 
-      console.log("[Onboarding] User created in IndexedDB:", userId);
-    }
+    const userId = user.id;
 
     // Story 3.6.1 - AC3.6.1.10: Initialize with selections if provided
     if (data.selections) {
@@ -295,10 +258,6 @@ export const persistUserSettings = async (data: OnboardingData) => {
     console.log("[Onboarding] Current user ID saved to localStorage");
   } catch (error) {
     console.error("[Onboarding] Failed to persist user settings", error);
-  } finally {
-    // Release the lock
-    resolveLock();
-    userCreationLock = null;
   }
 };
 
