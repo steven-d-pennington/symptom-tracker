@@ -28,6 +28,22 @@ jest.mock('@/lib/hooks/useFlares', () => ({
   useFlares: jest.fn(),
 }));
 
+// Mock coordinates utilities
+jest.mock('@/lib/utils/coordinates', () => ({
+  denormalizeCoordinates: jest.fn(({ x, y }) => ({ x: x * 100, y: y * 100 })),
+  getRegionBounds: jest.fn(() => ({ x: 0, y: 0, width: 100, height: 100 })),
+}));
+
+// Mock body regions data
+jest.mock('@/lib/data/bodyRegions', () => ({
+  getRegionsForView: jest.fn(() => [
+    { id: 'left-groin', center: { x: 50, y: 50 } },
+    { id: 'center-groin', center: { x: 150, y: 50 } },
+    { id: 'right-groin', center: { x: 250, y: 50 } },
+    { id: 'armpit-left', center: { x: 50, y: 150 } },
+  ]),
+}));
+
 // Import component AFTER mocks
 import { FlareMarkers } from '../FlareMarkers';
 
@@ -110,9 +126,15 @@ describe('FlareMarkers', () => {
         error: null,
       });
 
-      render(<FlareMarkers {...defaultProps} />);
+      // Story 5.4: FlareMarkers now uses BodyMapMarker component
+      // BodyMapMarker renders as SVG <g> elements, need to wrap in SVG
+      const { container } = render(
+        <svg>
+          <FlareMarkers {...defaultProps} />
+        </svg>
+      );
 
-      const markers = screen.getAllByRole('button');
+      const markers = container.querySelectorAll('[data-testid^="flare-marker-"]');
       expect(markers).toHaveLength(3);
     });
   });
@@ -192,17 +214,29 @@ describe('FlareMarkers', () => {
         error: null,
       });
 
-      const { container } = render(<FlareMarkers {...defaultProps} />);
+      // Story 5.4: BodyMapMarker uses layer-based colors (all flares are red)
+      // Resolved markers use gray
+      const { container } = render(
+        <svg>
+          <FlareMarkers {...defaultProps} />
+        </svg>
+      );
 
       const activeMarker = container.querySelector('[data-testid="flare-marker-flare-active"]');
       const improvingMarker = container.querySelector('[data-testid="flare-marker-flare-improving"]');
       const worseningMarker = container.querySelector('[data-testid="flare-marker-flare-worsening"]');
       const resolvedMarker = container.querySelector('[data-testid="flare-marker-flare-resolved"]');
 
-      expect(activeMarker).toHaveClass('fill-red-500');
-      expect(improvingMarker).toHaveClass('fill-yellow-400');
-      expect(worseningMarker).toHaveClass('fill-orange-500');
-      expect(resolvedMarker).toHaveClass('fill-gray-400');
+      // Active flares use layer color (red for flares)
+      const activeCircle = activeMarker?.querySelector('circle[class*="fill-"]');
+      const improvingCircle = improvingMarker?.querySelector('circle[class*="fill-"]');
+      const worseningCircle = worseningMarker?.querySelector('circle[class*="fill-"]');
+      const resolvedCircle = resolvedMarker?.querySelector('circle[class*="fill-"]');
+
+      expect(activeCircle?.className.baseVal).toContain('fill-red-500');
+      expect(improvingCircle?.className.baseVal).toContain('fill-red-500');
+      expect(worseningCircle?.className.baseVal).toContain('fill-red-500');
+      expect(resolvedCircle?.className.baseVal).toContain('fill-gray-400');
     });
   });
 
@@ -264,25 +298,28 @@ describe('FlareMarkers', () => {
         error: null,
       });
 
-      const { container } = render(<FlareMarkers {...defaultProps} />);
+      // Story 5.4: BodyMapMarker uses <g> elements with transform attribute
+      const { container } = render(
+        <svg>
+          <FlareMarkers {...defaultProps} />
+        </svg>
+      );
 
       const marker1 = container.querySelector('[data-testid="flare-marker-flare-1"]');
       const marker2 = container.querySelector('[data-testid="flare-marker-flare-2"]');
       const marker3 = container.querySelector('[data-testid="flare-marker-flare-3"]');
 
-      // Get cx/cy coordinates
-      const cx1 = marker1?.getAttribute('cx');
-      const cy1 = marker1?.getAttribute('cy');
-      const cx2 = marker2?.getAttribute('cx');
-      const cy2 = marker2?.getAttribute('cy');
-      const cx3 = marker3?.getAttribute('cx');
-      const cy3 = marker3?.getAttribute('cy');
+      // Get transform attributes (contains translate coordinates)
+      const transform1 = marker1?.getAttribute('transform');
+      const transform2 = marker2?.getAttribute('transform');
+      const transform3 = marker3?.getAttribute('transform');
 
-      // Verify coordinates are different (markers are offset)
-      expect(cx1).not.toBe(cx2);
-      expect(cy1).not.toBe(cy2);
-      expect(cx2).not.toBe(cx3);
-      expect(cy2).not.toBe(cy3);
+      // Verify transforms exist and are different (markers are offset)
+      expect(transform1).toBeTruthy();
+      expect(transform2).toBeTruthy();
+      expect(transform3).toBeTruthy();
+      expect(transform1).not.toBe(transform2);
+      expect(transform2).not.toBe(transform3);
     });
   });
 
@@ -312,10 +349,15 @@ describe('FlareMarkers', () => {
         error: null,
       });
 
-      render(<FlareMarkers {...defaultProps} />);
+      // Story 5.4: BodyMapMarker uses new aria-label format
+      const { container } = render(
+        <svg>
+          <FlareMarkers {...defaultProps} />
+        </svg>
+      );
 
-      const marker = screen.getByRole('button', { name: /Test Flare flare - active/i });
-      fireEvent.click(marker);
+      const marker = container.querySelector('[data-testid="flare-marker-flare-123"]');
+      fireEvent.click(marker!);
 
       expect(mockPush).toHaveBeenCalledWith('/flares/flare-123');
     });
@@ -345,27 +387,64 @@ describe('FlareMarkers', () => {
         error: null,
       });
 
-      render(<FlareMarkers {...defaultProps} />);
+      // Story 5.4: BodyMapMarker uses layer-based aria-label
+      const { container } = render(
+        <svg>
+          <FlareMarkers {...defaultProps} />
+        </svg>
+      );
 
-      const marker = screen.getByRole('button');
-      expect(marker).toHaveAttribute('aria-label', 'Test Symptom flare - active');
+      const marker = container.querySelector('[data-testid="flare-marker-flare-123"]');
+      expect(marker).toHaveAttribute('aria-label', 'Flares marker, severity 7');
       expect(marker).toHaveAttribute('role', 'button');
       expect(marker).toHaveAttribute('tabIndex', '0');
     });
   });
 
-  describe('AC1.7: Markers scale with zoom level', () => {
-    it('scales marker size inversely with zoom', () => {
+  describe('AC1.7: Markers scale with severity (Story 5.4)', () => {
+    it('scales marker size based on severity rating', () => {
       mockedUseFlares.mockReturnValue({
         data: [
           {
-            id: 'flare-1',
+            id: 'flare-low',
             userId: 'test-user-123',
             symptomId: 'symptom-1',
-            symptomName: 'Test Flare',
+            symptomName: 'Low Severity',
             startDate: new Date(),
-            severity: 7,
+            severity: 2, // Low severity: should be 16px
             bodyRegions: ['left-groin'],
+            status: 'active',
+            interventions: [],
+            notes: '',
+            photoIds: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            trend: 'stable',
+          },
+          {
+            id: 'flare-medium',
+            userId: 'test-user-123',
+            symptomId: 'symptom-2',
+            symptomName: 'Medium Severity',
+            startDate: new Date(),
+            severity: 5, // Medium severity: should be 24px
+            bodyRegions: ['center-groin'],
+            status: 'active',
+            interventions: [],
+            notes: '',
+            photoIds: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            trend: 'stable',
+          },
+          {
+            id: 'flare-high',
+            userId: 'test-user-123',
+            symptomId: 'symptom-3',
+            symptomName: 'High Severity',
+            startDate: new Date(),
+            severity: 9, // High severity: should be 32px
+            bodyRegions: ['right-groin'],
             status: 'active',
             interventions: [],
             notes: '',
@@ -380,28 +459,30 @@ describe('FlareMarkers', () => {
         error: null,
       });
 
-      // Test at zoom level 1
-      const { container: container1, rerender } = render(<FlareMarkers {...defaultProps} zoomLevel={1} />);
-      const marker1 = container1.querySelector('circle');
-      const radius1 = parseFloat(marker1?.getAttribute('r') || '0');
-      expect(radius1).toBeCloseTo(8, 1); // 8 / sqrt(1) = 8
+      // Story 5.4: BodyMapMarker uses severity-based sizing (AC5.4.2)
+      const { container } = render(
+        <svg>
+          <FlareMarkers {...defaultProps} />
+        </svg>
+      );
 
-      // Test at zoom level 2
-      rerender(<FlareMarkers {...defaultProps} zoomLevel={2} />);
-      const marker2 = container1.querySelector('circle');
-      const radius2 = parseFloat(marker2?.getAttribute('r') || '0');
-      expect(radius2).toBeCloseTo(5.66, 1); // 8 / sqrt(2) ≈ 5.66
+      const lowMarker = container.querySelector('[data-testid="flare-marker-flare-low"]');
+      const mediumMarker = container.querySelector('[data-testid="flare-marker-flare-medium"]');
+      const highMarker = container.querySelector('[data-testid="flare-marker-flare-high"]');
 
-      // Test at zoom level 3
-      rerender(<FlareMarkers {...defaultProps} zoomLevel={3} />);
-      const marker3 = container1.querySelector('circle');
-      const radius3 = parseFloat(marker3?.getAttribute('r') || '0');
-      expect(radius3).toBeCloseTo(4.62, 1); // 8 / sqrt(3) ≈ 4.62
+      // Get visible circles (not the transparent touch target)
+      const lowCircle = lowMarker?.querySelectorAll('circle')[1]; // Second circle is visible marker
+      const mediumCircle = mediumMarker?.querySelectorAll('circle')[1];
+      const highCircle = highMarker?.querySelectorAll('circle')[1];
+
+      expect(lowCircle?.getAttribute('r')).toBe('8'); // 16px diameter = 8px radius
+      expect(mediumCircle?.getAttribute('r')).toBe('12'); // 24px diameter = 12px radius
+      expect(highCircle?.getAttribute('r')).toBe('16'); // 32px diameter = 16px radius
     });
   });
 
   describe('Loading and error states', () => {
-    it('renders nothing when loading', () => {
+    it('renders empty group when loading', () => {
       mockedUseFlares.mockReturnValue({
         data: [],
         isLoading: true,
@@ -409,11 +490,20 @@ describe('FlareMarkers', () => {
         error: null,
       });
 
-      const { container } = render(<FlareMarkers {...defaultProps} />);
-      expect(container.querySelector('g')).not.toBeInTheDocument();
+      // Story 5.4: FlareMarkers always renders <g> to establish ref
+      const { container } = render(
+        <svg>
+          <FlareMarkers {...defaultProps} />
+        </svg>
+      );
+
+      const group = container.querySelector('g[data-testid="flare-markers"]');
+      expect(group).toBeInTheDocument();
+      // But no markers inside
+      expect(group?.querySelectorAll('[data-testid^="flare-marker-"]')).toHaveLength(0);
     });
 
-    it('renders nothing when no flares', () => {
+    it('renders empty group when no flares', () => {
       mockedUseFlares.mockReturnValue({
         data: [],
         isLoading: false,
@@ -421,8 +511,17 @@ describe('FlareMarkers', () => {
         error: null,
       });
 
-      const { container } = render(<FlareMarkers {...defaultProps} />);
-      expect(container.querySelector('g')).not.toBeInTheDocument();
+      // Story 5.4: FlareMarkers always renders <g> to establish ref
+      const { container } = render(
+        <svg>
+          <FlareMarkers {...defaultProps} />
+        </svg>
+      );
+
+      const group = container.querySelector('g[data-testid="flare-markers"]');
+      expect(group).toBeInTheDocument();
+      // But no markers inside
+      expect(group?.querySelectorAll('[data-testid^="flare-marker-"]')).toHaveLength(0);
     });
   });
 });

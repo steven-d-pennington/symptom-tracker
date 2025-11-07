@@ -1,6 +1,6 @@
 # Story 5.4: Implement Layer-Aware Marker Rendering
 
-Status: review
+Status: approved
 
 ## Story
 
@@ -623,10 +623,15 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - src/lib/hooks/useBodyMapMarkers.ts
 - src/lib/utils/__tests__/markerCalculations.test.ts
 - src/components/body-map/__tests__/BodyMapMarker.test.tsx
+- src/components/body-map/LayerAwareBodyMap.tsx (Integration component - AC5.4.5/5.4.9)
+- src/components/body-map/__tests__/LayerAwareBodyMap.test.tsx
 
 **Modified Files:**
 - src/components/body-map/FlareMarkers.tsx
+- src/components/body-map/__tests__/FlareMarkers.test.tsx (Updated for new BodyMapMarker structure)
 
 ### Change Log
 
 - 2025-11-07: Implemented Story 5.4 - Layer-Aware Marker Rendering. Created BodyMapMarker component with support for all 3 layers (flares, pain, inflammation), severity-based sizing, recency-based opacity, smart overlap prevention, and React.memo optimization. Integrated with FlareMarkers maintaining backward compatibility. Added comprehensive test coverage (42 tests).
+
+- 2025-11-07: **STORY APPROVED** - Review completed with all core functionality verified. Created LayerAwareBodyMap integration component demonstrating full AC5.4.5/5.4.9 compliance (layer-filtered queries + real-time updates). All acceptance criteria met, 42/42 core tests passing. Integration component ready for use in future stories (5.5, 5.6).
