@@ -340,19 +340,27 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         };
 
         // Build collapsed summary: "MealType: Food1 (M), Food2 (S)"
-        const ids = Array.from(new Set(allFoodIds));
-        const collapsedList = (JSON.parse(event.foodIds) as string[]).map(fid => {
-          const name = foodNameById.get(fid) || fid;
-          const abbrev = portionAbbrev(portions[fid]);
-          return abbrev ? `${name} (${abbrev})` : name;
-        }).join(', ');
+        let collapsedList = '';
+        let allergenList: string[] = [];
+        try {
+          const foodIdsParsed = JSON.parse(event.foodIds) as string[];
+          collapsedList = foodIdsParsed.map(fid => {
+            const name = foodNameById.get(fid) || fid;
+            const abbrev = portionAbbrev(portions[fid]);
+            return abbrev ? `${name} (${abbrev})` : name;
+          }).join(', ');
+
+          // Build allergen list
+          allergenList = foodIdsParsed
+            .flatMap(fid => allergenById.get(fid) || [])
+            .filter((v, i, a) => a.indexOf(v) === i);
+        } catch (error) {
+          console.error('[TimelineView] Failed to parse foodIds for event:', event.id, error);
+          collapsedList = 'Invalid food data';
+        }
+
         const mealType = event.mealType;
         const summary = `🍽️ Meal (${mealType}): ${collapsedList}`;
-
-        // Build details string including notes and allergens
-        const allergenList: string[] = (JSON.parse(event.foodIds) as string[])
-          .flatMap(fid => allergenById.get(fid) || [])
-          .filter((v, i, a) => a.indexOf(v) === i);
         const detailsParts: string[] = [];
         if (event.notes) detailsParts.push(`Notes: ${event.notes}`);
         if (allergenList.length > 0) detailsParts.push(`Allergens: ${allergenList.join(', ')}`);
