@@ -370,6 +370,81 @@ export function DevDataControls() {
     }
   };
 
+  // Story 5.2: Body Map Layer Preferences Controls
+  const handleResetLayerPreferences = async () => {
+    if (!userId) {
+      setError("No user found.");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const { bodyMapPreferencesRepository } = await import("@/lib/repositories/bodyMapPreferencesRepository");
+
+      // Get current prefs to trigger defaults if needed
+      await bodyMapPreferencesRepository.get(userId);
+
+      // Reset to defaults
+      await bodyMapPreferencesRepository.setLastUsedLayer(userId, "flares");
+      await bodyMapPreferencesRepository.setVisibleLayers(userId, ["flares"]);
+      await bodyMapPreferencesRepository.setViewMode(userId, "single");
+
+      setMessage("✅ Layer preferences reset to defaults (flares only, single view)");
+    } catch (err) {
+      console.error("Failed to reset layer preferences", err);
+      setError(err instanceof Error ? err.message : "Failed to reset preferences");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetLayer = async (layer: 'flares' | 'pain' | 'inflammation') => {
+    if (!userId) {
+      setError("No user found.");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const { bodyMapPreferencesRepository } = await import("@/lib/repositories/bodyMapPreferencesRepository");
+      await bodyMapPreferencesRepository.setLastUsedLayer(userId, layer);
+      setMessage(`✅ Last used layer set to: ${layer}`);
+    } catch (err) {
+      console.error("Failed to set layer", err);
+      setError(err instanceof Error ? err.message : "Failed to set layer");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearPreferences = async () => {
+    if (!userId) {
+      setError("No user found.");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const { db } = await import("@/lib/db/client");
+      await db.bodyMapPreferences.delete(userId);
+      setMessage("✅ Layer preferences cleared (will recreate defaults on next access)");
+    } catch (err) {
+      console.error("Failed to clear preferences", err);
+      setError(err instanceof Error ? err.message : "Failed to clear preferences");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleNuclearReset = async () => {
     const confirmed = confirm(
       "🚨 NUCLEAR RESET - EXTREME WARNING 🚨\\n\\n" +
@@ -598,6 +673,55 @@ export function DevDataControls() {
           >
             {isLoading ? "Clearing…" : "Clear All Data"}
           </button>
+        </div>
+
+        {/* Layer Preferences Section (Story 5.2) */}
+        <div className="mt-6 p-4 border-2 border-blue-500 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+          <div className="flex items-start gap-3 mb-3">
+            <span className="text-2xl">🗺️</span>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-blue-900 dark:text-blue-200">
+                Body Map Layer Preferences (Story 5.2)
+              </h4>
+              <p className="text-xs text-blue-800 dark:text-blue-300 mt-1">
+                Test layer preference persistence: reset to defaults, set specific layers, or clear preferences entirely.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleResetLayerPreferences}
+              disabled={isLoading}
+              className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isLoading ? "Resetting…" : "Reset to Defaults"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetLayer('pain')}
+              disabled={isLoading}
+              className="inline-flex items-center rounded-md bg-yellow-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-yellow-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              ⚡ Set Pain Layer
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetLayer('inflammation')}
+              disabled={isLoading}
+              className="inline-flex items-center rounded-md bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              🟣 Set Inflammation Layer
+            </button>
+            <button
+              type="button"
+              onClick={handleClearPreferences}
+              disabled={isLoading}
+              className="inline-flex items-center rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isLoading ? "Clearing…" : "Clear Preferences"}
+            </button>
+          </div>
         </div>
 
         {/* Nuclear Reset Section */}

@@ -25,6 +25,7 @@ import type {
   FoodCombinationRecord,
   UxEventRecord,
   BodyMapLocationRecord,
+  BodyMapPreferences,
   PhotoComparisonRecord,
   AnalysisResultRecord,
 } from "../db/schema";
@@ -64,6 +65,7 @@ export interface ImportResult {
     foodCombinations: number;
     uxEvents: number;
     bodyMapLocations: number;
+    bodyMapPreferences: number;
     photoComparisons: number;
     analysisResults: number;
   };
@@ -156,6 +158,7 @@ export class ImportService {
           foodCombinations: 0,
           uxEvents: 0,
           bodyMapLocations: 0,
+          bodyMapPreferences: 0,
           photoComparisons: 0,
           analysisResults: 0,
         },
@@ -198,6 +201,7 @@ export class ImportService {
         foodCombinations: 0,
         uxEvents: 0,
         bodyMapLocations: 0,
+        bodyMapPreferences: 0,
         photoComparisons: 0,
         analysisResults: 0,
       },
@@ -250,6 +254,7 @@ export class ImportService {
         foodCombinations: 0,
         uxEvents: 0,
         bodyMapLocations: 0,
+        bodyMapPreferences: 0,
         photoComparisons: 0,
         analysisResults: 0,
       },
@@ -435,6 +440,23 @@ export class ImportService {
         );
         result.imported.bodyMapLocations = imported.count;
         result.skipped.items += imported.skipped;
+      }
+
+      // Body Map Preferences (Story 5.2)
+      if (data.bodyMapPreferences) {
+        try {
+          // For preferences, we replace (not merge) since it's a single user preference record
+          const normalizedPrefs: BodyMapPreferences = {
+            ...data.bodyMapPreferences,
+            userId, // Ensure userId matches current user
+            updatedAt: Date.now(), // Update timestamp on import
+          };
+          await db.bodyMapPreferences.put(normalizedPrefs);
+          result.imported.bodyMapPreferences = 1;
+        } catch (error) {
+          console.error("Failed to import body map preferences:", error);
+          result.skipped.items += 1;
+        }
       }
 
       // Photo Comparisons
