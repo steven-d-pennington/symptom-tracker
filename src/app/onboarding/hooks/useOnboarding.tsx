@@ -64,19 +64,26 @@ export const OnboardingProvider = ({
     setState((prev) => (prev.hydrated ? prev : { ...prev, hydrated: true }));
   }, []);
 
+  // Persist onboarding state whenever it changes (but NOT the entire state object)
   useEffect(() => {
     if (!state.hydrated) {
       return;
     }
-
     persistOnboardingState(state);
+  }, [state.hydrated, state.currentStep, state.completedSteps, state.isComplete, state.data]);
+
+  // Only persist user settings when onboarding completes (separate effect!)
+  useEffect(() => {
+    if (!state.hydrated || !state.isComplete) {
+      return;
+    }
 
     // Only call persistUserSettings ONCE when onboarding completes
-    if (state.isComplete && !hasPersistedSettings.current) {
+    if (!hasPersistedSettings.current) {
       hasPersistedSettings.current = true;
       persistUserSettings(state.data);
     }
-  }, [state]);
+  }, [state.hydrated, state.isComplete]); // Only watch isComplete, not entire state!
 
   const goToStep = useCallback((stepId: OnboardingStepId) => {
     setState((prev) => {

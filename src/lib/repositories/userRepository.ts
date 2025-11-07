@@ -91,11 +91,20 @@ export class UserRepository {
     return users[0];
   }
 
+  // Lock to prevent concurrent user creation
+  private static userCreationLock: Promise<UserRecord> | null = null;
+
   /**
    * Create or get current user
    * Story 3.5.1: Now initializes default data for new users
    */
   async getOrCreateCurrentUser(): Promise<UserRecord> {
+    // If user creation is already in progress, wait for it
+    if (UserRepository.userCreationLock) {
+      console.log('[getOrCreateCurrentUser] User creation already in progress, waiting...');
+      return await UserRepository.userCreationLock;
+    }
+
     const currentUser = await this.getCurrentUser();
     if (currentUser) {
       // Ensure the current user ID is stored in localStorage
@@ -109,8 +118,10 @@ export class UserRepository {
       return currentUser;
     }
 
-    // Create default user
-    const id = await this.create({
+    // Create a lock promise to prevent concurrent creation
+    const creationPromise = (async () => {
+      // Create default user
+      const id = await this.create({
       name: "User",
       preferences: {
         theme: "system",
@@ -153,7 +164,19 @@ export class UserRepository {
       // Don't throw - let user proceed even if defaults fail
     }
 
-    return user;
+      return user;
+    })();
+
+    // Store the lock
+    UserRepository.userCreationLock = creationPromise;
+
+    try {
+      const newUser = await creationPromise;
+      return newUser;
+    } finally {
+      // Clear the lock when done
+      UserRepository.userCreationLock = null;
+    }
   }
 
   /**
