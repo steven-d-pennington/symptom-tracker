@@ -54,6 +54,9 @@ export function generateFlareEventHistory(
   let currentSeverity = flare.initialSeverity;
   let currentTrend: "improving" | "stable" | "worsening" = "active" as any;
 
+  // Track interventions to ensure follow-up severity updates
+  const interventionTimestamps: number[] = [];
+
   // Determine flare pattern
   const patternRoll = Math.random();
   let pattern: "improving" | "worsening" | "stable" | "fluctuating";
@@ -154,6 +157,47 @@ export function generateFlareEventHistory(
           notes: getInterventionNote(interventionType),
           userId: context.userId,
         });
+
+        // Track intervention for follow-up
+        interventionTimestamps.push(interventionTimestamp);
+      }
+    }
+  }
+
+  // 4.5. Generate follow-up severity updates for interventions (48 hours after)
+  // This ensures intervention effectiveness can be calculated
+  for (const interventionTime of interventionTimestamps) {
+    const followUpTime = interventionTime + 48 * 60 * 60 * 1000; // 48 hours later
+
+    // Only create follow-up if within flare duration and not in future
+    if (followUpTime <= now && (!flare.endDate || followUpTime <= flare.endDate)) {
+      // Simulate intervention effect: 60% chance of improvement, 30% stable, 10% worsening
+      const effectRoll = Math.random();
+      let followUpSeverity = currentSeverity;
+
+      if (effectRoll < 0.6) {
+        // Improvement: reduce severity by 1-3 points
+        followUpSeverity = Math.max(1, currentSeverity - Math.floor(Math.random() * 3) - 1);
+      } else if (effectRoll < 0.9) {
+        // Stable: minor change ±1
+        followUpSeverity = Math.max(1, Math.min(10, currentSeverity + (Math.random() < 0.5 ? -1 : 1)));
+      } else {
+        // Worsening: increase by 1-2 points
+        followUpSeverity = Math.min(10, currentSeverity + Math.floor(Math.random() * 2) + 1);
+      }
+
+      if (followUpSeverity !== currentSeverity) {
+        events.push({
+          id: generateId(),
+          flareId: flare.id,
+          eventType: "severity_update",
+          timestamp: followUpTime,
+          severity: followUpSeverity,
+          notes: `Follow-up check: ${getSeverityChangeNote(currentSeverity, followUpSeverity)}`,
+          userId: context.userId,
+        });
+
+        currentSeverity = followUpSeverity;
       }
     }
   }

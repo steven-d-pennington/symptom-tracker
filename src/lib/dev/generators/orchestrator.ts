@@ -728,9 +728,11 @@ async function generateFlaresWithClustering(
     else if (pattern === "worsening" && currentSeverity > initialSeverity + 2) currentStatus = "worsening";
 
     const flareAge = daysAgo;
+    // Increase resolution rate to 70% for better analytics data
+    // Resolve if: improving pattern AND (severity is low OR flare is old enough)
     const shouldResolve =
-      (pattern === "improving" && currentSeverity <= 2 && Math.random() < 0.4) ||
-      (flareAge > flareDuration && Math.random() < 0.5);
+      (pattern === "improving" && (currentSeverity <= 3 || flareAge > flareDuration * 0.7)) ||
+      (flareAge > flareDuration && Math.random() < 0.7);
 
     flares.push({
       id: generateId(),

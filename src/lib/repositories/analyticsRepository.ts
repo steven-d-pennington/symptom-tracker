@@ -680,6 +680,77 @@ export async function getInterventionEffectiveness(
 }
 
 /**
+ * Fetches individual flare durations for histogram visualization.
+ * Returns array of duration values in days for all resolved flares within time range.
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param timeRange - Time range to filter flares
+ * @returns Promise resolving to array of duration values in days
+ */
+export async function getIndividualDurations(
+  userId: string,
+  timeRange: TimeRange
+): Promise<number[]> {
+  // Fetch only resolved flares (must have endDate)
+  const allFlares = await db.flares.where({ userId, status: 'resolved' }).toArray();
+
+  // Filter by time range
+  const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
+
+  // Calculate duration in days for each flare
+  const durations = flaresInRange.map(flare => {
+    const durationMs = (flare.endDate! - flare.startDate);
+    return Math.round(durationMs / (24 * 60 * 60 * 1000));
+  });
+
+  return durations;
+}
+
+/**
+ * Fetches individual peak severities for distribution visualization.
+ * Returns array of peak severity values (1-10 scale) for all flares within time range.
+ *
+ * @param userId - User ID for multi-user isolation
+ * @param timeRange - Time range to filter flares
+ * @returns Promise resolving to array of peak severity values
+ */
+export async function getIndividualSeverities(
+  userId: string,
+  timeRange: TimeRange
+): Promise<number[]> {
+  // Fetch all flares (active and resolved)
+  const allFlares = await db.flares.where({ userId }).toArray();
+
+  // Filter by time range
+  const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
+
+  // Extract peak severity from each flare's events
+  const severities: number[] = [];
+
+  for (const flare of flaresInRange) {
+    // Get all events for this flare
+    const events = await db.flareEvents
+      .where({ flareId: flare.id })
+      .toArray();
+
+    // Find peak severity from severity_update events
+    const severityValues = events
+      .filter(e => e.severity !== undefined)
+      .map(e => e.severity!);
+
+    const peakSeverity = severityValues.length > 0
+      ? Math.max(...severityValues)
+      : flare.initialSeverity || 0;
+
+    if (peakSeverity > 0) {
+      severities.push(peakSeverity);
+    }
+  }
+
+  return severities;
+}
+
+/**
  * Repository object exposing analytics data access methods.
  */
 export const analyticsRepository = {
@@ -690,4 +761,6 @@ export const analyticsRepository = {
   getSeverityMetrics,
   getMonthlyTrendData,
   getInterventionEffectiveness,
+  getIndividualDurations,
+  getIndividualSeverities,
 };

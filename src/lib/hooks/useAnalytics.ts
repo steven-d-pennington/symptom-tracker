@@ -43,6 +43,10 @@ export interface UseAnalyticsResult {
   trendAnalysis: TrendAnalysis | null;
   /** Intervention effectiveness data (Story 3.5 - Task 2.2) */
   interventionEffectiveness: InterventionEffectiveness[] | null;
+  /** Individual flare durations for histogram visualization */
+  durations: number[];
+  /** Individual peak severities for distribution visualization */
+  severities: number[];
   /** Loading state */
   isLoading: boolean;
   /** Error state */
@@ -71,6 +75,9 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
   const [trendAnalysis, setTrendAnalysis] = useState<TrendAnalysis | null>(null);
   // Story 3.5 - Task 2.2: Add interventionEffectiveness state
   const [interventionEffectiveness, setInterventionEffectiveness] = useState<InterventionEffectiveness[] | null>(null);
+  // Individual arrays for distribution charts
+  const [durations, setDurations] = useState<number[]>([]);
+  const [severities, setSeverities] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -93,22 +100,34 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
         setIsLoading(true);
         setError(null);
 
-        // Story 3.5 - Task 2.4: Fetch all five data sets concurrently using Promise.all
-        const [problemAreasData, durationMetricsData, severityMetricsData, trendData, interventionData] = await Promise.all([
+        // Fetch all data sets concurrently using Promise.all
+        const [
+          problemAreasData,
+          durationMetricsData,
+          severityMetricsData,
+          trendData,
+          interventionData,
+          durationsData,
+          severitiesData
+        ] = await Promise.all([
           analyticsRepository.getProblemAreas(userId, timeRange),
           analyticsRepository.getDurationMetrics(userId, timeRange),
           analyticsRepository.getSeverityMetrics(userId, timeRange),
           analyticsRepository.getMonthlyTrendData(userId, timeRange),
           analyticsRepository.getInterventionEffectiveness(userId, timeRange),
+          analyticsRepository.getIndividualDurations(userId, timeRange),
+          analyticsRepository.getIndividualSeverities(userId, timeRange),
         ]);
 
-        // Story 3.5 - Task 2.5: Update interventionEffectiveness state when data fetched
+        // Update all state when data fetched
         if (mounted) {
           setProblemAreas(problemAreasData);
           setDurationMetrics(durationMetricsData);
           setSeverityMetrics(severityMetricsData);
           setTrendAnalysis(trendData);
           setInterventionEffectiveness(interventionData);
+          setDurations(durationsData);
+          setSeverities(severitiesData);
           setIsLoading(false);
         }
       } catch (err) {
@@ -145,13 +164,15 @@ export function useAnalytics({ timeRange }: UseAnalyticsOptions): UseAnalyticsRe
     };
   }, [userId, timeRange, refreshTrigger]);
 
-  // Story 3.5 - Task 2.6: Return interventionEffectiveness in hook result object
+  // Return all data including distribution arrays
   return {
     problemAreas,
     durationMetrics,
     severityMetrics,
     trendAnalysis,
     interventionEffectiveness,
+    durations,
+    severities,
     isLoading,
     error,
     refetch,

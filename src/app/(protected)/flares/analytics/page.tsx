@@ -14,7 +14,6 @@
 
 'use client';
 
-import { useMemo } from 'react';
 import { ProblemAreasView } from '@/components/analytics/ProblemAreasView';
 import { ProgressionMetricsSection } from '@/components/analytics/ProgressionMetricsSection';
 import { TrendAnalysisSection } from '@/components/analytics/TrendAnalysisSection';
@@ -31,29 +30,18 @@ export default function AnalyticsPage() {
   // For now, ProgressionMetricsSection will use the same default time range.
   // Future improvement: Lift timeRange state to this page level for perfect sync.
 
-  // Story 3.5 - Task 8.3: Extract interventionEffectiveness from useAnalytics hook result
-  // Using default time range that matches ProblemAreasView default
-  const { durationMetrics, severityMetrics, trendAnalysis, interventionEffectiveness, isLoading } = useAnalytics({
+  // Fetch all analytics data including distribution arrays
+  const {
+    durationMetrics,
+    severityMetrics,
+    trendAnalysis,
+    interventionEffectiveness,
+    durations,
+    severities,
+    isLoading
+  } = useAnalytics({
     timeRange: 'last90d'
   });
-
-  // Task 12.4-12.5: Calculate durations and severities arrays from flare data
-  // These arrays are needed for the histogram and distribution charts
-  const { durations, severities } = useMemo(() => {
-    // Extract duration values from durationMetrics for histogram
-    // Note: For full histogram, we need individual flare durations
-    // For now using empty arrays as the metrics provide aggregated data
-    const durationsArray: number[] = [];
-    const severitiesArray: number[] = [];
-
-    // TODO: Future enhancement - fetch individual flare records to populate these arrays
-    // This would require querying db.flares and db.flareEvents directly
-
-    return {
-      durations: durationsArray,
-      severities: severitiesArray,
-    };
-  }, [durationMetrics, severityMetrics]);
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">

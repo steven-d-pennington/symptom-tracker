@@ -32,20 +32,21 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
   'quick-start': {
     id: 'quick-start',
     name: 'Quick Start',
-    description: 'Basic 1-week dataset perfect for first-time exploration. Includes a few events of each type.',
+    description: 'Lightweight 2-week dataset for quick exploration. Includes variety of events with enough data to preview features.',
     icon: '🎯',
-    recommendedYears: 1 / 52, // 1 week
-    config: (years = 1 / 52) => ({
+    recommendedYears: 2 / 52, // 2 weeks
+    config: (years = 2 / 52) => ({
       timeRange: {
         daysBack: Math.floor(years * 365),
         yearsToGenerate: years,
       },
       flares: {
-        count: { min: 1, max: 2 },
-        regionClustering: false,
+        count: { min: 3, max: 5 }, // More flares for better preview
+        regionClustering: true, // Enable clustering to show problem areas feature
+        clusteringIntensity: 'medium',
         generateEvents: true,
-        eventsPerFlare: { min: 3, max: 5 },
-        interventionProbability: 0.4,
+        eventsPerFlare: { min: 4, max: 6 },
+        interventionProbability: 0.6,
       },
       foodPatterns: {
         repeatCombinations: false, // No patterns, just variety
@@ -75,7 +76,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
   'flare-progression': {
     id: 'flare-progression',
     name: 'Flare Progression',
-    description: 'Focused on flare tracking with detailed event histories, interventions, and severity progressions.',
+    description: 'Optimized for analytics testing with rich flare histories, interventions, and severity progressions. Generates enough data for all analytics features.',
     icon: '🔥',
     recommendedYears: 1,
     config: (years = 1) => ({
@@ -84,22 +85,22 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
         yearsToGenerate: years,
       },
       flares: {
-        count: { min: 8, max: 12 },
+        count: { min: Math.floor(years * 18), max: Math.floor(years * 24) }, // More flares for better analytics
         regionClustering: true,
-        clusteringIntensity: 'low', // Slight preferences, mostly varied
+        clusteringIntensity: 'medium', // Balance between clustering and variety
         generateEvents: true,
-        eventsPerFlare: { min: 5, max: 10 },
-        interventionProbability: 0.7, // High intervention rate
+        eventsPerFlare: { min: 6, max: 12 }, // More events per flare for richer histories
+        interventionProbability: 0.8, // Very high intervention rate for effectiveness analytics
       },
       foodPatterns: {
-        repeatCombinations: false,
-        correlationStrength: 'low',
-        patternsToCreate: 1,
+        repeatCombinations: true, // Enable patterns for correlation testing
+        correlationStrength: 'medium',
+        patternsToCreate: 3,
       },
       triggers: {
-        correlationWithSymptoms: false,
+        correlationWithSymptoms: true, // Enable correlations for trigger analysis
         delayWindow: 'varied',
-        correlationRate: 0.3,
+        correlationRate: 0.6,
       },
       uxEvents: {
         generate: true,
@@ -119,7 +120,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
   'food-correlations': {
     id: 'food-correlations',
     name: 'Food Correlations',
-    description: 'High-confidence food patterns with synergistic combinations and clear delay windows.',
+    description: 'High-confidence food patterns with synergistic combinations and clear delay windows. Optimized for food diary and correlation analysis.',
     icon: '🍽️',
     recommendedYears: 1,
     config: (years = 1) => ({
@@ -128,11 +129,12 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
         yearsToGenerate: years,
       },
       flares: {
-        count: { min: 3, max: 5 },
-        regionClustering: false,
+        count: { min: Math.floor(years * 12), max: Math.floor(years * 16) }, // More flares for better correlations
+        regionClustering: true,
+        clusteringIntensity: 'low',
         generateEvents: true,
-        eventsPerFlare: { min: 3, max: 6 },
-        interventionProbability: 0.3,
+        eventsPerFlare: { min: 4, max: 7 },
+        interventionProbability: 0.5,
       },
       foodPatterns: {
         repeatCombinations: true, // KEY: Create intentional patterns
@@ -162,7 +164,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
   'trigger-analysis': {
     id: 'trigger-analysis',
     name: 'Trigger Analysis',
-    description: 'Clear trigger-symptom correlations with realistic time delays for testing correlation dashboard.',
+    description: 'Clear trigger-symptom correlations with realistic time delays. Optimized for testing correlation and trigger analysis features.',
     icon: '⚠️',
     recommendedYears: 1,
     config: (years = 1) => ({
@@ -171,11 +173,12 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
         yearsToGenerate: years,
       },
       flares: {
-        count: { min: 3, max: 5 },
-        regionClustering: false,
+        count: { min: Math.floor(years * 12), max: Math.floor(years * 16) }, // More flares for better trigger analysis
+        regionClustering: true,
+        clusteringIntensity: 'low',
         generateEvents: true,
-        eventsPerFlare: { min: 3, max: 6 },
-        interventionProbability: 0.3,
+        eventsPerFlare: { min: 4, max: 7 },
+        interventionProbability: 0.5,
       },
       foodPatterns: {
         repeatCombinations: false,
