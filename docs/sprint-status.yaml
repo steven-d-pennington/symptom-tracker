@@ -111,7 +111,7 @@ development_status:
   epic-5: backlog
   5-1-add-layer-field-to-data-model-and-indexeddb-schema: done
   5-2-implement-layer-preferences-and-persistence: review
-  5-3-create-layer-selector-component-for-tracking-mode: ready-for-dev
+  5-3-create-layer-selector-component-for-tracking-mode: review
   5-4-implement-layer-aware-marker-rendering: ready-for-dev
   5-5-add-multi-layer-view-controls-and-filtering: ready-for-dev
   5-6-create-layer-legend-and-accessibility-features: ready-for-dev
