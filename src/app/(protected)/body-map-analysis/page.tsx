@@ -2,6 +2,7 @@
 
 import { LayerSelector } from '@/components/body-map/LayerSelector';
 import { LayerToggle } from '@/components/body-map/LayerToggle';
+import { LayerLegend } from '@/components/body-map/LayerLegend';
 import { useBodyMapLayers } from '@/lib/hooks/useBodyMapLayers';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { BodyMapMarker } from '@/components/body-map/markers/BodyMapMarker';
@@ -11,8 +12,9 @@ import { cn } from '@/lib/utils/cn';
 /**
  * Body Map Analysis Page
  * Story 5.5: Multi-layer view controls and filtering
+ * Story 5.6: Layer legend and accessibility features
  *
- * Demonstrates all Story 5.5 features:
+ * Demonstrates Story 5.5 features:
  * - AC5.5.1: LayerToggle with checkboxes and marker counts
  * - AC5.5.2: View mode selector (Single/All)
  * - AC5.5.3: Individual layer visibility toggles
@@ -21,6 +23,9 @@ import { cn } from '@/lib/utils/cn';
  * - AC5.5.7: Keyboard shortcuts
  * - AC5.5.8: Empty state messaging
  * - AC5.5.9: Real-time marker count updates
+ *
+ * Demonstrates Story 5.6 features:
+ * - AC5.6.1-5.6.9: LayerLegend component with accessibility
  */
 export default function BodyMapAnalysisPage() {
   const { userId } = useCurrentUser();
@@ -201,6 +206,14 @@ export default function BodyMapAnalysisPage() {
           </div>
         </div>
       </div>
+
+      {/* LayerLegend - Story 5.6 (AC5.6.1-5.6.9) */}
+      <LayerLegend
+        visibleLayers={viewMode === 'single' ? [currentLayer] : visibleLayers}
+        onToggleLayer={viewMode === 'all' ? toggleLayerVisibility : undefined}
+        markerCounts={markerCounts}
+        interactive={viewMode === 'all'}
+      />
     </div>
   );
 }
