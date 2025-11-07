@@ -24,4 +24,4 @@ path_files: "{project-root}/bmad/bmm/workflows/workflow-status/paths/"
 # Output configuration
 default_output_file: "{output_folder}/bmm-workflow-status.yaml"
 
-standalone: true
+standalone: true

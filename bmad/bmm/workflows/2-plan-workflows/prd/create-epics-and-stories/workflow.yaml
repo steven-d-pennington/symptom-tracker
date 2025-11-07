@@ -43,3 +43,4 @@ template: "{installed_path}/epics-template.md"
 default_output_file: "{output_folder}/epics.md"
 
 standalone: true
+

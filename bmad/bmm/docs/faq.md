@@ -8,11 +8,11 @@ Quick answers to common questions about the BMad Method Module.
 
 - [Getting Started](#getting-started)
 - [Choosing the Right Level](#choosing-the-right-level)
-- [Workflows & Phases](#workflows--phases)
+- [Workflows and Phases](#workflows-and-phases)
 - [Planning Documents](#planning-documents)
 - [Implementation](#implementation)
 - [Brownfield Development](#brownfield-development)
-- [Tools & Technical](#tools--technical)
+- [Tools and Technical](#tools-and-technical)
 
 ---
 
@@ -26,7 +26,7 @@ Quick answers to common questions about the BMad Method Module.
 - Creates the tracking status file
 - Routes you to the correct starting workflow
 
-For experienced users: use the [Quick Reference](./quick-start.md#quick-reference-agent--document-mapping) to go directly to the right agent/workflow.
+For experienced users: use the [Quick Reference](./quick-start.md#quick-reference-agent-document-mapping) to go directly to the right agent/workflow.
 
 ### Q: Why do I need fresh chats for each workflow?
 
@@ -108,7 +108,7 @@ The overlap (5-10 stories) is intentional. Choose based on:
 
 ---
 
-## Workflows & Phases
+## Workflows and Phases
 
 ### Q: What's the difference between workflow-status and workflow-init?
 
@@ -339,7 +339,7 @@ BMM respects your choice - it won't force modernization, but it will offer it.
 
 ---
 
-## Tools & Technical
+## Tools and Technical
 
 ### Q: Why are my Mermaid diagrams not rendering?
 
@@ -399,7 +399,7 @@ Use them together for best results.
 
 **Why model quality matters:** BMM workflows require LLMs that can follow multi-step processes, maintain context across phases, and implement code that adheres to specifications. Tools with weaker models will struggle with workflow adherence and code quality.
 
-See [IDE Setup Guides](../../../docs/ide-info/) for configuration specifics.
+See [IDE Setup Guides](https://github.com/bmad-code-org/BMAD-METHOD/tree/main/docs/ide-info) for configuration specifics.
 
 ### Q: Can I customize agents?
 
@@ -557,11 +557,10 @@ Trust your expertise - BMM supports your decisions.
 
 **A:**
 
-1. Check [Troubleshooting Guide](./troubleshooting.md) for common issues
-2. Search [Complete Documentation](./README.md) for related topics
-3. Ask in [Discord Community](https://discord.gg/gk8jAdXWmj) (#general-dev)
-4. Open a [GitHub Issue](https://github.com/bmad-code-org/BMAD-METHOD/issues)
-5. Watch [YouTube Tutorials](https://www.youtube.com/@BMadCode)
+1. Search [Complete Documentation](./README.md) for related topics
+2. Ask in [Discord Community](https://discord.gg/gk8jAdXWmj) (#general-dev)
+3. Open a [GitHub Issue](https://github.com/bmad-code-org/BMAD-METHOD/issues)
+4. Watch [YouTube Tutorials](https://www.youtube.com/@BMadCode)
 
 ### Q: How do I report a bug or request a feature?
 
@@ -580,7 +579,6 @@ Please include:
 
 - [Quick Start Guide](./quick-start.md) - Get started with BMM
 - [Glossary](./glossary.md) - Terminology reference
-- [Troubleshooting](./troubleshooting.md) - Problem resolution
 - [Scale Adaptive System](./scale-adaptive-system.md) - Understanding levels
 - [Brownfield Guide](./brownfield-guide.md) - Existing codebase workflows
 

@@ -69,3 +69,4 @@ validation_required:
   - blocker_resolution: "Any unresolved blockers that will impact next epic?"
 
 standalone: true
+

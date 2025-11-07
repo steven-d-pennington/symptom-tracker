@@ -72,3 +72,4 @@ input_file_patterns:
     sharded: "{output_folder}/docs/index.md"
 
 standalone: true
+

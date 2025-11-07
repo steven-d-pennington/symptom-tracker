@@ -62,3 +62,4 @@ input_file_patterns:
 validation_criteria: "{installed_path}/validation-criteria.yaml"
 
 standalone: true
+

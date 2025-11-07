@@ -1,6 +1,6 @@
 ide: claude-code
-configured_date: '2025-11-04T17:19:29.630Z'
-last_updated: '2025-11-04T17:19:29.630Z'
+configured_date: '2025-11-07T22:03:45.949Z'
+last_updated: '2025-11-07T22:03:45.949Z'
 configuration:
   subagentChoices:
     install: all

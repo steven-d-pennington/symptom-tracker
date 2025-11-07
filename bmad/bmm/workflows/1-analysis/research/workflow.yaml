@@ -42,3 +42,4 @@ template_technical: "{installed_path}/template-technical.md"
 default_output_file: "{output_folder}/research-{{research_type}}-{{date}}.md"
 
 standalone: true
+

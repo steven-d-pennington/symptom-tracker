@@ -61,3 +61,4 @@ input_file_patterns:
 default_output_file: "{story_dir}/{{story_key}}.context.xml"
 
 standalone: true
+

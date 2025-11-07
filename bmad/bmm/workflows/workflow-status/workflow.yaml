@@ -26,3 +26,4 @@ path_files: "{installed_path}/paths/"
 default_output_file: "{output_folder}/bmm-workflow-status.yaml"
 
 standalone: true
+

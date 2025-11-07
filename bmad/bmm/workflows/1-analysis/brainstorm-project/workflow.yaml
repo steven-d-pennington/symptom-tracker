@@ -24,3 +24,4 @@ project_context: "{installed_path}/project-context.md"
 core_brainstorming: "{project-root}/bmad/core/workflows/brainstorming/workflow.yaml"
 
 standalone: true
+

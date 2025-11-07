@@ -996,7 +996,7 @@ Quick reference for agent selection:
 - [Phase 2: Planning Workflows](./workflows-planning.md)
 - [Phase 3: Solutioning Workflows](./workflows-solutioning.md)
 - [Phase 4: Implementation Workflows](./workflows-implementation.md)
-- [Testing & QA Workflows](./workflows-testing.md)
+<!-- Testing & QA Workflows documentation to be added -->
 
 **Advanced References:**
 
@@ -1013,7 +1013,6 @@ Quick reference for agent selection:
 
 - [Enterprise Agentic Development](./enterprise-agentic-development.md) - Team collaboration
 - [FAQ](./faq.md) - Common questions
-- [Troubleshooting](./troubleshooting.md) - Problem resolution
 - [Glossary](./glossary.md) - Terminology reference
 
 ---
