@@ -153,7 +153,7 @@ export default function BodyMapAnalysisPage() {
                           <BodyMapMarker
                             key={marker.id}
                             id={marker.id}
-                            layer={marker.layer}
+                            layer={marker.layer || 'flares'}
                             bodyRegionId={marker.bodyRegionId}
                             severity={marker.severity}
                             timestamp={marker.createdAt.getTime()}
@@ -175,8 +175,8 @@ export default function BodyMapAnalysisPage() {
                             )}
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-lg">{marker.layer === 'flares' ? '🔥' : marker.layer === 'pain' ? '⚡' : '🟣'}</span>
-                              <span className="font-medium capitalize">{marker.layer}</span>
+                              <span className="text-lg">{(marker.layer || 'flares') === 'flares' ? '🔥' : (marker.layer || 'flares') === 'pain' ? '⚡' : '🟣'}</span>
+                              <span className="font-medium capitalize">{marker.layer || 'flares'}</span>
                             </div>
                             <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                               Severity: {marker.severity}/10
