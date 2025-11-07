@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Insights Hub - symptom-tracker UX Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #FAFAFA;
+            color: #292524;
+            line-height: 1.6;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, #0F9D91 0%, #0A7A70 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .demo-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1C1917;
+        }
+
+        .time-range-selector {
+            padding: 0.625rem 1.25rem;
+            border: 1px solid #E7E5E4;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-range-selector:hover {
+            border-color: #0F9D91;
+            box-shadow: 0 0 0 3px rgba(15, 157, 145, 0.1);
+        }
+
+        .insights-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1C1917;
+        }
+
+        .insight-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #F5F5F4;
+            transition: all 0.3s ease;
+        }
+
+        .insight-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .insight-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .badge-warning {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .badge-info {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .insight-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #1C1917;
+        }
+
+        .insight-description {
+            color: #57534E;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .insight-stat {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0F9D91;
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-placeholder {
+            background: linear-gradient(135deg, #F5F5F4 0%, #E7E5E4 100%);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            color: #78716C;
+            font-size: 0.9375rem;
+            border: 2px dashed #D6D3D1;
+        }
+
+        .recommendation-box {
+            background: #E0F5F3;
+            border-left: 4px solid #0F9D91;
+            padding: 1rem 1.25rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+
+        .recommendation-box h4 {
+            color: #0A7A70;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .recommendation-box p {
+            color: #1C1917;
+            font-size: 0.9375rem;
+        }
+
+        .action-link {
+            color: #0F9D91;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 1rem;
+            transition: all 0.2s;
+        }
+
+        .action-link:hover {
+            color: #0A7A70;
+            gap: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.25rem;
+            border: 1px solid #F5F5F4;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: #78716C;
+            font-size: 0.875rem;
+        }
+
+        .treatment-list {
+            list-style: none;
+        }
+
+        .treatment-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 0;
+            border-bottom: 1px solid #F5F5F4;
+        }
+
+        .treatment-item:last-child {
+            border-bottom: none;
+        }
+
+        .treatment-icon {
+            font-size: 1.5rem;
+        }
+
+        .treatment-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .treatment-effectiveness {
+            color: #0F9D91;
+            font-weight: 600;
+        }
+
+        .disclaimer {
+            background: #FEF3C7;
+            border: 1px solid #FDE047;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: #713F12;
+        }
+
+        @media (max-width: 768px) {
+            .demo-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1>🎯 Health Insights Hub</h1>
+        <p>Interactive UX Mockup - symptom-tracker Redesign</p>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Health Insights</h1>
+            <select class="time-range-selector">
+                <option>Last 30 days</option>
+                <option selected>Last 90 days</option>
+                <option>Last 6 months</option>
+                <option>Last year</option>
+                <option>All time</option>
+            </select>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value">23</div>
+                <div class="stat-label">Total Flares (90 days)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📉</div>
+                <div class="stat-value">-23%</div>
+                <div class="stat-label">Flare Frequency Change</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-value">9.2 days</div>
+                <div class="stat-label">Avg. Flare Duration</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">😊</div>
+                <div class="stat-value">7.3 hrs</div>
+                <div class="stat-label">Avg. Sleep (last 30d)</div>
+            </div>
+        </div>
+
+        <!-- Top Insights Section -->
+        <section class="insights-section">
+            <h2 class="section-title">🎯 Your Top Insights</h2>
+
+            <!-- Sleep Correlation Insight -->
+            <div class="insight-card">
+                <span class="insight-badge badge-warning">⚠️ STRONG CORRELATION DETECTED</span>
+                <h3 class="insight-title">Poor sleep significantly increases flares</h3>
+                <p class="insight-description">
+                    Based on your tracking data, we've detected a strong negative correlation between sleep duration and new flare occurrence.
+                </p>
+                <div class="insight-stat">Your flares increase 2.3× after nights with less than 6 hours of sleep</div>
+
+                <div class="chart-placeholder">
+                    📊 Scatter Plot: Sleep Hours vs. New Flares
+                    <br><small>Interactive Chart.js visualization would appear here</small>
+                </div>
+
+                <div class="recommendation-box">
+                    <h4>💡 What you can do:</h4>
+                    <p>Try to get 7-8 hours of sleep consistently. Your data shows flare frequency drops by 67% when you maintain good sleep patterns.</p>
+                </div>
+
+                <a href="#" class="action-link">View full sleep analysis →</a>
+            </div>
+
+            <!-- Mood Predictive Insight -->
+            <div class="insight-card">
+                <span class="insight-badge badge-info">📉 PREDICTIVE INDICATOR</span>
+                <h3 class="insight-title">Mood drops before flares appear</h3>
+                <p class="insight-description">
+                    Analysis shows your mood tends to decrease 1-2 days BEFORE new flares start - suggesting mood could serve as an early warning signal.
+                </p>
+                <div class="insight-stat">Mood drops to "Poor" an average of 1.2 days before flare onset</div>
+
+                <div class="chart-placeholder">
+                    📈 Timeline: Mood Trend with Flare Markers
+                    <br><small>Dual-axis chart showing mood line + flare events</small>
+                </div>
+
+                <div class="recommendation-box">
+                    <h4>💡 Early warning system:</h4>
+                    <p>If your mood drops unexpectedly, consider preparing for potential flares in the next 24-48 hours (ice packs ready, avoid triggers, extra rest).</p>
+                </div>
+
+                <a href="#" class="action-link">Enable mood-based alerts →</a>
+            </div>
+        </section>
+
+        <!-- Flare Analytics Section -->
+        <section class="insights-section">
+            <h2 class="section-title">📊 Flare Analytics</h2>
+
+            <div class="insight-card">
+                <h3 class="insight-title">Problem Areas (Most frequent flares)</h3>
+                <p class="insight-description">Body regions with highest flare occurrence in the selected time period.</p>
+
+                <div style="margin: 1.5rem 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span style="font-weight: 500;">1. Left groin</span>
+                        <span style="background: #FCA5A5; color: white; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600;">12 flares</span>
+                    </div>
+                    <div style="background: #F5F5F4; border-radius: 999px; height: 8px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, #FCA5A5, #EF4444); width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <div style="margin: 1.5rem 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span style="font-weight: 500;">2. Right armpit</span>
+                        <span style="background: #FBBF24; color: white; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600;">8 flares</span>
+                    </div>
+                    <div style="background: #F5F5F4; border-radius: 999px; height: 8px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, #FBBF24, #F59E0B); width: 67%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <div style="margin: 1.5rem 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span style="font-weight: 500;">3. Inner thigh (left)</span>
+                        <span style="background: #86EFAC; color: #065F46; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600;">6 flares</span>
+                    </div>
+                    <div style="background: #F5F5F4; border-radius: 999px; height: 8px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, #86EFAC, #22C55E); width: 50%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="chart-placeholder" style="margin-top: 1.5rem;">
+                    🗺️ Interactive Body Heat Map
+                    <br><small>Color-coded body map showing flare density</small>
+                </div>
+
+                <a href="#" class="action-link">View detailed body map analysis →</a>
+            </div>
+        </section>
+
+        <!-- Trend Section -->
+        <section class="insights-section">
+            <h2 class="section-title">📈 Trend Over Time</h2>
+
+            <div class="insight-card">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <span style="font-size: 3rem;">🎉</span>
+                    <div>
+                        <h3 class="insight-title" style="margin-bottom: 0.25rem;">Your condition is IMPROVING!</h3>
+                        <p style="color: #57534E; font-size: 0.9375rem;">Based on flare frequency and severity analysis</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                    <div style="text-align: center; padding: 1rem; background: #F0FDF4; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #22C55E;">-23%</div>
+                        <div style="font-size: 0.875rem; color: #15803D;">Flare frequency vs. last 90 days</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: #F0FDF4; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #22C55E;">7.2 → 5.8</div>
+                        <div style="font-size: 0.875rem; color: #15803D;">Average severity improvement</div>
+                    </div>
+                </div>
+
+                <div class="chart-placeholder">
+                    📉 Line Chart: Flare Count Over Time (Downward Trend)
+                    <br><small>Shows monthly flare count with trend line</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- Treatment Effectiveness Section -->
+        <section class="insights-section">
+            <h2 class="section-title">💊 Treatment Effectiveness</h2>
+
+            <div class="insight-card">
+                <h3 class="insight-title">What helps when you do it:</h3>
+                <p class="insight-description">Based on tracked interventions and recovery patterns from your flare history.</p>
+
+                <ul class="treatment-list">
+                    <li class="treatment-item">
+                        <span class="treatment-icon">✅</span>
+                        <span class="treatment-name">Ice packs</span>
+                        <span class="treatment-effectiveness">+45% faster recovery</span>
+                    </li>
+                    <li class="treatment-item">
+                        <span class="treatment-icon">✅</span>
+                        <span class="treatment-name">8+ hours sleep</span>
+                        <span class="treatment-effectiveness">-67% new flares</span>
+                    </li>
+                    <li class="treatment-item">
+                        <span class="treatment-icon">✅</span>
+                        <span class="treatment-name">Warm compress</span>
+                        <span class="treatment-effectiveness">+32% pain relief</span>
+                    </li>
+                    <li class="treatment-item">
+                        <span class="treatment-icon">⚠️</span>
+                        <span class="treatment-name">High stress days</span>
+                        <span class="treatment-effectiveness" style="color: #DC2626;">+89% chance of worsening</span>
+                    </li>
+                </ul>
+
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #F5F5F4; border-radius: 8px; font-size: 0.875rem; color: #57534E;">
+                    Based on 47 tracked interventions across 23 flares
+                </div>
+            </div>
+        </section>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            <strong>⚠️ Medical Disclaimer:</strong> These insights are based on your personal tracking data and correlations. They are not medical advice. Always consult with your healthcare provider before making treatment decisions.
+        </div>
+    </div>
+
+    <script>
+        // Simple interactive demo
+        const timeSelector = document.querySelector('.time-range-selector');
+        timeSelector.addEventListener('change', (e) => {
+            alert(`Demo: Time range changed to "${e.target.value}". In the real app, this would reload all analytics data for the selected period.`);
+        });
+
+        const actionLinks = document.querySelectorAll('.action-link');
+        actionLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('Demo: This would navigate to a detailed analytics page or enable a specific feature.');
+            });
+        });
+
+        // Add hover effect feedback
+        const cards = document.querySelectorAll('.insight-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.borderColor = '#0F9D91';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.borderColor = '#F5F5F4';
+            });
+        });
+    </script>
+</body>
+</html>

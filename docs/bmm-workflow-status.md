@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-11-02 (Story 3.7.1 Complete)
+- **Last Updated:** 2025-11-07 (Epic 6: UX Redesign - Ready to Begin)
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** Phase 4: Implementation (In Progress)
-- **Current Workflow:** Epic 3.7 Story 3.7.1 complete
-- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7 (Body Map UX Enhancements) Story 3.7.1 done.
-- **Next Action:** Continue with remaining Epic 3.7 stories or move to Epic 4
-- **Command to Run:** *create-story (for next story) or consult epics.md for next steps
-- **Agent to Load:** sm (Scrum Master) or pm (Product Manager)
-- **Note:** Story 3.7.1 (Region Detail View Infrastructure) successfully implemented with region click functionality working.
+- **Current Workflow:** Epic 6 (UX Redesign & Navigation Overhaul) - Ready to Begin
+- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7.1 done. Epic 6 planned and ready.
+- **Next Action:** Begin Epic 6 Phase 1 (Navigation & Structure) - HIGHEST PRIORITY for go-live
+- **Command to Run:** /bmad:bmm:workflows:create-story (to draft Epic 6 stories)
+- **Agent to Load:** sm (Scrum Master) or dev (Developer)
+- **Note:** UX Design Specification complete. Epic 6 is critical for production go-live - addresses navigation confusion, adds Health Insights analytics hub, Daily Log unified tracking, and Timeline pattern detection.
 
 ---
 
@@ -40,15 +40,34 @@
 
 #### BACKLOG (Not Yet Drafted)
 
+**Epic 6: UX Redesign & Navigation Overhaul (PRIORITY - Required for Go-Live)**
+
+| Epic | Story | ID | Title | Description | Points | Priority |
+|------|-------|-----|-------|-------------|--------|----------|
+| 6 | 1 | 6.1 | Navigation Restructure & shadcn/ui Integration | Update nav config, rename paths (/flares→/body-map, /analytics→/insights, /calendar→/timeline), integrate shadcn/ui components | 8 | CRITICAL |
+| 6 | 2 | 6.2 | Daily Log Page - Mood & Sleep Reflection | Create /daily-log page with mood selector, sleep input, notes, and event summary links | 13 | CRITICAL |
+| 6 | 3 | 6.3 | Correlation Engine & Spearman Algorithm | Implement correlation calculation service with Spearman rank correlation for sleep×flares, mood×flares patterns | 13 | HIGH |
+| 6 | 4 | 6.4 | Health Insights Hub UI | Build /insights page with InsightCard components, correlation visualizations, problem areas heat map | 13 | HIGH |
+| 6 | 5 | 6.5 | Timeline Pattern Detection | Build multi-layer timeline with mood/sleep/flares layers, pattern highlighting, day detail modal | 13 | HIGH |
+| 6 | 6 | 6.6 | Body Map Gender/Type Customization | Enhanced SVG variants (female/male/neutral), body-type selection, settings storage | 8 | MEDIUM |
+| 6 | 7 | 6.7 | Treatment Effectiveness Tracker | Algorithm to correlate interventions with recovery time, effectiveness display in insights | 8 | MEDIUM |
+
+**Epic 4: Photo Documentation (On Hold - Defer to Epic 6)**
+
 | Epic | Story | ID | Title | File | Points | Priority |
 |------|-------|-----|-------|------|--------|----------|
-| 4 | 1 | 4.1 | Attach Photos to Flare Entities | story-4.1.md | 8 | HIGH |
-| 4 | 2 | 4.2 | Flare Photo Timeline View | story-4.2.md | 8 | HIGH |
-| 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md | 5 | MEDIUM |
-| 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md | 5 | MEDIUM |
+| 4 | 1 | 4.1 | Attach Photos to Flare Entities | story-4.1.md | 8 | DEFERRED |
+| 4 | 2 | 4.2 | Flare Photo Timeline View | story-4.2.md | 8 | DEFERRED |
+| 4 | 3 | 4.3 | Before/After Photo Comparison | story-4.3.md | 5 | DEFERRED |
+| 4 | 4 | 4.4 | Photo Annotation (Simple) | story-4.4.md | 5 | DEFERRED |
+
+**Epic 2: Backlog Items**
+
+| Epic | Story | ID | Title | File | Points | Priority |
+|------|-------|-----|-------|------|--------|----------|
 | 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md | 5 | LOW |
 
-**Total in backlog:** 5 stories (4 Epic 4, 1 Epic 2)
+**Total in backlog:** 13 stories (7 Epic 6, 4 Epic 4, 1 Epic 2, 1 Epic 3.7)
 
 #### IN PROGRESS (Approved for Development / Review)
 
@@ -78,21 +97,42 @@
 
 ### Next Action Required
 
-**🎯 Story 3.7.1 Complete — Ready for Next Story**
+**🎯 Epic 6 Ready — UX Redesign Critical for Go-Live**
 
-Story 3.7.1 (Region Detail View Infrastructure) has been successfully implemented and tested. Region click functionality is working as expected.
+Epic 6 (UX Redesign & Navigation Overhaul) has been fully designed and is ready for implementation. This epic is **CRITICAL** for production go-live and should be prioritized over Epic 4.
 
-**Next Step:**
-- **Command:** `*create-story` (to draft next Epic 3.7 story) or consult epics.md for story planning
-- **Agent:** `sm` (Scrum Master) or `pm` (Product Manager)
-- **Epic:** Continue Epic 3.7 or move to Epic 4 (Photo Documentation)
-- **Status:** Story 3.7.1 complete (5 points delivered)
+**What Epic 6 Delivers:**
+- Fixes navigation confusion (Flares → Body Map, new Insights section)
+- Health Insights analytics hub with correlation detection
+- Daily Log unified tracking (mood, sleep, notes in one place)
+- Timeline with pattern detection
+- Body map enhancements (gender/body-type variants)
+- Treatment effectiveness tracking
 
-The implemented infrastructure provides the foundation for additional body map UX enhancements. Consult epics.md to determine the next story in Epic 3.7 or whether to proceed with Epic 4.
+**Design Documentation:**
+- **UX Specification:** [docs/ux-design-specification.md](./ux-design-specification.md)
+- **Interactive Mockups:**
+  - [docs/ux-health-insights-demo.html](./ux-health-insights-demo.html)
+  - [docs/ux-daily-log-demo.html](./ux-daily-log-demo.html)
+
+**Next Steps:**
+1. **Command:** `/bmad:bmm:workflows:create-story` to draft Story 6.1 (Navigation Restructure)
+2. **Agent:** Load `sm` (Scrum Master) to create stories or `dev` (Developer) to begin implementation
+3. **Priority Order:** 6.1 → 6.2 → 6.3 → 6.4 → 6.5 → 6.6 → 6.7
+4. **Epic:** Epic 6 (76 total story points estimated - ~14 weeks)
+5. **Must-Have for MVP:** Stories 6.1, 6.2, 6.4, 6.5 (47 points - ~8 weeks)
+
+**Why Epic 6 First:**
+- Addresses user-reported navigation confusion
+- Fixes broken analytics page
+- Adds competitive differentiator (correlation insights)
+- Required for production go-live credibility
 
 ---
 
 ## Decision Log
+
+- **2025-11-07:** Created Epic 6: UX Redesign & Navigation Overhaul (76 story points). This epic is now the **HIGHEST PRIORITY** for production go-live, superseding Epic 4 (Photo Documentation). Epic 6 addresses critical UX issues identified by stakeholder: navigation confusion (Flares→Body Map, Analytics broken, missing links), mood/sleep isolation, lack of correlation insights, and basic calendar. Comprehensive UX Design Specification completed with interactive HTML mockups. Epic includes 7 stories: (6.1) Navigation Restructure & shadcn/ui (8pt - CRITICAL), (6.2) Daily Log Page (13pt - CRITICAL), (6.3) Correlation Engine (13pt - HIGH), (6.4) Health Insights Hub (13pt - HIGH), (6.5) Timeline Pattern Detection (13pt - HIGH), (6.6) Body Map Gender/Type (8pt - MEDIUM), (6.7) Treatment Effectiveness (8pt - MEDIUM). Architecture clarified: Daily Log is end-of-day reflection (db.dailyLogs), Quick Actions remain for event-based tracking (db.foodEvents, etc.). Must-have MVP stories: 6.1, 6.2, 6.4, 6.5 (47 points ~8 weeks). Next action: Run `/bmad:bmm:workflows:create-story` to draft Story 6.1.
 
 - **2025-11-02 (Updated):** Completed Story 3.7.1: Region Detail View Infrastructure (5 points). Successfully implemented isolated region views that fill the viewport for maximum precision when placing body map markers. Features include: RegionDetailView component with isolated region rendering, view mode state management (full-body vs region-detail), region-relative coordinate system (0-1 normalized), coordinate transformations between views, historical marker display with toggle, ESC key navigation, and back button. Fixed region click event handling to properly trigger detail view. Epic 3.7 in progress.
 
