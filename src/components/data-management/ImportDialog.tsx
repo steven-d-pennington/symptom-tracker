@@ -111,6 +111,7 @@ export function ImportDialog() {
           foodCombinations: 0,
           uxEvents: 0,
           bodyMapLocations: 0,
+          bodyMapPreferences: 0,
           photoComparisons: 0,
           analysisResults: 0,
         },
