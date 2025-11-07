@@ -110,7 +110,7 @@ export function LayerSelector({
         return (
           <button
             key={layer.id}
-            ref={el => buttonRefs.current[index] = el}
+            ref={el => { buttonRefs.current[index] = el; }}
             role="radio"
             aria-checked={isActive}
             aria-label={`${layer.label} layer`}

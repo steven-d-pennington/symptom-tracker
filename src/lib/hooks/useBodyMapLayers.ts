@@ -49,10 +49,11 @@ export function useBodyMapLayers(userId: string | null): UseBodyMapLayersResult 
     }
 
     let mounted = true;
+    const currentUserId = userId; // Capture userId in a const for TypeScript
 
     async function loadPreferences() {
       try {
-        const prefs = await bodyMapPreferencesRepository.get(userId);
+        const prefs = await bodyMapPreferencesRepository.get(currentUserId);
         if (mounted) {
           setCurrentLayer(prefs.lastUsedLayer);
           setLastUsedLayer(prefs.lastUsedLayer);
