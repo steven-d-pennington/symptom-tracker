@@ -1,6 +1,6 @@
 # Story 5.5: Add Multi-Layer View Controls and Filtering
 
-Status: approved
+Status: done
 
 ## Story
 
@@ -582,6 +582,10 @@ describe('Multi-Layer Body Map', () => {
 - Fallback: Default to single-layer mode for simplicity
 
 ## Dev Agent Record
+
+### Completion Notes
+**Completed:** 2025-11-07
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing (39/39 tests), production-ready implementation
 
 ### Context Reference
 

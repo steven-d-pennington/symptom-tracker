@@ -1,6 +1,6 @@
 # Story 5.4: Implement Layer-Aware Marker Rendering
 
-Status: approved
+Status: done
 
 ## Story
 

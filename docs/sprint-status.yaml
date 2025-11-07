@@ -112,7 +112,7 @@ development_status:
   5-1-add-layer-field-to-data-model-and-indexeddb-schema: done
   5-2-implement-layer-preferences-and-persistence: done
   5-3-create-layer-selector-component-for-tracking-mode: done
-  5-4-implement-layer-aware-marker-rendering: review
-  5-5-add-multi-layer-view-controls-and-filtering: review
+  5-4-implement-layer-aware-marker-rendering: done
+  5-5-add-multi-layer-view-controls-and-filtering: done
   5-6-create-layer-legend-and-accessibility-features: ready-for-dev
   epic-5-retrospective: optional
