@@ -105,21 +105,25 @@ export class UserRepository {
       return await UserRepository.userCreationLock;
     }
 
-    const currentUser = await this.getCurrentUser();
-    if (currentUser) {
-      // Ensure the current user ID is stored in localStorage
-      if (typeof window !== 'undefined') {
-        const storedId = window.localStorage.getItem('pocket:currentUserId');
-        if (storedId !== currentUser.id) {
-          console.log(`[getOrCreateCurrentUser] Updating localStorage with current user ID: ${currentUser.id}`);
-          window.localStorage.setItem('pocket:currentUserId', currentUser.id);
-        }
-      }
-      return currentUser;
-    }
-
-    // Create a lock promise to prevent concurrent creation
+    // Set lock IMMEDIATELY before any async work to prevent race condition
+    // Multiple calls can get past the lock check above during the await below
     const creationPromise = (async () => {
+      // Check again inside the lock to prevent duplicate creation
+      const currentUser = await this.getCurrentUser();
+      if (currentUser) {
+        console.log('[getOrCreateCurrentUser] User already exists (checked inside lock):', currentUser.id);
+        // Ensure the current user ID is stored in localStorage
+        if (typeof window !== 'undefined') {
+          const storedId = window.localStorage.getItem('pocket:currentUserId');
+          if (storedId !== currentUser.id) {
+            console.log(`[getOrCreateCurrentUser] Updating localStorage with current user ID: ${currentUser.id}`);
+            window.localStorage.setItem('pocket:currentUserId', currentUser.id);
+          }
+        }
+        return currentUser;
+      }
+
+      // No user exists - create one
       // Create default user
       const id = await this.create({
       name: "User",
@@ -167,7 +171,7 @@ export class UserRepository {
       return user;
     })();
 
-    // Store the lock
+    // Store the lock IMMEDIATELY (synchronously) to block all concurrent calls
     UserRepository.userCreationLock = creationPromise;
 
     try {
