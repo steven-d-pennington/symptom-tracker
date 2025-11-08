@@ -54,7 +54,7 @@ export const NAV_PILLARS: NavPillar[] = [
         surface: "all",
       },
       {
-        href: "/log",
+        href: "/daily-log",
         label: "Daily Log",
         ariaLabel: "Daily Log - Record mood, sleep, and daily reflection",
         icon: FileText,
