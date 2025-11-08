@@ -118,7 +118,7 @@ development_status:
   epic-5-retrospective: optional
 
   epic-6: backlog
-  6-1-navigation-restructure-and-shadcn-ui-integration: drafted
+  6-1-navigation-restructure-and-shadcn-ui-integration: ready-for-dev
   6-2-daily-log-page: backlog
   6-3-correlation-engine-and-spearman-algorithm: backlog
   6-4-health-insights-hub-ui: backlog

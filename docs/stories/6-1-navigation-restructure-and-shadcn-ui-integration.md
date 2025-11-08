@@ -1,6 +1,6 @@
 # Story 6.1: Navigation Restructure & shadcn/ui Integration
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -437,7 +437,7 @@ describe('Navigation Config - Epic 6 Routes', () => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [Story 6.1 Context](6-1-navigation-restructure-and-shadcn-ui-integration.context.xml)
 
 ### Agent Model Used
 
