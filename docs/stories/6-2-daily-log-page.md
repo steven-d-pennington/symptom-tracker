@@ -1,6 +1,6 @@
 # Story 6.2: Daily Log Page
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -491,7 +491,7 @@ describe('Daily Log Page - Full Flow', () => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [Story 6.2 Context](6-2-daily-log-page.context.xml)
 
 ### Agent Model Used
 
