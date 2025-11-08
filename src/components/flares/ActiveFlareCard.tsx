@@ -81,7 +81,7 @@ export function ActiveFlareCard({ flare, onClick }: ActiveFlareCardProps) {
     if (onClick) {
       onClick();
     }
-    router.push(`/flares/${flare.id}`);
+    router.push(`/body-map/${flare.id}`);
   };
 
   // Handle keyboard navigation (AC2.3.4: Enter key triggers navigation)

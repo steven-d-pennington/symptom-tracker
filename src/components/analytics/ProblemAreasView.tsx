@@ -69,7 +69,7 @@ export function ProblemAreasView() {
 
   // AC3.1.5: Navigate to per-region flare history page
   const handleRegionClick = (regionId: string) => {
-    router.push(`/flares/analytics/regions/${regionId}`);
+    router.push(`/body-map/analytics/regions/${regionId}`);
   };
 
   // Loading state (AC3.1.6)

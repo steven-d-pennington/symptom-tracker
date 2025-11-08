@@ -43,9 +43,9 @@ export function ResolvedFlaresEmptyState({ hasFilters, onClearFilters }: Resolve
         Flares marked as resolved will appear here. You can mark active flares as resolved from their detail pages.
       </p>
       <Link
-        href="/flares"
+        href="/body-map"
         className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-        aria-label="Navigate to active flares page"
+        aria-label="Navigate to body map page"
       >
         View Active Flares →
       </Link>

@@ -81,7 +81,7 @@ export function RegionDetailView({ regionId }: RegionDetailViewProps) {
 
   // Task 8.16: Handle flare click - navigate to flare detail
   const handleFlareClick = (flareId: string) => {
-    router.push(`/flares/${flareId}`);
+    router.push(`/body-map/${flareId}`);
   };
 
   // Task 8.17: Handle loading state

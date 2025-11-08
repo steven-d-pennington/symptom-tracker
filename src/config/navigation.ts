@@ -10,10 +10,8 @@
 import {
   LayoutDashboard,
   FileText,
-  Flame,
+  MapPin,
   Camera,
-  Smile,
-  Moon,
   TrendingUp,
   Calendar,
   Sliders,
@@ -33,14 +31,14 @@ export interface NavDestination {
 }
 
 export interface NavPillar {
-  id: "track" | "analyze" | "manage" | "support";
+  id: "track" | "insights" | "manage" | "support";
   label: string;
   order: number;
   destinations: NavDestination[];
 }
 
 /**
- * Primary navigation pillars in Track → Analyze → Manage → Support order
+ * Primary navigation pillars in Track → Insights → Manage → Support order
  */
 export const NAV_PILLARS: NavPillar[] = [
   {
@@ -57,57 +55,43 @@ export const NAV_PILLARS: NavPillar[] = [
       },
       {
         href: "/log",
-        label: "Log",
-        ariaLabel: "Log - Record daily reflection",
+        label: "Daily Log",
+        ariaLabel: "Daily Log - Record mood, sleep, and daily reflection",
         icon: FileText,
         surface: "all",
       },
       {
-        href: "/flares",
-        label: "Flares",
-        ariaLabel: "Flares - Track active flare-ups",
-        icon: Flame,
-        surface: "desktop",
-      },
-      {
-        href: "/mood",
-        label: "Mood",
-        ariaLabel: "Mood - Track your daily mood and emotions",
-        icon: Smile,
-        surface: "desktop",
-      },
-      {
-        href: "/sleep",
-        label: "Sleep",
-        ariaLabel: "Sleep - Log sleep hours and quality",
-        icon: Moon,
-        surface: "desktop",
+        href: "/body-map",
+        label: "Body Map",
+        ariaLabel: "Body Map - Track flare locations with precision",
+        icon: MapPin,
+        surface: "all",
       },
       {
         href: "/photos",
         label: "Photos",
-        ariaLabel: "Photos - View photo gallery",
+        ariaLabel: "Photos - Visual documentation",
         icon: Camera,
         surface: "desktop",
       },
     ],
   },
   {
-    id: "analyze",
-    label: "Analyze",
+    id: "insights",
+    label: "Insights",
     order: 2,
     destinations: [
       {
-        href: "/analytics",
-        label: "Analytics",
-        ariaLabel: "Analytics - Review trends and insights",
+        href: "/insights",
+        label: "Health Insights",
+        ariaLabel: "Health Insights - Review correlations and trends",
         icon: TrendingUp,
         surface: "all",
       },
       {
-        href: "/calendar",
-        label: "Calendar",
-        ariaLabel: "Calendar - View timeline history",
+        href: "/timeline",
+        label: "Timeline",
+        ariaLabel: "Timeline - View health history and patterns",
         icon: Calendar,
         surface: "desktop",
       },
@@ -119,9 +103,9 @@ export const NAV_PILLARS: NavPillar[] = [
     order: 3,
     destinations: [
       {
-        href: "/manage",
-        label: "Manage Data",
-        ariaLabel: "Manage Data - Customize medications, symptoms, and triggers",
+        href: "/my-data",
+        label: "My Data",
+        ariaLabel: "My Data - Customize tracked items and preferences",
         icon: Sliders,
         surface: "desktop",
       },

@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Story Context: 6-2-daily-log-page
+  Generated: 2025-11-08
+  Epic: 6 (UX Redesign & Navigation Overhaul)
+  Story: 6.2 - Daily Log Page
+
+  This file provides technical context for implementing the unified daily log page
+  with end-of-day reflection for mood, sleep, and notes tracking.
+-->
+
+<story-context id="6-2-daily-log-page" epic="6" version="1.0">
+
+  <!-- STORY METADATA -->
+  <story>
+    <id>6.2</id>
+    <title>Daily Log Page</title>
+    <status>drafted</status>
+    <story-points>13</story-points>
+    <priority>CRITICAL</priority>
+
+    <user-story>
+      <as-a>user tracking my health symptoms</as-a>
+      <i-want>a unified daily log page where I can reflect on my mood, sleep quality, and overall day in one place</i-want>
+      <so-that>I can capture end-of-day reflections and understand daily patterns that complement my event-based tracking throughout the day</so-that>
+    </user-story>
+  </story>
+
+  <!-- ACCEPTANCE CRITERIA -->
+  <acceptance-criteria>
+    <criterion id="AC6.2.1">
+      <summary>Create daily log page route and navigation</summary>
+      <details>Create new page at src/app/(protected)/daily-log/page.tsx. Update src/config/navigation.ts to change /log route to /daily-log. Ensure navigation label "Daily Log" links to new route. Mobile bottom tabs and desktop sidebar both navigate to daily log page.</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Daily-Log-Architecture</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.2">
+      <summary>Implement DailyLog data model in IndexedDB</summary>
+      <details>Create dailyLogs table in Dexie schema with fields: id, userId, date (YYYY-MM-DD), mood (1-5), sleepHours, sleepQuality (1-5), notes, flareUpdates (array), createdAt, updatedAt. Add compound index [userId+date] to enforce one entry per user per day. Create repository class dailyLogsRepository.ts with CRUD methods following existing repository patterns.</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Daily-Log-Data-Model</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.3">
+      <summary>Build EmoticonMoodSelector component</summary>
+      <details>Create src/components/daily-log/EmoticonMoodSelector.tsx displaying 5 mood options with emojis: 😢 (1-Bad), 😟 (2-Poor), 😐 (3-Okay), 🙂 (4-Good), 😊 (5-Great). Support keyboard navigation (arrow keys) and touch/click selection. Show currently selected mood with visual highlight. Emit onMoodChange event. Use accessible ARIA labels.</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Daily-Log-UX-Flow</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.4">
+      <summary>Build SleepQualityInput component</summary>
+      <details>Create src/components/daily-log/SleepQualityInput.tsx with sleep hours (number input 0-24, step 0.5) and sleep quality (1-5 star rating). Pre-fill with previous day's values as smart defaults. Validate hours range (0-24). Emit onSleepChange event. Use shadcn/ui Input for hours field.</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Key-Features</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.5">
+      <summary>Build FlareQuickUpdateList component</summary>
+      <details>Create src/components/daily-log/FlareQuickUpdateList.tsx displaying all active flares. For each flare show: region name, current severity, trend indicator. Include [Quick Update] button with inline form for severity/trend/notes. Save updates to both flare record AND dailyLog.flareUpdates. Link to body map to mark new flares. Handle empty state.</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Daily-Log-UX-Flow</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.6">
+      <summary>Implement event summary section</summary>
+      <details>Create EventSummaryCard component showing counts of today's tracked items: Foods (db.foodEvents), Medications (db.medicationEvents), Symptoms (db.symptomInstances), Triggers (db.triggerEvents). Each row links to respective quick action page to add more entries. Display empty state with action buttons when count is 0.</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Daily-Log-UX-Flow</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.7">
+      <summary>Create daily notes text area</summary>
+      <details>Add multi-line text area for general notes (2000 char max with counter). Pre-fill with previous day's notes as template. Auto-save draft to localStorage every 5 seconds. Support markdown rendering in read-only mode (optional).</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Key-Features</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.8">
+      <summary>Implement smart defaults and date navigation</summary>
+      <details>Pre-populate form with previous day's mood, sleep hours, and sleep quality. Include date selector with "← Prev | Today | Next →" navigation. Load existing daily log if present for selected date. Disable "Next" for future dates. Mark current date prominently.</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Key-Features</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.9">
+      <summary>Add save functionality with offline-first persistence</summary>
+      <details>Implement "Save Daily Log" button persisting to IndexedDB immediately. Use repository upsert() for create/update. Show success toast with undo option (5 sec window). Validate required fields (mood, sleep hours). Allow partial saves (notes optional). Handle multi-tab conflicts.</details>
+      <sources>
+        <source>docs/ux-design-specification.md#Key-Features</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.2.10">
+      <summary>Create daily log page tests and documentation</summary>
+      <details>Write component tests for EmoticonMoodSelector, SleepQualityInput, FlareQuickUpdateList using React Testing Library. Test repository CRUD operations. Test date navigation and persistence. Add integration test for full daily log flow. Update architecture docs with daily log data flow diagram. Document event-based vs. daily reflection distinction.</details>
+      <sources>
+        <source>ARCHITECTURE.md#Testing-Architecture</source>
+      </sources>
+    </criterion>
+  </acceptance-criteria>
+
+  <!-- TASKS AND SUBTASKS -->
+  <tasks total="11">
+    <task id="1" ac-refs="AC6.2.2">
+      <summary>Create DailyLog data model and repository</summary>
+      <subtasks>
+        <subtask>Add dailyLogs table to Dexie schema in src/lib/db/schema.ts</subtask>
+        <subtask>Define TypeScript interface DailyLog with all fields</subtask>
+        <subtask>Add compound index [userId+date] for uniqueness constraint</subtask>
+        <subtask>Create src/lib/repositories/dailyLogsRepository.ts following repository pattern</subtask>
+        <subtask>Implement create(), getByDate(), update(), upsert(), listByDateRange() methods</subtask>
+        <subtask>Add method getPreviousDayLog(date) to fetch smart defaults</subtask>
+        <subtask>Test repository methods with sample data</subtask>
+      </subtasks>
+    </task>
+
+    <task id="2" ac-refs="AC6.2.3">
+      <summary>Build EmoticonMoodSelector component</summary>
+      <subtasks>
+        <subtask>Create component file src/components/daily-log/EmoticonMoodSelector.tsx</subtask>
+        <subtask>Define mood options array with emoji, label, value (1-5)</subtask>
+        <subtask>Implement radio button group with emoji display</subtask>
+        <subtask>Add keyboard navigation (arrow keys, space/enter to select)</subtask>
+        <subtask>Style selected state with border/background highlight</subtask>
+        <subtask>Add ARIA labels and roles for accessibility</subtask>
+        <subtask>Emit onMoodChange callback with selected value</subtask>
+        <subtask>Write component tests (rendering, selection, keyboard nav)</subtask>
+      </subtasks>
+    </task>
+
+    <task id="3" ac-refs="AC6.2.4">
+      <summary>Build SleepQualityInput component</summary>
+      <subtasks>
+        <subtask>Create component file src/components/daily-log/SleepQualityInput.tsx</subtask>
+        <subtask>Add shadcn/ui Input for sleep hours (type="number", step="0.5", min="0", max="24")</subtask>
+        <subtask>Create StarRating component for quality (1-5 stars, clickable)</subtask>
+        <subtask>Implement controlled inputs with value props</subtask>
+        <subtask>Add validation for hours range (0-24)</subtask>
+        <subtask>Show validation error message if hours out of range</subtask>
+        <subtask>Emit onSleepChange({ hours, quality }) on value change</subtask>
+        <subtask>Write component tests (input validation, star selection)</subtask>
+      </subtasks>
+    </task>
+
+    <task id="4" ac-refs="AC6.2.5">
+      <summary>Build FlareQuickUpdateList component</summary>
+      <subtasks>
+        <subtask>Create component file src/components/daily-log/FlareQuickUpdateList.tsx</subtask>
+        <subtask>Fetch active flares using existing flares repository (status != 'resolved')</subtask>
+        <subtask>Display each flare: region name, severity badge, trend indicator</subtask>
+        <subtask>Add [Quick Update] button per flare that expands inline form</subtask>
+        <subtask>Inline form: severity slider (1-10), trend radio, notes textarea</subtask>
+        <subtask>Save updates to both flare record AND dailyLog.flareUpdates array</subtask>
+        <subtask>Add "+ Mark new flare on body map" link to /body-map</subtask>
+        <subtask>Handle empty state when no active flares exist</subtask>
+        <subtask>Write component tests (flare list rendering, quick update flow)</subtask>
+      </subtasks>
+    </task>
+
+    <task id="5" ac-refs="AC6.2.6">
+      <summary>Implement EventSummaryCard component</summary>
+      <subtasks>
+        <subtask>Create component file src/components/daily-log/EventSummaryCard.tsx</subtask>
+        <subtask>Query today's food events count from db.foodEvents</subtask>
+        <subtask>Query today's medication events count from db.medicationEvents</subtask>
+        <subtask>Query today's symptom instances count from db.symptomInstances</subtask>
+        <subtask>Query today's trigger events count from db.triggerEvents</subtask>
+        <subtask>Display each category with icon, count, and "View/Add more →" link</subtask>
+        <subtask>Link to respective quick action pages (/log/food, /log/medication, etc.)</subtask>
+        <subtask>Show empty state with "Add your first..." buttons when count is 0</subtask>
+        <subtask>Use shadcn/ui Card component for layout</subtask>
+        <subtask>Write component tests (counts calculation, link navigation)</subtask>
+      </subtasks>
+    </task>
+
+    <task id="6" ac-refs="AC6.2.7">
+      <summary>Create daily notes text area</summary>
+      <subtasks>
+        <subtask>Add controlled textarea component for daily notes</subtask>
+        <subtask>Implement character counter (2000 max) with display</subtask>
+        <subtask>Add auto-save draft functionality (debounced 5 seconds)</subtask>
+        <subtask>Save draft to localStorage with key dailyLog_draft_${date}</subtask>
+        <subtask>Load draft on component mount if exists</subtask>
+        <subtask>Clear draft from localStorage after successful save</subtask>
+        <subtask>Pre-fill with previous day's notes as template (editable)</subtask>
+        <subtask>Show visual indicator when auto-save occurs</subtask>
+      </subtasks>
+    </task>
+
+    <task id="7" ac-refs="AC6.2.8">
+      <summary>Implement date navigation and smart defaults</summary>
+      <subtasks>
+        <subtask>Add date state management (React useState for current viewing date)</subtask>
+        <subtask>Create date header with format "Thursday, November 7 2025"</subtask>
+        <subtask>Add "← Prev", "Today", "Next →" navigation buttons</subtask>
+        <subtask>Disable "Next" button when viewing today's date</subtask>
+        <subtask>On date change, fetch existing daily log for that date</subtask>
+        <subtask>If no log exists, fetch previous day's log for smart defaults</subtask>
+        <subtask>Pre-populate mood, sleep hours, sleep quality with previous values</subtask>
+        <subtask>Clear notes field when changing dates</subtask>
+        <subtask>Update page title to show current viewing date</subtask>
+      </subtasks>
+    </task>
+
+    <task id="8" ac-refs="AC6.2.1">
+      <summary>Build main daily log page</summary>
+      <subtasks>
+        <subtask>Create page file src/app/(protected)/daily-log/page.tsx</subtask>
+        <subtask>Set up page layout with header, form sections, save button</subtask>
+        <subtask>Integrate EmoticonMoodSelector component</subtask>
+        <subtask>Integrate SleepQualityInput component</subtask>
+        <subtask>Integrate FlareQuickUpdateList component</subtask>
+        <subtask>Integrate EventSummaryCard component</subtask>
+        <subtask>Add daily notes textarea section</subtask>
+        <subtask>Implement form state management (React useState or form library)</subtask>
+        <subtask>Add loading states while fetching data</subtask>
+        <subtask>Add error handling with error boundaries</subtask>
+        <subtask>Test page rendering and component integration</subtask>
+      </subtasks>
+    </task>
+
+    <task id="9" ac-refs="AC6.2.9">
+      <summary>Implement save functionality</summary>
+      <subtasks>
+        <subtask>Create save handler function using dailyLogsRepository.upsert()</subtask>
+        <subtask>Validate required fields: mood selected, sleep hours filled</subtask>
+        <subtask>Show validation errors if required fields missing</subtask>
+        <subtask>Persist all data to IndexedDB on successful validation</subtask>
+        <subtask>Show success toast notification using existing toast system</subtask>
+        <subtask>Implement undo functionality (revert save within 5 seconds)</subtask>
+        <subtask>Clear auto-save draft after successful save</subtask>
+        <subtask>Handle concurrent edits (multi-tab conflict warning)</subtask>
+        <subtask>Update UI to show saved state (disable save until changes)</subtask>
+      </subtasks>
+    </task>
+
+    <task id="10" ac-refs="AC6.2.1">
+      <summary>Update navigation config</summary>
+      <subtasks>
+        <subtask>Open src/config/navigation.ts</subtask>
+        <subtask>Update Track pillar /log route to /daily-log</subtask>
+        <subtask>Verify label "Daily Log" is correct</subtask>
+        <subtask>Test navigation from sidebar (desktop) and bottom tabs (mobile)</subtask>
+        <subtask>Add redirect from /log → /daily-log in next.config.ts</subtask>
+        <subtask>Verify old mood/sleep page redirects still work</subtask>
+        <subtask>Update navigation tests to expect /daily-log route</subtask>
+      </subtasks>
+    </task>
+
+    <task id="11" ac-refs="AC6.2.10">
+      <summary>Write tests and documentation</summary>
+      <subtasks>
+        <subtask>Write unit tests for EmoticonMoodSelector component</subtask>
+        <subtask>Write unit tests for SleepQualityInput component</subtask>
+        <subtask>Write unit tests for FlareQuickUpdateList component</subtask>
+        <subtask>Write unit tests for EventSummaryCard component</subtask>
+        <subtask>Write integration test for full daily log flow (end-to-end)</subtask>
+        <subtask>Test repository CRUD operations (create, read, update, upsert)</subtask>
+        <subtask>Test date navigation and data loading</subtask>
+        <subtask>Test offline persistence and sync</subtask>
+        <subtask>Add architecture documentation for daily log data flow</subtask>
+        <subtask>Document event-based vs. daily reflection distinction</subtask>
+        <subtask>Update story status and completion notes</subtask>
+      </subtasks>
+    </task>
+  </tasks>
+
+  <!-- ARTIFACTS -->
+  <artifacts>
+
+    <!-- DOCUMENTATION -->
+    <docs>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Section 4: Daily Log Architecture</section>
+        <snippet>Detailed design for unified daily log page with mood selector, sleep input, notes, and event summary. Distinguishes between event-based tracking (throughout day) and daily reflection (end of day). Includes data model, UX flow, and component specifications.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Section 4.2: Daily Log vs Quick Actions Architecture</section>
+        <snippet>CRITICAL distinction between Quick Actions (event-based tracking throughout day → timestamped db entries) and Daily Log (once per day reflection → db.dailyLogs). Daily Log captures overall mood, sleep from last night, general notes, and optional flare updates.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Section 4.5: Daily Log Data Model</section>
+        <snippet>DailyLog interface with fields: id, userId, date (YYYY-MM-DD ISO string), mood (1-5), sleepHours (number), sleepQuality (1-5), notes (string), flareUpdates (array of quick update objects), createdAt, updatedAt. One entry per user per day enforced by [userId+date] compound index.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Repository Pattern</section>
+        <snippet>All data access uses repository pattern with create(), getById(), getByUserId(), update(), delete() methods. Repositories encapsulate IndexedDB operations and provide consistent API. Follow patterns from moodRepository and sleepRepository.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR002: Offline-First Persistence</section>
+        <snippet>All user data must persist immediately to IndexedDB for offline-first functionality. No data loss on network interruption or tab close. Auto-save drafts to prevent data loss during entry.</snippet>
+      </doc>
+
+      <doc>
+        <path>stories/6-1-navigation-restructure-and-shadcn-ui-integration.md</path>
+        <title>Story 6.1: Navigation Restructure</title>
+        <section>shadcn/ui Foundation</section>
+        <snippet>Story 6.1 initialized shadcn/ui with components.json and created docs/ui/shadcn-ui-components.md usage guide. Component directory at src/components/ui/ ready for use. Card, Input, Tabs components available.</snippet>
+      </doc>
+    </docs>
+
+    <!-- CODE ARTIFACTS -->
+    <code>
+      <artifact>
+        <path>src/lib/repositories/moodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>moodRepository</symbol>
+        <lines>1-149</lines>
+        <reason>Example repository pattern to follow for dailyLogsRepository. Shows create(), getByUserId(), getByDateRange(), update(), delete(), getById() methods. Uses UUID generation, timestamp handling, and proper error handling.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/lib/repositories/sleepRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>sleepRepository</symbol>
+        <lines>1-181</lines>
+        <reason>Sleep tracking repository with similar data model to daily log sleep fields. Shows hours + quality pattern. Includes getWeeklyAverage() for aggregation example.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>flareRepository</symbol>
+        <lines>all</lines>
+        <reason>Required for FlareQuickUpdateList component to fetch active flares (status != 'resolved'). Provides update() method for saving flare quick updates from daily log.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>foodEventRepository</symbol>
+        <lines>all</lines>
+        <reason>Used by EventSummaryCard to count today's food events. Example of event-based tracking pattern (timestamped entries throughout day).</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/lib/repositories/medicationEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>medicationEventRepository</symbol>
+        <lines>all</lines>
+        <reason>Used by EventSummaryCard to count today's medication events.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>symptomInstanceRepository</symbol>
+        <lines>all</lines>
+        <reason>Used by EventSummaryCard to count today's symptom instances.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/lib/repositories/triggerEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>triggerEventRepository</symbol>
+        <lines>all</lines>
+        <reason>Used by EventSummaryCard to count today's trigger events.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>schema</symbol>
+        <lines>1-300</lines>
+        <reason>Dexie schema definition. Add new dailyLogs table here with compound index [userId+date]. Follow patterns from moodEntries and sleepEntries tables.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database-client</kind>
+        <symbol>db</symbol>
+        <lines>all</lines>
+        <reason>Dexie database client instance. Import this as 'db' in repositories and components for database access.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/components/body-map/LayerSelector.tsx</path>
+        <kind>component</kind>
+        <symbol>LayerSelector</symbol>
+        <lines>1-80</lines>
+        <reason>Example selector component with keyboard navigation, accessibility, and controlled state. Good pattern for EmoticonMoodSelector implementation.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>config</kind>
+        <symbol>NAV_PILLARS</symbol>
+        <lines>all</lines>
+        <reason>Navigation configuration. Update Track pillar /log route to /daily-log. Currently label is "Daily Log" but href is "/log" - needs update to "/daily-log".</reason>
+      </artifact>
+
+      <artifact>
+        <path>next.config.ts</path>
+        <kind>config</kind>
+        <symbol>nextConfig</symbol>
+        <lines>all</lines>
+        <reason>Next.js config with redirects. Add /log → /daily-log redirect for backward compatibility with existing /mood and /sleep redirects.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/components/ui/</path>
+        <kind>component-directory</kind>
+        <symbol>shadcn-ui-components</symbol>
+        <lines>all</lines>
+        <reason>shadcn/ui components directory from Story 6.1. Use Card for EventSummaryCard layout, Input for sleep hours field, potentially Tabs for future enhancements.</reason>
+      </artifact>
+
+      <artifact>
+        <path>docs/ui/shadcn-ui-components.md</path>
+        <kind>documentation</kind>
+        <symbol>shadcn-usage-guide</symbol>
+        <lines>all</lines>
+        <reason>Usage guide for shadcn/ui components. Reference for importing and using Card, Input, and other components.</reason>
+      </artifact>
+    </code>
+
+    <!-- DEPENDENCIES -->
+    <dependencies>
+      <node>
+        <dependency name="dexie" version="^4.2.0" />
+        <dependency name="uuid" version="^13.0.0" />
+        <dependency name="date-fns" version="^4.1.0" />
+        <dependency name="react" version="19.1.0" />
+        <dependency name="next" version="15.5.4" />
+        <dependency name="lucide-react" version="^0.544.0" />
+        <dependency name="@radix-ui/react-tooltip" version="^1.2.8" />
+        <dependency name="zod" version="^4.1.12" />
+      </node>
+
+      <node-dev>
+        <dependency name="@testing-library/react" version="^16.3.0" />
+        <dependency name="@testing-library/jest-dom" version="^6.9.1" />
+        <dependency name="@testing-library/user-event" version="^14.6.1" />
+        <dependency name="jest" version="^30.2.0" />
+        <dependency name="jest-environment-jsdom" version="^30.2.0" />
+        <dependency name="fake-indexeddb" version="^6.2.4" />
+        <dependency name="typescript" version="^5" />
+      </node-dev>
+    </dependencies>
+  </artifacts>
+
+  <!-- INTERFACES AND APIS -->
+  <interfaces>
+    <interface>
+      <name>DailyLog (TypeScript Interface)</name>
+      <kind>database-model</kind>
+      <signature>
+interface DailyLog {
+  id: string;
+  userId: string;
+  date: string; // ISO date YYYY-MM-DD
+  mood: 1 | 2 | 3 | 4 | 5;
+  sleepHours: number;
+  sleepQuality: 1 | 2 | 3 | 4 | 5;
+  notes: string;
+  flareUpdates?: Array&lt;{
+    flareId: string;
+    severity: number;
+    trend: 'improving' | 'stable' | 'worsening';
+    interventions?: string[];
+    notes?: string;
+  }&gt;;
+  createdAt: number;
+  updatedAt: number;
+}
+      </signature>
+      <path>src/lib/db/schema.ts (to be added)</path>
+    </interface>
+
+    <interface>
+      <name>dailyLogsRepository</name>
+      <kind>repository-api</kind>
+      <signature>
+export const dailyLogsRepository = {
+  create: (entry: Partial&lt;DailyLog&gt;) =&gt; Promise&lt;string&gt;,
+  getByDate: (userId: string, date: string) =&gt; Promise&lt;DailyLog | undefined&gt;,
+  update: (id: string, changes: Partial&lt;DailyLog&gt;) =&gt; Promise&lt;void&gt;,
+  upsert: (entry: Partial&lt;DailyLog&gt;) =&gt; Promise&lt;string&gt;,
+  listByDateRange: (userId: string, startDate: string, endDate: string) =&gt; Promise&lt;DailyLog[]&gt;,
+  getPreviousDayLog: (userId: string, date: string) =&gt; Promise&lt;DailyLog | undefined&gt;,
+  delete: (id: string) =&gt; Promise&lt;void&gt;,
+}
+      </signature>
+      <path>src/lib/repositories/dailyLogsRepository.ts (to be created)</path>
+    </interface>
+
+    <interface>
+      <name>EmoticonMoodSelectorProps</name>
+      <kind>react-component-props</kind>
+      <signature>
+interface EmoticonMoodSelectorProps {
+  value?: 1 | 2 | 3 | 4 | 5;
+  onChange: (mood: 1 | 2 | 3 | 4 | 5) =&gt; void;
+  disabled?: boolean;
+}
+      </signature>
+      <path>src/components/daily-log/EmoticonMoodSelector.tsx (to be created)</path>
+    </interface>
+
+    <interface>
+      <name>SleepQualityInputProps</name>
+      <kind>react-component-props</kind>
+      <signature>
+interface SleepQualityInputProps {
+  hours: number;
+  quality: 1 | 2 | 3 | 4 | 5;
+  onHoursChange: (hours: number) =&gt; void;
+  onQualityChange: (quality: 1 | 2 | 3 | 4 | 5) =&gt; void;
+  defaultHours?: number;
+  defaultQuality?: number;
+}
+      </signature>
+      <path>src/components/daily-log/SleepQualityInput.tsx (to be created)</path>
+    </interface>
+
+    <interface>
+      <name>Dexie Table Definition</name>
+      <kind>database-schema</kind>
+      <signature>
+// In src/lib/db/client.ts
+dailyLogs: Dexie.Table&lt;DailyLog, string&gt;
+
+// In schema stores definition
+db.version(X).stores({
+  dailyLogs: 'id, [userId+date], userId, date, createdAt'
+});
+      </signature>
+      <path>src/lib/db/client.ts + schema.ts</path>
+    </interface>
+  </interfaces>
+
+  <!-- DEVELOPMENT CONSTRAINTS -->
+  <constraints>
+    <constraint>
+      <rule>Repository Pattern</rule>
+      <description>All database access MUST use repository pattern. Create dailyLogsRepository.ts following patterns from moodRepository.ts and sleepRepository.ts. Include create(), getByDate(), update(), upsert(), delete() methods. Use UUID for IDs, Date.now() for timestamps.</description>
+    </constraint>
+
+    <constraint>
+      <rule>Offline-First Persistence</rule>
+      <description>All data writes must persist immediately to IndexedDB. No network dependency for saves. Implement auto-save drafts to localStorage every 5 seconds to prevent data loss. Clear drafts after successful save.</description>
+    </constraint>
+
+    <constraint>
+      <rule>One Entry Per Day Constraint</rule>
+      <description>Database schema MUST enforce one daily log per user per day using compound index [userId+date]. Repository upsert() method should create new entry if none exists for date, or update existing entry.</description>
+    </constraint>
+
+    <constraint>
+      <rule>Event-Based vs Daily Reflection Separation</rule>
+      <description>CRITICAL: Daily Log is for once-per-day reflection (mood, sleep, notes). Event-based tracking (food, meds, symptoms, triggers) remains separate with timestamped entries throughout the day. EventSummaryCard shows counts and links to event tracking pages - it does NOT replace them.</description>
+    </constraint>
+
+    <constraint>
+      <rule>Component Testing</rule>
+      <description>All new components MUST have unit tests using React Testing Library and Jest. Test rendering, user interactions, keyboard navigation, accessibility. Integration test for full daily log page flow required.</description>
+    </constraint>
+
+    <constraint>
+      <rule>Accessibility</rule>
+      <description>All interactive elements must have ARIA labels and keyboard navigation support. EmoticonMoodSelector must support arrow key navigation. Focus management for inline forms in FlareQuickUpdateList. Screen reader announcements for state changes.</description>
+    </constraint>
+
+    <constraint>
+      <rule>Smart Defaults</rule>
+      <description>Pre-populate form with previous day's mood, sleep hours, and sleep quality using getPreviousDayLog() repository method. Do NOT pre-fill notes field - let users write fresh notes each day. Empty state should show helpful placeholders.</description>
+    </constraint>
+
+    <constraint>
+      <rule>Route Updates</rule>
+      <description>Update navigation.ts to change /log → /daily-log. Add redirect in next.config.ts from /log → /daily-log (308 permanent). Update navigation tests. Existing /mood and /sleep redirects to /log should continue working.</description>
+    </constraint>
+
+    <constraint>
+      <rule>shadcn/ui Component Usage</rule>
+      <description>Use shadcn/ui components from src/components/ui/ for consistent design. Card for EventSummaryCard layout, Input for sleep hours field. Follow usage patterns from docs/ui/shadcn-ui-components.md.</description>
+    </constraint>
+
+    <constraint>
+      <rule>Date Handling</rule>
+      <description>Store dates as ISO strings (YYYY-MM-DD) in database, NOT timestamps. This ensures one entry per calendar day regardless of timezone. Use date-fns for date manipulation. Current viewing date should default to today, support navigation to past days, disable navigation to future days.</description>
+    </constraint>
+  </constraints>
+
+  <!-- TESTING STANDARDS -->
+  <tests>
+    <standards>
+      Project uses Jest with React Testing Library for component tests and fake-indexeddb for database testing. Component tests located in __tests__/ directories adjacent to components. Repository tests verify CRUD operations, error handling, and data integrity. Integration tests verify full user flows. Run tests with npm test. Test coverage should be comprehensive for all new components and repositories.
+    </standards>
+
+    <locations>
+      <location>src/components/daily-log/__tests__/*.test.tsx</location>
+      <location>src/lib/repositories/__tests__/dailyLogsRepository.test.ts</location>
+      <location>src/app/(protected)/daily-log/__tests__/page.test.tsx</location>
+    </locations>
+
+    <ideas>
+      <test-idea ac-ref="AC6.2.2">
+        <summary>Test dailyLogsRepository CRUD operations</summary>
+        <details>Test create() with valid/invalid data, getByDate() returns correct entry, update() modifies fields, upsert() creates when missing and updates when exists, getPreviousDayLog() returns yesterday's entry, compound index [userId+date] prevents duplicates.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.3">
+        <summary>Test EmoticonMoodSelector interactions</summary>
+        <details>Verify 5 mood options render with emojis, clicking mood calls onChange with correct value (1-5), keyboard arrow navigation cycles through options, Enter/Space selects focused option, selected mood shows visual highlight, ARIA labels present for screen readers.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.4">
+        <summary>Test SleepQualityInput validation</summary>
+        <details>Verify hours input accepts 0-24 with 0.5 step, validation error shows for hours &gt; 24 or &lt; 0, star rating accepts 1-5 clicks, onChange events emit correct values, smart defaults pre-fill from previous day, disabled state prevents input.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.5">
+        <summary>Test FlareQuickUpdateList rendering and updates</summary>
+        <details>Fetch and display active flares (status != 'resolved'), quick update button opens inline form, severity slider updates flare record, updates save to both flare AND dailyLog.flareUpdates, empty state shows when no active flares, link to /body-map present.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.6">
+        <summary>Test EventSummaryCard counts and links</summary>
+        <details>Query today's foodEvents/medicationEvents/symptomInstances/triggerEvents, display correct counts, links navigate to /log/food, /log/medication, etc., empty state shows "No items logged" with action buttons, counts update after adding new events.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.7">
+        <summary>Test daily notes auto-save and character limit</summary>
+        <details>Textarea accepts input up to 2000 characters, character counter displays correctly, auto-save to localStorage after 5 seconds (debounced), draft loads on mount, draft clears after successful save, validation prevents save with &gt; 2000 chars.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.8">
+        <summary>Test date navigation and smart defaults</summary>
+        <details>Default viewing date is today, Prev button loads previous day's data, Next button disabled when viewing today, Today button resets to current date, loading existing log for date populates all fields, getPreviousDayLog() pre-fills mood/sleep when no log exists.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.9">
+        <summary>Test save functionality and validation</summary>
+        <details>Save button disabled until mood and sleep hours filled, validation errors show for missing required fields, successful save persists to IndexedDB via upsert(), success toast appears with undo option, undo reverts save within 5 second window, multi-tab conflict detection warns user.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.1">
+        <summary>Test daily log page route and navigation</summary>
+        <details>Page renders at /daily-log route, navigation link from sidebar goes to /daily-log, mobile bottom nav links to /daily-log, /log redirects to /daily-log (308), page title shows "Daily Log", all components integrate correctly on page.</details>
+      </test-idea>
+
+      <test-idea ac-ref="AC6.2.10">
+        <summary>Integration test: Full daily log flow</summary>
+        <details>User selects mood (Good = 4), enters sleep (7.5 hours, 4 stars quality), types notes, updates flare severity, saves daily log, data persists to db.dailyLogs, success toast shows, reload page loads saved data, can edit and update existing log.</details>
+      </test-idea>
+    </ideas>
+  </tests>
+
+  <!-- INTEGRATION POINTS -->
+  <integration-points>
+    <depends-on>
+      <story id="6.1">Navigation Restructure & shadcn/ui Integration (DONE)</story>
+      <reason>Provides shadcn/ui foundation (Card, Input components) and navigation structure with "Daily Log" label. Route will change from /log to /daily-log in this story.</reason>
+    </depends-on>
+
+    <enables>
+      <story id="6.3">Correlation Engine & Spearman Algorithm</story>
+      <reason>Uses dailyLogs mood and sleep data for correlation analysis with flares, foods, triggers. Calculates relationships like "Poor sleep increases flares 2.3×".</reason>
+    </enables>
+
+    <enables>
+      <story id="6.4">Health Insights Hub UI</story>
+      <reason>Displays insights derived from daily log patterns. Shows mood×flares and sleep×flares correlations in visual dashboard.</reason>
+    </enables>
+
+    <enables>
+      <story id="6.5">Timeline Pattern Detection</story>
+      <reason>Uses daily log data to populate timeline visualization. Shows how mood, sleep, and flares correlate on specific dates.</reason>
+    </enables>
+  </integration-points>
+
+</story-context>

@@ -169,7 +169,7 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
   }, [visibleFlares, boundsByRegion, regionsById]);
 
   const handleMarkerClick = (flareId: string) => {
-    router.push(`/flares/${flareId}`);
+    router.push(`/body-map/${flareId}`);
   };
 
   // Always render the <g> element to establish the ref, even if we don't have markers yet
