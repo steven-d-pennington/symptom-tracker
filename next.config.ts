@@ -11,6 +11,49 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  /* Route Redirects - Epic 6 Navigation Restructure */
+  // Permanent redirects (308) for renamed routes to preserve bookmarks and links
+  redirects: async () => {
+    return [
+      {
+        source: "/flares",
+        destination: "/body-map",
+        permanent: true,
+      },
+      {
+        source: "/flares/:path*",
+        destination: "/body-map/:path*",
+        permanent: true,
+      },
+      {
+        source: "/analytics",
+        destination: "/insights",
+        permanent: true,
+      },
+      {
+        source: "/calendar",
+        destination: "/timeline",
+        permanent: true,
+      },
+      {
+        source: "/manage",
+        destination: "/my-data",
+        permanent: true,
+      },
+      // Deprecated mood/sleep pages redirect to daily log
+      {
+        source: "/mood",
+        destination: "/log",
+        permanent: true,
+      },
+      {
+        source: "/sleep",
+        destination: "/log",
+        permanent: true,
+      },
+    ];
+  },
+
   /* PWA Configuration */
   // Enable service worker in production
   headers: async () => {

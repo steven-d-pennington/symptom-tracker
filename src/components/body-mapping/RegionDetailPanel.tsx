@@ -140,10 +140,10 @@ export function RegionDetailPanel({
                   </p>
                 )}
                 <Link
-                  href="/flares"
+                  href="/body-map"
                   className="mt-2 inline-block text-xs text-red-700 hover:text-red-900 font-medium"
                 >
-                  View in Flare Dashboard →
+                  View in Body Map →
                 </Link>
               </div>
             ))}

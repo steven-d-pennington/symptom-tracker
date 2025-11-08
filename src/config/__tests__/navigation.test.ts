@@ -2,7 +2,7 @@
  * Unit tests for shared navigation configuration
  *
  * Tests the navigation configuration helpers to ensure:
- * - Correct pillar ordering (Track → Analyze → Manage → Support)
+ * - Correct pillar ordering (Track → Insights → Manage → Support)
  * - Surface filtering works correctly (desktop vs mobile)
  * - Helper functions return expected values
  * - Labels are consistent across all surfaces
@@ -25,14 +25,14 @@ describe("Navigation Configuration", () => {
     it("should have exactly 4 pillars in correct order", () => {
       expect(NAV_PILLARS).toHaveLength(4);
       expect(NAV_PILLARS[0].id).toBe("track");
-      expect(NAV_PILLARS[1].id).toBe("analyze");
+      expect(NAV_PILLARS[1].id).toBe("insights");
       expect(NAV_PILLARS[2].id).toBe("manage");
       expect(NAV_PILLARS[3].id).toBe("support");
     });
 
     it("should have correct pillar labels", () => {
       expect(NAV_PILLARS[0].label).toBe("Track");
-      expect(NAV_PILLARS[1].label).toBe("Analyze");
+      expect(NAV_PILLARS[1].label).toBe("Insights");
       expect(NAV_PILLARS[2].label).toBe("Manage");
       expect(NAV_PILLARS[3].label).toBe("Support");
     });
@@ -115,16 +115,16 @@ describe("Navigation Configuration", () => {
     it("should maintain pillar order in flattened destinations", () => {
       const destinations = getNavDestinations("desktop");
       const trackDestinations = destinations.filter((dest) =>
-        ["/dashboard", "/log", "/flares", "/photos"].includes(dest.href)
+        ["/dashboard", "/log", "/body-map", "/photos"].includes(dest.href)
       );
-      const analyzeDestinations = destinations.filter((dest) =>
-        ["/analytics", "/calendar"].includes(dest.href)
+      const insightsDestinations = destinations.filter((dest) =>
+        ["/insights", "/timeline"].includes(dest.href)
       );
 
       const firstTrackIndex = destinations.indexOf(trackDestinations[0]);
-      const firstAnalyzeIndex = destinations.indexOf(analyzeDestinations[0]);
+      const firstInsightsIndex = destinations.indexOf(insightsDestinations[0]);
 
-      expect(firstAnalyzeIndex).toBeGreaterThan(firstTrackIndex);
+      expect(firstInsightsIndex).toBeGreaterThan(firstTrackIndex);
     });
 
     it("should include Dashboard and Log for mobile", () => {
@@ -135,14 +135,14 @@ describe("Navigation Configuration", () => {
       expect(hrefs).toContain("/log");
     });
 
-    it("should include Analytics for both desktop and mobile", () => {
+    it("should include Health Insights for both desktop and mobile", () => {
       const desktopDestinations = getNavDestinations("desktop");
       const mobileDestinations = getNavDestinations("mobile");
 
-      expect(desktopDestinations.some((d) => d.href === "/analytics")).toBe(
+      expect(desktopDestinations.some((d) => d.href === "/insights")).toBe(
         true
       );
-      expect(mobileDestinations.some((d) => d.href === "/analytics")).toBe(
+      expect(mobileDestinations.some((d) => d.href === "/insights")).toBe(
         true
       );
     });
@@ -169,7 +169,7 @@ describe("Navigation Configuration", () => {
     it("should maintain pillar order", () => {
       const pillars = getNavPillars("desktop");
       expect(pillars[0].id).toBe("track");
-      expect(pillars[1].id).toBe("analyze");
+      expect(pillars[1].id).toBe("insights");
       expect(pillars[2].id).toBe("manage");
     });
 
@@ -184,10 +184,15 @@ describe("Navigation Configuration", () => {
   describe("getPageTitle", () => {
     it("should return correct title for known routes", () => {
       expect(getPageTitle("/dashboard")).toBe("Dashboard");
-      expect(getPageTitle("/log")).toBe("Log");
-      expect(getPageTitle("/analytics")).toBe("Analytics");
-      expect(getPageTitle("/manage")).toBe("Manage Data");
+      expect(getPageTitle("/log")).toBe("Daily Log");
+      expect(getPageTitle("/insights")).toBe("Health Insights");
+      expect(getPageTitle("/my-data")).toBe("My Data");
       expect(getPageTitle("/about")).toBe("About");
+    });
+
+    it("should return correct titles for Epic 6 renamed routes", () => {
+      expect(getPageTitle("/body-map")).toBe("Body Map");
+      expect(getPageTitle("/timeline")).toBe("Timeline");
     });
 
     it("should return fallback for unknown routes", () => {
@@ -239,6 +244,33 @@ describe("Navigation Configuration", () => {
     it("should not return /more destination", () => {
       const destination = getDestinationByHref("/more");
       expect(destination).toBeUndefined();
+    });
+
+    it("should return destinations for Epic 6 renamed routes", () => {
+      const bodyMap = getDestinationByHref("/body-map");
+      expect(bodyMap).toBeDefined();
+      expect(bodyMap!.label).toBe("Body Map");
+
+      const insights = getDestinationByHref("/insights");
+      expect(insights).toBeDefined();
+      expect(insights!.label).toBe("Health Insights");
+
+      const timeline = getDestinationByHref("/timeline");
+      expect(timeline).toBeDefined();
+      expect(timeline!.label).toBe("Timeline");
+
+      const myData = getDestinationByHref("/my-data");
+      expect(myData).toBeDefined();
+      expect(myData!.label).toBe("My Data");
+    });
+
+    it("should not return old route paths that were renamed", () => {
+      expect(getDestinationByHref("/flares")).toBeUndefined();
+      expect(getDestinationByHref("/analytics")).toBeUndefined();
+      expect(getDestinationByHref("/calendar")).toBeUndefined();
+      expect(getDestinationByHref("/manage")).toBeUndefined();
+      expect(getDestinationByHref("/mood")).toBeUndefined();
+      expect(getDestinationByHref("/sleep")).toBeUndefined();
     });
   });
 
@@ -315,7 +347,8 @@ describe("Navigation Configuration", () => {
       it("should return true for standard navigation routes", () => {
         expect(shouldShowNavigation("/dashboard")).toBe(true);
         expect(shouldShowNavigation("/log")).toBe(true);
-        expect(shouldShowNavigation("/analytics")).toBe(true);
+        expect(shouldShowNavigation("/insights")).toBe(true);
+        expect(shouldShowNavigation("/body-map")).toBe(true);
         expect(shouldShowNavigation("/settings")).toBe(true);
       });
 
@@ -337,7 +370,7 @@ describe("Navigation Configuration", () => {
   describe("Title Rendering Integration (AC4)", () => {
     it("should provide consistent title for Log route", () => {
       const title = getPageTitle("/log");
-      expect(title).toBe("Log");
+      expect(title).toBe("Daily Log");
 
       // Verify it matches the destination label
       const destination = getDestinationByHref("/log");
@@ -369,7 +402,7 @@ describe("Navigation Configuration", () => {
       });
     });
 
-    it("should have Log available on both mobile and desktop", () => {
+    it("should have Daily Log available on both mobile and desktop", () => {
       const desktopDests = getNavDestinations("desktop");
       const mobileDests = getNavDestinations("mobile");
 
@@ -378,8 +411,8 @@ describe("Navigation Configuration", () => {
 
       expect(logDesktop).toBeDefined();
       expect(logMobile).toBeDefined();
-      expect(logDesktop!.label).toBe("Log");
-      expect(logMobile!.label).toBe("Log");
+      expect(logDesktop!.label).toBe("Daily Log");
+      expect(logMobile!.label).toBe("Daily Log");
     });
 
     it("should have Dashboard available on both mobile and desktop", () => {
@@ -406,7 +439,7 @@ describe("Navigation Configuration", () => {
 
           // Pillar association (implicit via parent)
           expect(pillar.id).toBeDefined();
-          expect(["track", "analyze", "manage", "support"]).toContain(
+          expect(["track", "insights", "manage", "support"]).toContain(
             pillar.id
           );
 
@@ -425,7 +458,7 @@ describe("Navigation Configuration", () => {
     it("should maintain pillar ordering as specified", () => {
       expect(NAV_PILLARS[0].id).toBe("track");
       expect(NAV_PILLARS[0].order).toBe(1);
-      expect(NAV_PILLARS[1].id).toBe("analyze");
+      expect(NAV_PILLARS[1].id).toBe("insights");
       expect(NAV_PILLARS[1].order).toBe(2);
       expect(NAV_PILLARS[2].id).toBe("manage");
       expect(NAV_PILLARS[2].order).toBe(3);

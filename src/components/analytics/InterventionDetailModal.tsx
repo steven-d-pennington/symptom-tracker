@@ -231,7 +231,7 @@ export function InterventionDetailModal({
 
                         {/* Task 5.5: Flare link to navigate to flare detail view */}
                         <Link
-                          href={`/flares/${instance.flareId}`}
+                          href={`/body-map/${instance.flareId}`}
                           className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
                         >
                           View Flare Details →
