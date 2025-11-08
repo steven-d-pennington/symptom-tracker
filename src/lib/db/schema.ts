@@ -569,3 +569,31 @@ export interface SleepEntryRecord {
   createdAt: number; // epoch ms
   updatedAt: number; // epoch ms
 }
+
+// Daily Log - Unified end-of-day reflection (Story 6.2)
+
+export interface FlareQuickUpdate {
+  flareId: string;
+  severity: number; // 1-10
+  trend: 'improving' | 'stable' | 'worsening';
+  interventions?: string[]; // Array of intervention descriptions
+  notes?: string;
+}
+
+export interface DailyLogRecord {
+  id: string; // UUID v4
+  userId: string; // User ID for multi-user support
+  date: string; // ISO date (YYYY-MM-DD) - unique per user per day
+
+  // Daily reflection fields
+  mood: 1 | 2 | 3 | 4 | 5; // 1=Bad, 2=Poor, 3=Okay, 4=Good, 5=Great
+  sleepHours: number; // 0-24 with 0.5 increments
+  sleepQuality: 1 | 2 | 3 | 4 | 5; // Star rating
+  notes?: string; // General notes about the day (max 2000 chars)
+
+  // Optional flare quick updates (JSON-stringified per IndexedDB conventions)
+  flareUpdates?: string; // JSON-stringified FlareQuickUpdate[]
+
+  createdAt: number; // Unix timestamp (epoch ms)
+  updatedAt: number; // Unix timestamp (epoch ms)
+}
