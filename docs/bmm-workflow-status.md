@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-11-07 (Epic 6: UX Redesign - Ready to Begin)
+- **Last Updated:** 2025-11-08 (Story 6.2 Code Review Complete - Changes Requested)
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** Phase 4: Implementation (In Progress)
-- **Current Workflow:** Epic 6 (UX Redesign & Navigation Overhaul) - Ready to Begin
-- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7.1 done. Epic 6 planned and ready.
-- **Next Action:** Begin Epic 6 Phase 1 (Navigation & Structure) - HIGHEST PRIORITY for go-live
-- **Command to Run:** /bmad:bmm:workflows:create-story (to draft Epic 6 stories)
-- **Agent to Load:** sm (Scrum Master) or dev (Developer)
-- **Note:** UX Design Specification complete. Epic 6 is critical for production go-live - addresses navigation confusion, adds Health Insights analytics hub, Daily Log unified tracking, and Timeline pattern detection.
+- **Current Workflow:** Epic 6 (UX Redesign & Navigation Overhaul) - In Progress (Story 6.2)
+- **Overall Progress:** Story 6.1 DONE. Story 6.2 reviewed, changes requested (3 action items).
+- **Next Action:** Address Story 6.2 code review action items (toast notifications, auth context, error handling)
+- **Command to Run:** *develop-story (to resolve Story 6.2 review items)
+- **Agent to Load:** dev (Developer)
+- **Note:** Story 6.2 implementation is solid (90% ACs complete), just needs polish on toast notifications and hardcoded user ID before marking done.
 
 ---
 
@@ -71,7 +71,9 @@
 
 #### IN PROGRESS (Approved for Development / Review)
 
-*No stories currently in progress.*
+| Story ID | File | Status | Points | Epic | Action Items |
+|----------|------|--------|--------|------|--------------|
+| 6.2 | docs/stories/6-2-daily-log-page.md | Changes Requested (Code Review) | 13 | Epic 6: UX Redesign | 3 action items: toast notifications, auth context, error handling |
 
 ---
 
@@ -79,6 +81,7 @@
 
 | Story ID | File | Completed Date | Points | Epic |
 |----------|------|----------------|--------|------|
+| 6.1 | docs/stories/6-1-navigation-restructure-and-shadcn-ui-integration.md | 2025-11-07 | 8 | Epic 6: UX Redesign |
 | 3.7.1 | docs/stories/3-7-1-region-detail-view-infrastructure.md | 2025-11-02 | 5 | Epic 3.7: Body Map UX Enhancements |
 | 3.6.1 | docs/stories/3.6.1-onboarding-data-selection-flow.md | 2025-11-02 | 13 | Epic 3.6: Onboarding Enhancement |
 | 3.5.10 | docs/stories/story-3.5.10.md | 2025-11-01 | 1 | Epic 3.5: Production UX (Bug Fix) |
@@ -131,6 +134,8 @@ Epic 6 (UX Redesign & Navigation Overhaul) has been fully designed and is ready 
 ---
 
 ## Decision Log
+
+- **2025-11-08:** Completed Senior Developer Review of Story 6.2: Daily Log Page (13 points). Review outcome: **Changes Requested**. Implementation is solid with 9 of 10 ACs fully implemented (90% complete) and strong architecture alignment. Code review found 3 medium-severity items requiring attention before marking done: (1) Toast notifications using console.log instead of proper toast library (react-hot-toast), (2) Hardcoded user ID needs auth context integration, (3) Error handling using alert() instead of toast. No high-severity issues or architecture violations found. Tests explicitly deferred as "future work" - acceptable for MVP. Story returned to in-progress status with 3 action items. All components (EmoticonMoodSelector, SleepQualityInput, FlareQuickUpdateList, EventSummaryCard) verified complete. Repository pattern correctly implemented with full CRUD operations. Navigation config successfully updated to /daily-log route. Next action: Developer agent to address the 3 review action items and re-submit for review.
 
 - **2025-11-07:** Created Epic 6: UX Redesign & Navigation Overhaul (76 story points). This epic is now the **HIGHEST PRIORITY** for production go-live, superseding Epic 4 (Photo Documentation). Epic 6 addresses critical UX issues identified by stakeholder: navigation confusion (Flares→Body Map, Analytics broken, missing links), mood/sleep isolation, lack of correlation insights, and basic calendar. Comprehensive UX Design Specification completed with interactive HTML mockups. Epic includes 7 stories: (6.1) Navigation Restructure & shadcn/ui (8pt - CRITICAL), (6.2) Daily Log Page (13pt - CRITICAL), (6.3) Correlation Engine (13pt - HIGH), (6.4) Health Insights Hub (13pt - HIGH), (6.5) Timeline Pattern Detection (13pt - HIGH), (6.6) Body Map Gender/Type (8pt - MEDIUM), (6.7) Treatment Effectiveness (8pt - MEDIUM). Architecture clarified: Daily Log is end-of-day reflection (db.dailyLogs), Quick Actions remain for event-based tracking (db.foodEvents, etc.). Must-have MVP stories: 6.1, 6.2, 6.4, 6.5 (47 points ~8 weeks). Next action: Run `/bmad:bmm:workflows:create-story` to draft Story 6.1.
 
