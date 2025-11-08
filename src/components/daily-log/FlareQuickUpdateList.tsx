@@ -42,10 +42,14 @@ function FlareUpdateForm({ flare, userId, onSave, onCancel }: FlareUpdateFormPro
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Map trend to valid FlareRecord status
+      // "stable" maps to "active" since stable isn't a valid status
+      const flareStatus = trend === 'stable' ? 'active' : trend;
+
       // Update flare record in database
       await updateFlare(userId, flare.id, {
         currentSeverity: severity,
-        status: trend,
+        status: flareStatus,
         updatedAt: Date.now(),
       });
 
