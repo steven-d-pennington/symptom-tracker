@@ -1,6 +1,6 @@
 # Story 6.1: Navigation Restructure & shadcn/ui Integration
 
-Status: review
+Status: done
 
 ## Story
 
@@ -434,6 +434,10 @@ describe('Navigation Config - Epic 6 Routes', () => {
 - Bookmarked URLs continue working via redirects
 
 ## Dev Agent Record
+
+### Completion Notes
+**Completed:** 2025-11-08
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing (47/47), production build successful
 
 ### Context Reference
 
