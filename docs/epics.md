@@ -1285,6 +1285,181 @@ So that I can quickly interpret the visualization without confusion.
 
 ---
 
+## Epic 6: Health Insights & Correlation Analytics
+
+### Expanded Goal
+
+Transform the symptom tracker from a passive logging tool into an intelligent health insights platform by implementing correlation analysis that detects meaningful relationships between tracked data (foods, symptoms, medications, triggers, flares) and surfaces actionable insights. This epic delivers the correlation engine foundation, visual insights dashboard, enhanced timeline with pattern detection, and body map customization.
+
+### Value Proposition
+
+Users currently log extensive health data but lack tools to understand what drives their symptoms. This epic provides:
+- **Automated correlation discovery** - Spearman rank correlation finds relationships between foods/triggers and symptom severity
+- **Actionable insights** - Clear, prioritized insights help users identify patterns they'd never spot manually
+- **Pattern-aware timeline** - Visual highlighting of recurring patterns and trigger-symptom windows
+- **Personalized body map** - Gender/body-type variants for user comfort and accuracy
+- **Treatment guidance** - Data-driven insights into which interventions correlate with improvement
+
+### Story Breakdown
+
+**Story 6.1: Navigation Restructure & shadcn/ui Integration** _(COMPLETE)_
+
+As a user navigating the symptom tracker application,
+I want clear, intuitive navigation with renamed routes that reflect their purpose and modern UI components,
+so that I can easily find features like the body map, health insights, and timeline without confusion.
+
+**Acceptance Criteria:**
+1. Navigation config updated with new route structure: `/flares` → `/body-map`, `/analytics` → `/insights`, `/calendar` → `/timeline`
+2. Route redirects implemented for renamed paths with 308 permanent redirects
+3. Page components moved to new route paths
+4. shadcn/ui initialized and integrated with Tailwind CSS and Radix UI
+5. Navigation icons updated for new routes (MapPin, TrendingUp, Calendar, FileText)
+6. Deprecated mood/sleep routes removed from navigation
+7. Analyze pillar renamed to Insights in navigation config
+8. Manage Data route renamed to My Data (`/my-data`)
+9. Navigation component integration tests updated
+10. shadcn/ui components documented in `docs/ui/shadcn-ui-components.md`
+
+**Prerequisites:** Epic 0 complete (UI/UX foundation)
+
+**Status:** Done (completed in earlier work)
+
+---
+
+**Story 6.2: Daily Log Page** _(IN REVIEW)_
+
+As a user tracking my health symptoms,
+I want a unified daily log page where I can reflect on my mood, sleep quality, and overall day in one place,
+so that I can capture end-of-day reflections and understand daily patterns that complement my event-based tracking throughout the day.
+
+**Acceptance Criteria:**
+1. Create daily log page route and navigation at `/daily-log`
+2. Implement DailyLog data model in IndexedDB with mood, sleep, notes, flare updates
+3. Build EmoticonMoodSelector component (5 mood states with emoji)
+4. Build SleepQualityInput component (hours + star rating)
+5. Build FlareQuickUpdateList component showing active flares with inline update
+6. Implement event summary section showing counts of today's logged items
+7. Create daily notes text area with 2000 char limit and auto-save draft
+8. Implement smart defaults and date navigation (← Prev | Today | Next →)
+9. Add save functionality with offline-first persistence
+10. Create tests and documentation for daily log flow
+
+**Prerequisites:** Story 6.1 (navigation structure exists)
+
+**Status:** In Review (implementation complete, under review)
+
+---
+
+**Story 6.3: Correlation Engine and Spearman Algorithm**
+
+As a user seeking to understand what triggers my symptoms,
+I want an automated correlation analysis system that finds statistical relationships in my data,
+So that I can discover which foods, medications, or triggers correlate with symptom changes without manually analyzing months of logs.
+
+**Acceptance Criteria:**
+1. Implement Spearman rank correlation coefficient algorithm in TypeScript with proper statistical formula (ρ = 1 - (6Σd²)/(n(n²-1)))
+2. Create CorrelationEngine service class with methods: calculateCorrelation(series1, series2), findSignificantCorrelations(threshold), rankByStrength()
+3. Implement data windowing logic: extract time-series data for foods, symptoms, medications, triggers over configurable time range (7, 30, 90 days)
+4. Create correlation pairs: food-symptom, trigger-symptom, medication-symptom, food-flare, trigger-flare with lag windows (0-48 hours)
+5. Filter correlations by significance: |ρ| >= 0.3 (moderate), sample size n >= 10, p-value < 0.05 (statistical significance)
+6. Create CorrelationResult data model: { type, item1, item2, coefficient, strength, significance, sampleSize, lagHours, confidence }
+7. Implement correlation repository with CRUD operations and efficient IndexedDB queries using compound indexes
+8. Add background calculation service that recalculates correlations on data changes (debounced, not real-time)
+9. Create unit tests for Spearman algorithm accuracy, edge cases (ties, perfect correlation, zero correlation, insufficient data)
+10. Add performance optimization: calculation batching, caching results for 1 hour, Web Worker for heavy computation (optional enhancement)
+
+**Prerequisites:** Story 6.2 (daily log data available for correlation), Epic 3.5 (intervention effectiveness patterns established)
+
+---
+
+**Story 6.4: Health Insights Hub UI**
+
+As a user reviewing my health patterns,
+I want a visual insights dashboard that presents correlation findings in clear, actionable cards,
+So that I can quickly understand the most important relationships in my data and take action.
+
+**Acceptance Criteria:**
+1. Create `/insights` page route (renamed from `/analytics`) with responsive layout
+2. Build InsightCard component displaying: insight type icon, headline ("High Dairy → Increased Symptoms"), correlation strength (strong/moderate/weak), confidence level, timeframe, sample size, action button
+3. Implement insight prioritization algorithm: sort by |coefficient| × log(sampleSize), surface strong correlations first, group by insight type
+4. Create correlation scatter plot visualization using Chart.js: X-axis = item consumption/exposure, Y-axis = symptom severity, trend line overlay, interactive tooltips
+5. Build FlareAnalytics heat map component: body regions on Y-axis, time periods on X-axis, color intensity = flare frequency, clickable cells drill down to region detail
+6. Add time range selector: Last 7 days, Last 30 days, Last 90 days, All time (affects all visualizations)
+7. Implement empty state: "Log data for at least 10 days to see insights" with progress indicator
+8. Add medical disclaimer banner: "Insights show correlations, not causation. Discuss findings with your healthcare provider."
+9. Create insight detail modal: shows full correlation data, scatter plot, related events timeline, export as PDF option
+10. Build responsive grid layout: 1 column mobile, 2 columns tablet, 3 columns desktop, smooth loading skeletons
+
+**Prerequisites:** Story 6.3 (correlation engine produces data)
+
+---
+
+**Story 6.5: Timeline Pattern Detection**
+
+As a user reviewing my health history,
+I want the timeline to visually highlight recurring patterns and symptom-trigger windows,
+So that I can see at a glance when patterns occur and what precedes my symptoms.
+
+**Acceptance Criteria:**
+1. Extend timeline component to query correlation data and pattern detection results
+2. Implement visual pattern highlighting: colored bands around correlated events (e.g., highlight food event + symptom spike 6-12 hours later)
+3. Create pattern legend showing: food-symptom correlations (orange), trigger-symptom correlations (red), medication-improvement correlations (green), custom user patterns
+4. Add pattern detection algorithm: sliding window analysis (24-hour windows), detect recurring sequences (food → symptom after N hours), identify day-of-week patterns
+5. Build pattern badge/icon system: badge on timeline events that are part of detected patterns, tooltip explains pattern ("This food preceded symptoms in 7 of 10 instances")
+6. Implement timeline layer toggle: show/hide different event types, show/hide pattern highlights, filter by pattern strength
+7. Create pattern detail panel: clicking highlighted pattern opens side panel showing: pattern description, occurrence frequency, statistical confidence, related insights link
+8. Add export functionality: export timeline view as image with pattern annotations, generate pattern summary report (PDF)
+9. Optimize timeline rendering: virtualization for large datasets (>1000 events), lazy load pattern highlights, smooth scrolling
+10. Create timeline tests: pattern detection accuracy, visual rendering, interaction flows, performance with large datasets
+
+**Prerequisites:** Story 6.4 (insights UI patterns established), Epic 2 complete (flare timeline exists)
+
+---
+
+**Story 6.6: Body Map Gender & Body Type Customization**
+
+As a user who wants a body map that represents my body type,
+I want to select gender and body type options for the body map visualization,
+So that I feel comfortable using the tool and can mark locations more accurately on a body that looks like mine.
+
+**Acceptance Criteria:**
+1. Create body map settings UI in Settings > Preferences with gender selector (Female, Male, Neutral/Other) and body type selector (Slim, Average, Plus-size, Athletic)
+2. Design and implement 3 enhanced body map SVG variants: female anatomical variant (with appropriate chest/hip proportions), male anatomical variant (with broader shoulders/different proportions), neutral/gender-neutral variant (current enhanced)
+3. Store body map preferences in IndexedDB bodyMapPreferences table: userId, selectedGender, selectedBodyType, createdAt, updatedAt
+4. Implement SVG loading system: dynamically load selected variant SVG, maintain consistent region IDs across all variants, preserve existing marker coordinates (coordinate system stays normalized 0-1)
+5. Ensure all body regions present in all variants: groin regions in all maps, consistent labeling, same interaction patterns
+6. Create smooth transition: fade out old SVG, fade in new SVG (300ms transition), preserve zoom/pan state during variant switch, maintain visible markers
+7. Add body type customization (optional enhancement): scale proportions within variants, adjust marker positioning for body types, preserve medical accuracy
+8. Implement preview modal: before saving preference, show preview of selected variant, display sample markers, confirm button applies change
+9. Add accessibility features: screen reader announces body map variant change, high contrast mode support for all variants, keyboard navigation works identically
+10. Create comprehensive tests: variant loading, preference persistence, coordinate preservation, transition smoothness, accessibility compliance
+
+**Prerequisites:** Epic 1 complete (body map foundation with regions and coordinates)
+
+---
+
+**Story 6.7: Treatment Effectiveness Tracker**
+
+As a user trying different treatments and interventions,
+I want a dedicated tracker showing which treatments correlate with symptom improvement over time,
+So that I can have data-driven conversations with my doctor about what's working.
+
+**Acceptance Criteria:**
+1. Create TreatmentEffectiveness data model: treatmentId, treatmentType (medication/intervention), effectivenessScore (0-100), trendDirection (improving/stable/declining), sampleSize, timeRange, lastCalculated
+2. Extend correlation engine to calculate treatment effectiveness: compare symptom severity before/after treatment events, calculate average change over multiple instances, factor in time decay (recent data weighted higher)
+3. Build TreatmentTracker component showing: list of all tracked treatments, effectiveness score with visual indicator (color-coded 0-100), trend arrow (↑↓→), confidence level based on sample size
+4. Implement effectiveness calculation algorithm: baseline severity = average of 7 days before treatment start, outcome severity = average of 7-30 days after treatment, effectiveness score = ((baseline - outcome) / baseline) × 100, minimum 3 treatment cycles for valid score
+5. Create TreatmentDetail modal: shows treatment timeline, before/after severity chart, statistical confidence, correlation with other factors, export treatment report
+6. Add comparison view: side-by-side comparison of multiple treatments, ranked by effectiveness, shows which combination works best, statistical significance indicators
+7. Implement medical disclaimer: "Effectiveness scores show correlations in your data. Many factors affect outcomes. Always consult your healthcare provider before changing treatment plans."
+8. Add alert system: notify when treatment effectiveness drops significantly (decline >20% over 30 days), suggest reviewing with doctor, link to related insights
+9. Create treatment journal integration: link treatment effectiveness to daily log notes, show journal entries during treatment periods, export combined treatment journal
+10. Build comprehensive tests: effectiveness calculation accuracy, edge cases (insufficient data, changing treatments), UI rendering, alert triggering, export functionality
+
+**Prerequisites:** Story 6.3 (correlation engine), Story 6.4 (insights UI patterns), Story 6.2 (daily log integration)
+
+---
+
 ## Story Guidelines Reference
 
 **Story Format:**
