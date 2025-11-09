@@ -225,7 +225,7 @@ export async function extractFlareTimeSeries(
       const dateKey = getDateKey(flare.createdAt);
       const current = dailyData.get(dateKey) || { sum: 0, count: 0 };
       dailyData.set(dateKey, {
-        sum: current.sum + flare.severity,
+        sum: current.sum + flare.initialSeverity,
         count: current.count + 1,
       });
     }
@@ -235,7 +235,7 @@ export async function extractFlareTimeSeries(
       const dateKey = getDateKey(flare.updatedAt);
       const current = dailyData.get(dateKey) || { sum: 0, count: 0 };
       dailyData.set(dateKey, {
-        sum: current.sum + flare.severity,
+        sum: current.sum + flare.currentSeverity,
         count: current.count + 1,
       });
     }
