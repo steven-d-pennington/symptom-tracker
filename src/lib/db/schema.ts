@@ -597,3 +597,44 @@ export interface DailyLogRecord {
   createdAt: number; // Unix timestamp (epoch ms)
   updatedAt: number; // Unix timestamp (epoch ms)
 }
+
+// Correlation Analysis - Statistical relationship tracking (Story 6.3)
+
+export type CorrelationType =
+  | "food-symptom"
+  | "trigger-symptom"
+  | "medication-symptom"
+  | "food-flare"
+  | "trigger-flare";
+
+export type CorrelationStrength = "strong" | "moderate" | "weak";
+
+export type CorrelationConfidence = "high" | "medium" | "low";
+
+export type TimeRange = "7d" | "30d" | "90d";
+
+export interface CorrelationRecord {
+  id: string; // UUID v4
+  userId: string; // User ID
+
+  // Correlation metadata
+  type: CorrelationType; // Type of correlation pair
+  item1: string; // Food/trigger/medication ID or name
+  item2: string; // Symptom/flare ID or name
+
+  // Statistical results
+  coefficient: number; // Spearman's ρ (-1 to +1)
+  strength: CorrelationStrength; // strong | moderate | weak
+  significance: number; // p-value (0-1)
+  sampleSize: number; // Number of data points (n)
+  lagHours: number; // Time lag in hours (0, 6, 12, 24, 48)
+  confidence: CorrelationConfidence; // high | medium | low
+
+  // Temporal context
+  timeRange: TimeRange; // Time window used for calculation (7d | 30d | 90d)
+  calculatedAt: number; // Unix timestamp when correlation was calculated
+
+  // Timestamps
+  createdAt: number; // Unix timestamp (epoch ms)
+  updatedAt: number; // Unix timestamp (epoch ms)
+}
