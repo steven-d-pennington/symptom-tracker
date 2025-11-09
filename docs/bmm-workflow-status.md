@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** Phase 4: Implementation (In Progress)
-- **Current Workflow:** Epic 6 (UX Redesign & Navigation Overhaul) - Ready to Begin
-- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7.1 done. Epic 6 planned and ready.
-- **Next Action:** Begin Epic 6 Phase 1 (Navigation & Structure) - HIGHEST PRIORITY for go-live
-- **Command to Run:** /bmad:bmm:workflows:create-story (to draft Epic 6 stories)
-- **Agent to Load:** sm (Scrum Master) or dev (Developer)
-- **Note:** UX Design Specification complete. Epic 6 is critical for production go-live - addresses navigation confusion, adds Health Insights analytics hub, Daily Log unified tracking, and Timeline pattern detection.
+- **Current Workflow:** Epic 6 (UX Redesign & Navigation Overhaul) - In Progress
+- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7.1 done. Epic 6: Stories 6.1 done, 6.2 & 6.3 in review.
+- **Next Action:** Review Stories 6.2 & 6.3, then begin Story 6.4 (Health Insights Hub UI)
+- **Command to Run:** /bmad:bmm:workflows:create-story (to draft Story 6.4)
+- **Agent to Load:** sm (Scrum Master) for review or dev (Developer) for next story
+- **Note:** Epic 6 critical path progressing. Story 6.3 (Correlation Engine) complete with 37/37 tests passing - ready for review. Correlation infrastructure now available for Health Insights Hub (6.4).
 
 ---
 
@@ -44,9 +44,6 @@
 
 | Epic | Story | ID | Title | Description | Points | Priority |
 |------|-------|-----|-------|-------------|--------|----------|
-| 6 | 1 | 6.1 | Navigation Restructure & shadcn/ui Integration | Update nav config, rename paths (/flares→/body-map, /analytics→/insights, /calendar→/timeline), integrate shadcn/ui components | 8 | CRITICAL |
-| 6 | 2 | 6.2 | Daily Log Page - Mood & Sleep Reflection | Create /daily-log page with mood selector, sleep input, notes, and event summary links | 13 | CRITICAL |
-| 6 | 3 | 6.3 | Correlation Engine & Spearman Algorithm | Implement correlation calculation service with Spearman rank correlation for sleep×flares, mood×flares patterns | 13 | HIGH |
 | 6 | 4 | 6.4 | Health Insights Hub UI | Build /insights page with InsightCard components, correlation visualizations, problem areas heat map | 13 | HIGH |
 | 6 | 5 | 6.5 | Timeline Pattern Detection | Build multi-layer timeline with mood/sleep/flares layers, pattern highlighting, day detail modal | 13 | HIGH |
 | 6 | 6 | 6.6 | Body Map Gender/Type Customization | Enhanced SVG variants (female/male/neutral), body-type selection, settings storage | 8 | MEDIUM |
@@ -67,11 +64,14 @@
 |------|-------|-----|-------|------|--------|----------|
 | 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md | 5 | LOW |
 
-**Total in backlog:** 13 stories (7 Epic 6, 4 Epic 4, 1 Epic 2, 1 Epic 3.7)
+**Total in backlog:** 10 stories (4 Epic 6, 4 Epic 4, 1 Epic 2, 1 Epic 3.7)
 
 #### IN PROGRESS (Approved for Development / Review)
 
-*No stories currently in progress.*
+| Story ID | File | Status | Points | Epic | Notes |
+|----------|------|--------|--------|------|-------|
+| 6.2 | docs/stories/6-2-daily-log-page.md | Review | 13 | Epic 6: UX Redesign | Implementation complete, under review |
+| 6.3 | docs/stories/6-3-correlation-engine-and-spearman-algorithm.md | Review | 13 | Epic 6: UX Redesign | Implementation complete, 37/37 tests passing, ready for code review |
 
 ---
 
@@ -79,6 +79,7 @@
 
 | Story ID | File | Completed Date | Points | Epic |
 |----------|------|----------------|--------|------|
+| 6.1 | docs/stories/6-1-navigation-restructure-and-shadcn-ui-integration.md | 2025-11-08 | 8 | Epic 6: UX Redesign |
 | 3.7.1 | docs/stories/3-7-1-region-detail-view-infrastructure.md | 2025-11-02 | 5 | Epic 3.7: Body Map UX Enhancements |
 | 3.6.1 | docs/stories/3.6.1-onboarding-data-selection-flow.md | 2025-11-02 | 13 | Epic 3.6: Onboarding Enhancement |
 | 3.5.10 | docs/stories/story-3.5.10.md | 2025-11-01 | 1 | Epic 3.5: Production UX (Bug Fix) |
@@ -131,6 +132,8 @@ Epic 6 (UX Redesign & Navigation Overhaul) has been fully designed and is ready 
 ---
 
 ## Decision Log
+
+- **2025-11-08:** Completed Story 6.3: Correlation Engine and Spearman Algorithm (13 points). Implemented complete statistical correlation analysis engine with Spearman's ρ algorithm, p-value calculation, data windowing, lag window testing (0-48 hours), significance filtering, IndexedDB persistence (schema v25), background calculation service with debouncing, and comprehensive unit tests (37/37 passing). All 10 acceptance criteria met. New files: spearmanCorrelation.ts (core algorithm), correlationEngine.ts (orchestration), correlationDataExtractor.ts (time-series extraction), correlationRepository.ts (persistence), correlationCalculationService.ts (background processing), correlationCache.ts (performance), correlation.ts (types), and full test suite. Database upgraded to version 25 with correlations table and compound indexes. Build successful, ready for code review. Next: Story 6.4 (Health Insights Hub UI) can now consume correlation data.
 
 - **2025-11-07:** Created Epic 6: UX Redesign & Navigation Overhaul (76 story points). This epic is now the **HIGHEST PRIORITY** for production go-live, superseding Epic 4 (Photo Documentation). Epic 6 addresses critical UX issues identified by stakeholder: navigation confusion (Flares→Body Map, Analytics broken, missing links), mood/sleep isolation, lack of correlation insights, and basic calendar. Comprehensive UX Design Specification completed with interactive HTML mockups. Epic includes 7 stories: (6.1) Navigation Restructure & shadcn/ui (8pt - CRITICAL), (6.2) Daily Log Page (13pt - CRITICAL), (6.3) Correlation Engine (13pt - HIGH), (6.4) Health Insights Hub (13pt - HIGH), (6.5) Timeline Pattern Detection (13pt - HIGH), (6.6) Body Map Gender/Type (8pt - MEDIUM), (6.7) Treatment Effectiveness (8pt - MEDIUM). Architecture clarified: Daily Log is end-of-day reflection (db.dailyLogs), Quick Actions remain for event-based tracking (db.foodEvents, etc.). Must-have MVP stories: 6.1, 6.2, 6.4, 6.5 (47 points ~8 weeks). Next action: Run `/bmad:bmm:workflows:create-story` to draft Story 6.1.
 
