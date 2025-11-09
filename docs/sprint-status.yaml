@@ -120,7 +120,7 @@ development_status:
   epic-6: backlog
   6-1-navigation-restructure-and-shadcn-ui-integration: done
   6-2-daily-log-page: review
-  6-3-correlation-engine-and-spearman-algorithm: ready-for-dev
+  6-3-correlation-engine-and-spearman-algorithm: review
   6-4-health-insights-hub-ui: backlog
   6-5-timeline-pattern-detection: backlog
   6-6-body-map-gender-type-customization: backlog
