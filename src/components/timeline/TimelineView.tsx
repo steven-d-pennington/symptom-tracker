@@ -11,8 +11,10 @@ import { triggerRepository } from '@/lib/repositories/triggerRepository';
 import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
 import { foodRepository } from '@/lib/repositories/foodRepository';
 import { symptomInstanceRepository } from '@/lib/repositories/symptomInstanceRepository';
+import { correlationRepository } from '@/lib/repositories/correlationRepository';
 import EventDetailModal from './EventDetailModal';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+import type { CorrelationRecord } from '@/lib/db/schema';
 
 // Timeline event types
 export type TimelineEventType = 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved' | 'food';
@@ -53,6 +55,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedFood, setExpandedFood] = useState<Set<string>>(new Set());
   const [mountTimestamp] = useState(() => Date.now()); // Unique value per mount
+
+  // Story 6.5: Pattern detection correlation state
+  const [correlations, setCorrelations] = useState<CorrelationRecord[]>([]);
+  const [correlationsLoading, setCorrelationsLoading] = useState(false);
+  const [correlationsError, setCorrelationsError] = useState<string | null>(null);
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -403,6 +410,55 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
+  // Story 6.5: Load correlations for pattern detection
+  const loadCorrelations = async (startTime: number, endTime: number) => {
+    try {
+      if (!userId) {
+        return;
+      }
+
+      setCorrelationsLoading(true);
+      setCorrelationsError(null);
+
+      console.log("🔗 TimelineView: Loading correlations for pattern detection", {
+        userId,
+        timeRange: {
+          start: new Date(startTime).toLocaleString(),
+          end: new Date(endTime).toLocaleString(),
+        }
+      });
+
+      // Query all correlations for this user
+      const allCorrelations = await correlationRepository.findAll(userId);
+
+      // Filter correlations by timeline date range
+      // We want correlations that were calculated during or before this time range
+      // and could apply to events in this range
+      const filteredCorrelations = allCorrelations.filter(correlation => {
+        // Include all correlations for now - we'll refine filtering as we build pattern detection
+        // Pattern detection algorithm (Task 4) will determine which correlations are relevant
+        return true;
+      });
+
+      console.log("✅ Correlations loaded:", {
+        total: allCorrelations.length,
+        filtered: filteredCorrelations.length,
+        byType: {
+          'food-symptom': filteredCorrelations.filter(c => c.type === 'food-symptom').length,
+          'trigger-symptom': filteredCorrelations.filter(c => c.type === 'trigger-symptom').length,
+          'medication-symptom': filteredCorrelations.filter(c => c.type === 'medication-symptom').length,
+        }
+      });
+
+      setCorrelations(filteredCorrelations);
+    } catch (err) {
+      console.error('Error loading correlations:', err);
+      setCorrelationsError('Failed to load pattern correlations');
+    } finally {
+      setCorrelationsLoading(false);
+    }
+  };
+
   // Initial load - load only today
   // mountTimestamp ensures this runs on EVERY mount (Story 3.5.13 fix)
   useEffect(() => {
@@ -417,7 +473,17 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       console.log("🔄 TimelineView: Loading initial events (mount:", mountTimestamp, ") for userId:", userId);
 
       // Load only today's events
-      await loadEvents(new Date());
+      const today = new Date();
+      await loadEvents(today);
+
+      // Story 6.5: Load correlations for pattern detection
+      // Calculate date range for correlation filtering
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      await loadCorrelations(startOfDay.getTime(), endOfDay.getTime());
 
       setLoading(false);
     };

@@ -638,3 +638,29 @@ export interface CorrelationRecord {
   createdAt: number; // Unix timestamp (epoch ms)
   updatedAt: number; // Unix timestamp (epoch ms)
 }
+
+// Pattern Detection - Timeline pattern analysis (Story 6.5)
+
+export interface PatternDetectionRecord {
+  id: string; // UUID v4
+  userId: string; // User ID
+
+  // Pattern metadata
+  type: CorrelationType; // Type of pattern (matches correlation type)
+  correlationId: string; // Reference to correlation that validated this pattern
+  description: string; // Human-readable pattern description
+
+  // Pattern statistics
+  frequency: number; // Number of occurrences found
+  confidence: CorrelationConfidence; // high | medium | low
+  coefficient: number; // Correlation coefficient
+  lagHours: number; // Time lag in hours
+
+  // Pattern occurrences (stored as JSON)
+  occurrences: string; // JSON array of {event1Id, event2Id, timestamp}
+
+  // Timestamps
+  detectedAt: number; // Unix timestamp when pattern was detected
+  createdAt: number; // Unix timestamp (epoch ms)
+  updatedAt: number; // Unix timestamp (epoch ms)
+}

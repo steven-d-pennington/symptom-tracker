@@ -16,6 +16,7 @@ import {
   MedicationEventRecord, // New
   MedicationRecord,
   MoodEntryRecord, // Story 3.5.2
+  PatternDetectionRecord, // Story 6.5
   PhotoAttachmentRecord,
   PhotoComparisonRecord,
   SleepEntryRecord, // Story 3.5.2
@@ -53,6 +54,7 @@ export class SymptomTrackerDatabase extends Dexie {
   moodEntries!: Table<MoodEntryRecord, string>; // Story 3.5.2
   sleepEntries!: Table<SleepEntryRecord, string>; // Story 3.5.2
   correlations!: Table<CorrelationRecord, string>; // Story 6.3
+  patternDetections!: Table<PatternDetectionRecord, string>; // Story 6.5
 
   constructor() {
     super("symptom-tracker");
@@ -623,6 +625,37 @@ export class SymptomTrackerDatabase extends Dexie {
       sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
       // Story 6.3: Correlation analysis with compound indexes for efficient lookups
       correlations: "id, [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt], userId, type, item1, item2, calculatedAt",
+    });
+
+    // Version 26: Add patternDetections table for timeline pattern visualization (Story 6.5)
+    this.version(26).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      dailyLogs: "id, [userId+date], userId, date, createdAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], [userId+layer+createdAt], createdAt",
+      bodyMapPreferences: "userId",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      flares: "id, [userId+status], [userId+bodyRegionId], [userId+startDate], userId",
+      flareEvents: "id, [flareId+timestamp], [userId+timestamp], flareId, userId",
+      flareBodyLocations: "id, [flareId+bodyRegionId], [userId+flareId], flareId, userId",
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+      moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      correlations: "id, [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt], userId, type, item1, item2, calculatedAt",
+      // Story 6.5: Pattern detection with compound indexes for efficient pattern lookups
+      patternDetections: "id, [userId+type], [userId+correlationId], [userId+detectedAt], userId, type, correlationId, detectedAt",
     });
   }
 }

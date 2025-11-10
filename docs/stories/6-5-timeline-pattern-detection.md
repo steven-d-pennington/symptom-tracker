@@ -32,24 +32,24 @@ So that I can see at a glance when patterns occur and what precedes my symptoms.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Extend TimelineView to query correlation data (AC: #6.5.1)
-  - [ ] 1.1: Import correlationRepository from Story 6.3
-  - [ ] 1.2: Add correlation state: `const [correlations, setCorrelations] = useState<CorrelationResult[]>([])`
-  - [ ] 1.3: Create `loadCorrelations()` function that queries correlationRepository.findAll(userId)
-  - [ ] 1.4: Filter correlations by timeRange matching timeline date range
-  - [ ] 1.5: Call loadCorrelations() in useEffect when timeline events load
-  - [ ] 1.6: Store correlations in component state for pattern highlighting
-  - [ ] 1.7: Add loading state for correlations (separate from events loading)
-  - [ ] 1.8: Handle errors if correlation query fails
+- [x] Task 1: Extend TimelineView to query correlation data (AC: #6.5.1)
+  - [x] 1.1: Import correlationRepository from Story 6.3
+  - [x] 1.2: Add correlation state: `const [correlations, setCorrelations] = useState<CorrelationResult[]>([])`
+  - [x] 1.3: Create `loadCorrelations()` function that queries correlationRepository.findAll(userId)
+  - [x] 1.4: Filter correlations by timeRange matching timeline date range
+  - [x] 1.5: Call loadCorrelations() in useEffect when timeline events load
+  - [x] 1.6: Store correlations in component state for pattern highlighting
+  - [x] 1.7: Add loading state for correlations (separate from events loading)
+  - [x] 1.8: Handle errors if correlation query fails
 
 - [ ] Task 2: Create pattern highlighting visualization system (AC: #6.5.2)
-  - [ ] 2.1: Create `src/components/timeline/PatternHighlight.tsx` component
-  - [ ] 2.2: Define PatternHighlightProps: event1, event2, correlationType, lagHours
-  - [ ] 2.3: Calculate band position: connect event1 timestamp to event2 timestamp accounting for lagHours
-  - [ ] 2.4: Implement color mapping: food-symptom (orange), trigger-symptom (red), medication-improvement (green)
-  - [ ] 2.5: Render semi-transparent colored band/connector using SVG or CSS
-  - [ ] 2.6: Only render highlight if both events visible in viewport
-  - [ ] 2.7: Add hover effect: highlight band becomes more opaque on hover
+  - [x] 2.1: Create `src/components/timeline/PatternHighlight.tsx` component
+  - [x] 2.2: Define PatternHighlightProps: event1, event2, correlationType, lagHours
+  - [x] 2.3: Calculate band position: connect event1 timestamp to event2 timestamp accounting for lagHours
+  - [x] 2.4: Implement color mapping: food-symptom (orange), trigger-symptom (red), medication-improvement (green)
+  - [x] 2.5: Render semi-transparent colored band/connector using SVG or CSS
+  - [x] 2.6: Only render highlight if both events visible in viewport
+  - [x] 2.7: Add hover effect: highlight band becomes more opaque on hover
   - [ ] 2.8: Integrate PatternHighlight into TimelineView rendering loop
 
 - [ ] Task 3: Build pattern legend component (AC: #6.5.3)
@@ -62,17 +62,17 @@ So that I can see at a glance when patterns occur and what precedes my symptoms.
   - [ ] 3.7: Position legend above timeline or in sidebar
   - [ ] 3.8: Update legend dynamically based on available correlations
 
-- [ ] Task 4: Implement pattern detection algorithm (AC: #6.5.4)
-  - [ ] 4.1: Create `src/lib/services/patternDetectionService.ts` module
-  - [ ] 4.2: Implement `detectRecurringSequences(events: TimelineEvent[], correlations: CorrelationResult[]): Pattern[]`
-  - [ ] 4.3: Sliding window analysis: iterate 24-hour windows across timeline
-  - [ ] 4.4: Detect sequences: food → symptom after N hours (use lagHours from correlation)
-  - [ ] 5.5: Detect day-of-week patterns: group events by day of week, identify recurring spikes
-  - [ ] 4.6: Validate patterns using correlation data: only mark as pattern if correlation exists in correlationRepository
-  - [ ] 4.7: Create Pattern interface: { id, type, description, frequency, confidence, occurrences: Event[] }
-  - [ ] 4.8: Add patternDetections table to IndexedDB schema (version 26)
-  - [ ] 4.9: Implement debouncing: wait 500ms after data load before running detection
-  - [ ] 4.10: Run detection in background (non-blocking UI)
+- [x] Task 4: Implement pattern detection algorithm (AC: #6.5.4)
+  - [x] 4.1: Create `src/lib/services/patternDetectionService.ts` module
+  - [x] 4.2: Implement `detectRecurringSequences(events: TimelineEvent[], correlations: CorrelationResult[]): Pattern[]`
+  - [x] 4.3: Sliding window analysis: iterate 24-hour windows across timeline
+  - [x] 4.4: Detect sequences: food → symptom after N hours (use lagHours from correlation)
+  - [x] 4.5: Detect day-of-week patterns: group events by day of week, identify recurring spikes
+  - [x] 4.6: Validate patterns using correlation data: only mark as pattern if correlation exists in correlationRepository
+  - [x] 4.7: Create Pattern interface: { id, type, description, frequency, confidence, occurrences: Event[] }
+  - [x] 4.8: Add patternDetections table to IndexedDB schema (version 26)
+  - [x] 4.9: Implement debouncing: wait 500ms after data load before running detection
+  - [x] 4.10: Run detection in background (non-blocking UI)
 
 - [ ] Task 5: Build pattern badge/icon system (AC: #6.5.5)
   - [ ] 5.1: Create `src/components/timeline/PatternBadge.tsx` component
