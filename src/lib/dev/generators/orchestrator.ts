@@ -29,6 +29,7 @@ import { generateUxEvents } from "./generateUxEvents";
 import { generatePhotoAttachments } from "./generatePhotoAttachments";
 import { generateId } from "@/lib/utils/idGenerator";
 import { seedFoodsService } from "@/lib/services/food/seedFoodsService";
+import { generateDailyLogs } from "./generateDailyLogs";
 
 /**
  * Main orchestrator - generates complete dataset with all features
@@ -214,6 +215,76 @@ export async function generateComprehensiveData(
     console.log(`[Orchestrator] Generated ${sleepEntries.length} sleep entries`);
   }
 
+  // Step 13: Generate daily logs (Story 6.8)
+  console.log("[Orchestrator] Step 13: Generating daily logs");
+  let dailyLogsCreated = 0;
+  const dailyLogCoverage = config.dailyLogCoverage ?? 0.6; // Default 60% coverage
+  if (dailyLogCoverage > 0) {
+    const dailyLogResult = await generateDailyLogs({
+      userId,
+      startDate,
+      endDate: now,
+      coveragePercent: dailyLogCoverage,
+      correlateWithFlares: true, // Always correlate for analytics testing
+    });
+    dailyLogsCreated = dailyLogResult.dailyLogsCreated;
+    console.log(`[Orchestrator] Generated ${dailyLogsCreated} daily logs (${Math.round(dailyLogCoverage * 100)}% coverage)`);
+  }
+
+  // Step 14: Calculate correlations (Story 6.8 - Story 6.3 integration)
+  console.log("[Orchestrator] Step 14: Calculating correlations");
+  let correlationsGenerated = 0;
+  let significantCorrelations = 0;
+  try {
+    // Dynamic import to handle case where service may not exist yet
+    const { recalculateCorrelations } = await import("@/lib/services/correlationCalculationService");
+    const { correlationRepository } = await import("@/lib/repositories/correlationRepository");
+
+    // Trigger correlation calculation
+    await recalculateCorrelations(userId);
+
+    // Query correlation counts
+    const correlations = await correlationRepository.findAll(userId);
+    correlationsGenerated = correlations.length;
+
+    // Filter significant correlations (|ρ| >= 0.3)
+    const significantCorrelationsList = correlations.filter(
+      (c) => Math.abs(c.coefficient) >= 0.3
+    );
+    significantCorrelations = significantCorrelationsList.length;
+
+    console.log(
+      `[Orchestrator] ✅ Correlations calculated: ${correlationsGenerated} total, ${significantCorrelations} significant (|ρ| >= 0.3)`
+    );
+  } catch (error) {
+    console.warn(
+      "[Orchestrator] ⚠️ Skipping correlation calculation - service not yet implemented:",
+      error
+    );
+    correlationsGenerated = 0;
+    significantCorrelations = 0;
+  }
+
+  // Step 15: Calculate treatment effectiveness (Story 6.8 - Story 6.7 integration)
+  console.log("[Orchestrator] Step 15: Calculating treatment effectiveness");
+  let treatmentEffectivenessRecordsCreated = 0;
+  if (medicationEvents.length > 0) {
+    try {
+      // Note: Treatment effectiveness service from Story 6.7 not yet implemented
+      // This code will execute when Story 6.7 is complete
+      // For now, gracefully skip with warning message
+      throw new Error("Treatment effectiveness service not yet implemented (Story 6.7 pending)");
+    } catch (error) {
+      console.warn(
+        "[Orchestrator] ⚠️ Skipping treatment effectiveness calculation - service not yet implemented:",
+        error instanceof Error ? error.message : error
+      );
+      treatmentEffectivenessRecordsCreated = 0;
+    }
+  } else {
+    console.log("[Orchestrator] ⏭️ Skipping treatment effectiveness - no medication events generated");
+  }
+
   const result: GeneratedDataResult = {
     medicationEventsCreated: medicationEvents.length,
     triggerEventsCreated: triggerEvents.length,
@@ -234,6 +305,12 @@ export async function generateComprehensiveData(
     startDate: startDate.toISOString(),
     endDate: now.toISOString(),
     userId,
+    // Story 6.8: Analytics data
+    dailyLogsCreated,
+    correlationsGenerated,
+    significantCorrelations,
+    treatmentEffectivenessRecordsCreated,
+    patternsGenerated: 0, // Will be populated when pattern generation implemented
   };
 
   console.log("[Orchestrator] ✅ Generation complete:", result);
@@ -256,6 +333,7 @@ async function clearAllEventData(userId: string): Promise<void> {
     db.photoAttachments?.where({ userId }).delete(),
     db.moodEntries?.where({ userId }).delete(),
     db.sleepEntries?.where({ userId }).delete(),
+    db.dailyLogs?.where({ userId }).delete(),
   ]);
   console.log("[Orchestrator] Cleared existing event data");
 }

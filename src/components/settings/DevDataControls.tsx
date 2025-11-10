@@ -32,6 +32,10 @@ export function DevDataControls() {
       const config = getScenarioConfig(scenarioId, years);
       const result = await generateComprehensiveData(userId, config);
 
+      // Calculate daily log coverage percentage (Story 6.8)
+      const totalDays = Math.floor((new Date(result.endDate).getTime() - new Date(result.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const coveragePercent = result.dailyLogsCreated > 0 ? Math.round((result.dailyLogsCreated / totalDays) * 100) : 0;
+
       setMessage(
         `✅ Generated comprehensive test data:\\n\\n` +
         `📊 **Event Counts:**\\n` +
@@ -46,6 +50,14 @@ export function DevDataControls() {
         (result.uxEventsCreated > 0 ? `• ${result.uxEventsCreated} UX events\\n` : '') +
         (result.bodyMapLocationsCreated > 0 ? `• ${result.bodyMapLocationsCreated} body map locations\\n` : '') +
         (result.photoAttachmentsCreated > 0 ? `• ${result.photoAttachmentsCreated} photos\\n` : '') +
+        // Story 6.8: Analytics data section
+        (result.dailyLogsCreated > 0 || result.correlationsGenerated > 0 || result.treatmentEffectivenessRecordsCreated > 0 || result.patternsGenerated > 0
+          ? `\\n📈 **Analytics Data:**\\n` +
+            (result.dailyLogsCreated > 0 ? `• ${result.dailyLogsCreated} daily logs (${coveragePercent}% coverage)\\n` : '') +
+            (result.correlationsGenerated > 0 ? `• ${result.correlationsGenerated} correlations (${result.significantCorrelations} significant |ρ| >= 0.3)\\n` : '') +
+            (result.treatmentEffectivenessRecordsCreated > 0 ? `• ${result.treatmentEffectivenessRecordsCreated} treatment effectiveness records\\n` : '') +
+            (result.patternsGenerated > 0 ? `• ${result.patternsGenerated} intentional patterns\\n` : '')
+          : '') +
         `\\n📅 **Time Range:** ${new Date(result.startDate).toLocaleDateString()} to ${new Date(result.endDate).toLocaleDateString()}\\n\\n` +
         `**Refresh the page to see your data!**`
       );
@@ -572,38 +584,130 @@ export function DevDataControls() {
           </div>
         </div>
 
-        {/* Scenario Cards */}
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {scenarios.map((scenario) => (
-            <div
-              key={scenario.id}
-              className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
-                selectedScenario === scenario.id
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                  : 'border-gray-300 dark:border-gray-700 hover:border-purple-400'
-              }`}
-              onClick={() => setSelectedScenario(scenario.id)}
-            >
-              <div className="flex items-start space-x-3">
-                <span className="text-3xl">{scenario.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                    {scenario.name}
-                  </h4>
-                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 line-clamp-3">
-                    {scenario.description}
-                  </p>
+        {/* Scenario Cards - Grouped (Story 6.8) */}
+        <div className="mt-6 space-y-6">
+          {/* Basic Scenarios */}
+          <div>
+            <h4 className="text-md font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+              <span className="mr-2">📚</span>
+              Basic Scenarios
+              <span className="ml-2 text-xs font-normal text-gray-500">Quick exploration and comprehensive testing</span>
+            </h4>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {scenarios.filter(s => s.group === 'basic').map((scenario) => (
+                <div
+                  key={scenario.id}
+                  className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
+                    selectedScenario === scenario.id
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-gray-300 dark:border-gray-700 hover:border-purple-400'
+                  }`}
+                  onClick={() => setSelectedScenario(scenario.id)}
+                >
+                  <div className="flex items-start space-x-3">
+                    <span className="text-3xl">{scenario.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                        {scenario.name}
+                      </h5>
+                      <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 line-clamp-3">
+                        {scenario.description}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedScenario === scenario.id && (
+                    <div className="absolute top-2 right-2 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-              </div>
-              {selectedScenario === scenario.id && (
-                <div className="absolute top-2 right-2 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              )}
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Analytics Scenarios */}
+          <div>
+            <h4 className="text-md font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+              <span className="mr-2">📈</span>
+              Analytics Scenarios
+              <span className="ml-2 text-xs font-normal text-gray-500">Optimized for Epic 6 insights features</span>
+            </h4>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {scenarios.filter(s => s.group === 'analytics').map((scenario) => (
+                <div
+                  key={scenario.id}
+                  className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
+                    selectedScenario === scenario.id
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-gray-300 dark:border-gray-700 hover:border-purple-400'
+                  }`}
+                  onClick={() => setSelectedScenario(scenario.id)}
+                >
+                  <div className="flex items-start space-x-3">
+                    <span className="text-3xl">{scenario.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                        {scenario.name}
+                      </h5>
+                      <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 line-clamp-3">
+                        {scenario.description}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedScenario === scenario.id && (
+                    <div className="absolute top-2 right-2 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Performance Scenarios */}
+          <div>
+            <h4 className="text-md font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+              <span className="mr-2">🚀</span>
+              Performance Scenarios
+              <span className="ml-2 text-xs font-normal text-gray-500">Stress testing with large datasets</span>
+            </h4>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {scenarios.filter(s => s.group === 'performance').map((scenario) => (
+                <div
+                  key={scenario.id}
+                  className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
+                    selectedScenario === scenario.id
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-gray-300 dark:border-gray-700 hover:border-purple-400'
+                  }`}
+                  onClick={() => setSelectedScenario(scenario.id)}
+                >
+                  <div className="flex items-start space-x-3">
+                    <span className="text-3xl">{scenario.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                        {scenario.name}
+                      </h5>
+                      <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 line-clamp-3">
+                        {scenario.description}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedScenario === scenario.id && (
+                    <div className="absolute top-2 right-2 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Generate Button */}
