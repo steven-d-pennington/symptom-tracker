@@ -10,6 +10,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { CorrelationResult, TimeRange, timeRangeToMs } from '@/types/correlation';
 import { correlationRepository } from '@/lib/repositories/correlationRepository';
 
@@ -125,8 +126,11 @@ export function useLoggedDaysCount(userId: string): {
         // Dynamically import dailyLogsRepository to avoid circular dependencies
         const { dailyLogsRepository } = await import('@/lib/repositories/dailyLogsRepository');
 
-        // Query all daily logs for user
-        const logs = await dailyLogsRepository.listByDateRange(userId, 0, Date.now());
+        // Query all daily logs for user (using date strings for compatibility)
+        // Use a very old start date to get all logs
+        const startDate = '1970-01-01';
+        const endDate = format(new Date(), 'yyyy-MM-dd');
+        const logs = await dailyLogsRepository.listByDateRange(userId, startDate, endDate);
 
         // Count unique dates
         const uniqueDates = new Set(logs.map((log) => log.date));
