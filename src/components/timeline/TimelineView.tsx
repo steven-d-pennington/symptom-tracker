@@ -15,6 +15,7 @@ import { correlationRepository } from '@/lib/repositories/correlationRepository'
 import EventDetailModal from './EventDetailModal';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import type { CorrelationRecord } from '@/lib/db/schema';
+import { detectRecurringSequences, type DetectedPattern } from '@/lib/services/patternDetectionService';
 
 // Timeline event types
 export type TimelineEventType = 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved' | 'food';
@@ -60,6 +61,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [correlations, setCorrelations] = useState<CorrelationRecord[]>([]);
   const [correlationsLoading, setCorrelationsLoading] = useState(false);
   const [correlationsError, setCorrelationsError] = useState<string | null>(null);
+
+  // Story 6.5: Detected patterns state
+  const [detectedPatterns, setDetectedPatterns] = useState<DetectedPattern[]>([]);
+  const [patternsLoading, setPatternsLoading] = useState(false);
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -491,6 +496,38 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     loadInitialEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, mountTimestamp]); // Re-run when userId changes OR component remounts
+
+  // Story 6.5: Run pattern detection when events and correlations are loaded
+  useEffect(() => {
+    if (events.length === 0 || correlations.length === 0) {
+      // No patterns to detect without both events and correlations
+      setDetectedPatterns([]);
+      return;
+    }
+
+    setPatternsLoading(true);
+
+    // Debounce pattern detection by 500ms
+    const timeoutId = setTimeout(() => {
+      console.log('🔍 Running pattern detection...', {
+        events: events.length,
+        correlations: correlations.length,
+      });
+
+      const patterns = detectRecurringSequences(events, correlations);
+      setDetectedPatterns(patterns);
+      setPatternsLoading(false);
+
+      console.log('✅ Pattern detection complete:', {
+        patternsFound: patterns.length,
+      });
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+      setPatternsLoading(false);
+    };
+  }, [events, correlations]);
 
   // Group events by day
   const groupedEvents = useMemo((): DayGroup[] => {
