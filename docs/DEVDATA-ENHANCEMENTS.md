@@ -439,3 +439,9 @@ After implementing these enhancements:
 - Correlations should include variety (strong, moderate, weak)
 - UI should provide clear feedback about what was generated
 - Consider adding "demo mode" flag to mark synthetic data
+
+## MUST REFERENCE
+
+- In addition to this document you MUST read the related story documents in the docs/stories folder
+- ALSO reference the docs/epics.md file
+- Scan for relevent documentation in the docs folder and reference real code to inform your data generation decisions
