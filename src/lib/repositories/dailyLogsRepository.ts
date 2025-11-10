@@ -202,8 +202,10 @@ export async function getPreviousDayLog(
   userId: string,
   currentDate: string
 ): Promise<DailyLog | undefined> {
-  // Calculate previous day's date
-  const currentDateObj = new Date(currentDate);
+  // Parse date string (YYYY-MM-DD) properly to avoid timezone issues
+  // Split and create date in local timezone
+  const [year, month, day] = currentDate.split('-').map(Number);
+  const currentDateObj = new Date(year, month - 1, day);
   const previousDateObj = subDays(currentDateObj, 1);
   const previousDate = format(previousDateObj, "yyyy-MM-dd");
 

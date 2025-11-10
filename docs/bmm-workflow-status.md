@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-11-07 (Epic 6: UX Redesign - Ready to Begin)
+- **Last Updated:** 2025-11-10 (Epic 6: Stories 6.3 done, 6.4 & 6.5 in progress)
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -13,11 +13,11 @@
 
 - **Current Phase:** Phase 4: Implementation (In Progress)
 - **Current Workflow:** Epic 6 (UX Redesign & Navigation Overhaul) - In Progress
-- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7.1 done. Epic 6: Stories 6.1 done, 6.2 & 6.3 in review.
-- **Next Action:** Review Stories 6.2 & 6.3, then begin Story 6.4 (Health Insights Hub UI)
-- **Command to Run:** /bmad:bmm:workflows:create-story (to draft Story 6.4)
-- **Agent to Load:** sm (Scrum Master) for review or dev (Developer) for next story
-- **Note:** Epic 6 critical path progressing. Story 6.3 (Correlation Engine) complete with 37/37 tests passing - ready for review. Correlation infrastructure now available for Health Insights Hub (6.4).
+- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7.1 done. Epic 6: Stories 6.1 & 6.3 done, 6.2 & 6.4 in-progress, 6.5 ready-for-dev.
+- **Next Action:** Continue development on Stories 6.2 & 6.4, or begin Story 6.5 (Timeline Pattern Detection)
+- **Command to Run:** /bmad:bmm:workflows:dev-story (to implement Story 6.5)
+- **Agent to Load:** dev (Developer) for implementation
+- **Note:** Epic 6 critical path progressing. Story 6.3 (Correlation Engine) completed with 37/37 tests passing. Story 6.4 (Health Insights Hub UI) in-progress. Story 6.5 (Timeline Pattern Detection) drafted and context generated - ready for development.
 
 ---
 
@@ -34,7 +34,9 @@
 
 #### DRAFTED (Story Created, Context Generated, Ready for Development)
 
-*No stories currently drafted.*
+| Story ID | File | Status | Points | Epic | Notes |
+|----------|------|--------|--------|------|-------|
+| 6.5 | docs/stories/6-5-timeline-pattern-detection.md | ready-for-dev | 13 | Epic 6: UX Redesign | Story drafted and context generated. Extends TimelineView with pattern detection, visual highlighting, badges, layer toggle, export functionality. |
 
 ---
 
@@ -44,8 +46,6 @@
 
 | Epic | Story | ID | Title | Description | Points | Priority |
 |------|-------|-----|-------|-------------|--------|----------|
-| 6 | 4 | 6.4 | Health Insights Hub UI | Build /insights page with InsightCard components, correlation visualizations, problem areas heat map | 13 | HIGH |
-| 6 | 5 | 6.5 | Timeline Pattern Detection | Build multi-layer timeline with mood/sleep/flares layers, pattern highlighting, day detail modal | 13 | HIGH |
 | 6 | 6 | 6.6 | Body Map Gender/Type Customization | Enhanced SVG variants (female/male/neutral), body-type selection, settings storage | 8 | MEDIUM |
 | 6 | 7 | 6.7 | Treatment Effectiveness Tracker | Algorithm to correlate interventions with recovery time, effectiveness display in insights | 8 | MEDIUM |
 
@@ -64,14 +64,14 @@
 |------|-------|-----|-------|------|--------|----------|
 | 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md | 5 | LOW |
 
-**Total in backlog:** 10 stories (4 Epic 6, 4 Epic 4, 1 Epic 2, 1 Epic 3.7)
+**Total in backlog:** 8 stories (2 Epic 6, 4 Epic 4, 1 Epic 2, 1 Epic 3.7)
 
 #### IN PROGRESS (Approved for Development / Review)
 
 | Story ID | File | Status | Points | Epic | Notes |
 |----------|------|--------|--------|------|-------|
-| 6.2 | docs/stories/6-2-daily-log-page.md | Review | 13 | Epic 6: UX Redesign | Implementation complete, under review |
-| 6.3 | docs/stories/6-3-correlation-engine-and-spearman-algorithm.md | Review | 13 | Epic 6: UX Redesign | Implementation complete, 37/37 tests passing, ready for code review |
+| 6.2 | docs/stories/6-2-daily-log-page.md | in-progress | 13 | Epic 6: UX Redesign | Implementation in progress |
+| 6.4 | docs/stories/6-4-health-insights-hub-ui.md | in-progress | 13 | Epic 6: UX Redesign | Implementation in progress - Health Insights Hub UI with correlation visualizations |
 
 ---
 
@@ -79,6 +79,7 @@
 
 | Story ID | File | Completed Date | Points | Epic |
 |----------|------|----------------|--------|------|
+| 6.3 | docs/stories/6-3-correlation-engine-and-spearman-algorithm.md | 2025-11-10 | 13 | Epic 6: UX Redesign |
 | 6.1 | docs/stories/6-1-navigation-restructure-and-shadcn-ui-integration.md | 2025-11-08 | 8 | Epic 6: UX Redesign |
 | 3.7.1 | docs/stories/3-7-1-region-detail-view-infrastructure.md | 2025-11-02 | 5 | Epic 3.7: Body Map UX Enhancements |
 | 3.6.1 | docs/stories/3.6.1-onboarding-data-selection-flow.md | 2025-11-02 | 13 | Epic 3.6: Onboarding Enhancement |
@@ -133,7 +134,9 @@ Epic 6 (UX Redesign & Navigation Overhaul) has been fully designed and is ready 
 
 ## Decision Log
 
-- **2025-11-08:** Completed Story 6.3: Correlation Engine and Spearman Algorithm (13 points). Implemented complete statistical correlation analysis engine with Spearman's ρ algorithm, p-value calculation, data windowing, lag window testing (0-48 hours), significance filtering, IndexedDB persistence (schema v25), background calculation service with debouncing, and comprehensive unit tests (37/37 passing). All 10 acceptance criteria met. New files: spearmanCorrelation.ts (core algorithm), correlationEngine.ts (orchestration), correlationDataExtractor.ts (time-series extraction), correlationRepository.ts (persistence), correlationCalculationService.ts (background processing), correlationCache.ts (performance), correlation.ts (types), and full test suite. Database upgraded to version 25 with correlations table and compound indexes. Build successful, ready for code review. Next: Story 6.4 (Health Insights Hub UI) can now consume correlation data.
+- **2025-11-10:** Created Story 6.5: Timeline Pattern Detection (13 points). Story drafted and context generated. Extends existing TimelineView component with pattern detection and visualization capabilities. Features include: correlation data integration, visual pattern highlighting (colored bands), pattern detection algorithm (sliding window + day-of-week), pattern badges/icons, timeline layer toggle, pattern detail panel, export functionality (image + PDF), performance optimizations (virtualization, lazy loading). Story ready-for-dev. Context file: docs/stories/6-5-timeline-pattern-detection.context.xml
+
+- **2025-11-10:** Completed Story 6.3: Correlation Engine and Spearman Algorithm (13 points). Implemented complete statistical correlation analysis engine with Spearman's ρ algorithm, p-value calculation, data windowing, lag window testing (0-48 hours), significance filtering, IndexedDB persistence (schema v25), background calculation service with debouncing, and comprehensive unit tests (37/37 passing). All 10 acceptance criteria met. New files: spearmanCorrelation.ts (core algorithm), correlationEngine.ts (orchestration), correlationDataExtractor.ts (time-series extraction), correlationRepository.ts (persistence), correlationCalculationService.ts (background processing), correlationCache.ts (performance), correlation.ts (types), and full test suite. Database upgraded to version 25 with correlations table and compound indexes. Build successful. Story marked done. Correlation infrastructure now available for Health Insights Hub (6.4) and Timeline Pattern Detection (6.5).
 
 - **2025-11-07:** Created Epic 6: UX Redesign & Navigation Overhaul (76 story points). This epic is now the **HIGHEST PRIORITY** for production go-live, superseding Epic 4 (Photo Documentation). Epic 6 addresses critical UX issues identified by stakeholder: navigation confusion (Flares→Body Map, Analytics broken, missing links), mood/sleep isolation, lack of correlation insights, and basic calendar. Comprehensive UX Design Specification completed with interactive HTML mockups. Epic includes 7 stories: (6.1) Navigation Restructure & shadcn/ui (8pt - CRITICAL), (6.2) Daily Log Page (13pt - CRITICAL), (6.3) Correlation Engine (13pt - HIGH), (6.4) Health Insights Hub (13pt - HIGH), (6.5) Timeline Pattern Detection (13pt - HIGH), (6.6) Body Map Gender/Type (8pt - MEDIUM), (6.7) Treatment Effectiveness (8pt - MEDIUM). Architecture clarified: Daily Log is end-of-day reflection (db.dailyLogs), Quick Actions remain for event-based tracking (db.foodEvents, etc.). Must-have MVP stories: 6.1, 6.2, 6.4, 6.5 (47 points ~8 weeks). Next action: Run `/bmad:bmm:workflows:create-story` to draft Story 6.1.
 
