@@ -129,12 +129,10 @@ function PatternLegend({
                   style={{
                     backgroundColor: isVisible ? `${item.color}33` : '#f3f4f6',
                     border: `2px solid ${isVisible ? item.color : '#d1d5db'}`,
+                    color: isVisible ? item.color : '#9ca3af',
                   }}
                 >
-                  <Icon
-                    className="w-4 h-4"
-                    style={{ color: isVisible ? item.color : '#9ca3af' }}
-                  />
+                  <Icon className="w-4 h-4" />
                 </div>
 
                 {/* Label and description */}

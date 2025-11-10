@@ -13,8 +13,12 @@ import { foodRepository } from '@/lib/repositories/foodRepository';
 import { symptomInstanceRepository } from '@/lib/repositories/symptomInstanceRepository';
 import { correlationRepository } from '@/lib/repositories/correlationRepository';
 import EventDetailModal from './EventDetailModal';
+import PatternLegend from './PatternLegend';
+import PatternBadge from './PatternBadge';
+import PatternDetailPanel from './PatternDetailPanel';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import type { CorrelationRecord } from '@/lib/db/schema';
+import type { CorrelationType } from '@/types/correlation';
 import { detectRecurringSequences, type DetectedPattern } from '@/lib/services/patternDetectionService';
 
 // Timeline event types
@@ -65,6 +69,17 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   // Story 6.5: Detected patterns state
   const [detectedPatterns, setDetectedPatterns] = useState<DetectedPattern[]>([]);
   const [patternsLoading, setPatternsLoading] = useState(false);
+
+  // Story 6.5: Pattern visibility and detail panel state
+  const [visiblePatternTypes, setVisiblePatternTypes] = useState<Set<CorrelationType>>(new Set([
+    'food-symptom',
+    'trigger-symptom',
+    'medication-symptom',
+    'food-flare',
+    'trigger-flare'
+  ]));
+  const [selectedPattern, setSelectedPattern] = useState<DetectedPattern | null>(null);
+  const [isPatternPanelOpen, setIsPatternPanelOpen] = useState(false);
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -646,6 +661,45 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     loadEvents(currentDate);
   };
 
+  // Story 6.5: Pattern interaction handlers
+  const handleTogglePatternType = (type: CorrelationType) => {
+    setVisiblePatternTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
+
+  const handlePatternBadgeClick = (pattern: DetectedPattern) => {
+    setSelectedPattern(pattern);
+    setIsPatternPanelOpen(true);
+  };
+
+  const handlePatternPanelClose = () => {
+    setIsPatternPanelOpen(false);
+    setSelectedPattern(null);
+  };
+
+  // Story 6.5: Get patterns for a specific event
+  const getPatternsForEvent = (eventId: string): DetectedPattern[] => {
+    return detectedPatterns.filter(pattern =>
+      pattern.occurrences.some(occ =>
+        occ.event1.id === eventId || occ.event2.id === eventId
+      ) && visiblePatternTypes.has(pattern.type)
+    );
+  };
+
+  // Story 6.5: Extract available pattern types from detected patterns
+  const availablePatternTypes = useMemo((): CorrelationType[] => {
+    const types = new Set<CorrelationType>();
+    detectedPatterns.forEach(pattern => types.add(pattern.type));
+    return Array.from(types);
+  }, [detectedPatterns]);
+
   if (loading) {
     return (
       <div className="w-full md:w-2/3 space-y-4">
@@ -673,6 +727,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
   return (
     <div className="w-full md:w-2/3 space-y-6">
+      {/* Story 6.5: Pattern Legend */}
+      {detectedPatterns.length > 0 && (
+        <PatternLegend
+          availableTypes={availablePatternTypes}
+          visibleTypes={visiblePatternTypes}
+          onToggleType={handleTogglePatternType}
+        />
+      )}
+
       {groupedEvents.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground text-lg">
@@ -686,29 +749,40 @@ const TimelineView: React.FC<TimelineViewProps> = ({
               {group.dateLabel}
             </h3>
             <div className="space-y-2">
-              {group.events.map((event) => (
-                <article
-                  key={event.id}
-                  id={`timeline-event-${event.id}`}
-                  className="card-hover"
-                  onClick={() => handleEventTap(event)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleEventTap(event);
-                    }
-                  }}
-                  aria-label={`Event: ${event.summary} at ${formatTime(event.timestamp)}`}
-                >
-                  <time
-                    className="flex-shrink-0 text-sm text-gray-500 font-mono"
-                    dateTime={new Date(event.timestamp).toISOString()}
+              {group.events.map((event) => {
+                const eventPatterns = getPatternsForEvent(event.id);
+                return (
+                  <article
+                    key={event.id}
+                    id={`timeline-event-${event.id}`}
+                    className="card-hover relative"
+                    onClick={() => handleEventTap(event)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleEventTap(event);
+                      }
+                    }}
+                    aria-label={`Event: ${event.summary} at ${formatTime(event.timestamp)}`}
                   >
-                    {formatTime(event.timestamp)}
-                  </time>
-                  <div className="flex-1 min-w-0">
+                    {/* Story 6.5: Pattern Badge */}
+                    {eventPatterns.length > 0 && eventPatterns.map(pattern => (
+                      <PatternBadge
+                        key={pattern.id}
+                        pattern={pattern}
+                        onClick={() => handlePatternBadgeClick(pattern)}
+                      />
+                    ))}
+
+                    <time
+                      className="flex-shrink-0 text-sm text-gray-500 font-mono"
+                      dateTime={new Date(event.timestamp).toISOString()}
+                    >
+                      {formatTime(event.timestamp)}
+                    </time>
+                    <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="text-gray-900 truncate">{event.summary}</p>
                       {!event.hasDetails && (
@@ -769,7 +843,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                     )}
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))
@@ -804,6 +879,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         onClose={handleModalClose}
         onSave={handleModalSave}
         onDelete={handleModalDelete}
+      />
+
+      {/* Story 6.5: Pattern Detail Panel */}
+      <PatternDetailPanel
+        pattern={selectedPattern}
+        isOpen={isPatternPanelOpen}
+        onClose={handlePatternPanelClose}
       />
     </div>
   );
