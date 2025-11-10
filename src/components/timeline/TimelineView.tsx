@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, Download } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { medicationEventRepository } from '@/lib/repositories/medicationEventRepository';
 import { triggerEventRepository } from '@/lib/repositories/triggerEventRepository';
@@ -16,10 +16,13 @@ import EventDetailModal from './EventDetailModal';
 import PatternLegend from './PatternLegend';
 import PatternBadge from './PatternBadge';
 import PatternDetailPanel from './PatternDetailPanel';
+import PatternHighlight from './PatternHighlight';
+import TimelineLayerToggle from './TimelineLayerToggle';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import type { CorrelationRecord } from '@/lib/db/schema';
 import type { CorrelationType } from '@/types/correlation';
-import { detectRecurringSequences, type DetectedPattern } from '@/lib/services/patternDetectionService';
+import { detectRecurringSequences, type DetectedPattern, type PatternOccurrence } from '@/lib/services/patternDetectionService';
+import { downloadTimelineImage, exportPatternSummaryPDF } from '@/lib/services/timelineExportService';
 
 // Timeline event types
 export type TimelineEventType = 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved' | 'food';
@@ -80,6 +83,19 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   ]));
   const [selectedPattern, setSelectedPattern] = useState<DetectedPattern | null>(null);
   const [isPatternPanelOpen, setIsPatternPanelOpen] = useState(false);
+
+  // Story 6.5: Layer toggle state
+  const [visibleEventTypes, setVisibleEventTypes] = useState<Set<TimelineEventType>>(new Set([
+    'symptom',
+    'food',
+    'trigger',
+    'medication',
+    'flare-created',
+    'flare-updated',
+    'flare-resolved'
+  ]));
+  const [showPatternHighlights, setShowPatternHighlights] = useState(true);
+  const [patternStrengthFilter, setPatternStrengthFilter] = useState<'all' | 'strong' | 'moderate+strong'>('all');
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -479,6 +495,27 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
+  // Story 6.5: Load layer preferences from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('timeline-layer-preferences');
+      if (stored) {
+        const preferences = JSON.parse(stored);
+        if (preferences.visibleEventTypes) {
+          setVisibleEventTypes(new Set(preferences.visibleEventTypes));
+        }
+        if (preferences.showPatternHighlights !== undefined) {
+          setShowPatternHighlights(preferences.showPatternHighlights);
+        }
+        if (preferences.patternStrengthFilter) {
+          setPatternStrengthFilter(preferences.patternStrengthFilter);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load timeline layer preferences:', error);
+    }
+  }, []);
+
   // Initial load - load only today
   // mountTimestamp ensures this runs on EVERY mount (Story 3.5.13 fix)
   useEffect(() => {
@@ -544,13 +581,43 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     };
   }, [events, correlations]);
 
+  // Story 6.5: Filter events based on visible event types
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      // Handle flare events - check if any flare type is visible
+      if (event.type.startsWith('flare-')) {
+        return visibleEventTypes.has('flare-created') || 
+               visibleEventTypes.has('flare-updated') || 
+               visibleEventTypes.has('flare-resolved');
+      }
+      return visibleEventTypes.has(event.type);
+    });
+  }, [events, visibleEventTypes]);
+
+  // Story 6.5: Filter patterns based on strength filter
+  const filteredPatterns = useMemo(() => {
+    if (patternStrengthFilter === 'all') {
+      return detectedPatterns;
+    }
+    return detectedPatterns.filter(pattern => {
+      const absCoeff = Math.abs(pattern.coefficient);
+      if (patternStrengthFilter === 'strong') {
+        return absCoeff >= 0.7;
+      }
+      if (patternStrengthFilter === 'moderate+strong') {
+        return absCoeff >= 0.5;
+      }
+      return true;
+    });
+  }, [detectedPatterns, patternStrengthFilter]);
+
   // Group events by day
   const groupedEvents = useMemo((): DayGroup[] => {
     const groups: { [key: string]: DayGroup } = {};
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    events.forEach(event => {
+    filteredEvents.forEach(event => {
       const eventDate = new Date(event.timestamp);
       eventDate.setHours(0, 0, 0, 0);
       const dateKey = eventDate.toISOString().split('T')[0];
@@ -581,7 +648,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
     // Sort groups by date descending
     return Object.values(groups).sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [events]);
+  }, [filteredEvents]);
 
   // Note: Allergen filtering removed from dashboard timeline
   // Users can filter by allergen on dedicated food/analytics pages
@@ -684,21 +751,36 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     setSelectedPattern(null);
   };
 
-  // Story 6.5: Get patterns for a specific event
+  // Story 6.5: Get patterns for a specific event (using filtered patterns)
   const getPatternsForEvent = (eventId: string): DetectedPattern[] => {
-    return detectedPatterns.filter(pattern =>
+    return filteredPatterns.filter(pattern =>
       pattern.occurrences.some(occ =>
         occ.event1.id === eventId || occ.event2.id === eventId
       ) && visiblePatternTypes.has(pattern.type)
     );
   };
 
+  // Story 6.5: Get pattern highlights for a specific event (where this event is event2)
+  const getPatternHighlightsForEvent = (eventId: string): Array<{ pattern: DetectedPattern; occurrence: PatternOccurrence }> => {
+    const highlights: Array<{ pattern: DetectedPattern; occurrence: PatternOccurrence }> = [];
+    filteredPatterns.forEach(pattern => {
+      if (!visiblePatternTypes.has(pattern.type)) return;
+      pattern.occurrences.forEach(occurrence => {
+        // Render highlight when this event is event2 (the result event)
+        if (occurrence.event2.id === eventId) {
+          highlights.push({ pattern, occurrence });
+        }
+      });
+    });
+    return highlights;
+  };
+
   // Story 6.5: Extract available pattern types from detected patterns
   const availablePatternTypes = useMemo((): CorrelationType[] => {
     const types = new Set<CorrelationType>();
-    detectedPatterns.forEach(pattern => types.add(pattern.type));
+    filteredPatterns.forEach(pattern => types.add(pattern.type));
     return Array.from(types);
-  }, [detectedPatterns]);
+  }, [filteredPatterns]);
 
   if (loading) {
     return (
@@ -726,9 +808,68 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   }
 
   return (
-    <div className="w-full md:w-2/3 space-y-6">
+    <div id="timeline-container" className="w-full md:w-2/3 space-y-6">
+      {/* Story 6.5: Timeline Layer Toggle */}
+      <TimelineLayerToggle
+        visibleEventTypes={visibleEventTypes}
+        onToggleEventType={(type) => {
+          setVisibleEventTypes(prev => {
+            const next = new Set(prev);
+            if (next.has(type)) {
+              next.delete(type);
+            } else {
+              next.add(type);
+            }
+            return next;
+          });
+        }}
+        showPatternHighlights={showPatternHighlights}
+        onTogglePatternHighlights={() => setShowPatternHighlights(prev => !prev)}
+        patternStrengthFilter={patternStrengthFilter}
+        onPatternStrengthFilterChange={setPatternStrengthFilter}
+      />
+
+      {/* Story 6.5: Export Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex-1" />
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              try {
+                await downloadTimelineImage('timeline-container');
+              } catch (error) {
+                console.error('Failed to export timeline image:', error);
+                alert('Failed to export timeline image. Please ensure html2canvas is installed.');
+              }
+            }}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            aria-label="Export timeline as image"
+          >
+            <Download className="w-4 h-4" />
+            Export Image
+          </button>
+          {filteredPatterns.length > 0 && (
+            <button
+              onClick={async () => {
+                try {
+                  await exportPatternSummaryPDF(filteredPatterns);
+                } catch (error) {
+                  console.error('Failed to export pattern summary PDF:', error);
+                  alert('Failed to export pattern summary PDF. Please ensure jsPDF is installed.');
+                }
+              }}
+              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+              aria-label="Export pattern summary as PDF"
+            >
+              <Download className="w-4 h-4" />
+              Export PDF
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Story 6.5: Pattern Legend */}
-      {detectedPatterns.length > 0 && (
+      {filteredPatterns.length > 0 && (
         <PatternLegend
           availableTypes={availablePatternTypes}
           visibleTypes={visiblePatternTypes}
@@ -751,30 +892,42 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             <div className="space-y-2">
               {group.events.map((event) => {
                 const eventPatterns = getPatternsForEvent(event.id);
+                const patternHighlights = getPatternHighlightsForEvent(event.id);
                 return (
-                  <article
-                    key={event.id}
-                    id={`timeline-event-${event.id}`}
-                    className="card-hover relative"
-                    onClick={() => handleEventTap(event)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleEventTap(event);
-                      }
-                    }}
-                    aria-label={`Event: ${event.summary} at ${formatTime(event.timestamp)}`}
-                  >
-                    {/* Story 6.5: Pattern Badge */}
-                    {eventPatterns.length > 0 && eventPatterns.map(pattern => (
-                      <PatternBadge
-                        key={pattern.id}
-                        pattern={pattern}
-                        onClick={() => handlePatternBadgeClick(pattern)}
+                  <React.Fragment key={event.id}>
+                    {/* Story 6.5: Pattern Highlights - render before event2 to show connection */}
+                    {showPatternHighlights && patternHighlights.map(({ pattern, occurrence }) => (
+                      <PatternHighlight
+                        key={`highlight-${pattern.id}-${occurrence.event1.id}-${occurrence.event2.id}`}
+                        event1={occurrence.event1}
+                        event2={occurrence.event2}
+                        correlationType={pattern.type}
+                        lagHours={pattern.lagHours}
+                        isVisible={visiblePatternTypes.has(pattern.type)}
                       />
                     ))}
+                    <article
+                      id={`timeline-event-${event.id}`}
+                      className="card-hover relative"
+                      onClick={() => handleEventTap(event)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleEventTap(event);
+                        }
+                      }}
+                      aria-label={`Event: ${event.summary} at ${formatTime(event.timestamp)}`}
+                    >
+                      {/* Story 6.5: Pattern Badge */}
+                      {eventPatterns.length > 0 && eventPatterns.map(pattern => (
+                        <PatternBadge
+                          key={pattern.id}
+                          pattern={pattern}
+                          onClick={() => handlePatternBadgeClick(pattern)}
+                        />
+                      ))}
 
                     <time
                       className="flex-shrink-0 text-sm text-gray-500 font-mono"
@@ -843,6 +996,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                     )}
                   </div>
                 </article>
+                  </React.Fragment>
                 );
               })}
             </div>
