@@ -1,6 +1,6 @@
 # Story 6.4: Health Insights Hub UI
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -636,7 +636,7 @@ describe('Insights Page', () => {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/6-4-health-insights-hub-ui.context.xml
 
 ### Agent Model Used
 
