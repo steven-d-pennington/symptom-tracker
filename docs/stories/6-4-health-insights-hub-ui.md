@@ -32,7 +32,7 @@ So that I can quickly understand the most important relationships in my data and
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create /insights page route and layout structure (AC: #6.4.1)
+- [x] Task 1: Create /insights page route and layout structure (AC: #6.4.1)
   - [ ] 1.1: Create `src/app/(protected)/insights/page.tsx` using Next.js App Router
   - [ ] 1.2: Add page metadata (title: "Health Insights", description)
   - [ ] 1.3: Create page header component with title "Health Insights Hub"
@@ -42,7 +42,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 1.7: Add loading state with skeleton cards
   - [ ] 1.8: Test page navigation from main nav/sidebar
 
-- [ ] Task 2: Build InsightCard component (AC: #6.4.2)
+- [x] Task 2: Build InsightCard component (AC: #6.4.2)
   - [ ] 2.1: Create `src/components/insights/InsightCard.tsx` React component
   - [ ] 2.2: Define InsightCardProps interface accepting CorrelationResult data
   - [ ] 2.3: Implement card layout: border, rounded corners, shadow, padding (Tailwind)
@@ -56,7 +56,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 2.11: Make card responsive: full width mobile, grid cell on desktop
   - [ ] 2.12: Add hover effect: subtle shadow increase on hover
 
-- [ ] Task 3: Implement insight prioritization algorithm (AC: #6.4.3)
+- [x] Task 3: Implement insight prioritization algorithm (AC: #6.4.3)
   - [ ] 3.1: Create `src/lib/services/insightPrioritization.ts` module
   - [ ] 3.2: Implement `calculatePriorityScore(correlation: CorrelationResult): number`
   - [ ] 3.3: Priority formula: score = Math.abs(correlation.coefficient) × Math.log(correlation.sampleSize)
@@ -68,7 +68,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 3.9: Group by correlation.type (food-symptom, trigger-symptom, etc.)
   - [ ] 3.10: Filter weak correlations: |coefficient| < 0.3 removed before display
 
-- [ ] Task 4: Query correlation data from repository (Foundation for AC: #6.4.3, #6.4.4, #6.4.5)
+- [x] Task 4: Query correlation data from repository (Foundation for AC: #6.4.3, #6.4.4, #6.4.5)
   - [ ] 4.1: Create `src/lib/hooks/useCorrelations.ts` custom React hook
   - [ ] 4.2: Import correlationRepository from Story 6.3
   - [ ] 4.3: Implement `useCorrelations(userId: string, timeRange: TimeRange)` hook
@@ -80,7 +80,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 4.9: Use useEffect to re-fetch when timeRange or userId changes
   - [ ] 4.10: Add error handling and loading state management
 
-- [ ] Task 5: Create correlation scatter plot visualization (AC: #6.4.4)
+- [x] Task 5: Create correlation scatter plot visualization (AC: #6.4.4)
   - [ ] 5.1: Create `src/components/insights/CorrelationScatterPlot.tsx` component
   - [ ] 5.2: Install/verify Chart.js and react-chartjs-2 dependencies (already in project)
   - [ ] 5.3: Define ScatterPlotProps: correlation data, item1 time series, item2 time series
@@ -93,7 +93,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 5.10: Add accessibility: aria-label describing chart purpose
   - [ ] 5.11: Style axis grids, ticks, and labels for readability
 
-- [ ] Task 6: Build FlareAnalytics heat map component (AC: #6.4.5)
+- [x] Task 6: Build FlareAnalytics heat map component (AC: #6.4.5)
   - [ ] 6.1: Create `src/components/insights/FlareAnalyticsHeatMap.tsx` component
   - [ ] 6.2: Define HeatMapProps: userId, timeRange
   - [ ] 6.3: Query flareRepository for all flares in time range
@@ -107,7 +107,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 6.11: Add legend showing color scale with labels
   - [ ] 6.12: Make responsive: adjust cell size and labels based on screen width
 
-- [ ] Task 7: Add time range selector (AC: #6.4.6)
+- [x] Task 7: Add time range selector (AC: #6.4.6)
   - [ ] 7.1: Create `src/components/insights/TimeRangeSelector.tsx` component
   - [ ] 7.2: Define TimeRange type: "7d" | "30d" | "90d" | "all"
   - [ ] 7.3: Implement dropdown/button group UI with 4 options: Last 7 days, Last 30 days, Last 90 days, All time
@@ -119,7 +119,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 7.9: Pass timeRange to all child components (InsightCard grid, HeatMap, etc.)
   - [ ] 7.10: Re-query correlations when timeRange changes (via useCorrelations hook)
 
-- [ ] Task 8: Implement empty state (AC: #6.4.7)
+- [x] Task 8: Implement empty state (AC: #6.4.7)
   - [ ] 8.1: Create `src/components/insights/InsightsEmptyState.tsx` component
   - [ ] 8.2: Accept props: loggedDaysCount (number), requiredDays (default 10)
   - [ ] 8.3: Calculate progress: loggedDaysCount / requiredDays × 100
@@ -131,7 +131,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 8.9: Query dailyLogsRepository to count logged days for progress calculation
   - [ ] 8.10: Conditional rendering in page: show empty state if correlations.length === 0 OR loggedDaysCount < 10
 
-- [ ] Task 9: Add medical disclaimer banner (AC: #6.4.8)
+- [x] Task 9: Add medical disclaimer banner (AC: #6.4.8)
   - [ ] 9.1: Create `src/components/insights/MedicalDisclaimerBanner.tsx` component
   - [ ] 9.2: Implement banner UI: amber/yellow background, AlertTriangle icon, disclaimer text
   - [ ] 9.3: Text: "Insights show correlations, not causation. Discuss findings with your healthcare provider."
@@ -143,7 +143,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 9.9: Make banner responsive: full width, padding adjusts on mobile
   - [ ] 9.10: Position banner at top of insights page (before insights grid)
 
-- [ ] Task 10: Create insight detail modal (AC: #6.4.9)
+- [x] Task 10: Create insight detail modal (AC: #6.4.9)
   - [ ] 10.1: Create `src/components/insights/InsightDetailModal.tsx` component
   - [ ] 10.2: Define ModalProps: isOpen, onClose, correlation (CorrelationResult)
   - [ ] 10.3: Implement modal overlay: backdrop with semi-transparent dark background
@@ -158,7 +158,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 10.12: Add focus trap: Tab key cycles within modal, focus returns to trigger on close
   - [ ] 10.13: Use existing modal patterns from project (check for Dialog/Modal components in ui/)
 
-- [ ] Task 11: Build responsive grid layout with loading skeletons (AC: #6.4.10)
+- [x] Task 11: Build responsive grid layout with loading skeletons (AC: #6.4.10)
   - [ ] 11.1: Create `src/components/insights/InsightsGrid.tsx` container component
   - [ ] 11.2: Implement CSS Grid: grid-cols-1 (mobile), md:grid-cols-2 (tablet), lg:grid-cols-3 (desktop)
   - [ ] 11.3: Add gap between grid items: gap-4 or gap-6
@@ -171,7 +171,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 11.10: Test responsive breakpoints: verify 1/2/3 column layout at different screen sizes
   - [ ] 11.11: Ensure no layout shift (CLS) when loading completes
 
-- [ ] Task 12: Integrate all components into insights page
+- [x] Task 12: Integrate all components into insights page
   - [ ] 12.1: Import all components: TimeRangeSelector, MedicalDisclaimerBanner, InsightsGrid, InsightsEmptyState, InsightDetailModal
   - [ ] 12.2: Add time range state management at page level
   - [ ] 12.3: Use useCorrelations hook to fetch correlation data based on timeRange
@@ -183,7 +183,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 12.9: Add page-level loading state while initial data loads
   - [ ] 12.10: Test full user flow: page load → time range change → click insight → view modal → close
 
-- [ ] Task 13: Add navigation link to insights page
+- [x] Task 13: Add navigation link to insights page
   - [ ] 13.1: Update main navigation/sidebar to include "Insights" link
   - [ ] 13.2: Icon: TrendingUp or LineChart from Lucide
   - [ ] 13.3: Link route: /insights
@@ -191,7 +191,7 @@ So that I can quickly understand the most important relationships in my data and
   - [ ] 13.5: Test navigation: clicking link navigates to insights page
   - [ ] 13.6: Active state: highlight "Insights" when on /insights route
 
-- [ ] Task 14: Write unit tests for components
+- [x] Task 14: Write unit tests for components
   - [ ] 14.1: Create `src/components/insights/__tests__/InsightCard.test.tsx`
   - [ ] 14.2: Test InsightCard rendering with sample CorrelationResult data
   - [ ] 14.3: Test headline formatting for different correlation types

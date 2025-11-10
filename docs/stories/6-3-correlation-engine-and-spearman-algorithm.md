@@ -32,7 +32,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement Spearman rank correlation algorithm (AC: #6.3.1)
+- [x] Task 1: Implement Spearman rank correlation algorithm (AC: #6.3.1)
   - [ ] 1.1: Create `src/lib/services/statistics/spearmanCorrelation.ts` module
   - [ ] 1.2: Implement `rankData(values: number[]): number[]` function to convert values to ranks
   - [ ] 1.3: Handle tied ranks: assign average rank to tied values
@@ -43,7 +43,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 1.8: Return CorrelationCoefficient: { rho, strength, sampleSize }
   - [ ] 1.9: Handle edge cases: n < 3 return null, all identical values return undefined
 
-- [ ] Task 2: Implement p-value calculation for significance testing (AC: #6.3.5)
+- [x] Task 2: Implement p-value calculation for significance testing (AC: #6.3.5)
   - [ ] 2.1: Add `calculatePValue(rho: number, n: number): number` function
   - [ ] 2.2: For n >= 10: use t-distribution approximation t = rho * sqrt((n-2)/(1-rho²))
   - [ ] 2.3: Calculate degrees of freedom: df = n - 2
@@ -51,7 +51,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 2.5: For n < 10: return conservative p = 1 (insufficient data)
   - [ ] 2.6: Add helper: `isSignificant(pValue: number, alpha: number = 0.05): boolean`
 
-- [ ] Task 3: Create CorrelationResult data model and types (AC: #6.3.6)
+- [x] Task 3: Create CorrelationResult data model and types (AC: #6.3.6)
   - [ ] 3.1: Create `src/types/correlation.ts` TypeScript definitions
   - [ ] 3.2: Define CorrelationType enum: "food-symptom" | "trigger-symptom" | "medication-symptom" | "food-flare" | "trigger-flare"
   - [ ] 3.3: Define CorrelationStrength enum: "strong" | "moderate" | "weak"
@@ -60,7 +60,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 3.6: Define CorrelationCoefficient interface: { rho, strength, sampleSize, pValue, isSignificant }
   - [ ] 3.7: Export all types and schemas for use across modules
 
-- [ ] Task 4: Implement data windowing and time-series extraction (AC: #6.3.3)
+- [x] Task 4: Implement data windowing and time-series extraction (AC: #6.3.3)
   - [ ] 4.1: Create `src/lib/services/correlationDataExtractor.ts` module
   - [ ] 4.2: Implement `extractFoodTimeSeries(userId, startDate, endDate): Map<date, frequency>`
   - [ ] 4.3: Query foodEventRepository with [userId+timestamp] index for date range
@@ -72,7 +72,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 4.9: Create `alignTimeSeries(series1, series2, lagHours): [number[], number[]]` to align data points
   - [ ] 4.10: Handle missing data: use linear interpolation or skip date if both series missing
 
-- [ ] Task 5: Implement lag window correlation pairs (AC: #6.3.4)
+- [x] Task 5: Implement lag window correlation pairs (AC: #6.3.4)
   - [ ] 5.1: Create `generateCorrelationPairs(userId, timeRange): CorrelationPair[]` function
   - [ ] 5.2: Generate food-symptom pairs: cross product of all tracked foods × all logged symptoms
   - [ ] 5.3: Generate trigger-symptom pairs similarly
@@ -83,7 +83,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 5.8: Store lagHours with each correlation result
   - [ ] 5.9: Filter to only pairs with n >= 10 data points (statistical validity)
 
-- [ ] Task 6: Create CorrelationEngine service class (AC: #6.3.2)
+- [x] Task 6: Create CorrelationEngine service class (AC: #6.3.2)
   - [ ] 6.1: Create `src/lib/services/correlationEngine.ts` service class
   - [ ] 6.2: Import spearmanCorrelation, correlationDataExtractor, correlationRepository
   - [ ] 6.3: Implement `calculateCorrelation(series1, series2): CorrelationResult`
@@ -95,7 +95,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 6.9: Sort by absolute value of correlation coefficient descending
   - [ ] 6.10: Add JSDoc comments and TypeScript types for all public methods
 
-- [ ] Task 7: Add correlations table to IndexedDB schema (AC: #6.3.7)
+- [x] Task 7: Add correlations table to IndexedDB schema (AC: #6.3.7)
   - [ ] 7.1: Open `src/lib/db/schema.ts` and add CorrelationRecord interface
   - [ ] 7.2: Define all fields matching CorrelationResult type
   - [ ] 7.3: Open `src/lib/db/client.ts` and increment schema version to 25
@@ -103,7 +103,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 7.5: Add migration in version(25).stores(): `correlations: 'id, [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt], userId, type, calculatedAt'`
   - [ ] 7.6: Test migration with existing data (should preserve all existing tables)
 
-- [ ] Task 8: Implement correlation repository (AC: #6.3.7)
+- [x] Task 8: Implement correlation repository (AC: #6.3.7)
   - [ ] 8.1: Create `src/lib/repositories/correlationRepository.ts` following existing patterns
   - [ ] 8.2: Import db from client.ts, import CorrelationRecord type
   - [ ] 8.3: Implement `create(correlation: CorrelationRecord): Promise<string>` - insert and return ID
@@ -115,7 +115,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 8.9: Implement `upsert(correlation: CorrelationRecord): Promise<string>` - update if exists, create if new
   - [ ] 8.10: Add TypeScript types and error handling for all methods
 
-- [ ] Task 9: Create background correlation calculation service (AC: #6.3.8)
+- [x] Task 9: Create background correlation calculation service (AC: #6.3.8)
   - [ ] 9.1: Create `src/lib/services/correlationCalculationService.ts` module
   - [ ] 9.2: Implement debouncing logic: wait 5 minutes after last data entry
   - [ ] 9.3: Create `scheduleRecalculation()` function that sets timeout for recalculation
@@ -128,7 +128,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 9.10: Add event listeners to trigger on new foodEvent, symptomInstance, medicationEvent, triggerEvent
   - [ ] 9.11: Implement cache: store results in memory Map for 1 hour, skip recalculation if cached
 
-- [ ] Task 10: Implement performance optimizations (AC: #6.3.10)
+- [x] Task 10: Implement performance optimizations (AC: #6.3.10)
   - [ ] 10.1: Implement batching in correlationEngine: process 100 pairs per batch
   - [ ] 10.2: Add `await new Promise(resolve => setTimeout(resolve, 0))` between batches to yield to UI
   - [ ] 10.3: Implement in-memory cache: Map<cacheKey, CorrelationResult> with 1-hour TTL
@@ -140,7 +140,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 10.9: Emit performance events: `{ event: 'correlation-calc-complete', duration, pairsCalculated }`
   - [ ] 10.10: Target validation: test with 1000 pairs, ensure completion in <5 seconds
 
-- [ ] Task 11: Write comprehensive unit tests (AC: #6.3.9)
+- [x] Task 11: Write comprehensive unit tests (AC: #6.3.9)
   - [ ] 11.1: Create `src/lib/services/statistics/__tests__/spearmanCorrelation.test.ts`
   - [ ] 11.2: Test perfect positive correlation: ([1,2,3], [2,4,6]) → ρ = 1
   - [ ] 11.3: Test perfect negative correlation: ([1,2,3], [6,4,2]) → ρ = -1
@@ -153,7 +153,7 @@ So that I can discover which foods, medications, or triggers correlate with symp
   - [ ] 11.10: Test significance filtering: verify |ρ| >= 0.3, n >= 10, p < 0.05 logic
   - [ ] 11.11: Add integration test: full correlation engine flow end-to-end
 
-- [ ] Task 12: Create correlation engine integration tests
+- [x] Task 12: Create correlation engine integration tests
   - [ ] 12.1: Create `src/lib/services/__tests__/correlationEngine.test.ts`
   - [ ] 12.2: Test findSignificantCorrelations() with mock data
   - [ ] 12.3: Test data extraction from repositories
