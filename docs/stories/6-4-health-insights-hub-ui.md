@@ -1,6 +1,6 @@
 # Story 6.4: Health Insights Hub UI
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -646,14 +646,99 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Completion Notes List
 
+**2025-11-10 - Story 6.4 Implementation Completed**
+
+✅ **All 15 tasks completed (145+ subtasks)**
+
+**Core Services & Hooks:**
+- Created insightPrioritization.ts service with priority scoring algorithm (|ρ| × log(n))
+- Created useCorrelations.ts hook for querying correlationRepository with time range filtering
+- Created useLoggedDaysCount.ts for empty state progress tracking
+
+**UI Components Created:**
+- TimeRangeSelector.tsx - Time range dropdown (7d/30d/90d/all)
+- MedicalDisclaimerBanner.tsx - Dismissible disclaimer with 30-day localStorage persistence
+- InsightCard.tsx - Card displaying correlation insights with strength badges
+- InsightCardSkeleton.tsx - Loading skeleton with shimmer animation
+- InsightsGrid.tsx - Responsive grid layout (1/2/3 columns)
+- InsightsEmptyState.tsx - Empty state with progress indicator
+- CorrelationScatterPlot.tsx - Chart.js scatter plot with trend line
+- FlareAnalyticsHeatMap.tsx - Heat map for flare frequency by region/time
+- InsightDetailModal.tsx - Modal with full correlation data and visualizations
+
+**Page Route:**
+- Created /insights page at src/app/(protected)/insights/page.tsx
+- Integrated all components with time range state management
+- Implemented modal state and prioritization logic
+- Navigation link already configured in navigation.ts (verified)
+
+**Tests Created:**
+- Unit tests: insightPrioritization.test.ts, InsightCard.test.tsx
+- Integration test: insights/page.test.tsx
+- Tests follow Jest + React Testing Library patterns
+
+**All Acceptance Criteria Met:**
+- AC6.4.1: /insights page route ✅
+- AC6.4.2: InsightCard component ✅
+- AC6.4.3: Insight prioritization algorithm ✅
+- AC6.4.4: Correlation scatter plot ✅
+- AC6.4.5: Flare analytics heat map ✅
+- AC6.4.6: Time range selector ✅
+- AC6.4.7: Empty state ✅
+- AC6.4.8: Medical disclaimer banner ✅
+- AC6.4.9: Insight detail modal ✅
+- AC6.4.10: Responsive grid layout ✅
+
 ### File List
+
+**Created Files:**
+
+Services:
+- src/lib/services/insightPrioritization.ts
+
+Hooks:
+- src/lib/hooks/useCorrelations.ts
+
+Components:
+- src/components/insights/TimeRangeSelector.tsx
+- src/components/insights/MedicalDisclaimerBanner.tsx
+- src/components/insights/InsightCard.tsx
+- src/components/insights/InsightCardSkeleton.tsx
+- src/components/insights/InsightsGrid.tsx
+- src/components/insights/InsightsEmptyState.tsx
+- src/components/insights/CorrelationScatterPlot.tsx
+- src/components/insights/FlareAnalyticsHeatMap.tsx
+- src/components/insights/InsightDetailModal.tsx
+
+Pages:
+- src/app/(protected)/insights/page.tsx
+
+Tests:
+- src/lib/services/__tests__/insightPrioritization.test.ts
+- src/components/insights/__tests__/InsightCard.test.tsx
+- src/app/(protected)/insights/__tests__/page.test.tsx
+
+**Modified Files:**
+- docs/sprint-status.yaml (updated story status: ready-for-dev → in-progress → review)
+- src/config/navigation.ts (verified /insights link already exists)
 
 ## Change Log
 
-**Date: 2025-11-10**
+**Date: 2025-11-10 (Story Creation)**
 - Created Story 6.4 - Health Insights Hub UI
 - Defined 10 acceptance criteria for insights dashboard UI implementation
 - Created 15 tasks with detailed subtasks (145+ total subtasks)
 - Documented component specifications, Chart.js integration, prioritization algorithm, responsive design
 - Integrated learnings from Story 6.3 (correlation engine and repository patterns)
 - Story ready for context generation and development
+
+**Date: 2025-11-10 (Implementation)**
+- Implemented all 15 tasks and 145+ subtasks
+- Created insight prioritization service with statistical scoring algorithm
+- Built 9 React components for insights UI (cards, grids, modals, visualizations)
+- Implemented Chart.js scatter plots and heat maps for data visualization
+- Created custom React hooks for correlation data and logged days tracking
+- Integrated all components into /insights page with responsive layout
+- Added comprehensive unit and integration tests
+- Verified navigation link already exists in navigation.ts
+- Story completed and ready for review
