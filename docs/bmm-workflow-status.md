@@ -2,7 +2,7 @@
 
 - **Project:** symptom-tracker
 - **Created:** 2025-10-18
-- **Last Updated:** 2025-11-10 (Epic 6: Stories 6.3 done, 6.4 & 6.5 in progress)
+- **Last Updated:** 2025-11-10 (Epic 6: Story 6.8 added, 6.6 deferred, 6.7 next)
 - **Project Level:** 2
 - **Project Type:** web
 - **Context:** brownfield
@@ -12,12 +12,12 @@
 ## Current State
 
 - **Current Phase:** Phase 4: Implementation (In Progress)
-- **Current Workflow:** Epic 6 (UX Redesign & Navigation Overhaul) - In Progress
-- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7.1 done. Epic 6: Stories 6.1 & 6.3 done, 6.2 & 6.4 in-progress, 6.5 ready-for-dev.
-- **Next Action:** Continue development on Stories 6.2 & 6.4, or begin Story 6.5 (Timeline Pattern Detection)
-- **Command to Run:** /bmad:bmm:workflows:dev-story (to implement Story 6.5)
-- **Agent to Load:** dev (Developer) for implementation
-- **Note:** Epic 6 critical path progressing. Story 6.3 (Correlation Engine) completed with 37/37 tests passing. Story 6.4 (Health Insights Hub UI) in-progress. Story 6.5 (Timeline Pattern Detection) drafted and context generated - ready for development.
+- **Current Workflow:** Epic 6 (Health Insights & Correlation Analytics) - In Progress
+- **Overall Progress:** Epics 3.5, 3.6 complete. Epic 3.7.1 done. Epic 6: Stories 6.1 & 6.3 done, 6.2 & 6.4 in-progress, 6.5 ready-for-dev, 6.7 & 6.8 in backlog (6.6 deferred to end).
+- **Next Action:** Create detailed story file for Story 6.7 (Treatment Effectiveness Tracker) using Scrum Master
+- **Command to Run:** /bmad:bmm:agents:sm Create detailed story file for Story 6.7
+- **Agent to Load:** sm (Scrum Master) to create story file, then dev (Developer) for implementation
+- **Note:** Epic 6 story sequencing updated. Story 6.6 (Body Map Customization) deferred to end of epic (after 6.8). Story 6.8 (DevData Controls Enhancement) added to support analytics testing. Priority order now: 6.7 → 6.8 → 6.6.
 
 ---
 
@@ -42,12 +42,13 @@
 
 #### BACKLOG (Not Yet Drafted)
 
-**Epic 6: UX Redesign & Navigation Overhaul (PRIORITY - Required for Go-Live)**
+**Epic 6: Health Insights & Correlation Analytics (PRIORITY - Required for Go-Live)**
 
 | Epic | Story | ID | Title | Description | Points | Priority |
 |------|-------|-----|-------|-------------|--------|----------|
-| 6 | 6 | 6.6 | Body Map Gender/Type Customization | Enhanced SVG variants (female/male/neutral), body-type selection, settings storage | 8 | MEDIUM |
-| 6 | 7 | 6.7 | Treatment Effectiveness Tracker | Algorithm to correlate interventions with recovery time, effectiveness display in insights | 8 | MEDIUM |
+| 6 | 7 | 6.7 | Treatment Effectiveness Tracker | Algorithm to correlate interventions with recovery time, effectiveness display in insights | 8 | HIGH |
+| 6 | 8 | 6.8 | DevData Controls Enhancement | Generate daily logs, correlations, intentional patterns; add analytics-showcase scenario | 8 | HIGH |
+| 6 | 6 | 6.6 | Body Map Gender/Type Customization | Enhanced SVG variants (female/male/neutral), body-type selection, settings storage | 8 | MEDIUM (Deferred) |
 
 **Epic 4: Photo Documentation (On Hold - Defer to Epic 6)**
 
@@ -64,7 +65,7 @@
 |------|-------|-----|-------|------|--------|----------|
 | 2 | 8 | 2.8 | Resolved Flares Archive | story-2.8.md | 5 | LOW |
 
-**Total in backlog:** 8 stories (2 Epic 6, 4 Epic 4, 1 Epic 2, 1 Epic 3.7)
+**Total in backlog:** 9 stories (3 Epic 6, 4 Epic 4, 1 Epic 2, 1 Epic 3.7)
 
 #### IN PROGRESS (Approved for Development / Review)
 
@@ -99,40 +100,38 @@
 
 ### Next Action Required
 
-**🎯 Epic 6 Ready — UX Redesign Critical for Go-Live**
+**🎯 Epic 6 In Progress — Health Insights & Correlation Analytics**
 
-Epic 6 (UX Redesign & Navigation Overhaul) has been fully designed and is ready for implementation. This epic is **CRITICAL** for production go-live and should be prioritized over Epic 4.
+Epic 6 (Health Insights & Correlation Analytics) is progressing well with Stories 6.1 & 6.3 complete, 6.2 & 6.4 in progress, and 6.5 ready for development.
 
-**What Epic 6 Delivers:**
-- Fixes navigation confusion (Flares → Body Map, new Insights section)
-- Health Insights analytics hub with correlation detection
-- Daily Log unified tracking (mood, sleep, notes in one place)
-- Timeline with pattern detection
-- Body map enhancements (gender/body-type variants)
-- Treatment effectiveness tracking
-
-**Design Documentation:**
-- **UX Specification:** [docs/ux-design-specification.md](./ux-design-specification.md)
-- **Interactive Mockups:**
-  - [docs/ux-health-insights-demo.html](./ux-health-insights-demo.html)
-  - [docs/ux-daily-log-demo.html](./ux-daily-log-demo.html)
+**Epic 6 Current Status:**
+- ✅ Story 6.1: Navigation Restructure & shadcn/ui (DONE)
+- 🔄 Story 6.2: Daily Log Page (IN PROGRESS)
+- ✅ Story 6.3: Correlation Engine (DONE - 37/37 tests passing)
+- 🔄 Story 6.4: Health Insights Hub UI (IN PROGRESS)
+- 📋 Story 6.5: Timeline Pattern Detection (READY FOR DEV)
+- 📋 Story 6.7: Treatment Effectiveness Tracker (NEXT - Backlog)
+- 📋 Story 6.8: DevData Controls Enhancement (Backlog)
+- 📋 Story 6.6: Body Map Gender/Type Customization (Backlog - Deferred to end)
 
 **Next Steps:**
-1. **Command:** `/bmad:bmm:workflows:create-story` to draft Story 6.1 (Navigation Restructure)
-2. **Agent:** Load `sm` (Scrum Master) to create stories or `dev` (Developer) to begin implementation
-3. **Priority Order:** 6.1 → 6.2 → 6.3 → 6.4 → 6.5 → 6.6 → 6.7
-4. **Epic:** Epic 6 (76 total story points estimated - ~14 weeks)
-5. **Must-Have for MVP:** Stories 6.1, 6.2, 6.4, 6.5 (47 points - ~8 weeks)
+1. **Command:** `/bmad:bmm:agents:sm Create detailed story file for Story 6.7`
+2. **Agent:** Load `sm` (Scrum Master) to create Story 6.7 detailed markdown
+3. **Updated Priority Order:** 6.7 → 6.8 → 6.6 (6.6 deferred to end of epic)
+4. **Epic:** Epic 6 (84 total story points - Story 6.8 added)
+5. **Rationale:** Story 6.7 (Treatment Effectiveness) and 6.8 (DevData Enhancement) needed before 6.6 (Body Map Customization) for testing analytics features
 
-**Why Epic 6 First:**
-- Addresses user-reported navigation confusion
-- Fixes broken analytics page
-- Adds competitive differentiator (correlation insights)
-- Required for production go-live credibility
+**What Story 6.7 Delivers:**
+- Treatment effectiveness calculation algorithm
+- Tracker showing intervention correlation with symptom improvement
+- Data-driven treatment insights for medical consultations
+- Integration with correlation engine and insights hub
 
 ---
 
 ## Decision Log
+
+- **2025-11-10:** Epic 6 story sequencing updated. Created Story 6.8 (DevData Controls Enhancement for Analytics Support, 8 points) to generate comprehensive test data for Epic 6 analytics features. Story includes: daily log generator, correlation engine integration, intentional pattern generators, analytics-showcase scenario, pattern-detection scenario, and UI improvements for generation statistics. Story 6.6 (Body Map Gender/Type Customization) deferred to end of Epic 6 - new sequence is 6.7 → 6.8 → 6.6. Next action: Create detailed story file for Story 6.7 (Treatment Effectiveness Tracker).
 
 - **2025-11-10:** Created Story 6.5: Timeline Pattern Detection (13 points). Story drafted and context generated. Extends existing TimelineView component with pattern detection and visualization capabilities. Features include: correlation data integration, visual pattern highlighting (colored bands), pattern detection algorithm (sliding window + day-of-week), pattern badges/icons, timeline layer toggle, pattern detail panel, export functionality (image + PDF), performance optimizations (virtualization, lazy loading). Story ready-for-dev. Context file: docs/stories/6-5-timeline-pattern-detection.context.xml
 

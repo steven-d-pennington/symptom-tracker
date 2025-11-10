@@ -14,7 +14,9 @@ export type ScenarioType =
   | 'trigger-analysis'
   | 'problem-areas'
   | 'comprehensive'
-  | 'stress-test';
+  | 'stress-test'
+  | 'analytics-showcase'
+  | 'pattern-detection';
 
 export interface Scenario {
   id: ScenarioType;
@@ -23,6 +25,7 @@ export interface Scenario {
   icon: string;
   recommendedYears: number;
   config: (years?: number) => GeneratorConfig;
+  group: 'basic' | 'analytics' | 'performance'; // Story 6.8: Scenario grouping
 }
 
 /**
@@ -34,6 +37,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
     name: 'Quick Start',
     description: 'Lightweight 2-week dataset for quick exploration. Includes variety of events with enough data to preview features.',
     icon: '🎯',
+    group: 'basic',
     recommendedYears: 2 / 52, // 2 weeks
     config: (years = 2 / 52) => ({
       timeRange: {
@@ -78,6 +82,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
     name: 'Flare Progression',
     description: 'Optimized for analytics testing with rich flare histories, interventions, and severity progressions. Generates enough data for all analytics features.',
     icon: '🔥',
+    group: 'basic',
     recommendedYears: 1,
     config: (years = 1) => ({
       timeRange: {
@@ -122,6 +127,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
     name: 'Food Correlations',
     description: 'High-confidence food patterns with synergistic combinations and clear delay windows. Optimized for food diary and correlation analysis.',
     icon: '🍽️',
+    group: 'basic',
     recommendedYears: 1,
     config: (years = 1) => ({
       timeRange: {
@@ -166,6 +172,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
     name: 'Trigger Analysis',
     description: 'Clear trigger-symptom correlations with realistic time delays. Optimized for testing correlation and trigger analysis features.',
     icon: '⚠️',
+    group: 'basic',
     recommendedYears: 1,
     config: (years = 1) => ({
       timeRange: {
@@ -210,6 +217,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
     name: 'Problem Areas',
     description: 'Clustered flares in specific regions (3+ per region) to test Problem Areas analytics.',
     icon: '🗺️',
+    group: 'basic',
     recommendedYears: 1,
     config: (years = 1) => ({
       timeRange: {
@@ -254,6 +262,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
     name: 'Comprehensive',
     description: 'All features enabled with realistic data volumes. Perfect for complete application testing.',
     icon: '📊',
+    group: 'basic',
     recommendedYears: 1,
     config: (years = 1) => ({
       timeRange: {
@@ -298,6 +307,7 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
     name: 'Stress Test',
     description: 'High-volume data for performance testing. Tests UI rendering and database performance.',
     icon: '🚀',
+    group: 'performance',
     recommendedYears: 2,
     config: (years = 2) => ({
       timeRange: {
@@ -334,6 +344,102 @@ export const SCENARIOS: Record<ScenarioType, Scenario> = {
         generate: true,
         photosPerFlare: { min: 2, max: 4 },
       },
+    }),
+  },
+
+  'analytics-showcase': {
+    id: 'analytics-showcase',
+    name: 'Analytics Showcase',
+    description: 'Demonstrates correlation analysis, treatment effectiveness, and pattern detection with strong intentional patterns for insights testing. High correlation strength, 80% daily log coverage, 12-month timeframe.',
+    icon: '📊',
+    group: 'analytics',
+    recommendedYears: 1,
+    config: (years = 1) => ({
+      timeRange: {
+        daysBack: Math.floor(years * 365),
+        yearsToGenerate: years,
+      },
+      flares: {
+        count: { min: 20, max: 25 }, // 20-25 flares for strong clustering
+        regionClustering: true,
+        clusteringIntensity: 'high', // High clustering for clear patterns
+        generateEvents: true,
+        eventsPerFlare: { min: 6, max: 10 },
+        interventionProbability: 0.8, // High intervention rate for treatment effectiveness
+      },
+      foodPatterns: {
+        repeatCombinations: true,
+        correlationStrength: 'high', // Strong correlations (0.85 target)
+        patternsToCreate: 4, // Strong food-symptom relationships
+      },
+      triggers: {
+        correlationWithSymptoms: true,
+        delayWindow: 'varied',
+        correlationRate: 0.8, // High correlation rate for clear patterns
+      },
+      uxEvents: {
+        generate: true,
+        eventsPerDay: { min: 5, max: 12 },
+      },
+      bodyMapLocations: {
+        generate: true,
+        locationsPerSymptom: { min: 1, max: 2 },
+      },
+      photoAttachments: {
+        generate: true,
+        photosPerFlare: { min: 1, max: 2 },
+      },
+      // Story 6.8: Analytics-specific configuration
+      dailyLogCoverage: 0.8, // 80% daily log coverage (very high)
+      intentionalPatterns: true, // Enable intentional recurring patterns
+    }),
+  },
+
+  'pattern-detection': {
+    id: 'pattern-detection',
+    name: 'Pattern Detection',
+    description: 'Focused dataset with recurring patterns and consistent time windows for testing timeline pattern highlighting and detection. 6-month concentrated timeframe with day-of-week patterns, food delay windows, and medication effectiveness patterns.',
+    icon: '🔍',
+    group: 'analytics',
+    recommendedYears: 0.5,
+    config: (years = 0.5) => ({
+      timeRange: {
+        daysBack: Math.floor(years * 365),
+        yearsToGenerate: years,
+      },
+      flares: {
+        count: { min: 10, max: 14 }, // Fewer flares, more concentrated
+        regionClustering: true,
+        clusteringIntensity: 'high', // High clustering for pattern clarity
+        generateEvents: true,
+        eventsPerFlare: { min: 5, max: 8 },
+        interventionProbability: 0.7,
+      },
+      foodPatterns: {
+        repeatCombinations: true,
+        correlationStrength: 'high', // Consistent delay windows
+        patternsToCreate: 3, // Focused patterns (dairy → headache)
+      },
+      triggers: {
+        correlationWithSymptoms: true,
+        delayWindow: 'short', // Consistent 6-12 hour delays
+        correlationRate: 0.85, // Very high - same triggers → same symptoms repeatedly
+      },
+      uxEvents: {
+        generate: true,
+        eventsPerDay: { min: 4, max: 10 },
+      },
+      bodyMapLocations: {
+        generate: true,
+        locationsPerSymptom: { min: 1, max: 1 },
+      },
+      photoAttachments: {
+        generate: false, // Skip photos for pattern focus
+        photosPerFlare: { min: 0, max: 0 },
+      },
+      // Story 6.8: Pattern detection configuration
+      dailyLogCoverage: 0.7, // 70% coverage for good daily pattern visibility
+      intentionalPatterns: true, // Enable recurring sequence patterns
     }),
   },
 };

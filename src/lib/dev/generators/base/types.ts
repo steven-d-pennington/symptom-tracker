@@ -51,6 +51,9 @@ export interface GeneratorConfig {
     generate: boolean;
     photosPerFlare: { min: number; max: number };
   };
+  // Story 6.8: Analytics generation configuration
+  dailyLogCoverage?: number; // 0-1, percentage of days to generate daily logs (default 0.6 = 60%)
+  intentionalPatterns?: boolean; // Whether to generate intentional recurring patterns
 }
 
 export interface GeneratedDataResult {
@@ -73,6 +76,12 @@ export interface GeneratedDataResult {
   startDate: string;
   endDate: string;
   userId: string;
+  // Story 6.8: Analytics generation statistics
+  dailyLogsCreated: number;
+  correlationsGenerated: number;
+  significantCorrelations: number;
+  treatmentEffectivenessRecordsCreated: number;
+  patternsGenerated: number;
 }
 
 export interface FoodCombinationPattern {
