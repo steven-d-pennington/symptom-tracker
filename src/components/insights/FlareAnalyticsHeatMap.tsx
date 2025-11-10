@@ -112,7 +112,7 @@ export function FlareAnalyticsHeatMap({ userId, timeRange }: FlareAnalyticsHeatM
         const flares = await flareRepository.listByDateRange(userId, startDate, endDate);
 
         // Extract unique body regions
-        const uniqueRegions = Array.from(new Set(flares.map((f) => f.bodyRegion))).sort();
+        const uniqueRegions = Array.from(new Set(flares.map((f) => f.bodyRegionId))).sort();
         setRegions(uniqueRegions);
 
         // Get time periods
@@ -128,7 +128,7 @@ export function FlareAnalyticsHeatMap({ userId, timeRange }: FlareAnalyticsHeatM
 
             // Filter flares for this region and period
             // (Simplified: count all flares in region for now)
-            const regionFlares = flares.filter((f) => f.bodyRegion === region);
+            const regionFlares = flares.filter((f) => f.bodyRegionId === region);
             const count = regionFlares.length;
 
             cellData.push({

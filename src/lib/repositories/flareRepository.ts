@@ -228,6 +228,38 @@ export async function getResolvedFlares(userId: string): Promise<FlareWithLocati
 }
 
 /**
+ * Retrieves all flares for a user within a date range (Story 6.4).
+ * Filters by flare startDate to find flares that occurred in the time period.
+ *
+ * @param userId - User ID to query
+ * @param startDate - Start of date range (timestamp)
+ * @param endDate - End of date range (timestamp)
+ * @returns Promise resolving to array of FlareWithLocations within date range
+ */
+export async function listByDateRange(
+  userId: string,
+  startDate: number,
+  endDate: number
+): Promise<FlareWithLocations[]> {
+  // Query all flares for user and filter by date range
+  const flares = await db.flares
+    .where("userId")
+    .equals(userId)
+    .filter((flare) => {
+      // Include flares that started within the date range
+      if (startDate === 0) {
+        // 'all' time range - include all flares up to endDate
+        return flare.startDate <= endDate;
+      }
+      return flare.startDate >= startDate && flare.startDate <= endDate;
+    })
+    .toArray();
+
+  // Enrich each flare with body locations
+  return Promise.all(flares.map(enrichFlareWithLocations));
+}
+
+/**
  * Adds a new event to a flare's history.
  * Events are never modified or deleted (append-only, ADR-003).
  * Generates UUID and timestamp automatically.
@@ -449,6 +481,7 @@ export const flareRepository = {
   getFlareById,
   getActiveFlares,
   getResolvedFlares,
+  listByDateRange,
   addFlareEvent,
   getFlareHistory,
   deleteFlare,

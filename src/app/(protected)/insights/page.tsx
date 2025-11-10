@@ -137,13 +137,3 @@ export default function InsightsPage() {
     </div>
   );
 }
-
-/**
- * Page Metadata
- *
- * For SEO and browser tab display
- */
-export const metadata = {
-  title: 'Health Insights - Symptom Tracker',
-  description: 'Discover patterns and correlations in your health data',
-};

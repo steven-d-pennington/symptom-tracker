@@ -20,6 +20,7 @@ import {
   Tooltip,
   Legend,
   ChartOptions,
+  ChartData,
 } from 'chart.js';
 
 // Register Chart.js components
@@ -101,7 +102,7 @@ export function CorrelationScatterPlot({
 }: CorrelationScatterPlotProps) {
   const trendLine = calculateTrendLine(dataPoints);
 
-  const chartData = {
+  const chartData: ChartData<'scatter', ScatterDataPoint[], unknown> = {
     datasets: [
       {
         label: 'Data Points',
@@ -121,7 +122,7 @@ export function CorrelationScatterPlot({
         borderDash: [5, 5],
         pointRadius: 0,
         pointHoverRadius: 0,
-      },
+      } as any,
     ],
   };
 
