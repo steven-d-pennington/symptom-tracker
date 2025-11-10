@@ -11,8 +11,15 @@ import { triggerRepository } from '@/lib/repositories/triggerRepository';
 import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
 import { foodRepository } from '@/lib/repositories/foodRepository';
 import { symptomInstanceRepository } from '@/lib/repositories/symptomInstanceRepository';
+import { correlationRepository } from '@/lib/repositories/correlationRepository';
 import EventDetailModal from './EventDetailModal';
+import PatternLegend from './PatternLegend';
+import PatternBadge from './PatternBadge';
+import PatternDetailPanel from './PatternDetailPanel';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+import type { CorrelationRecord } from '@/lib/db/schema';
+import type { CorrelationType } from '@/types/correlation';
+import { detectRecurringSequences, type DetectedPattern } from '@/lib/services/patternDetectionService';
 
 // Timeline event types
 export type TimelineEventType = 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved' | 'food';
@@ -53,6 +60,26 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedFood, setExpandedFood] = useState<Set<string>>(new Set());
   const [mountTimestamp] = useState(() => Date.now()); // Unique value per mount
+
+  // Story 6.5: Pattern detection correlation state
+  const [correlations, setCorrelations] = useState<CorrelationRecord[]>([]);
+  const [correlationsLoading, setCorrelationsLoading] = useState(false);
+  const [correlationsError, setCorrelationsError] = useState<string | null>(null);
+
+  // Story 6.5: Detected patterns state
+  const [detectedPatterns, setDetectedPatterns] = useState<DetectedPattern[]>([]);
+  const [patternsLoading, setPatternsLoading] = useState(false);
+
+  // Story 6.5: Pattern visibility and detail panel state
+  const [visiblePatternTypes, setVisiblePatternTypes] = useState<Set<CorrelationType>>(new Set([
+    'food-symptom',
+    'trigger-symptom',
+    'medication-symptom',
+    'food-flare',
+    'trigger-flare'
+  ]));
+  const [selectedPattern, setSelectedPattern] = useState<DetectedPattern | null>(null);
+  const [isPatternPanelOpen, setIsPatternPanelOpen] = useState(false);
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -403,6 +430,55 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
+  // Story 6.5: Load correlations for pattern detection
+  const loadCorrelations = async (startTime: number, endTime: number) => {
+    try {
+      if (!userId) {
+        return;
+      }
+
+      setCorrelationsLoading(true);
+      setCorrelationsError(null);
+
+      console.log("🔗 TimelineView: Loading correlations for pattern detection", {
+        userId,
+        timeRange: {
+          start: new Date(startTime).toLocaleString(),
+          end: new Date(endTime).toLocaleString(),
+        }
+      });
+
+      // Query all correlations for this user
+      const allCorrelations = await correlationRepository.findAll(userId);
+
+      // Filter correlations by timeline date range
+      // We want correlations that were calculated during or before this time range
+      // and could apply to events in this range
+      const filteredCorrelations = allCorrelations.filter(correlation => {
+        // Include all correlations for now - we'll refine filtering as we build pattern detection
+        // Pattern detection algorithm (Task 4) will determine which correlations are relevant
+        return true;
+      });
+
+      console.log("✅ Correlations loaded:", {
+        total: allCorrelations.length,
+        filtered: filteredCorrelations.length,
+        byType: {
+          'food-symptom': filteredCorrelations.filter(c => c.type === 'food-symptom').length,
+          'trigger-symptom': filteredCorrelations.filter(c => c.type === 'trigger-symptom').length,
+          'medication-symptom': filteredCorrelations.filter(c => c.type === 'medication-symptom').length,
+        }
+      });
+
+      setCorrelations(filteredCorrelations);
+    } catch (err) {
+      console.error('Error loading correlations:', err);
+      setCorrelationsError('Failed to load pattern correlations');
+    } finally {
+      setCorrelationsLoading(false);
+    }
+  };
+
   // Initial load - load only today
   // mountTimestamp ensures this runs on EVERY mount (Story 3.5.13 fix)
   useEffect(() => {
@@ -417,7 +493,17 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       console.log("🔄 TimelineView: Loading initial events (mount:", mountTimestamp, ") for userId:", userId);
 
       // Load only today's events
-      await loadEvents(new Date());
+      const today = new Date();
+      await loadEvents(today);
+
+      // Story 6.5: Load correlations for pattern detection
+      // Calculate date range for correlation filtering
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      await loadCorrelations(startOfDay.getTime(), endOfDay.getTime());
 
       setLoading(false);
     };
@@ -425,6 +511,38 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     loadInitialEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, mountTimestamp]); // Re-run when userId changes OR component remounts
+
+  // Story 6.5: Run pattern detection when events and correlations are loaded
+  useEffect(() => {
+    if (events.length === 0 || correlations.length === 0) {
+      // No patterns to detect without both events and correlations
+      setDetectedPatterns([]);
+      return;
+    }
+
+    setPatternsLoading(true);
+
+    // Debounce pattern detection by 500ms
+    const timeoutId = setTimeout(() => {
+      console.log('🔍 Running pattern detection...', {
+        events: events.length,
+        correlations: correlations.length,
+      });
+
+      const patterns = detectRecurringSequences(events, correlations);
+      setDetectedPatterns(patterns);
+      setPatternsLoading(false);
+
+      console.log('✅ Pattern detection complete:', {
+        patternsFound: patterns.length,
+      });
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+      setPatternsLoading(false);
+    };
+  }, [events, correlations]);
 
   // Group events by day
   const groupedEvents = useMemo((): DayGroup[] => {
@@ -543,6 +661,45 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     loadEvents(currentDate);
   };
 
+  // Story 6.5: Pattern interaction handlers
+  const handleTogglePatternType = (type: CorrelationType) => {
+    setVisiblePatternTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
+
+  const handlePatternBadgeClick = (pattern: DetectedPattern) => {
+    setSelectedPattern(pattern);
+    setIsPatternPanelOpen(true);
+  };
+
+  const handlePatternPanelClose = () => {
+    setIsPatternPanelOpen(false);
+    setSelectedPattern(null);
+  };
+
+  // Story 6.5: Get patterns for a specific event
+  const getPatternsForEvent = (eventId: string): DetectedPattern[] => {
+    return detectedPatterns.filter(pattern =>
+      pattern.occurrences.some(occ =>
+        occ.event1.id === eventId || occ.event2.id === eventId
+      ) && visiblePatternTypes.has(pattern.type)
+    );
+  };
+
+  // Story 6.5: Extract available pattern types from detected patterns
+  const availablePatternTypes = useMemo((): CorrelationType[] => {
+    const types = new Set<CorrelationType>();
+    detectedPatterns.forEach(pattern => types.add(pattern.type));
+    return Array.from(types);
+  }, [detectedPatterns]);
+
   if (loading) {
     return (
       <div className="w-full md:w-2/3 space-y-4">
@@ -570,6 +727,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
   return (
     <div className="w-full md:w-2/3 space-y-6">
+      {/* Story 6.5: Pattern Legend */}
+      {detectedPatterns.length > 0 && (
+        <PatternLegend
+          availableTypes={availablePatternTypes}
+          visibleTypes={visiblePatternTypes}
+          onToggleType={handleTogglePatternType}
+        />
+      )}
+
       {groupedEvents.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground text-lg">
@@ -583,29 +749,40 @@ const TimelineView: React.FC<TimelineViewProps> = ({
               {group.dateLabel}
             </h3>
             <div className="space-y-2">
-              {group.events.map((event) => (
-                <article
-                  key={event.id}
-                  id={`timeline-event-${event.id}`}
-                  className="card-hover"
-                  onClick={() => handleEventTap(event)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleEventTap(event);
-                    }
-                  }}
-                  aria-label={`Event: ${event.summary} at ${formatTime(event.timestamp)}`}
-                >
-                  <time
-                    className="flex-shrink-0 text-sm text-gray-500 font-mono"
-                    dateTime={new Date(event.timestamp).toISOString()}
+              {group.events.map((event) => {
+                const eventPatterns = getPatternsForEvent(event.id);
+                return (
+                  <article
+                    key={event.id}
+                    id={`timeline-event-${event.id}`}
+                    className="card-hover relative"
+                    onClick={() => handleEventTap(event)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleEventTap(event);
+                      }
+                    }}
+                    aria-label={`Event: ${event.summary} at ${formatTime(event.timestamp)}`}
                   >
-                    {formatTime(event.timestamp)}
-                  </time>
-                  <div className="flex-1 min-w-0">
+                    {/* Story 6.5: Pattern Badge */}
+                    {eventPatterns.length > 0 && eventPatterns.map(pattern => (
+                      <PatternBadge
+                        key={pattern.id}
+                        pattern={pattern}
+                        onClick={() => handlePatternBadgeClick(pattern)}
+                      />
+                    ))}
+
+                    <time
+                      className="flex-shrink-0 text-sm text-gray-500 font-mono"
+                      dateTime={new Date(event.timestamp).toISOString()}
+                    >
+                      {formatTime(event.timestamp)}
+                    </time>
+                    <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="text-gray-900 truncate">{event.summary}</p>
                       {!event.hasDetails && (
@@ -666,7 +843,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                     )}
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))
@@ -701,6 +879,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         onClose={handleModalClose}
         onSave={handleModalSave}
         onDelete={handleModalDelete}
+      />
+
+      {/* Story 6.5: Pattern Detail Panel */}
+      <PatternDetailPanel
+        pattern={selectedPattern}
+        isOpen={isPatternPanelOpen}
+        onClose={handlePatternPanelClose}
       />
     </div>
   );

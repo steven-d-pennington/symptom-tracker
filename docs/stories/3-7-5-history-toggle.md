@@ -1,6 +1,6 @@
 # Story 3.7.5: History Toggle
 
-Status: review
+Status: done
 
 **Dependencies**: Story 3.7.7 (Multi-Location Flare Persistence) - Must complete BEFORE 3.7.5 to avoid rework due to schema changes
 
@@ -205,6 +205,10 @@ Claude 3.5 Sonnet (claude-3-5-sonnet-20241022) - SM Agent
 ### Debug Log References
 
 ### Completion Notes List
+
+### Completion Notes
+**Completed:** 2025-11-10
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing
 
 **Story 3.7.5 Implementation Complete** (Date: 2025-11-03)
 
