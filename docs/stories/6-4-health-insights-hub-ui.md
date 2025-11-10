@@ -742,3 +742,260 @@ Tests:
 - Added comprehensive unit and integration tests
 - Verified navigation link already exists in navigation.ts
 - Story completed and ready for review
+
+---
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Steven (Dev Agent - Amelia)
+
+**Date:** 2025-11-10
+
+**Outcome:** **CHANGES REQUESTED**
+
+### Summary
+
+Story 6.4 delivers a functional Health Insights Hub UI with comprehensive components for displaying correlation insights. The implementation includes prioritization algorithms, data visualization (scatter plots, heat maps), time range filtering, and responsive layouts. Build passes successfully after fixing 6 critical issues (duplicate routes, metadata exports, type errors, missing repository methods). However, **integration tests have failures** (5/6 tests failing due to ESM/CommonJS mocking setup issues) and task tracking is inaccurate.
+
+**Strengths:**
+- Complete UI implementation with all 10 components created
+- Unit tests passing (16/16) for prioritization algorithm and InsightCard
+- Build passes after comprehensive bug fixes
+- Good component architecture with proper separation of concerns
+- Accessible design with ARIA labels and responsive grid
+- Proper data flow using custom hooks (useCorrelations, useLoggedDaysCount)
+
+**Concerns:**
+- **MEDIUM**: Integration tests failing (5/6 tests) due to `require()` in ESM context
+- **MEDIUM**: All 15 tasks marked `[ ]` incomplete despite full implementation
+- **INFO**: Build errors fixed earlier in this session (6 issues resolved)
+
+### Key Findings
+
+#### MEDIUM Severity
+
+**Finding 1: Integration Test Failures**
+- **Issue:** 5 of 6 integration tests failing with `ReferenceError: require is not defined`
+- **Evidence:** Test results from `src/app/(protected)/insights/__tests__/page.test.tsx`
+  ```
+  ReferenceError: require is not defined
+    at Object.<anonymous> (page.test.tsx:106:53)
+  ```
+- **Root Cause:** Test file uses CommonJS `require()` for mocking in ESM context (Jest experimental VM modules)
+- **Impact:** Cannot verify page integration, empty state handling, error states, time range filtering
+- **Current Test Status:**
+  - insightPrioritization: 9/9 passing ✅
+  - InsightCard: 7/7 passing ✅
+  - page integration: 1/6 passing, 5/6 failing ⚠️
+  - **Total: 17/22 tests passing (77%)**
+- **Required Action:** Fix mock setup to use ESM imports instead of require()
+  - Replace `require('@/lib/hooks/useCorrelations')` with `import` + `jest.mock()`
+  - Use `vi.mock()` if using Vitest, or proper `jest.mock()` for Jest
+- **Location:** `src/app/(protected)/insights/__tests__/page.test.tsx:84, 106, 135`
+
+**Finding 2: Task Completion Tracking Inaccuracy**
+- **Issue:** All 15 tasks (lines 35-206) show `[ ]` incomplete but implementation is fully complete
+- **Evidence:**
+  - Story file lines 35-206: All tasks marked `[ ]`
+  - But all files exist, build passes, 16/16 unit tests passing
+  - Completion notes confirm "All 15 tasks completed (145+ subtasks)"
+- **Impact:** Misleads reviewers about story progress
+- **Required Action:** Update task checkboxes to reflect actual completion state
+- **Location:** Story file lines 35-206 (Tasks 1-15)
+
+#### INFO Severity (Already Fixed)
+
+**Finding 3: Build Errors Fixed (Historical)**
+- **Issue:** Story had 6 critical build errors that prevented compilation
+- **Status:** ✅ **FIXED** (earlier in this review session)
+- **Fixes Applied:**
+  1. Removed duplicate /insights route (src/app/insights/page.tsx deleted)
+  2. Removed metadata export from client component (page.tsx:139)
+  3. Fixed Chart.js mixed chart types (CorrelationScatterPlot.tsx:191)
+  4. Added flareRepository.listByDateRange() method
+  5. Fixed bodyRegion → bodyRegionId (FlareAnalyticsHeatMap.tsx:115, 131)
+  6. Fixed date format (useCorrelations.ts:129 - ISO strings vs timestamps)
+- **Evidence:** Build now passes: `npm run build` successful
+- **No Action Needed:** Build errors resolved
+
+### Acceptance Criteria Coverage
+
+**Summary: 10 of 10 ACs implemented (pending test fixes for full verification)**
+
+| AC# | Description | Status | Evidence |
+|-----|-------------|--------|----------|
+| AC6.4.1 | Create /insights page route | ✅ IMPLEMENTED | `src/app/(protected)/insights/page.tsx` exists, navigation config verified |
+| AC6.4.2 | Build InsightCard component | ✅ IMPLEMENTED | `src/components/insights/InsightCard.tsx` with 7/7 tests passing |
+| AC6.4.3 | Implement insight prioritization | ✅ IMPLEMENTED | `src/lib/services/insightPrioritization.ts` with 9/9 tests passing, uses \|ρ\| × log(n) formula |
+| AC6.4.4 | Create correlation scatter plot | ✅ IMPLEMENTED | `src/components/insights/CorrelationScatterPlot.tsx` with Chart.js scatter + trend line (type fixed) |
+| AC6.4.5 | Build flare analytics heat map | ✅ IMPLEMENTED | `src/components/insights/FlareAnalyticsHeatMap.tsx` with region/time grid (bodyRegionId fixed) |
+| AC6.4.6 | Add time range selector | ✅ IMPLEMENTED | `src/components/insights/TimeRangeSelector.tsx` with 7d/30d/90d/all options |
+| AC6.4.7 | Implement empty state | ✅ IMPLEMENTED | `src/components/insights/InsightsEmptyState.tsx` with progress indicator (useLoggedDaysCount hook) |
+| AC6.4.8 | Add medical disclaimer banner | ✅ IMPLEMENTED | `src/components/insights/MedicalDisclaimerBanner.tsx` with 30-day localStorage persistence |
+| AC6.4.9 | Create insight detail modal | ✅ IMPLEMENTED | `src/components/insights/InsightDetailModal.tsx` with full correlation data + visualizations |
+| AC6.4.10 | Build responsive grid layout | ✅ IMPLEMENTED | `src/components/insights/InsightsGrid.tsx` with 1/2/3 column responsive layout + loading skeletons |
+
+### Task Completion Validation
+
+**Summary: 15 of 15 tasks VERIFIED complete, but 15 of 15 marked incomplete**
+
+**ISSUE:** All tasks show `[ ]` in story file despite full implementation with passing build and unit tests.
+
+| Task | Marked As | Verified As | Evidence |
+|------|-----------|-------------|----------|
+| Task 1: Create /insights page | ❌ Incomplete | ✅ **COMPLETE** | `page.tsx` exists, integrates all components |
+| Task 2: Build InsightCard | ❌ Incomplete | ✅ **COMPLETE** | `InsightCard.tsx` with 7/7 tests passing |
+| Task 3: Implement prioritization | ❌ Incomplete | ✅ **COMPLETE** | `insightPrioritization.ts` with 9/9 tests passing |
+| Task 4: Query correlation data | ❌ Incomplete | ✅ **COMPLETE** | `useCorrelations.ts` hook created, queries correlationRepository |
+| Task 5: Scatter plot | ❌ Incomplete | ✅ **COMPLETE** | `CorrelationScatterPlot.tsx` with Chart.js (type errors fixed) |
+| Task 6: Heat map | ❌ Incomplete | ✅ **COMPLETE** | `FlareAnalyticsHeatMap.tsx` (bodyRegionId fixed) |
+| Task 7: Time range selector | ❌ Incomplete | ✅ **COMPLETE** | `TimeRangeSelector.tsx` component created |
+| Task 8: Empty state | ❌ Incomplete | ✅ **COMPLETE** | `InsightsEmptyState.tsx` with progress indicator |
+| Task 9: Medical disclaimer | ❌ Incomplete | ✅ **COMPLETE** | `MedicalDisclaimerBanner.tsx` with localStorage |
+| Task 10: Detail modal | ❌ Incomplete | ✅ **COMPLETE** | `InsightDetailModal.tsx` component created |
+| Task 11: Responsive grid | ❌ Incomplete | ✅ **COMPLETE** | `InsightsGrid.tsx` + `InsightCardSkeleton.tsx` |
+| Task 12: Integrate components | ❌ Incomplete | ✅ **COMPLETE** | All components integrated in page.tsx |
+| Task 13: Navigation link | ❌ Incomplete | ✅ **COMPLETE** | Already configured in navigation.ts |
+| Task 14: Unit tests | ❌ Incomplete | ✅ **COMPLETE** | 16/16 unit tests passing (prioritization + InsightCard) |
+| Task 15: Integration tests | ❌ Incomplete | ⚠️ **PARTIAL** | Tests written but 5/6 failing due to mocking setup issue |
+
+### Test Coverage and Gaps
+
+**Current Coverage:** 17/22 tests passing (77%)
+
+**Unit Tests: EXCELLENT**
+- ✅ insightPrioritization.test.ts (9/9 passing)
+  - Priority score calculation (|ρ| × log(n))
+  - Sorting by priority
+  - Grouping by type
+  - Filtering weak correlations
+  - Top N insights selection
+  - Strong/moderate separation
+
+- ✅ InsightCard.test.tsx (7/7 passing)
+  - Renders with correlation data
+  - Formats positive/negative headlines
+  - Strength badge colors (strong/moderate)
+  - onClick handlers
+  - Conditional lag hours display
+
+**Integration Tests: NEEDS FIXING**
+- ⚠️ page.test.tsx (1/6 passing, 5/6 failing)
+  - ✅ PASSING: 1 test
+  - ❌ FAILING: 5 tests due to `ReferenceError: require is not defined`
+  - **Root Cause:** CommonJS require() used in ESM context (experimental VM modules)
+  - **Required Fix:** Convert mocks to use ESM imports
+
+**Test Gap Impact:**
+- Cannot verify page integration behavior
+- Cannot test empty state rendering
+- Cannot test error state handling
+- Cannot test time range filtering
+- Cannot test modal open/close flow
+
+### Architectural Alignment
+
+✅ **Good** - Follows project patterns with some integration improvements needed:
+
+**Component Architecture:**
+- Clean separation: InsightCard, InsightsGrid, InsightDetailModal, visualizations
+- Proper prop interfaces with TypeScript
+- Custom hooks for data fetching (useCorrelations, useLoggedDaysCount)
+- Responsive design with Tailwind CSS
+
+**Data Flow:**
+- Uses correlationRepository from Story 6.3 ✅
+- Time range filtering implemented
+- Prioritization algorithm with proper scoring formula (|ρ| × log(n))
+- LocalStorage for banner dismissal (30-day persistence)
+
+**Visualization:**
+- Chart.js for scatter plots and heat maps
+- Proper data mapping for visualizations
+- Trend line calculation for scatter plots
+- Color coding for correlation strength
+
+**Fixes Applied (Earlier This Session):**
+- Duplicate route removed (/app/insights vs /(protected)/insights)
+- Metadata export fixed (client vs server components)
+- Chart.js type compatibility fixed (mixed scatter + line charts)
+- Repository method added (flareRepository.listByDateRange)
+- Schema property fixed (bodyRegion → bodyRegionId)
+- Date format compatibility fixed (ISO strings for dailyLogsRepository)
+
+**No Architecture Violations Found** (all issues from Story 6.4 implementation have been fixed)
+
+### Security Notes
+
+✅ **Good** - No critical security concerns
+
+**Data Handling:**
+- Proper userId scoping in repository queries
+- Client-side only (IndexedDB)
+- Medical disclaimer for data interpretation
+
+**Input Validation:**
+- Time range selection validated
+- Correlation thresholds enforced
+
+**No Security Issues Found**
+
+### Best-Practices and References
+
+**Data Visualization:**
+- Chart.js 4.5.0 for scatter plots and heat maps
+- Proper chart configuration for health data
+- Color-blind friendly palettes recommended
+
+**Testing:**
+- Jest with React Testing Library
+- ESM modules (experimental VM modules)
+- **Issue:** Mocking pattern needs ESM compatibility
+
+**React Patterns:**
+- Custom hooks for data fetching
+- Component composition
+- Responsive design with Tailwind
+
+**Recommended:**
+- [Chart.js Documentation](https://www.chartjs.org/docs/latest/)
+- [Jest ESM Support](https://jestjs.io/docs/ecmascript-modules)
+- [React Testing Library Best Practices](https://testing-library.com/docs/react-testing-library/intro/)
+
+### Action Items
+
+#### Code Changes Required
+
+- [ ] [High] Fix integration test mocking to use ESM imports [file: `src/app/(protected)/insights/__tests__/page.test.tsx`]
+  - Replace `require('@/lib/hooks/useCorrelations')` with proper ESM mock setup
+  - Use `jest.mock('@/lib/hooks/useCorrelations')` before imports
+  - Update all 5 failing tests (lines 84, 106, 135)
+  - Verify all 6 integration tests pass after fix
+  - Target: 22/22 tests passing (100%)
+
+- [ ] [Med] Update all task checkboxes (lines 35-206) to reflect actual completion state [file: `docs/stories/6-4-health-insights-hub-ui.md:35-206`]
+  - Mark Tasks 1-14 as `[x]` completed
+  - Mark Task 15 as `[x]` after integration tests fixed
+
+#### Advisory Notes
+
+- Note: Build errors were comprehensively fixed earlier in this review session (6 issues resolved)
+- Note: Unit test coverage is excellent (16/16 passing) - integration test setup just needs ESM compatibility
+- Note: Consider adding visual regression tests for charts (Percy, Chromatic, or Playwright screenshots)
+- Note: Medical disclaimer is a good practice for health data interpretation
+- Note: Prioritization algorithm (|ρ| × log(n)) is mathematically sound for ranking insights
+
+---
+
+**Review Complete**
+
+Story 6.4 demonstrates solid UI implementation with comprehensive components, good unit test coverage, and proper data visualization. Build issues were identified and fixed during this review (6 critical errors resolved). Primary remaining issue is integration test mocking setup (5/6 tests failing due to CommonJS require() in ESM context). After fixing test mocking pattern, this story will be ready for approval.
+
+**Recommended Next Steps:**
+1. Fix integration test mocking per Action Item #1 (convert require() to ESM imports)
+2. Verify all 22 tests pass
+3. Update task checkboxes per Action Item #2
+4. Re-submit for review
+
+**Progress:** Build passes ✅, Unit tests pass ✅, Integration tests need fixing ⚠️
+
