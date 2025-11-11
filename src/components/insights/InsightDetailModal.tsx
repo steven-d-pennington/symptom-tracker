@@ -12,6 +12,7 @@
 'use client';
 
 import { CorrelationResult } from '@/types/correlation';
+import { EnrichedCorrelation } from '@/lib/hooks/useEnrichedCorrelations';
 import { CorrelationScatterPlot } from './CorrelationScatterPlot';
 import {
   Dialog,
@@ -25,7 +26,7 @@ import { Button } from '@/components/ui/button';
 interface InsightDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  correlation: CorrelationResult | null;
+  correlation: EnrichedCorrelation | null;
 }
 
 /**
@@ -49,9 +50,9 @@ export function InsightDetailModal({ isOpen, onClose, correlation }: InsightDeta
     return null;
   }
 
-  // Generate headline
-  const item1Formatted = correlation.item1.charAt(0).toUpperCase() + correlation.item1.slice(1);
-  const item2Formatted = correlation.item2.charAt(0).toUpperCase() + correlation.item2.slice(1);
+  // Generate headline using enriched names
+  const item1Formatted = correlation.item1Name.charAt(0).toUpperCase() + correlation.item1Name.slice(1);
+  const item2Formatted = correlation.item2Name.charAt(0).toUpperCase() + correlation.item2Name.slice(1);
   const direction = correlation.coefficient > 0 ? 'Increased' : 'Decreased';
   const headline = `High ${item1Formatted} → ${direction} ${item2Formatted}`;
 
@@ -121,8 +122,8 @@ export function InsightDetailModal({ isOpen, onClose, correlation }: InsightDeta
               Correlation Visualization
             </h3>
             <CorrelationScatterPlot
-              item1Name={correlation.item1}
-              item2Name={correlation.item2}
+              item1Name={correlation.item1Name}
+              item2Name={correlation.item2Name}
               dataPoints={scatterData}
               coefficient={correlation.coefficient}
             />
@@ -134,7 +135,7 @@ export function InsightDetailModal({ isOpen, onClose, correlation }: InsightDeta
               Related Events Timeline
             </h3>
             <p className="text-sm text-muted-foreground">
-              Timeline showing {correlation.item1} and {correlation.item2} events will be displayed
+              Timeline showing {correlation.item1Name} and {correlation.item2Name} events will be displayed
               here. This feature can be enhanced in future iterations to show a chronological list
               of relevant events in the time range.
             </p>

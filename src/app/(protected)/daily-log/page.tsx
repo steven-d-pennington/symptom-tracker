@@ -9,6 +9,7 @@ import { EventSummaryCard } from '@/components/daily-log/EventSummaryCard';
 import { dailyLogsRepository } from '@/lib/repositories/dailyLogsRepository';
 import { DailyLog, FlareQuickUpdate } from '@/types/daily-log';
 import { cn } from '@/lib/utils/cn';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 
 // Toast notification (simple implementation - could be replaced with a toast library)
 function showToast(message: string, duration = 3000) {
@@ -22,8 +23,8 @@ function showToast(message: string, duration = 3000) {
  * Unified end-of-day reflection for mood, sleep, and notes.
  */
 export default function DailyLogPage() {
-  // Get current user (in production, from auth context)
-  const userId = 'default-user'; // TODO: Get from auth context
+  // Get current user from hook
+  const { userId } = useCurrentUser();
 
   // Date navigation state
   const [currentDate, setCurrentDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));

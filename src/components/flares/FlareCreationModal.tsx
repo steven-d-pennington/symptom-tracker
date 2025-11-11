@@ -9,6 +9,8 @@ import { toast } from "@/components/common/Toast";
 import { BodyMapViewer } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
+import { bodyMapLocationRepository } from "@/lib/repositories/bodyMapLocationRepository";
+import type { LayerType } from "@/lib/db/schema";
 
 type Coordinates = {
   x: number;
@@ -95,6 +97,7 @@ export function FlareCreationModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [submitAction, setSubmitAction] = useState<'save' | 'save-and-add-more'>('save');
+  const [selectedLayer, setSelectedLayer] = useState<'flares' | 'pain' | 'inflammation'>('flares');
 
   // Internal body map selection state (used when no external selection provided)
   const [internalSelection, setInternalSelection] = useState<FlareCreationSelection | null>(null);
@@ -249,70 +252,103 @@ export function FlareCreationModal({
     setIsSaving(true);
     try {
       const trimmedNotes = notes.trim();
-      const saveHandler = onSave ?? defaultSave;
 
-      // Story 3.7.7: Create flare with all marked body locations
-      const primarySelection = selectionsArray[0];
-      const result = await saveHandler({
-        timestamp,
-        severity,
-        notes: trimmedNotes.length > 0 ? trimmedNotes : undefined,
-        selection: primarySelection,
-      });
+      // Handle different layer types
+      if (selectedLayer === 'pain' || selectedLayer === 'inflammation') {
+        // For pain/inflammation, create bodyMapLocation records directly
+        const markerPromises = selectionsArray.map(sel =>
+          bodyMapLocationRepository.create({
+            userId,
+            symptomId: 'manual-marker', // Placeholder for manual markers
+            bodyRegionId: sel.bodyRegionId,
+            coordinates: sel.coordinates,
+            severity,
+            layer: selectedLayer as LayerType,
+            notes: trimmedNotes.length > 0 ? trimmedNotes : undefined,
+          })
+        );
 
-      const createdFlare: FlareRecord | undefined =
-        (result as FlareRecord | undefined) ?? undefined;
+        await Promise.all(markerPromises);
 
-      if (createdFlare) {
-        // Show success toast with action buttons
         const locationsText = selectionsArray.length === 1
-          ? (primarySelection.bodyRegionName || primarySelection.bodyRegionId)
+          ? (selectionsArray[0].bodyRegionName || selectionsArray[0].bodyRegionId)
           : `${selectionsArray.length} locations`;
-        toast.success("Flare created successfully", {
-          description: `Flare logged in ${locationsText}`,
-          actions: [
-            {
-              label: "View Details",
-              onClick: () => {
-                // TODO: Navigate to flare details page when implemented
-                console.log("Navigate to flare details:", createdFlare.id);
-              },
-            },
-            {
-              label: "Log Another",
-              onClick: () => {
-                // Reset form for another flare
-                setSeverity(5);
-                setNotes("");
-                setTimestampValue(formatDateTimeLocal(new Date()));
-                setErrorMessage(null);
-                // Keep modal open for another entry
-                return;
-              },
-            },
-          ],
-          duration: 5000,
+
+        const layerLabel = selectedLayer === 'pain' ? 'Pain' : 'Inflammation';
+
+        toast.success(`${layerLabel} marker created successfully`, {
+          description: `${layerLabel} logged in ${locationsText}`,
+          duration: 3000,
         });
 
-        // Dispatch custom event for any other listeners
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(
-            new CustomEvent("flare:created", {
-              detail: {
-                flare: createdFlare,
-                selection,
-                severity,
-                timestamp,
+        // Call onCreated with a dummy flare object for compatibility
+        onCreated?.({} as FlareRecord, submitAction === 'save-and-add-more');
+      } else {
+        // For flares, use existing flare creation logic
+        const saveHandler = onSave ?? defaultSave;
+
+        const primarySelection = selectionsArray[0];
+        const result = await saveHandler({
+          timestamp,
+          severity,
+          notes: trimmedNotes.length > 0 ? trimmedNotes : undefined,
+          selection: primarySelection,
+        });
+
+        const createdFlare: FlareRecord | undefined =
+          (result as FlareRecord | undefined) ?? undefined;
+
+        if (createdFlare) {
+          // Show success toast with action buttons
+          const locationsText = selectionsArray.length === 1
+            ? (primarySelection.bodyRegionName || primarySelection.bodyRegionId)
+            : `${selectionsArray.length} locations`;
+          toast.success("Flare created successfully", {
+            description: `Flare logged in ${locationsText}`,
+            actions: [
+              {
+                label: "View Details",
+                onClick: () => {
+                  // TODO: Navigate to flare details page when implemented
+                  console.log("Navigate to flare details:", createdFlare.id);
+                },
               },
-            })
-          );
+              {
+                label: "Log Another",
+                onClick: () => {
+                  // Reset form for another flare
+                  setSeverity(5);
+                  setNotes("");
+                  setTimestampValue(formatDateTimeLocal(new Date()));
+                  setErrorMessage(null);
+                  // Keep modal open for another entry
+                  return;
+                },
+              },
+            ],
+            duration: 5000,
+          });
+
+          // Dispatch custom event for any other listeners
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("flare:created", {
+                detail: {
+                  flare: createdFlare,
+                  selection,
+                  severity,
+                  timestamp,
+                },
+              })
+            );
+          }
+          onCreated?.(createdFlare, submitAction === 'save-and-add-more');
         }
-        onCreated?.(createdFlare, submitAction === 'save-and-add-more');
       }
 
       onClose();
     } catch (error) {
-      console.error("Failed to create flare", error);
+      console.error("Failed to create marker", error);
       
       // Handle specific error types for offline-first experience
       let errorMessage = "Saving flare failed. Please try again.";
@@ -368,10 +404,14 @@ export function FlareCreationModal({
             <header className="flex items-start justify-between gap-4 px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
               <div>
                 <h2 id="flare-creation-title" className="text-h2">
-                  Create New Flare
+                  {selectedLayer === 'flares' ? 'Create New Flare' :
+                   selectedLayer === 'pain' ? 'Add Pain Marker' :
+                   'Add Inflammation Marker'}
                 </h2>
                 <p id="flare-creation-description" className="mt-1 text-small">
-                  {selection ? "Confirm details for the flare you just marked on the body map." : "Select a location on the body map and confirm flare details."}
+                  {selection ?
+                    `Confirm details for the ${selectedLayer === 'flares' ? 'flare' : 'marker'} you just marked on the body map.` :
+                    `Select a location on the body map and confirm ${selectedLayer} details.`}
                 </p>
               </div>
               <button
@@ -415,6 +455,54 @@ export function FlareCreationModal({
             )}
 
             <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+              {/* Layer Selector */}
+              <section>
+                <label className="mb-2 block text-small font-medium">
+                  Layer Type <span style={{ color: 'var(--error)' }}>*</span>
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLayer('flares')}
+                    className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
+                      selectedLayer === 'flares'
+                        ? 'border-red-500 bg-red-50 text-red-700'
+                        : 'border-border hover:border-red-300'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">🔥</div>
+                    <div className="text-xs font-medium">Flare</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLayer('pain')}
+                    className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
+                      selectedLayer === 'pain'
+                        ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
+                        : 'border-border hover:border-yellow-300'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">⚡</div>
+                    <div className="text-xs font-medium">Pain</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLayer('inflammation')}
+                    className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
+                      selectedLayer === 'inflammation'
+                        ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : 'border-border hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">🟣</div>
+                    <div className="text-xs font-medium">Inflammation</div>
+                  </button>
+                </div>
+                <p className="mt-1 text-tiny" style={{ color: 'var(--text-muted)' }}>
+                  Select what type of marker you're adding to the body map
+                </p>
+              </section>
+
               <section className="card px-4 py-3" style={{ backgroundColor: 'var(--muted)' }}>
                 <p className="text-small font-medium">
                   Body Location{selectionsArray.length > 1 ? 's' : ''}

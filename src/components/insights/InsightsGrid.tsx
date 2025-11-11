@@ -10,13 +10,14 @@
 'use client';
 
 import { CorrelationResult } from '@/types/correlation';
+import { EnrichedCorrelation } from '@/lib/hooks/useEnrichedCorrelations';
 import { InsightCard } from './InsightCard';
 import { InsightCardSkeleton } from './InsightCardSkeleton';
 
 interface InsightsGridProps {
-  correlations: CorrelationResult[];
+  correlations: EnrichedCorrelation[];
   isLoading: boolean;
-  onViewDetails: (correlation: CorrelationResult) => void;
+  onViewDetails: (correlation: EnrichedCorrelation) => void;
 }
 
 /**

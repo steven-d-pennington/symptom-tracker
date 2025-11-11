@@ -11,7 +11,7 @@
  */
 
 import { db } from "../db/client";
-import { FlareRecord, FlareEventRecord, FlareBodyLocationRecord } from "../db/schema";
+import { FlareRecord, FlareEventRecord, FlareBodyLocationRecord, BodyMapLocationRecord } from "../db/schema";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -88,7 +88,8 @@ export async function createFlare(
 
   // Use transaction for atomic write (flare + initial event + body locations)
   // Story 3.7.7: Include flareBodyLocations table in transaction for multi-location support
-  await db.transaction("rw", [db.flares, db.flareEvents, db.flareBodyLocations], async () => {
+  // Story 5.1: Also write to bodyMapLocations table for layer system compatibility
+  await db.transaction("rw", [db.flares, db.flareEvents, db.flareBodyLocations, db.bodyMapLocations], async () => {
     await db.flares.add(flare);
 
     // Create initial 'created' event for append-only history
@@ -117,6 +118,22 @@ export async function createFlare(
           updatedAt: startDate,
         };
         await db.flareBodyLocations.add(bodyLocationRecord);
+
+        // Story 5.1: Also create bodyMapLocation entry for visualization layer system
+        // This ensures flares created manually appear on the body map alongside generated data
+        const bodyMapLocationRecord: BodyMapLocationRecord = {
+          id: uuidv4(),
+          userId,
+          symptomId: flareId, // Link to flare for correlation
+          bodyRegionId: location.bodyRegionId,
+          coordinates: location.coordinates,
+          severity: flare.initialSeverity,
+          layer: 'flares', // Layer type for body map filtering
+          notes: initialEventNotes || '',
+          createdAt: new Date(startDate), // Convert timestamp to Date object
+          updatedAt: new Date(startDate),
+        };
+        await db.bodyMapLocations.add(bodyMapLocationRecord);
       }
     }
   });
@@ -398,12 +415,16 @@ export async function deleteFlare(
 
   // Use transaction to delete flare and all associated events/locations atomically
   // Story 3.7.7: Include flareBodyLocations in deletion
-  await db.transaction("rw", [db.flares, db.flareEvents, db.flareBodyLocations], async () => {
+  // Story 5.1: Also clean up bodyMapLocations entries
+  await db.transaction("rw", [db.flares, db.flareEvents, db.flareBodyLocations, db.bodyMapLocations], async () => {
     // Delete all events associated with this flare
     await db.flareEvents.where("flareId").equals(flareId).delete();
 
     // Delete all body locations associated with this flare (Story 3.7.7)
     await db.flareBodyLocations.where("flareId").equals(flareId).delete();
+
+    // Story 5.1: Delete bodyMapLocation entries where symptomId matches flareId
+    await db.bodyMapLocations.where("symptomId").equals(flareId).delete();
 
     // Delete the flare itself
     await db.flares.delete(flareId);

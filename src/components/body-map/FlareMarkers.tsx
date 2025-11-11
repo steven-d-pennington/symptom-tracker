@@ -9,11 +9,14 @@ import { calculateRadialOffsets } from '@/lib/utils/flareMarkers';
 import { denormalizeCoordinates, getRegionBounds, RegionBounds } from '@/lib/utils/coordinates';
 import { BodyMapMarker } from '@/components/body-map/markers/BodyMapMarker';
 import { calculateMarkerOffset } from '@/lib/utils/markerCalculations';
+import { BodyMapLocation } from '@/lib/types/body-mapping';
 
 interface FlareMarkersProps {
   viewType: 'front' | 'back' | 'left' | 'right';
   zoomLevel: number;
   userId: string;
+  /** Optional: Provide markers from external source (bodyMapLocations table) */
+  markers?: BodyMapLocation[];
 }
 
 interface MarkerPosition {
@@ -23,11 +26,18 @@ interface MarkerPosition {
   locationId?: string; // Story 3.7.5: Unique ID for each marker location
 }
 
-export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps) {
+export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMarkersProps) {
   const router = useRouter();
-  const { data: flares = [], isLoading } = useFlares({ userId, includeResolved: true });
+  // Only query flares if markers prop is not provided (backward compatibility)
+  const { data: flares = [], isLoading } = useFlares({
+    userId,
+    includeResolved: true
+  }, {
+    enabled: !markers  // Disable query if markers are provided
+  });
   const markerGroupRef = useRef<SVGGElement | null>(null);
   const [svgElement, setSvgElement] = useState<SVGSVGElement | null>(null);
+
 
   // Check for SVG element after every render
   useEffect(() => {
@@ -74,9 +84,69 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
     return map;
   }, [viewRegions]);
 
+  // NEW: If markers provided from bodyMapLocations, render those instead
+  const bodyMapLocationPositions = useMemo(() => {
+    if (!markers || markers.length === 0) {
+      return [];
+    }
+
+    const positions: Array<{
+      id: string;
+      bodyRegionId: string;
+      x: number;
+      y: number;
+      severity: number;
+      layer: string;
+      timestamp: number;
+    }> = [];
+
+    // Get regions for current view
+    const regionIds = new Set(viewRegions.map(r => r.id));
+
+    markers.forEach((marker) => {
+      // Only show markers for regions visible in current view
+      if (!regionIds.has(marker.bodyRegionId)) {
+        return;
+      }
+
+      // Skip markers without coordinates
+      if (!marker.coordinates) {
+        return;
+      }
+
+      const bounds = boundsByRegion.get(marker.bodyRegionId);
+      if (!bounds) {
+        return;
+      }
+
+      // Denormalize coordinates to SVG space
+      const { x, y } = denormalizeCoordinates(
+        { x: marker.coordinates.x, y: marker.coordinates.y },
+        bounds
+      );
+
+      positions.push({
+        id: marker.id,
+        bodyRegionId: marker.bodyRegionId,
+        x,
+        y,
+        severity: marker.severity,
+        layer: marker.layer,
+        timestamp: marker.createdAt instanceof Date ? marker.createdAt.getTime() : marker.createdAt,
+      });
+    });
+
+    return positions;
+  }, [markers, viewRegions, boundsByRegion]);
+
   // Group flares by body region and calculate positions with offsets
   // Story 5.4: Updated to support smart overlap prevention with circular distribution
   const markerPositions = useMemo(() => {
+    // If we have bodyMapLocation markers, use those instead
+    if (bodyMapLocationPositions.length > 0) {
+      return [];
+    }
+
     const positions: MarkerPosition[] = [];
 
     const regionsWithFlares = new Set<string>();
@@ -173,12 +243,32 @@ export function FlareMarkers({ viewType, zoomLevel, userId }: FlareMarkersProps)
   };
 
   // Always render the <g> element to establish the ref, even if we don't have markers yet
-  if (isLoading || markerPositions.length === 0) {
+  if (isLoading || (markerPositions.length === 0 && bodyMapLocationPositions.length === 0)) {
     return <g data-testid="flare-markers" ref={markerGroupRef} />;
   }
 
   return (
     <g data-testid="flare-markers" ref={markerGroupRef}>
+      {/* Render bodyMapLocation markers if provided */}
+      {bodyMapLocationPositions.map((position) => (
+        <BodyMapMarker
+          key={position.id}
+          id={position.id}
+          layer={position.layer as 'flares' | 'pain' | 'inflammation'}
+          bodyRegionId={position.bodyRegionId}
+          severity={position.severity}
+          timestamp={position.timestamp}
+          position={{ x: position.x, y: position.y }}
+          onClick={() => {
+            // For now, just log - we'll implement proper navigation later
+            console.log('[FlareMarkers] Marker clicked:', position.id);
+          }}
+          isResolved={false}
+          testId={`body-map-marker-${position.id}`}
+        />
+      ))}
+
+      {/* Render flare markers (legacy/fallback) */}
       {markerPositions.map(({ flare, x, y, locationId }) => {
         // Story 3.7.5: Use locationId for unique keys when multiple markers per flare
         const markerKey = locationId || flare.id;

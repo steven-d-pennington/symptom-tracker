@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ActiveFlareCards } from "@/components/flares/ActiveFlareCards";
+import { LayerSpecificCards } from "@/components/body-map/LayerSpecificCards";
 import { BodyMapViewer, BodyMapViewerRef } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
+import { LayerSelector } from "@/components/body-map/LayerSelector";
 import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
 import { flareRepository } from "@/lib/repositories/flareRepository";
 import { ActiveFlare } from "@/lib/types/flare";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useFlares } from "@/lib/hooks/useFlares";
+import { useBodyMapLayers } from "@/lib/hooks/useBodyMapLayers";
 import { cn } from "@/lib/utils/cn";
 import { Plus, X, Maximize2, TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +19,21 @@ import Link from "next/link";
 export default function FlaresPage() {
   const { userId } = useCurrentUser();
   const { data: flares = [], isLoading: flaresLoading, refetch: refetchFlares } = useFlares({ userId: userId || '', includeResolved: false });
+
+  // Layer management hook (Story 5.3, 5.5)
+  const {
+    currentLayer,
+    changeLayer,
+    viewMode,
+    changeViewMode,
+    visibleLayers,
+    toggleLayerVisibility,
+    markerCounts,
+    markers,
+    isLoadingMarkers,
+    refresh: refreshMarkers
+  } = useBodyMapLayers(userId);
+
   const [selectedFlareId, setSelectedFlareId] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<"front" | "back" | "left" | "right">("front");
@@ -66,24 +83,8 @@ export default function FlaresPage() {
     return acc;
   }, {} as Record<string, number>);
 
-  // Convert flare coordinates to BodyMapLocation format for display
-  const flareMarkers = useMemo(() => {
-    if (!userId) return [];
-
-    return flares.flatMap(flare =>
-      (flare.coordinates || []).map(coord => ({
-        id: coord.locationId || `${flare.id}-${coord.regionId}`,
-        userId: userId,
-        bodyRegionId: coord.regionId,
-        symptomId: flare.id,
-        coordinates: { x: coord.x, y: coord.y },
-        severity: flare.severity,
-        notes: '',
-        createdAt: flare.startDate,
-        updatedAt: flare.startDate,
-      }))
-    );
-  }, [flares, userId]);
+  // Markers now come from useBodyMapLayers hook, which queries bodyMapLocations table
+  // and respects layer filtering
 
   const handleRegionSelect = (regionId: string) => {
     if (selectedRegion === regionId) {
@@ -127,9 +128,11 @@ export default function FlaresPage() {
     }
   };
 
-  const handleFlareCreated = (_flare: unknown, stayInRegion?: boolean) => {
+  const handleFlareCreated = async (_flare: unknown, stayInRegion?: boolean) => {
     setSelectedCoordinates([]);
     refetchFlares();
+    // Refresh markers from bodyMapLocations table
+    await refreshMarkers();
 
     if (!stayInRegion) {
       setBodyMapViewMode('full-body');
@@ -199,7 +202,7 @@ export default function FlaresPage() {
 
           <div className="ml-auto">
             <Link
-              href="/flares/analytics"
+              href="/body-map/analytics"
               className="btn-secondary inline-flex items-center gap-2"
               aria-label="View advanced analytics"
             >
@@ -230,11 +233,14 @@ export default function FlaresPage() {
               </div>
             )}
 
-            <ActiveFlareCards
+            <LayerSpecificCards
               userId={userId}
-              onUpdateFlare={handleFlareCardClick}
-              externalFlares={flares}
+              currentLayer={currentLayer}
+              markers={markers}
+              isLoading={isLoadingMarkers}
+              flares={flares}
               filterByRegion={selectedRegion}
+              onCardClick={handleFlareCardClick}
             />
           </div>
         </div>
@@ -263,6 +269,19 @@ export default function FlaresPage() {
             </div>
 
             <div className="p-4 flex-1 flex flex-col min-h-0">
+              {/* Layer Selector */}
+              <div className="mb-3">
+                <LayerSelector
+                  currentLayer={currentLayer}
+                  onLayerChange={changeLayer}
+                  viewMode={viewMode}
+                  onViewModeChange={changeViewMode}
+                  visibleLayers={visibleLayers}
+                  onToggleLayerVisibility={toggleLayerVisibility}
+                  markerCounts={markerCounts}
+                />
+              </div>
+
               <div className="flex-1 bg-card border border-border rounded-xl overflow-hidden mb-4 flex items-center justify-center" style={{ minHeight: '400px' }}>
                 <BodyMapViewer
                   ref={bodyMapRef}
@@ -271,7 +290,7 @@ export default function FlaresPage() {
                   selectedRegion={selectedRegion || undefined}
                   onRegionSelect={handleRegionSelect}
                   flareSeverityByRegion={flareSeverityByRegion}
-                  symptoms={flareMarkers}
+                  symptoms={markers}
                   readOnly={false}
                   onCoordinateMark={handleCoordinateMark}
                   viewMode={bodyMapViewMode}

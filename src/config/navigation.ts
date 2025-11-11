@@ -19,6 +19,10 @@ import {
   Settings,
   Lock,
   Info,
+  HelpCircle,
+  BarChart3,
+  AlertCircle,
+  Plus,
   LucideIcon,
 } from "lucide-react";
 
@@ -68,6 +72,20 @@ export const NAV_PILLARS: NavPillar[] = [
         surface: "all",
       },
       {
+        href: "/active-flares",
+        label: "Active Flares",
+        ariaLabel: "Active Flares - View and manage ongoing flares",
+        icon: AlertCircle,
+        surface: "desktop",
+      },
+      {
+        href: "/log",
+        label: "Quick Log",
+        ariaLabel: "Quick Log - Rapidly record health events",
+        icon: Plus,
+        surface: "desktop",
+      },
+      {
         href: "/photos",
         label: "Photos",
         ariaLabel: "Photos - Visual documentation",
@@ -93,6 +111,13 @@ export const NAV_PILLARS: NavPillar[] = [
         label: "Timeline",
         ariaLabel: "Timeline - View health history and patterns",
         icon: Calendar,
+        surface: "desktop",
+      },
+      {
+        href: "/body-map/analytics",
+        label: "Body Map Analytics",
+        ariaLabel: "Body Map Analytics - Deep dive into flare patterns",
+        icon: BarChart3,
         surface: "desktop",
       },
     ],
@@ -137,6 +162,13 @@ export const NAV_PILLARS: NavPillar[] = [
     label: "Support",
     order: 4,
     destinations: [
+      {
+        href: "/help",
+        label: "Help",
+        ariaLabel: "Help - User guides and documentation",
+        icon: HelpCircle,
+        surface: "all",
+      },
       {
         href: "/about",
         label: "About",

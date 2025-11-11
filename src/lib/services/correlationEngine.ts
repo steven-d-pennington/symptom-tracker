@@ -24,6 +24,8 @@ import {
   timeRangeToMs,
 } from "../../types/correlation";
 import { generateId } from "../utils/idGenerator";
+import type { TreatmentEffectiveness } from "../../types/treatmentEffectiveness";
+import { calculateTreatmentEffectiveness as calculateTreatmentEffectivenessImpl } from "./treatmentEffectivenessService";
 
 /**
  * Lag windows to test for delayed effects (in hours)
@@ -439,6 +441,38 @@ export class CorrelationEngine {
       byType,
       byStrength,
     };
+  }
+
+  /**
+   * Calculate treatment effectiveness (Story 6.7)
+   *
+   * Analyzes treatment effectiveness by comparing baseline symptom severity
+   * (7 days before treatment) vs outcome severity (7-30 days after treatment)
+   *
+   * Formula: effectiveness = ((baseline - outcome) / baseline) × 100
+   * - Positive score: symptom improvement
+   * - Negative score: symptom worsening
+   *
+   * Requires minimum 3 treatment cycles for valid results
+   *
+   * @param userId - User ID
+   * @param treatmentId - Treatment ID (medication or trigger/intervention)
+   * @param treatmentType - Type of treatment ('medication' | 'intervention')
+   * @param timeRange - Time range for analysis
+   * @returns Treatment effectiveness or null if insufficient data (< 3 cycles)
+   */
+  async calculateTreatmentEffectiveness(
+    userId: string,
+    treatmentId: string,
+    treatmentType: 'medication' | 'intervention',
+    timeRange: TimeRange
+  ): Promise<TreatmentEffectiveness | null> {
+    return calculateTreatmentEffectivenessImpl(
+      userId,
+      treatmentId,
+      treatmentType,
+      timeRange
+    );
   }
 }
 

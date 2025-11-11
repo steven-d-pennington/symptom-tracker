@@ -42,6 +42,10 @@ export interface PowerUserDataResult {
   flaresCreated: number;
   flareEventsCreated: number;
 
+  // Body map layers
+  painMarkersCreated: number;
+  inflammationMarkersCreated: number;
+
   // Daily tracking
   dailyLogsCreated: number;
   dailyLogCoverage: number; // percentage
@@ -83,6 +87,10 @@ export async function generatePowerUserData(
   console.log("[PowerUserData] Step 2: Generating flares...");
   const flares = await generateFlares(userId, startDate, endDate, entities);
 
+  // Step 2b: Generate pain and inflammation layer markers
+  console.log("[PowerUserData] Step 2b: Generating pain and inflammation markers...");
+  const bodyMapLayers = await generateBodyMapLayers(userId, startDate, endDate, flares);
+
   // Step 3: Generate health events around flares
   console.log("[PowerUserData] Step 3: Generating health events...");
   const events = await generateHealthEvents(userId, startDate, endDate, entities, flares);
@@ -116,6 +124,9 @@ export async function generatePowerUserData(
 
     flaresCreated: flares.flaresCreated,
     flareEventsCreated: flares.eventsCreated,
+
+    painMarkersCreated: bodyMapLayers.painMarkersCreated,
+    inflammationMarkersCreated: bodyMapLayers.inflammationMarkersCreated,
 
     dailyLogsCreated: dailyLogs.count,
     dailyLogCoverage: dailyLogs.coverage,
@@ -252,6 +263,24 @@ async function createCoreEntities(userId: string) {
 }
 
 /**
+ * Helper: Generate realistic NORMALIZED coordinates for body region (0-1 range)
+ * Body map system expects normalized coordinates which are then denormalized to SVG space
+ *
+ * Valid body region IDs from bodyRegions.ts:
+ * - Front: neck-front, shoulder-left, shoulder-right, hand-left, hand-right, knee-left, knee-right, etc.
+ * - Back: neck-back, lower-back, shoulder-back-left, shoulder-back-right, etc.
+ */
+function generateRegionCoordinates(regionId: string): { x: number; y: number } {
+  // Generate random normalized coordinates (0-1 range) within the region
+  // Using a tighter spread around center (0.3-0.7) for realistic marker placement
+  // All regions use same range since normalization is relative to region bounds
+  return {
+    x: 0.3 + Math.random() * 0.4, // 0.3 to 0.7
+    y: 0.3 + Math.random() * 0.4, // 0.3 to 0.7
+  };
+}
+
+/**
  * Step 2: Generate flares
  */
 async function generateFlares(
@@ -266,29 +295,107 @@ async function generateFlares(
 
   const flares = [];
   const flareEvents = [];
-  const bodyRegions = ["lower-back", "right-knee", "left-shoulder", "neck", "hands"];
+  const bodyMapLocations = [];
+
+  // Valid body region IDs from bodyRegions.ts
+  // Mix of commonly affected areas for realistic flare patterns
+  const bodyRegions = [
+    // Back regions (HS common areas)
+    "lower-back",
+    "buttocks-left",
+    "buttocks-right",
+
+    // Front regions (HS common areas)
+    "armpit-left",
+    "armpit-right",
+    "left-groin",
+    "right-groin",
+    "inner-thigh-left",
+    "inner-thigh-right",
+    "under-breast-left",
+    "under-breast-right",
+
+    // Joint regions (pain/inflammation)
+    "knee-left",
+    "knee-right",
+    "shoulder-left",
+    "shoulder-right",
+    "elbow-left",
+    "elbow-right",
+
+    // Other regions
+    "neck-front",
+    "neck-back",
+    "hand-left",
+    "hand-right",
+  ];
+
+  // Calculate how many flares should be recent (last 30% of flares)
+  const recentFlareCount = Math.floor(totalFlares * 0.3);
+  const historicalFlareCount = totalFlares - recentFlareCount;
 
   for (let i = 0; i < totalFlares; i++) {
     const flareId = generateId();
-    const daysFromStart = Math.floor(Math.random() * differenceInDays(endDate, startDate));
-    const flareStart = addDays(startDate, daysFromStart);
+    const isRecentFlare = i >= historicalFlareCount;
+
+    // Recent flares: last 60 days, Historical flares: any time before that
+    let flareStart: Date;
+    if (isRecentFlare) {
+      // Generate in last 60 days
+      const daysBack = Math.floor(Math.random() * 60);
+      flareStart = subDays(endDate, daysBack);
+    } else {
+      // Generate anywhere from startDate to 60 days ago
+      const historicalRange = differenceInDays(subDays(endDate, 60), startDate);
+      const daysFromStart = Math.floor(Math.random() * historicalRange);
+      flareStart = addDays(startDate, daysFromStart);
+    }
+
     const flareDuration = 3 + Math.floor(Math.random() * 10); // 3-12 days
     const flareEnd = addDays(flareStart, flareDuration);
 
+    // For recent flares, 35% chance they're still active (no endDate)
+    const isActive = isRecentFlare && Math.random() < 0.35;
+
     const bodyRegion = bodyRegions[Math.floor(Math.random() * bodyRegions.length)];
     const initialSeverity = 6 + Math.floor(Math.random() * 3); // 6-8
+
+    // Generate coordinates for body map visualization
+    const coordinates = generateRegionCoordinates(bodyRegion);
+    const locationId = generateId();
 
     flares.push({
       id: flareId,
       userId,
       startDate: flareStart.getTime(),
-      endDate: flareEnd < endDate ? flareEnd.getTime() : undefined,
-      status: flareEnd < endDate ? "resolved" : "active",
+      endDate: isActive ? undefined : (flareEnd <= endDate ? flareEnd.getTime() : undefined),
+      status: isActive ? "active" : "resolved",
       bodyRegionId: bodyRegion,
+      bodyRegions: [bodyRegion], // Array of regions (flare can span multiple)
       initialSeverity,
-      currentSeverity: flareEnd < endDate ? 2 : initialSeverity,
+      currentSeverity: isActive ? initialSeverity : 2, // Active flares keep initial severity, resolved drop to 2
+      coordinates: [{ // Array of coordinate objects for each region
+        regionId: bodyRegion,
+        x: coordinates.x,
+        y: coordinates.y,
+        locationId,
+      }],
       createdAt: flareStart.getTime(),
-      updatedAt: flareEnd < endDate ? flareEnd.getTime() : Date.now(),
+      updatedAt: isActive ? Date.now() : flareEnd.getTime(),
+    });
+
+    // Create body map location entry for visualization
+    bodyMapLocations.push({
+      id: locationId,
+      userId,
+      bodyRegionId: bodyRegion,
+      symptomId: flareId,
+      coordinates,
+      severity: initialSeverity,
+      layer: 'flares' as const, // Layer type for body map filtering
+      notes: '',
+      createdAt: flareStart, // Use Date object for compound index compatibility
+      updatedAt: flareStart, // Use Date object for compound index compatibility
     });
 
     // Create flare events
@@ -301,8 +408,8 @@ async function generateFlares(
       timestamp: flareStart.getTime(),
     });
 
-    // Add severity updates during flare
-    if (flareDuration > 5) {
+    // Add severity updates during flare (only for resolved flares or if flare is old enough)
+    if (!isActive && flareDuration > 5) {
       const midpoint = addDays(flareStart, Math.floor(flareDuration / 2));
       flareEvents.push({
         id: generateId(),
@@ -315,8 +422,8 @@ async function generateFlares(
       });
     }
 
-    // Resolved event
-    if (flareEnd < endDate) {
+    // Resolved event (only for resolved flares)
+    if (!isActive && flareEnd <= endDate) {
       flareEvents.push({
         id: generateId(),
         flareId,
@@ -330,11 +437,186 @@ async function generateFlares(
 
   await db.flares!.bulkAdd(flares as any);
   await db.flareEvents!.bulkAdd(flareEvents as any);
+  await db.bodyMapLocations!.bulkAdd(bodyMapLocations as any);
+
+  console.log(`[Flares] Created ${bodyMapLocations.length} bodyMapLocations for userId: ${userId}`);
 
   return {
     flaresCreated: flares.length,
     eventsCreated: flareEvents.length,
     flares,
+  };
+}
+
+/**
+ * Step 2b: Generate pain and inflammation layer markers
+ *
+ * Generates bodyMapLocation entries for pain and inflammation layers:
+ * - Some linked to existing flares (during flare periods)
+ * - Some independent (chronic pain, standalone inflammation)
+ * - Realistic distributions across body regions
+ * - Varying severities (2-10)
+ */
+async function generateBodyMapLayers(
+  userId: string,
+  startDate: Date,
+  endDate: Date,
+  flares: any
+) {
+  const painMarkers = [];
+  const inflammationMarkers = [];
+
+  // Common pain regions (joints, back, neck)
+  const painRegions = [
+    "knee-left",
+    "knee-right",
+    "shoulder-left",
+    "shoulder-right",
+    "elbow-left",
+    "elbow-right",
+    "lower-back",
+    "neck-front",
+    "neck-back",
+    "hip-left",
+    "hip-right",
+    "ankle-left",
+    "ankle-right",
+  ];
+
+  // Common inflammation regions (joints, soft tissue)
+  const inflammationRegions = [
+    "knee-left",
+    "knee-right",
+    "elbow-left",
+    "elbow-right",
+    "wrist-left",
+    "wrist-right",
+    "ankle-left",
+    "ankle-right",
+    "hand-left",
+    "hand-right",
+    "shoulder-left",
+    "shoulder-right",
+  ];
+
+  // 1. Generate pain markers during flares (70% of flares have associated pain)
+  flares.flares.forEach((flare: any) => {
+    if (Math.random() < 0.7) {
+      const flareStartDate = new Date(flare.startDate);
+      const flareEndDate = flare.endDate ? new Date(flare.endDate) : endDate;
+      const flareDays = differenceInDays(flareEndDate, flareStartDate);
+
+      // 30% of days during flare have pain markers
+      const daysWithPain = Math.ceil(flareDays * 0.3);
+
+      for (let d = 0; d < daysWithPain; d++) {
+        const painDay = addDays(flareStartDate, Math.floor(Math.random() * flareDays));
+        const painRegion = painRegions[Math.floor(Math.random() * painRegions.length)];
+        const coordinates = generateRegionCoordinates(painRegion);
+
+        painMarkers.push({
+          id: generateId(),
+          userId,
+          bodyRegionId: painRegion,
+          symptomId: flare.id, // Link to flare
+          coordinates,
+          severity: 5 + Math.floor(Math.random() * 4), // 5-8 during flares
+          layer: 'pain' as const,
+          notes: 'Pain during flare',
+          createdAt: painDay,
+          updatedAt: painDay,
+        });
+      }
+    }
+  });
+
+  // 2. Generate inflammation markers during flares (60% of flares have inflammation)
+  flares.flares.forEach((flare: any) => {
+    if (Math.random() < 0.6) {
+      const flareStartDate = new Date(flare.startDate);
+      const flareEndDate = flare.endDate ? new Date(flare.endDate) : endDate;
+      const flareDays = differenceInDays(flareEndDate, flareStartDate);
+
+      // 25% of days during flare have inflammation markers
+      const daysWithInflammation = Math.ceil(flareDays * 0.25);
+
+      for (let d = 0; d < daysWithInflammation; d++) {
+        const inflammationDay = addDays(flareStartDate, Math.floor(Math.random() * flareDays));
+        const inflammationRegion = inflammationRegions[Math.floor(Math.random() * inflammationRegions.length)];
+        const coordinates = generateRegionCoordinates(inflammationRegion);
+
+        inflammationMarkers.push({
+          id: generateId(),
+          userId,
+          bodyRegionId: inflammationRegion,
+          symptomId: flare.id, // Link to flare
+          coordinates,
+          severity: 4 + Math.floor(Math.random() * 5), // 4-8 during flares
+          layer: 'inflammation' as const,
+          notes: 'Inflammation during flare',
+          createdAt: inflammationDay,
+          updatedAt: inflammationDay,
+        });
+      }
+    }
+  });
+
+  // 3. Generate independent chronic pain markers (not during flares)
+  // About 30-50 markers spread over the time period
+  const totalDays = differenceInDays(endDate, startDate);
+  const independentPainCount = 30 + Math.floor(Math.random() * 21); // 30-50
+
+  for (let i = 0; i < independentPainCount; i++) {
+    const randomDay = addDays(startDate, Math.floor(Math.random() * totalDays));
+    const painRegion = painRegions[Math.floor(Math.random() * painRegions.length)];
+    const coordinates = generateRegionCoordinates(painRegion);
+
+    painMarkers.push({
+      id: generateId(),
+      userId,
+      bodyRegionId: painRegion,
+      symptomId: generateId(), // Standalone, not linked to flare
+      coordinates,
+      severity: 2 + Math.floor(Math.random() * 6), // 2-7 for chronic pain
+      layer: 'pain' as const,
+      notes: 'Chronic pain',
+      createdAt: randomDay,
+      updatedAt: randomDay,
+    });
+  }
+
+  // 4. Generate independent inflammation markers (not during flares)
+  // About 20-35 markers spread over the time period
+  const independentInflammationCount = 20 + Math.floor(Math.random() * 16); // 20-35
+
+  for (let i = 0; i < independentInflammationCount; i++) {
+    const randomDay = addDays(startDate, Math.floor(Math.random() * totalDays));
+    const inflammationRegion = inflammationRegions[Math.floor(Math.random() * inflammationRegions.length)];
+    const coordinates = generateRegionCoordinates(inflammationRegion);
+
+    inflammationMarkers.push({
+      id: generateId(),
+      userId,
+      bodyRegionId: inflammationRegion,
+      symptomId: generateId(), // Standalone
+      coordinates,
+      severity: 2 + Math.floor(Math.random() * 5), // 2-6 for general inflammation
+      layer: 'inflammation' as const,
+      notes: 'General inflammation',
+      createdAt: randomDay,
+      updatedAt: randomDay,
+    });
+  }
+
+  // Bulk insert all markers
+  const allMarkers = [...painMarkers, ...inflammationMarkers];
+  await db.bodyMapLocations!.bulkAdd(allMarkers as any);
+
+  console.log(`[BodyMapLayers] Created ${painMarkers.length} pain markers and ${inflammationMarkers.length} inflammation markers`);
+
+  return {
+    painMarkersCreated: painMarkers.length,
+    inflammationMarkersCreated: inflammationMarkers.length,
   };
 }
 
@@ -577,17 +859,42 @@ async function generateCorrelations(
     const randomFood = entities.foods[Math.floor(Math.random() * entities.foods.length)];
     const randomSymptom = entities.symptoms[Math.floor(Math.random() * entities.symptoms.length)];
 
+    // Generate coefficient (Spearman's ρ between -1 and +1, focusing on positive correlations)
+    const coefficient = 0.3 + Math.random() * 0.55; // 0.3 to 0.85
+
+    // Determine strength based on coefficient
+    let strength: "strong" | "moderate" | "weak";
+    if (Math.abs(coefficient) >= 0.7) strength = "strong";
+    else if (Math.abs(coefficient) >= 0.4) strength = "moderate";
+    else strength = "weak";
+
+    // Determine confidence based on sample size
+    const sampleSize = Math.floor(foodEventCount * 0.1) + 10; // At least 10 samples
+    let confidence: "high" | "medium" | "low";
+    if (sampleSize >= 30) confidence = "high";
+    else if (sampleSize >= 15) confidence = "medium";
+    else confidence = "low";
+
+    // Random lag hours (0, 6, 12, 24, 48)
+    const lagOptions = [0, 6, 12, 24, 48];
+    const lagHours = lagOptions[Math.floor(Math.random() * lagOptions.length)];
+
     correlations.push({
       id: generateId(),
       userId,
       type: "food-symptom",
       item1: randomFood.id,
       item2: randomSymptom.id,
-      correlation: 0.3 + Math.random() * 0.5, // 0.3-0.8 correlation
-      sampleSize: Math.floor(foodEventCount * 0.1),
+      coefficient, // Spearman's ρ (required field)
+      strength, // strong | moderate | weak (required field)
+      significance: 0.01 + Math.random() * 0.04, // p-value 0.01-0.05 (statistically significant)
+      sampleSize,
+      lagHours, // Time lag in hours (required field)
+      confidence, // high | medium | low (required field)
+      timeRange: "30d" as const, // Time window (required field)
       calculatedAt: Date.now(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     });
   }
 

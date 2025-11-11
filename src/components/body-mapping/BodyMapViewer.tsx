@@ -368,10 +368,15 @@ export const BodyMapViewer = forwardRef<BodyMapViewerRef, BodyMapViewerProps>(fu
 
     return (
       <React.Suspense fallback={null}>
-        <FlareMarkers viewType={view} zoomLevel={zoomLevel} userId={userId} />
+        <FlareMarkers
+          viewType={view}
+          zoomLevel={zoomLevel}
+          userId={userId}
+          markers={symptoms}
+        />
       </React.Suspense>
     );
-  }, [view, zoomLevel, userId, showFlareMarkers]);
+  }, [view, zoomLevel, userId, showFlareMarkers, symptoms]);
 
   // Task 2.5: Conditionally render RegionDetailView or full body view
   // Note: RegionDetailView handles its own portal rendering when in fullscreen

@@ -13,13 +13,14 @@
 
 import { Apple, AlertCircle, Pill, Activity, TrendingUp } from 'lucide-react';
 import { CorrelationResult } from '@/types/correlation';
+import { EnrichedCorrelation } from '@/lib/hooks/useEnrichedCorrelations';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 interface InsightCardProps {
-  correlation: CorrelationResult;
-  onViewDetails: (correlation: CorrelationResult) => void;
+  correlation: EnrichedCorrelation;
+  onViewDetails: (correlation: EnrichedCorrelation) => void;
 }
 
 /**
@@ -50,18 +51,18 @@ function getInsightIcon(type: string) {
 /**
  * Generate headline text from correlation
  *
- * Format: "High {item1} → Increased {item2}"
+ * Format: "High {item1Name} → Increased {item2Name}"
  *
  * Examples:
  * - "High Dairy → Increased Headache"
  * - "High Gluten → Increased Fatigue"
  *
- * @param correlation - Correlation result
+ * @param correlation - Enriched correlation result with item names
  * @returns Formatted headline string
  */
-function generateHeadline(correlation: CorrelationResult): string {
-  const item1Formatted = correlation.item1.charAt(0).toUpperCase() + correlation.item1.slice(1);
-  const item2Formatted = correlation.item2.charAt(0).toUpperCase() + correlation.item2.slice(1);
+function generateHeadline(correlation: EnrichedCorrelation): string {
+  const item1Formatted = correlation.item1Name.charAt(0).toUpperCase() + correlation.item1Name.slice(1);
+  const item2Formatted = correlation.item2Name.charAt(0).toUpperCase() + correlation.item2Name.slice(1);
 
   // Determine direction based on coefficient sign
   const direction = correlation.coefficient > 0 ? 'Increased' : 'Decreased';

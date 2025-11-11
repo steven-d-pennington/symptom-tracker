@@ -14,12 +14,18 @@
 import { useState } from 'react';
 import { CorrelationResult } from '@/types/correlation';
 import { useCorrelations, useLoggedDaysCount } from '@/lib/hooks/useCorrelations';
+import { useEnrichedCorrelations, EnrichedCorrelation } from '@/lib/hooks/useEnrichedCorrelations';
 import { sortInsightsByPriority } from '@/lib/services/insightPrioritization';
 import { TimeRangeSelector } from '@/components/insights/TimeRangeSelector';
 import { MedicalDisclaimerBanner } from '@/components/insights/MedicalDisclaimerBanner';
 import { InsightsGrid } from '@/components/insights/InsightsGrid';
 import { InsightsEmptyState } from '@/components/insights/InsightsEmptyState';
 import { InsightDetailModal } from '@/components/insights/InsightDetailModal';
+import { TreatmentTracker } from '@/components/insights/TreatmentTracker';
+import { TreatmentDetailModal } from '@/components/insights/TreatmentDetailModal';
+import { TreatmentEffectiveness } from '@/types/treatmentEffectiveness';
+import { exportTreatmentReportPDF } from '@/lib/services/treatmentReportExportService';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 
 /**
  * Health Insights Hub Page
@@ -36,31 +42,44 @@ import { InsightDetailModal } from '@/components/insights/InsightDetailModal';
  * - Grid adapts to screen size (1/2/3 columns)
  */
 export default function InsightsPage() {
-  // User ID (in production, from auth context)
-  const userId = 'default-user'; // TODO: Get from auth context
+  // User ID from current user hook
+  const { userId } = useCurrentUser();
 
   // Time range state (default: 30 days)
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
   // Modal state
-  const [selectedInsight, setSelectedInsight] = useState<CorrelationResult | null>(null);
+  const [selectedInsight, setSelectedInsight] = useState<EnrichedCorrelation | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Treatment modal state (Story 6.7)
+  const [selectedTreatment, setSelectedTreatment] = useState<TreatmentEffectiveness | null>(null);
+  const [isTreatmentModalOpen, setIsTreatmentModalOpen] = useState(false);
+
   // Fetch correlations and logged days count
-  const { correlations: rawCorrelations, isLoading, error } = useCorrelations(userId, timeRange);
-  const { loggedDaysCount, isLoading: isLoadingDays } = useLoggedDaysCount(userId);
+  const { correlations: rawCorrelations, isLoading, error } = useCorrelations(userId || '', timeRange);
+  const { loggedDaysCount, isLoading: isLoadingDays } = useLoggedDaysCount(userId || '');
+
+  // Enrich correlations with item names
+  const { correlations: enrichedCorrelations, isLoading: isEnriching } = useEnrichedCorrelations(
+    rawCorrelations,
+    userId || ''
+  );
 
   // Apply prioritization algorithm
-  const prioritizedCorrelations = sortInsightsByPriority(rawCorrelations);
+  const prioritizedCorrelations = sortInsightsByPriority(enrichedCorrelations);
+
+  // Combine loading states
+  const isLoadingData = isLoading || isEnriching;
 
   // Determine if empty state should be shown
   const showEmptyState =
-    !isLoading && (prioritizedCorrelations.length === 0 || loggedDaysCount < 10);
+    !isLoadingData && (prioritizedCorrelations.length === 0 || loggedDaysCount < 10);
 
   /**
    * Handle "View Details" button click
    */
-  const handleViewDetails = (correlation: CorrelationResult) => {
+  const handleViewDetails = (correlation: EnrichedCorrelation) => {
     setSelectedInsight(correlation);
     setIsModalOpen(true);
   };
@@ -71,6 +90,33 @@ export default function InsightsPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedInsight(null);
+  };
+
+  /**
+   * Handle treatment click (Story 6.7)
+   */
+  const handleTreatmentClick = (treatment: TreatmentEffectiveness) => {
+    setSelectedTreatment(treatment);
+    setIsTreatmentModalOpen(true);
+  };
+
+  /**
+   * Handle treatment modal close (Story 6.7)
+   */
+  const handleCloseTreatmentModal = () => {
+    setIsTreatmentModalOpen(false);
+    setSelectedTreatment(null);
+  };
+
+  /**
+   * Handle treatment export (Story 6.7)
+   */
+  const handleExportTreatment = async (treatment: TreatmentEffectiveness) => {
+    try {
+      await exportTreatmentReportPDF(treatment);
+    } catch (error) {
+      console.error('Failed to export treatment report:', error);
+    }
   };
 
   return (
@@ -121,17 +167,39 @@ export default function InsightsPage() {
           ) : (
             <InsightsGrid
               correlations={prioritizedCorrelations}
-              isLoading={isLoading}
+              isLoading={isLoadingData}
               onViewDetails={handleViewDetails}
             />
           )}
         </main>
+
+        {/* Treatment Effectiveness Section (Story 6.7) */}
+        {!showEmptyState && userId && (
+          <section className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Treatment Effectiveness
+            </h2>
+            <TreatmentTracker
+              userId={userId}
+              timeRange={timeRange === 'all' ? '90d' : timeRange}
+              onTreatmentClick={handleTreatmentClick}
+            />
+          </section>
+        )}
 
         {/* Insight detail modal */}
         <InsightDetailModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           correlation={selectedInsight}
+        />
+
+        {/* Treatment detail modal (Story 6.7) */}
+        <TreatmentDetailModal
+          treatment={selectedTreatment}
+          isOpen={isTreatmentModalOpen}
+          onClose={handleCloseTreatmentModal}
+          onExport={handleExportTreatment}
         />
       </div>
     </div>

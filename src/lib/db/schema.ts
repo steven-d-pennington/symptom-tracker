@@ -664,3 +664,50 @@ export interface PatternDetectionRecord {
   createdAt: number; // Unix timestamp (epoch ms)
   updatedAt: number; // Unix timestamp (epoch ms)
 }
+
+// Treatment Effectiveness - Treatment effectiveness tracking (Story 6.7)
+
+export interface TreatmentEffectivenessRecord {
+  id: string; // UUID v4
+  userId: string; // User ID
+
+  // Treatment identification
+  treatmentId: string; // Reference to medication or trigger (intervention) ID
+  treatmentType: 'medication' | 'intervention'; // Type of treatment
+  treatmentName: string; // Human-readable treatment name
+
+  // Effectiveness metrics
+  effectivenessScore: number; // 0-100 scale, formula: ((baseline - outcome) / baseline) × 100
+  trendDirection: 'improving' | 'stable' | 'declining'; // Trend over time
+  sampleSize: number; // Number of treatment cycles analyzed (minimum 3 required)
+  confidence: 'high' | 'medium' | 'low'; // high: n>=10, medium: 5<=n<10, low: 3<=n<5
+
+  // Time range analyzed (Unix timestamps)
+  timeRangeStart: number; // Start of analysis period
+  timeRangeEnd: number; // End of analysis period
+
+  // Timestamps
+  lastCalculated: number; // Unix timestamp when effectiveness was last calculated
+  createdAt: number; // Unix timestamp (epoch ms)
+  updatedAt: number; // Unix timestamp (epoch ms)
+}
+
+export interface TreatmentAlertRecord {
+  id: string; // UUID v4 (alertId)
+  userId: string; // User ID
+
+  // Alert identification
+  treatmentId: string; // Reference to treatment
+  alertType: 'effectiveness_drop' | 'low_effectiveness' | 'unused_effective_treatment';
+
+  // Alert details
+  severity: 'warning' | 'info'; // Alert severity level
+  message: string; // Human-readable alert message
+  actionSuggestion: string; // Suggested action for user
+
+  // Alert state
+  dismissed: boolean; // Whether user has dismissed this alert
+
+  // Timestamps
+  createdAt: number; // Unix timestamp when alert was created (epoch ms)
+}
