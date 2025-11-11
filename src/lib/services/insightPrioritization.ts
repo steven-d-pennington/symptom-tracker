@@ -51,9 +51,9 @@ export function calculatePriorityScore(correlation: CorrelationResult): number {
  * @param insights - Array of correlation results to sort
  * @returns Sorted array (highest priority first)
  */
-export function sortInsightsByPriority(
-  insights: CorrelationResult[]
-): CorrelationResult[] {
+export function sortInsightsByPriority<T extends CorrelationResult>(
+  insights: T[]
+): T[] {
   return [...insights].sort((a, b) => {
     const priorityA = calculatePriorityScore(a);
     const priorityB = calculatePriorityScore(b);

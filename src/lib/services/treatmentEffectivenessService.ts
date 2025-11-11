@@ -39,8 +39,8 @@ async function calculateAverageSeverity(
   // Query symptom instances in date range
   const symptomInstances = await symptomInstanceRepository.findByDateRange(
     userId,
-    new Date(startDate),
-    new Date(endDate)
+    startDate,
+    endDate
   );
 
   if (symptomInstances.length === 0) {
@@ -187,8 +187,8 @@ export async function calculateTreatmentEffectiveness(
     // Query medication events
     const events = await medicationEventRepository.findByDateRange(
       userId,
-      new Date(startDate),
-      new Date(endDate)
+      startDate,
+      endDate
     );
     treatmentEvents = events
       .filter((e) => e.medicationId === treatmentId && e.taken)
@@ -201,8 +201,8 @@ export async function calculateTreatmentEffectiveness(
     // Query trigger (intervention) events
     const events = await triggerEventRepository.findByDateRange(
       userId,
-      new Date(startDate),
-      new Date(endDate)
+      startDate,
+      endDate
     );
     treatmentEvents = events
       .filter((e) => e.triggerId === treatmentId)

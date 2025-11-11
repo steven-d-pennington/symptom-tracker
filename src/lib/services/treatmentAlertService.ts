@@ -103,8 +103,8 @@ export async function checkUnusedEffectiveTreatment(
   if (treatmentType === 'medication') {
     const events = await medicationEventRepository.findByDateRange(
       userId,
-      new Date(cutoffDate),
-      new Date(now)
+      cutoffDate,
+      now
     );
     const treatmentEvents = events.filter(
       (e) => e.medicationId === treatmentId && e.taken
@@ -115,8 +115,8 @@ export async function checkUnusedEffectiveTreatment(
   } else {
     const events = await triggerEventRepository.findByDateRange(
       userId,
-      new Date(cutoffDate),
-      new Date(now)
+      cutoffDate,
+      now
     );
     const treatmentEvents = events.filter((e) => e.triggerId === treatmentId);
     if (treatmentEvents.length > 0) {
@@ -199,7 +199,7 @@ export async function storeAlert(alert: TreatmentAlert): Promise<void> {
 export async function getActiveAlerts(userId: string): Promise<TreatmentAlert[]> {
   const records = await db.treatmentAlerts
     .where('[userId+dismissed]')
-    .equals([userId, false])
+    .equals([userId, false] as any)
     .toArray();
 
   return records.map((r) => ({

@@ -294,10 +294,10 @@ export class ExportService {
     }
 
     if (options.includeFlareEvents !== false) {
-      data.flareEvents = await db.bodyMarkerEvents
+      data.flareEvents = (await db.bodyMarkerEvents
         .where("userId")
         .equals(userId)
-        .toArray();
+        .toArray()) as any;
     }
 
     // Photos (opt-in)
@@ -516,10 +516,10 @@ export class ExportService {
     }
 
     // Body Marker Locations (Story 3.7.7 - Multi-location tracking, now unified)
-    data.flareBodyLocations = await db.bodyMarkerLocations
+    data.flareBodyLocations = (await db.bodyMarkerLocations
       .where("userId")
       .equals(userId)
-      .toArray();
+      .toArray()) as any;
 
     // Correlation Records (Story 6.3 - Direct correlation records)
     if (options.dateRange) {

@@ -279,8 +279,9 @@ export function DevDataControls() {
         db.medicationEvents?.where({ userId: ghostUserId }).delete(),
         db.triggerEvents?.where({ userId: ghostUserId }).delete(),
         db.symptomInstances?.where({ userId: ghostUserId }).delete(),
-        db.flares?.where({ userId: ghostUserId }).delete(),
-        db.flareEvents?.where({ userId: ghostUserId }).delete(),
+        db.bodyMarkers?.where({ userId: ghostUserId }).delete(),
+        db.bodyMarkerEvents?.where({ userId: ghostUserId }).delete(),
+        db.bodyMarkerLocations?.where({ userId: ghostUserId }).delete(),
         // Food data
         db.foodEvents?.where({ userId: ghostUserId }).delete(),
         db.foods?.where({ userId: ghostUserId }).delete(),
@@ -341,8 +342,9 @@ export function DevDataControls() {
         db.medicationEvents?.where({ userId }).delete(),
         db.triggerEvents?.where({ userId }).delete(),
         db.symptomInstances?.where({ userId }).delete(),
-        db.flares?.where({ userId }).delete(),
-        db.flareEvents?.where({ userId }).delete(),
+        db.bodyMarkers?.where({ userId }).delete(),
+        db.bodyMarkerEvents?.where({ userId }).delete(),
+        db.bodyMarkerLocations?.where({ userId }).delete(),
         // Food data
         db.foodEvents?.where({ userId }).delete(),
         db.foods?.where({ userId }).delete(),

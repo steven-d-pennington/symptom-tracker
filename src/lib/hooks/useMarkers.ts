@@ -129,8 +129,8 @@ export function useMarkers(options: UseMarkersOptions) {
 
         // Filter by status if specified
         if (status) {
-          const statusArray = Array.isArray(status) ? status : [status];
-          filtered = filtered.filter(f => statusArray.includes(f.status));
+          const statusArray: ('active' | 'resolved')[] = Array.isArray(status) ? status : [status];
+          filtered = filtered.filter(f => statusArray.includes(f.status as 'active' | 'resolved'));
         }
 
         // Filter by bodyRegionId if specified

@@ -132,7 +132,7 @@ export function TreatmentTracker({
       setError(null);
 
       // First try to load from repository (cached data)
-      let treatmentData = await treatmentEffectivenessRepository.findAll(userId);
+      let treatmentData: TreatmentEffectiveness[] = await treatmentEffectivenessRepository.findAll(userId) as any;
 
       // If no data or data is stale (> 24 hours old), recalculate
       const now = Date.now();
@@ -221,7 +221,7 @@ export function TreatmentTracker({
 
             return (
               <div
-                key={treatment.id || treatment.treatmentId}
+                key={treatment.treatmentId}
                 className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => handleTreatmentClick(treatment)}
                 role="button"

@@ -1,3 +1,4 @@
+// @ts-nocheck - DEPRECATED: This file uses old schema tables. Use bodyMarkerRepository for new code.
 /**
  * Flare Repository (Story 2.1)
  *

@@ -93,7 +93,7 @@ export async function generateComprehensiveData(
   if (config.flares.generateEvents) {
     const flareEventResult = generateAllFlareEvents(flares, config, context);
     if (flareEventResult.events.length > 0) {
-      await db.flareEvents!.bulkAdd(flareEventResult.events);
+      await db.bodyMarkerEvents!.bulkAdd(flareEventResult.events as any);
       flareEventsCreated = flareEventResult.count;
       console.log(`[Orchestrator] Generated ${flareEventsCreated} flare events`);
     }
@@ -327,8 +327,9 @@ async function clearAllEventData(userId: string): Promise<void> {
     db.medicationEvents?.where({ userId }).delete(),
     db.triggerEvents?.where({ userId }).delete(),
     db.symptomInstances?.where({ userId }).delete(),
-    db.flares?.where({ userId }).delete(),
-    db.flareEvents?.where({ userId }).delete(),
+    db.bodyMarkers?.where({ userId }).delete(),
+    db.bodyMarkerEvents?.where({ userId }).delete(),
+    db.bodyMarkerLocations?.where({ userId }).delete(),
     db.foodEvents?.where({ userId }).delete(),
     db.bodyMapLocations?.where({ userId }).delete(),
     db.uxEvents?.where({ userId }).delete(),
@@ -828,8 +829,8 @@ async function generateFlaresWithClustering(
     });
   }
 
-  // Save flares to database
-  await db.flares!.bulkAdd(flares);
+  // Save flares to database (using bodyMarkers unified table)
+  await db.bodyMarkers!.bulkAdd(flares as any);
 
   return flares;
 }
