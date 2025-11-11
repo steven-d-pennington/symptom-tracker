@@ -1,12 +1,12 @@
 'use client';
 
-import { FlareEventRecord } from '@/lib/db/schema';
+import { BodyMarkerEventRecord } from '@/lib/db/schema';
 import { FlareEventType, FlareTrend } from '@/types/flare';
 import { formatDistanceToNow } from 'date-fns';
 import { TrendingUp, Activity, ArrowUpDown, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface FlareHistoryEntryProps {
-  event: FlareEventRecord;
+  event: BodyMarkerEventRecord;
   isExpanded: boolean;
   onToggle: () => void;
 }

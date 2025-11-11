@@ -7,10 +7,10 @@ import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
 import { LayerSelector } from "@/components/body-map/LayerSelector";
 import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
-import { flareRepository } from "@/lib/repositories/flareRepository";
+import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository";
 import { ActiveFlare } from "@/lib/types/flare";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
-import { useFlares } from "@/lib/hooks/useFlares";
+import { useMarkers } from "@/lib/hooks/useMarkers";
 import { useBodyMapLayers } from "@/lib/hooks/useBodyMapLayers";
 import { cn } from "@/lib/utils/cn";
 import { Plus, X, Maximize2, TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
@@ -18,7 +18,7 @@ import Link from "next/link";
 
 export default function FlaresPage() {
   const { userId } = useCurrentUser();
-  const { data: flares = [], isLoading: flaresLoading, refetch: refetchFlares } = useFlares({ userId: userId || '', includeResolved: false });
+  const { data: flares = [], isLoading: flaresLoading, refetch: refetchFlares } = useMarkers({ userId: userId || '', type: 'flare', includeResolved: false });
 
   // Layer management hook (Story 5.3, 5.5)
   const {
@@ -236,9 +236,6 @@ export default function FlaresPage() {
             <LayerSpecificCards
               userId={userId}
               currentLayer={currentLayer}
-              markers={markers}
-              isLoading={isLoadingMarkers}
-              flares={flares}
               filterByRegion={selectedRegion}
               onCardClick={handleFlareCardClick}
             />
@@ -274,11 +271,6 @@ export default function FlaresPage() {
                 <LayerSelector
                   currentLayer={currentLayer}
                   onLayerChange={changeLayer}
-                  viewMode={viewMode}
-                  onViewModeChange={changeViewMode}
-                  visibleLayers={visibleLayers}
-                  onToggleLayerVisibility={toggleLayerVisibility}
-                  markerCounts={markerCounts}
                 />
               </div>
 

@@ -35,7 +35,10 @@ export async function getProblemAreas(
 ): Promise<ProblemArea[]> {
   // Fetch all flares for user (both active and resolved)
   // Story 3.1 includes both active and resolved flares for complete frequency picture
-  const allFlares = await db.flares.where({ userId }).toArray();
+  const allFlares = await db.bodyMarkers
+    .where({ userId })
+    .and((marker) => marker.type === 'flare')
+    .toArray();
 
   // Filter by time range
   const flaresInRange = allFlares.filter((f) => withinTimeRange(f, timeRange));
@@ -91,8 +94,9 @@ export async function getFlaresByRegion(
   regionId: string
 ): Promise<RegionFlareHistory[]> {
   // Fetch all flares for this region (Task 1.4)
-  const flares = await db.flares
+  const flares = await db.bodyMarkers
     .where({ userId, bodyRegionId: regionId })
+    .and((marker) => marker.type === 'flare')
     .toArray();
 
   // Sort by startDate descending (Task 1.5)
@@ -108,9 +112,9 @@ export async function getFlaresByRegion(
     const durationMs = endTime - flare.startDate;
     const duration = Math.round(durationMs / (24 * 60 * 60 * 1000));
 
-    // Task 1.7: Get peak severity from flare events
-    const events = await db.flareEvents
-      .where({ flareId: flare.id })
+    // Task 1.7: Get peak severity from body marker events
+    const events = await db.bodyMarkerEvents
+      .where({ markerId: flare.id })
       .toArray();
 
     const severityValues = events
@@ -226,7 +230,10 @@ export async function getDurationMetrics(
   timeRange: TimeRange
 ): Promise<DurationMetrics> {
   // Fetch only resolved flares (Task 1.5)
-  const allFlares = await db.flares.where({ userId, status: 'resolved' }).toArray();
+  const allFlares = await db.bodyMarkers
+    .where({ userId, status: 'resolved' })
+    .and((marker) => marker.type === 'flare')
+    .toArray();
 
   // Filter by time range
   const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
@@ -295,7 +302,10 @@ export async function getSeverityMetrics(
   timeRange: TimeRange
 ): Promise<SeverityMetrics> {
   // Task 1.13: Fetch all flares (active and resolved)
-  const allFlares = await db.flares.where({ userId }).toArray();
+  const allFlares = await db.bodyMarkers
+    .where({ userId })
+    .and((marker) => marker.type === 'flare')
+    .toArray();
 
   // Filter by time range
   const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
@@ -319,9 +329,9 @@ export async function getSeverityMetrics(
   const trends: string[] = [];
 
   for (const flare of flaresInRange) {
-    // Task 1.14: Get peak severity from flareEvents table
-    const events = await db.flareEvents
-      .where({ flareId: flare.id })
+    // Task 1.14: Get peak severity from bodyMarkerEvents table
+    const events = await db.bodyMarkerEvents
+      .where({ markerId: flare.id })
       .toArray();
 
     const severityValues = events
@@ -393,7 +403,10 @@ export async function getMonthlyTrendData(
   timeRange: TimeRange
 ): Promise<TrendAnalysis> {
   // Task 1.4: Query all flares (active and resolved) within time range
-  const allFlares = await db.flares.where({ userId }).toArray();
+  const allFlares = await db.bodyMarkers
+    .where({ userId })
+    .and((marker) => marker.type === 'flare')
+    .toArray();
   const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
 
   // Handle empty state - no flares
@@ -428,8 +441,8 @@ export async function getMonthlyTrendData(
     const severities: number[] = [];
 
     for (const flare of flares) {
-      const events = await db.flareEvents
-        .where({ flareId: flare.id })
+      const events = await db.bodyMarkerEvents
+        .where({ markerId: flare.id })
         .toArray();
 
       const severityValues = events
@@ -554,7 +567,10 @@ export async function getInterventionEffectiveness(
   timeRange: TimeRange
 ): Promise<InterventionEffectiveness[]> {
   // Task 1.5: Fetch all flares within time range
-  const allFlares = await db.flares.where({ userId }).toArray();
+  const allFlares = await db.bodyMarkers
+    .where({ userId })
+    .and((marker) => marker.type === 'flare')
+    .toArray();
   const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
 
   // Map to collect intervention instances by type
@@ -563,8 +579,8 @@ export async function getInterventionEffectiveness(
   // Task 1.6-1.13: Process each flare to find interventions and calculate effectiveness
   for (const flare of flaresInRange) {
     // Get all events for this flare, sorted by timestamp
-    const events = await db.flareEvents
-      .where({ flareId: flare.id })
+    const events = await db.bodyMarkerEvents
+      .where({ markerId: flare.id })
       .sortBy('timestamp');
 
     // Task 1.6: Find intervention events
@@ -692,7 +708,10 @@ export async function getIndividualDurations(
   timeRange: TimeRange
 ): Promise<number[]> {
   // Fetch only resolved flares (must have endDate)
-  const allFlares = await db.flares.where({ userId, status: 'resolved' }).toArray();
+  const allFlares = await db.bodyMarkers
+    .where({ userId, status: 'resolved' })
+    .and((marker) => marker.type === 'flare')
+    .toArray();
 
   // Filter by time range
   const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
@@ -719,7 +738,10 @@ export async function getIndividualSeverities(
   timeRange: TimeRange
 ): Promise<number[]> {
   // Fetch all flares (active and resolved)
-  const allFlares = await db.flares.where({ userId }).toArray();
+  const allFlares = await db.bodyMarkers
+    .where({ userId })
+    .and((marker) => marker.type === 'flare')
+    .toArray();
 
   // Filter by time range
   const flaresInRange = allFlares.filter(f => withinTimeRange(f, timeRange));
@@ -729,8 +751,8 @@ export async function getIndividualSeverities(
 
   for (const flare of flaresInRange) {
     // Get all events for this flare
-    const events = await db.flareEvents
-      .where({ flareId: flare.id })
+    const events = await db.bodyMarkerEvents
+      .where({ markerId: flare.id })
       .toArray();
 
     // Find peak severity from severity_update events

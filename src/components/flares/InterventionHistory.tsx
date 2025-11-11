@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { flareRepository } from '@/lib/repositories/flareRepository';
-import { FlareEventRecord } from '@/lib/db/schema';
+import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
+import { BodyMarkerEventRecord } from '@/lib/db/schema';
 import { InterventionType } from '@/types/flare';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -32,13 +32,13 @@ export function InterventionHistory({
   flareId,
   userId,
 }: InterventionHistoryProps) {
-  const [interventions, setInterventions] = useState<FlareEventRecord[]>([]);
+  const [interventions, setInterventions] = useState<BodyMarkerEventRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadInterventions = async () => {
       try {
-        const history = await flareRepository.getFlareHistory(userId, flareId);
+        const history = await bodyMarkerRepository.getMarkerHistory(userId, flareId);
         // Filter for intervention events and sort reverse-chronologically
         const interventionEvents = history
           .filter((e) => e.eventType === 'intervention')

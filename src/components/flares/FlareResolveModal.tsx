@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FlareRecord } from '@/lib/db/schema';
-import { flareRepository } from '@/lib/repositories/flareRepository';
+import { BodyMarkerRecord } from '@/lib/db/schema';
+import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
 import { getBodyRegionById } from '@/lib/data/bodyRegions';
 
 interface FlareResolveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  flare: FlareRecord;
+  flare: BodyMarkerRecord;
   userId: string;
   onResolve?: () => void;
 }
@@ -55,19 +55,13 @@ export function FlareResolveModal({ isOpen, onClose, flare, userId, onResolve }:
     setError(null);
 
     try {
-      // Create resolution FlareEvent record (append-only)
-      await flareRepository.addFlareEvent(userId, flare.id, {
-        eventType: "resolved",
-        timestamp: Date.now(),
+      // Use unified marker repository's resolveMarker method
+      await bodyMarkerRepository.resolveMarker(
+        userId,
+        flare.id,
         resolutionDate,
-        resolutionNotes: notes.trim() || undefined,
-      });
-
-      // Update FlareRecord status to resolved and set endDate
-      await flareRepository.updateFlare(userId, flare.id, {
-        status: "resolved",
-        endDate: resolutionDate,
-      });
+        notes.trim() || undefined
+      );
 
       // Success - close modal and trigger callback
       onClose();

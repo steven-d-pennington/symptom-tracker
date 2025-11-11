@@ -318,6 +318,8 @@ export class TrendAnalysisService {
     }
 
     private async fetchFlareSeveritySeries(userId: string, start: Date, end: Date): Promise<MetricSeries<FlareSeverityPoint>> {
+        // Note: This fetches flares which are now stored as bodyMarkers with type='flare'
+        // The flareRepo is already adapted to use bodyMarkers table
         const flares = await this.flareRepo.getByUserId(userId);
         const windowStart = start.getTime();
         const windowEnd = end.getTime();

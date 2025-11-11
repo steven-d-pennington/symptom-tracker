@@ -2,9 +2,8 @@
 
 import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import { Save, X } from "lucide-react";
-import { flareRepository } from "@/lib/repositories/flareRepository";
-import type { FlareRecord } from "@/lib/db/schema";
-import type { CreateFlareInput } from "@/lib/repositories/flareRepository";
+import { bodyMarkerRepository, type CreateMarkerInput } from "@/lib/repositories/bodyMarkerRepository";
+import type { BodyMarkerRecord } from "@/lib/db/schema";
 import { toast } from "@/components/common/Toast";
 import { BodyMapViewer } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
@@ -38,16 +37,16 @@ interface FlareCreationModalProps {
   selection: FlareCreationSelection | FlareCreationSelection[] | null;
   /**
    * Optional override for persistence logic.
-   * Defaults to flareRepository.createFlare when not provided.
+   * Defaults to bodyMarkerRepository.createMarker when not provided.
    */
   onSave?: (payload: {
     timestamp: number;
     severity: number;
     notes?: string;
     selection: FlareCreationSelection;
-  }) => Promise<FlareRecord | void>;
-  /** Invoked after a successful save with the created flare record */
-  onCreated?: (flare: FlareRecord, stayInRegion?: boolean) => void;
+  }) => Promise<BodyMarkerRecord | void>;
+  /** Invoked after a successful save with the created marker record */
+  onCreated?: (marker: BodyMarkerRecord, stayInRegion?: boolean) => void;
 }
 
 const MAX_NOTES_LENGTH = 500;
@@ -210,16 +209,17 @@ export function FlareCreationModal({
     severity: number;
     notes?: string;
     selection: FlareCreationSelection;
-  }): Promise<FlareRecord> => {
+  }): Promise<BodyMarkerRecord> => {
     const trimmedNotes = payload.notes?.trim();
 
-    // Story 3.7.7: Map all selections to bodyLocations array
+    // Map all selections to bodyLocations array
     const bodyLocations = selectionsArray.map(sel => ({
       bodyRegionId: sel.bodyRegionId,
       coordinates: sel.coordinates,
     }));
 
-    const createPayload: CreateFlareInput = {
+    const createPayload: CreateMarkerInput = {
+      type: 'flare', // UNIFIED MARKER SYSTEM: Specify marker type
       bodyRegionId: payload.selection.bodyRegionId,
       coordinates: payload.selection.coordinates,
       initialSeverity: payload.severity,
@@ -228,10 +228,10 @@ export function FlareCreationModal({
       createdAt: payload.timestamp,
       updatedAt: payload.timestamp,
       initialEventNotes: trimmedNotes && trimmedNotes.length > 0 ? trimmedNotes : undefined,
-      bodyLocations, // Story 3.7.7: Pass all marked locations
+      bodyLocations, // Pass all marked locations
     };
 
-    return flareRepository.createFlare(userId, createPayload);
+    return bodyMarkerRepository.createMarker(userId, createPayload);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -281,8 +281,8 @@ export function FlareCreationModal({
           duration: 3000,
         });
 
-        // Call onCreated with a dummy flare object for compatibility
-        onCreated?.({} as FlareRecord, submitAction === 'save-and-add-more');
+        // Call onCreated with a dummy marker object for compatibility
+        onCreated?.({} as BodyMarkerRecord, submitAction === 'save-and-add-more');
       } else {
         // For flares, use existing flare creation logic
         const saveHandler = onSave ?? defaultSave;
@@ -295,10 +295,10 @@ export function FlareCreationModal({
           selection: primarySelection,
         });
 
-        const createdFlare: FlareRecord | undefined =
-          (result as FlareRecord | undefined) ?? undefined;
+        const createdMarker: BodyMarkerRecord | undefined =
+          (result as BodyMarkerRecord | undefined) ?? undefined;
 
-        if (createdFlare) {
+        if (createdMarker) {
           // Show success toast with action buttons
           const locationsText = selectionsArray.length === 1
             ? (primarySelection.bodyRegionName || primarySelection.bodyRegionId)
@@ -310,7 +310,7 @@ export function FlareCreationModal({
                 label: "View Details",
                 onClick: () => {
                   // TODO: Navigate to flare details page when implemented
-                  console.log("Navigate to flare details:", createdFlare.id);
+                  console.log("Navigate to marker details:", createdMarker.id);
                 },
               },
               {
@@ -332,9 +332,9 @@ export function FlareCreationModal({
           // Dispatch custom event for any other listeners
           if (typeof window !== "undefined") {
             window.dispatchEvent(
-              new CustomEvent("flare:created", {
+              new CustomEvent("marker:created", {
                 detail: {
-                  flare: createdFlare,
+                  marker: createdMarker,
                   selection,
                   severity,
                   timestamp,
@@ -342,7 +342,7 @@ export function FlareCreationModal({
               })
             );
           }
-          onCreated?.(createdFlare, submitAction === 'save-and-add-more');
+          onCreated?.(createdMarker, submitAction === 'save-and-add-more');
         }
       }
 

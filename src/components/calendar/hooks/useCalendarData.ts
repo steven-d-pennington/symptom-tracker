@@ -29,7 +29,7 @@ import { foodEventRepository } from "@/lib/repositories/foodEventRepository"; //
 import { symptomInstanceRepository } from "@/lib/repositories/symptomInstanceRepository"; // Story 3.5.7
 import { medicationEventRepository } from "@/lib/repositories/medicationEventRepository"; // Story 3.5.7
 import { triggerEventRepository } from "@/lib/repositories/triggerEventRepository"; // Story 3.5.7
-import { flareRepository } from "@/lib/repositories/flareRepository"; // Story 3.5.7
+import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository"; // Unified marker system
 import { useDateNavigation } from "./useDateNavigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
@@ -732,7 +732,7 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
           symptomInstanceRepository.getAll(userId),
           medicationEventRepository.getAll(userId),
           triggerEventRepository.getAll(userId),
-          flareRepository.getActiveFlares(userId),
+          bodyMarkerRepository.getActiveMarkers(userId, 'flare'), // Use unified marker system for flares
         ]);
 
         setMoodEntries(moods);

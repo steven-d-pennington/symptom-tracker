@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { ResolvedFlareCard } from "@/components/flares/ResolvedFlareCard";
 import { ResolvedFlaresFilters } from "@/components/flares/ResolvedFlaresFilters";
 import { ResolvedFlaresEmptyState } from "@/components/flares/ResolvedFlaresEmptyState";
-import { flareRepository } from "@/lib/repositories/flareRepository";
-import { FlareRecord } from "@/lib/db/schema";
+import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository";
+import { BodyMarkerRecord } from "@/lib/db/schema";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 type SortBy = 'resolutionDate' | 'duration' | 'peakSeverity';
@@ -23,8 +23,8 @@ export default function ResolvedFlaresPage() {
   const { userId } = useCurrentUser();
 
   // State for resolved flares data
-  const [resolvedFlares, setResolvedFlares] = useState<FlareRecord[]>([]);
-  const [filteredFlares, setFilteredFlares] = useState<FlareRecord[]>([]);
+  const [resolvedFlares, setResolvedFlares] = useState<BodyMarkerRecord[]>([]);
+  const [filteredFlares, setFilteredFlares] = useState<BodyMarkerRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -68,15 +68,15 @@ export default function ResolvedFlaresPage() {
     const fetchResolvedFlares = async () => {
       try {
         setIsLoading(true);
-        const flares = await flareRepository.getResolvedFlares(userId);
+        const flares = await bodyMarkerRepository.getResolvedMarkers(userId, 'flare');
         setResolvedFlares(flares);
         setFilteredFlares(flares);
 
         // Fetch peak severities for all flares for sorting
         const severities: Record<string, number> = {};
         await Promise.all(
-          flares.map(async (flare) => {
-            const history = await flareRepository.getFlareHistory(userId, flare.id);
+          flares.map(async (flare: BodyMarkerRecord) => {
+            const history = await bodyMarkerRepository.getMarkerHistory(userId, flare.id);
             const severityValues = history
               .map(e => e.severity)
               .filter((s): s is number => s != null);
@@ -144,7 +144,7 @@ export default function ResolvedFlaresPage() {
   }, [router]);
 
   // Handle filter change
-  const handleFilterChange = useCallback((filtered: FlareRecord[]) => {
+  const handleFilterChange = useCallback((filtered: BodyMarkerRecord[]) => {
     setFilteredFlares(filtered);
   }, []);
 

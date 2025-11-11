@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FlareRecord } from "@/lib/db/schema";
-import { flareRepository } from "@/lib/repositories/flareRepository";
+import { BodyMarkerRecord } from "@/lib/db/schema";
+import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository";
 import { FRONT_BODY_REGIONS, BACK_BODY_REGIONS } from "@/lib/data/bodyRegions";
 import { formatDistanceToNow } from "@/lib/utils/dateUtils";
 import { cn } from "@/lib/utils/cn";
 
 interface ResolvedFlareCardProps {
-  flare: FlareRecord;
+  flare: BodyMarkerRecord;
   userId: string;
   onFlareClick: (flareId: string) => void;
 }
@@ -29,7 +29,7 @@ export function ResolvedFlareCard({ flare, userId, onFlareClick }: ResolvedFlare
   useEffect(() => {
     const fetchPeakSeverity = async () => {
       try {
-        const history = await flareRepository.getFlareHistory(userId, flare.id);
+        const history = await bodyMarkerRepository.getMarkerHistory(userId, flare.id);
         const severities = history
           .map(e => e.severity)
           .filter((s): s is number => s != null);

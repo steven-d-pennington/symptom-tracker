@@ -372,7 +372,7 @@ export class ImportService {
       }
 
       if (data.flares && data.flares.length > 0) {
-        const imported = await this.importFlares(
+        const imported = await this.importBodyMarkers(
           data.flares,
           userId,
           options
@@ -382,7 +382,7 @@ export class ImportService {
       }
 
       if (data.flareEvents && data.flareEvents.length > 0) {
-        const imported = await this.importFlareEvents(
+        const imported = await this.importBodyMarkerEvents(
           data.flareEvents,
           userId,
           options
@@ -904,9 +904,9 @@ export class ImportService {
   }
 
   /**
-   * Import flares
+   * Import body markers (flares from old schema)
    */
-  private async importFlares(
+  private async importBodyMarkers(
     flares: FlareRecord[],
     userId: string,
     options: ImportOptions
@@ -927,7 +927,7 @@ export class ImportService {
           }
           const parsed = new Date(value).getTime();
           if (Number.isNaN(parsed)) {
-            throw new Error("Invalid flare timestamp");
+            throw new Error("Invalid marker timestamp");
           }
           return parsed;
         };
@@ -937,9 +937,10 @@ export class ImportService {
         const updatedAt = normalizeEpoch(flare.updatedAt) ?? createdAt;
         const endDate = normalizeEpoch(flare.endDate ?? undefined);
 
-        const normalized: FlareRecord = {
+        const normalized: any = {
           id,
           userId,
+          type: 'flare', // All imported flares become type='flare' markers
           startDate,
           endDate,
           status: flare.status ?? "active",
@@ -958,16 +959,16 @@ export class ImportService {
           updatedAt,
         };
 
-        const existing = await db.flares.get(id);
+        const existing = await db.bodyMarkers.get(id);
         if (options.mergeStrategy === "skip" && existing) {
           skipped++;
           continue;
         }
 
-        await db.flares.put(normalized);
+        await db.bodyMarkers.put(normalized);
         count++;
       } catch (error) {
-        console.error("Failed to import flare:", error);
+        console.error("Failed to import body marker:", error);
         skipped++;
       }
     }
@@ -976,9 +977,9 @@ export class ImportService {
   }
 
   /**
-   * Import flare events
+   * Import body marker events (flare events from old schema)
    */
-  private async importFlareEvents(
+  private async importBodyMarkerEvents(
     events: FlareEventRecord[],
     userId: string,
     options: ImportOptions
@@ -994,34 +995,33 @@ export class ImportService {
             ? new Date(event.timestamp).getTime()
             : event.timestamp;
         if (Number.isNaN(timestamp)) {
-          throw new Error("Invalid flare event timestamp");
+          throw new Error("Invalid body marker event timestamp");
         }
 
-        const normalized: FlareEventRecord = {
+        const normalized: any = {
           ...event,
           id,
           userId,
-          flareId: event.flareId,
+          markerId: event.flareId, // Map flareId to markerId
           eventType: event.eventType,
           timestamp,
           severity: event.severity,
           trend: event.trend,
           notes: event.notes,
-          interventions: event.interventions,
           interventionType: event.interventionType,
           interventionDetails: event.interventionDetails,
         };
 
-        const existing = await db.flareEvents.get(id);
+        const existing = await db.bodyMarkerEvents.get(id);
         if (options.mergeStrategy === "skip" && existing) {
           skipped++;
           continue;
         }
 
-        await db.flareEvents.put(normalized);
+        await db.bodyMarkerEvents.put(normalized);
         count++;
       } catch (error) {
-        console.error("Failed to import flare event:", error);
+        console.error("Failed to import body marker event:", error);
         skipped++;
       }
     }

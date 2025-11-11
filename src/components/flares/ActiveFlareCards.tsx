@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { flareRepository } from "@/lib/repositories/flareRepository";
+import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository";
 import { ActiveFlare } from "@/lib/types/flare";
-import { FlareRecord, FlareEventRecord } from "@/lib/db/schema";
+import { BodyMarkerRecord, BodyMarkerEventRecord } from "@/lib/db/schema";
 import { ArrowUp, ArrowRight, ArrowDown, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { FlareUpdateModal } from "./FlareUpdateModal";
@@ -14,10 +14,10 @@ type SortOption = "severity" | "recency";
 type FlareTrend = "worsening" | "stable" | "improving";
 
 /**
- * Calculate trend based on flare event history
- * Compares recent severity changes to determine if flare is improving/worsening/stable
+ * Calculate trend based on marker event history
+ * Compares recent severity changes to determine if marker is improving/worsening/stable
  */
-function calculateTrend(flare: FlareRecord, events: FlareEventRecord[]): FlareTrend {
+function calculateTrend(marker: BodyMarkerRecord, events: BodyMarkerEventRecord[]): FlareTrend {
   // Filter to severity-related events only
   const severityEvents = events.filter(
     e => e.severity !== undefined && (e.eventType === 'created' || e.eventType === 'severity_update')
@@ -41,25 +41,27 @@ function calculateTrend(flare: FlareRecord, events: FlareEventRecord[]): FlareTr
 
 interface ActiveFlareCardsProps {
   userId: string;
+  markerType?: 'flare' | 'pain' | 'inflammation'; // Type of markers to display
   onUpdateFlare?: (flareId: string) => void;
   externalFlares?: FlareWithTrend[];
   filterByRegion?: string | null;
-  repository?: typeof flareRepository;
+  repository?: typeof bodyMarkerRepository;
 }
 
 export function ActiveFlareCards({
   userId,
+  markerType = 'flare', // Default to 'flare' for backward compatibility
   onUpdateFlare,
   externalFlares,
   filterByRegion,
-  repository = flareRepository,
+  repository = bodyMarkerRepository,
 }: ActiveFlareCardsProps) {
   const [flares, setFlares] = useState<FlareWithTrend[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("severity");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  const [selectedFlare, setSelectedFlare] = useState<FlareRecord | null>(null);
+  const [selectedFlare, setSelectedFlare] = useState<BodyMarkerRecord | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
 
@@ -68,19 +70,19 @@ export function ActiveFlareCards({
       setLoading(true);
       setError(null);
 
-      // Story 2.1: Use new API - getActiveFlares + getFlareHistory
-      const flareRecords = await repository.getActiveFlares(userId);
+      // Use unified marker API - getActiveMarkers with specified markerType + getMarkerHistory
+      const flareRecords = await repository.getActiveMarkers(userId, markerType);
 
       // Fetch event history for each flare and calculate trends
       const flaresWithTrends = await Promise.all(
         flareRecords.map(async (flare) => {
-          const events = await repository.getFlareHistory(userId, flare.id);
+          const events = await repository.getMarkerHistory(userId, flare.id);
           const trend = calculateTrend(flare, events);
 
           // Get body region name for display
           const bodyRegion = getBodyRegionById(flare.bodyRegionId);
 
-          // Convert FlareRecord to ActiveFlare format for backward compatibility
+          // Convert BodyMarkerRecord to ActiveFlare format for backward compatibility
           return {
             id: flare.id,
             userId: flare.userId,
@@ -111,7 +113,7 @@ export function ActiveFlareCards({
     } else {
       loadFlares();
     }
-  }, [userId, externalFlares]);
+  }, [userId, markerType, externalFlares]);
 
   // Reset visible count when filter or sort changes
   useEffect(() => {
@@ -128,18 +130,8 @@ export function ActiveFlareCards({
     try {
       const resolutionDate = Date.now();
 
-      // Create resolution FlareEvent record (append-only pattern)
-      await repository.addFlareEvent(userId, flareId, {
-        eventType: "resolved",
-        timestamp: resolutionDate,
-        resolutionDate: resolutionDate,
-      });
-
-      // Update FlareRecord status to resolved and set endDate
-      await repository.updateFlare(userId, flareId, {
-        status: "resolved",
-        endDate: resolutionDate,
-      });
+      // Use unified marker repository's resolveMarker method
+      await repository.resolveMarker(userId, flareId, resolutionDate);
 
       await loadFlares(); // Refresh the list
     } catch (err) {
@@ -150,10 +142,10 @@ export function ActiveFlareCards({
 
   const handleUpdate = async (flareId: string) => {
     try {
-      // Fetch fresh flare data from repository
-      const flareRecord = await repository.getFlareById(userId, flareId);
-      if (flareRecord) {
-        setSelectedFlare(flareRecord);
+      // Fetch fresh marker data from repository
+      const markerRecord = await repository.getMarkerById(userId, flareId);
+      if (markerRecord) {
+        setSelectedFlare(markerRecord);
         setUpdateModalOpen(true);
       }
     } catch (err) {

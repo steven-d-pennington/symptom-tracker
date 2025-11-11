@@ -4,7 +4,8 @@ export { medicationRepository, MedicationRepository } from "./medicationReposito
 export { triggerRepository, TriggerRepository } from "./triggerRepository";
 export { dailyEntryRepository, DailyEntryRepository } from "./dailyEntryRepository";
 export { uxEventRepository, UxEventRepository } from "./uxEventRepository";
-export { flareRepository } from "./flareRepository"; // Story 2.1
+export { bodyMarkerRepository } from "./bodyMarkerRepository"; // Unified marker system
+export { flareRepository } from "./flareRepository"; // DEPRECATED: Use bodyMarkerRepository for new code
 export { moodRepository } from "./moodRepository"; // Story 3.5.2
 export { sleepRepository } from "./sleepRepository"; // Story 3.5.2
 export { foodEventRepository } from "./foodEventRepository"; // Story 3.5.4

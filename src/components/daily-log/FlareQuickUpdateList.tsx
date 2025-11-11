@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils/cn';
-import { FlareWithLocations, getActiveFlares, updateFlare } from '@/lib/repositories/flareRepository';
+import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
+import { BodyMarkerRecord } from '@/lib/db/schema';
 import { getBodyRegionById } from '@/lib/data/bodyRegions';
 import { FlareQuickUpdate } from '@/types/daily-log';
 
@@ -22,7 +23,7 @@ export interface FlareQuickUpdateListProps {
  * Inline update form for a single flare.
  */
 interface FlareUpdateFormProps {
-  flare: FlareWithLocations;
+  flare: BodyMarkerRecord;
   userId: string;
   onSave: (update: FlareQuickUpdate) => Promise<void>;
   onCancel: () => void;
@@ -30,11 +31,7 @@ interface FlareUpdateFormProps {
 
 function FlareUpdateForm({ flare, userId, onSave, onCancel }: FlareUpdateFormProps) {
   const [severity, setSeverity] = useState(flare.currentSeverity);
-  const [trend, setTrend] = useState<'improving' | 'stable' | 'worsening'>(
-    flare.status === 'improving' ? 'improving' :
-    flare.status === 'worsening' ? 'worsening' :
-    'stable'
-  );
+  const [trend, setTrend] = useState<'improving' | 'stable' | 'worsening'>('stable');
   const [notes, setNotes] = useState('');
   const [interventions, setInterventions] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -42,15 +39,18 @@ function FlareUpdateForm({ flare, userId, onSave, onCancel }: FlareUpdateFormPro
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Map trend to valid FlareRecord status
-      // "stable" maps to "active" since stable isn't a valid status
-      const flareStatus = trend === 'stable' ? 'active' : trend;
-
-      // Update flare record in database
-      await updateFlare(userId, flare.id, {
+      // Update marker record in database
+      await bodyMarkerRepository.updateMarker(userId, flare.id, {
         currentSeverity: severity,
-        status: flareStatus,
         updatedAt: Date.now(),
+      });
+
+      // Add marker event for the update
+      await bodyMarkerRepository.addMarkerEvent(userId, flare.id, {
+        eventType: trend === 'improving' ? 'trend_change' : 'severity_update',
+        timestamp: Date.now(),
+        severity,
+        trend: trend as 'improving' | 'stable' | 'worsening',
       });
 
       // Build flare update object for dailyLog.flareUpdates
@@ -216,7 +216,7 @@ export function FlareQuickUpdateList({
   onFlareUpdate,
   className
 }: FlareQuickUpdateListProps) {
-  const [flares, setFlares] = useState<FlareWithLocations[]>([]);
+  const [flares, setFlares] = useState<BodyMarkerRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedFlareId, setExpandedFlareId] = useState<string | null>(null);
 
@@ -225,7 +225,7 @@ export function FlareQuickUpdateList({
     async function loadFlares() {
       setIsLoading(true);
       try {
-        const activeFlares = await getActiveFlares(userId);
+        const activeFlares = await bodyMarkerRepository.getActiveMarkers(userId, 'flare');
         setFlares(activeFlares);
       } catch (error) {
         console.error('Failed to load active flares:', error);
@@ -249,7 +249,7 @@ export function FlareQuickUpdateList({
     setExpandedFlareId(null);
 
     // Reload flares to get updated data
-    const activeFlares = await getActiveFlares(userId);
+    const activeFlares = await bodyMarkerRepository.getActiveMarkers(userId, 'flare');
     setFlares(activeFlares);
   }, [userId, onFlareUpdate]);
 
@@ -306,22 +306,10 @@ export function FlareQuickUpdateList({
             flare.currentSeverity <= 6 ? "warning" :
             "destructive";
 
-          // Determine trend indicator
-          const trendIcon = {
-            improving: '↓',
-            stable: '→',
-            worsening: '↑',
-            active: '→', // Default to stable for active status
-            resolved: '✓'
-          }[flare.status];
-
-          const trendColor = {
-            improving: 'text-green-500',
-            stable: 'text-yellow-500',
-            worsening: 'text-red-500',
-            active: 'text-gray-500',
-            resolved: 'text-blue-500'
-          }[flare.status];
+          // Note: Trend information would come from marker events
+          // For now, we just show the current status
+          const statusIcon = flare.status === 'resolved' ? '✓' : '→';
+          const statusColor = flare.status === 'resolved' ? 'text-blue-500' : 'text-gray-500';
 
           return (
             <div
@@ -335,10 +323,10 @@ export function FlareQuickUpdateList({
                     {flare.currentSeverity}/10
                   </Badge>
                   <span
-                    className={cn("text-lg font-bold", trendColor)}
-                    aria-label={`Trend: ${flare.status}`}
+                    className={cn("text-lg font-bold", statusColor)}
+                    aria-label={`Status: ${flare.status}`}
                   >
-                    {trendIcon}
+                    {statusIcon}
                   </span>
                 </div>
                 <button

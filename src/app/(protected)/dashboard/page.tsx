@@ -38,11 +38,11 @@ function DashboardContent() {
       const startOfDay = today.getTime();
       const endOfDay = new Date(today).setHours(23, 59, 59, 999);
 
-      const [symptoms, triggers, medications, flares, foods] = await Promise.all([
+      const [symptoms, triggers, medications, markers, foods] = await Promise.all([
         db.symptomInstances.where("userId").equals(userId).toArray(),
         db.triggerEvents.where("userId").equals(userId).toArray(),
         db.medicationEvents.where("userId").equals(userId).toArray(),
-        db.flares.where("userId").equals(userId).toArray(),
+        db.bodyMarkers.where("userId").equals(userId).toArray(),
         db.foodEvents.where("userId").equals(userId).toArray(),
       ]);
 
@@ -59,7 +59,7 @@ function DashboardContent() {
           symptoms: symptoms.length,
           triggers: triggers.length,
           medications: medications.length,
-          flares: flares.length,
+          markers: markers.length,
           foods: foods.length,
         },
         symptoms: symptoms.map(s => ({

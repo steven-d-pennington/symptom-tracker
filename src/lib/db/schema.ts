@@ -265,11 +265,36 @@ export const DEFAULT_BODY_MAP_PREFERENCES: Omit<BodyMapPreferences, 'userId'> = 
   updatedAt: Date.now()
 };
 
+/**
+ * Body map location record for visualization layer (denormalized view).
+ * Updated to support unified marker system while maintaining backward compatibility.
+ *
+ * Purpose: Fast queries for body map visualization without joining multiple tables.
+ * This is a denormalized view that gets updated when bodyMarkers change.
+ */
 export interface BodyMapLocationRecord {
   id: string;
   userId: string;
   dailyEntryId?: string;
+
+  /**
+   * Reference to bodyMarkers.id (NEW in unified system)
+   * For old data: symptomId serves as fallback
+   */
+  markerId?: string;
+
+  /**
+   * Denormalized marker type for fast layer filtering (NEW in unified system)
+   * Maps directly to layer for visualization
+   */
+  markerType?: MarkerType;
+
+  /**
+   * @deprecated Use markerId instead
+   * Legacy field: points to flares.id or symptom ID
+   */
   symptomId: string;
+
   bodyRegionId: string;
   coordinates?: {
     x: number;
@@ -279,6 +304,7 @@ export interface BodyMapLocationRecord {
   /**
    * Layer categorization for multi-layer tracking (Story 5.1)
    * Defaults to 'flares' for backward compatibility
+   * Should match markerType in unified system
    */
   layer?: LayerType;
   notes?: string;
@@ -368,7 +394,152 @@ export interface UxEventRecord {
   createdAt: number; // storage timestamp (usually same as timestamp)
 }
 
+// ============================================================================
+// UNIFIED BODY MARKER SYSTEM (Replaces separate flare/pain/inflammation)
+// ============================================================================
+
 /**
+ * Marker type for unified body tracking system.
+ * All body markers (flares, pain, inflammation) use the same data structure,
+ * differentiated only by this type field.
+ */
+export type MarkerType = 'flare' | 'pain' | 'inflammation';
+
+/**
+ * Unified body marker record for tracking flares, pain, and inflammation.
+ * Replaces the old FlareRecord with a unified approach for all body markers.
+ *
+ * Features:
+ * - Same CRUD operations for all marker types
+ * - Consistent event history tracking
+ * - Active/resolved status management
+ * - Multi-location support via bodyMarkerLocations table
+ *
+ * References:
+ * - UNIFIED_MARKERS_PLAN.md: Complete refactoring plan
+ * - ADR-003: Append-only event history pattern
+ */
+export interface BodyMarkerRecord {
+  /** UUID v4 primary key */
+  id: string;
+
+  /** User ID for multi-user support */
+  userId: string;
+
+  /** Marker type: flare, pain, or inflammation */
+  type: MarkerType;
+
+  /** Body region ID (primary location) */
+  bodyRegionId: string;
+
+  /** Optional normalized coordinates (0-1 scale) within the body region */
+  coordinates?: {
+    x: number;
+    y: number;
+  };
+
+  /** Unix timestamp when marker started */
+  startDate: number;
+
+  /** Unix timestamp when marker ended (nullable until resolved) */
+  endDate?: number;
+
+  /** Current status of the marker */
+  status: 'active' | 'resolved';
+
+  /** Initial severity when marker was created (1-10 scale) */
+  initialSeverity: number;
+
+  /** Current severity level (1-10 scale, updated via events) */
+  currentSeverity: number;
+
+  /** Unix timestamp when record was created */
+  createdAt: number;
+
+  /** Unix timestamp when record was last updated */
+  updatedAt: number;
+}
+
+/**
+ * Body marker event record for append-only history tracking.
+ * Events are never modified or deleted after creation (ADR-003).
+ * Works for all marker types: flares, pain, and inflammation.
+ */
+export interface BodyMarkerEventRecord {
+  /** UUID v4 primary key */
+  id: string;
+
+  /** Foreign key to bodyMarkers.id */
+  markerId: string;
+
+  /** User ID for multi-user support */
+  userId: string;
+
+  /** Type of event */
+  eventType: 'created' | 'severity_update' | 'trend_change' | 'intervention' | 'resolved';
+
+  /** Unix timestamp when event occurred */
+  timestamp: number;
+
+  /** Severity level (1-10) for severity_update events */
+  severity?: number;
+
+  /** Trend indicator for trend_change events */
+  trend?: 'improving' | 'stable' | 'worsening';
+
+  /** User notes describing the event */
+  notes?: string;
+
+  /** Intervention type for intervention events */
+  interventionType?: 'ice' | 'heat' | 'medication' | 'rest' | 'drainage' | 'other';
+
+  /** Specific intervention details */
+  interventionDetails?: string;
+
+  /** Resolution date for resolution events (eventType='resolved') */
+  resolutionDate?: number;
+
+  /** Resolution notes for resolution events */
+  resolutionNotes?: string;
+}
+
+/**
+ * Body marker location record for multi-location marker tracking.
+ * Supports marking the same marker instance in multiple body regions.
+ * Example: A flare that affects both armpits, or pain in both knees.
+ */
+export interface BodyMarkerLocationRecord {
+  /** UUID v4 primary key */
+  id: string;
+
+  /** Foreign key to bodyMarkers.id */
+  markerId: string;
+
+  /** Body region ID */
+  bodyRegionId: string;
+
+  /** Normalized coordinates (0-1 scale) within the body region */
+  coordinates: {
+    x: number;
+    y: number;
+  };
+
+  /** User ID for multi-user support */
+  userId: string;
+
+  /** Unix timestamp when record was created */
+  createdAt: number;
+
+  /** Unix timestamp when record was last updated */
+  updatedAt: number;
+}
+
+// ============================================================================
+// DEPRECATED: Old Flare-specific tables (kept for reference during migration)
+// ============================================================================
+
+/**
+ * @deprecated Use BodyMarkerRecord instead
  * Flare entity record (Story 2.1 - refactored for append-only event history pattern).
  * Represents a single flare instance with its current state.
  * Historical changes are tracked in separate FlareEventRecord entries (ADR-003).
@@ -412,6 +583,7 @@ export interface FlareRecord {
 }
 
 /**
+ * @deprecated Use BodyMarkerEventRecord instead
  * Flare event record for append-only history tracking (Story 2.1).
  * Events are never modified or deleted after creation (ADR-003).
  * Each event represents a state change in the flare's lifecycle.
@@ -458,6 +630,7 @@ export interface FlareEventRecord {
 }
 
 /**
+ * @deprecated Use BodyMarkerLocationRecord instead
  * Flare body location record for multi-location flare tracking (Story 3.7.7).
  * Implements "Model B" architecture: one flare episode with multiple body locations.
  * Each record represents a single body location affected during a flare episode.

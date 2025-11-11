@@ -435,9 +435,51 @@ async function generateFlares(
     }
   }
 
-  await db.flares!.bulkAdd(flares as any);
-  await db.flareEvents!.bulkAdd(flareEvents as any);
-  await db.bodyMapLocations!.bulkAdd(bodyMapLocations as any);
+  // UNIFIED MARKER SYSTEM: Use bodyMarkers tables instead of flares
+  await db.bodyMarkers!.bulkAdd(flares.map((f: any) => ({
+    id: f.id,
+    userId: f.userId,
+    type: 'flare' as const, // All generated markers are flare type
+    bodyRegionId: f.bodyRegionId,
+    coordinates: f.coordinates[0] ? { x: f.coordinates[0].x, y: f.coordinates[0].y } : undefined,
+    startDate: f.startDate,
+    endDate: f.endDate,
+    status: f.status,
+    initialSeverity: f.initialSeverity,
+    currentSeverity: f.currentSeverity,
+    createdAt: f.createdAt,
+    updatedAt: f.updatedAt,
+  })));
+
+  await db.bodyMarkerEvents!.bulkAdd(flareEvents.map((e: any) => ({
+    id: e.id,
+    markerId: e.flareId, // flareId maps to markerId
+    userId: e.userId,
+    eventType: e.eventType,
+    timestamp: e.timestamp,
+    severity: e.severity,
+    trend: e.trend,
+  })));
+
+  // Create bodyMarkerLocations for each flare
+  const bodyMarkerLocations = flares.map((f: any) => ({
+    id: generateId(),
+    markerId: f.id,
+    userId: f.userId,
+    bodyRegionId: f.bodyRegionId,
+    coordinates: f.coordinates[0] ? { x: f.coordinates[0].x, y: f.coordinates[0].y } : { x: 0.5, y: 0.5 },
+    createdAt: f.createdAt,
+    updatedAt: f.updatedAt,
+  }));
+
+  await db.bodyMarkerLocations!.bulkAdd(bodyMarkerLocations as any);
+
+  // Update bodyMapLocations to reference the new marker system
+  await db.bodyMapLocations!.bulkAdd(bodyMapLocations.map((loc: any) => ({
+    ...loc,
+    markerId: loc.symptomId, // symptomId contains the flare/marker ID
+    markerType: 'flare' as const, // Denormalized marker type
+  })));
 
   console.log(`[Flares] Created ${bodyMapLocations.length} bodyMapLocations for userId: ${userId}`);
 
@@ -608,9 +650,111 @@ async function generateBodyMapLayers(
     });
   }
 
-  // Bulk insert all markers
-  const allMarkers = [...painMarkers, ...inflammationMarkers];
-  await db.bodyMapLocations!.bulkAdd(allMarkers as any);
+  // UNIFIED MARKER SYSTEM: Create bodyMarker records for pain and inflammation
+  const bodyMarkerRecords = [];
+  const bodyMarkerEventRecords = [];
+  const bodyMarkerLocationRecords = [];
+  const bodyMapLocationRecords = [];
+
+  // Process pain markers
+  for (const marker of painMarkers) {
+    const markerId = marker.id;
+    const timestamp = marker.createdAt instanceof Date ? marker.createdAt.getTime() : marker.createdAt;
+
+    bodyMarkerRecords.push({
+      id: markerId,
+      userId: marker.userId,
+      type: 'pain' as const,
+      bodyRegionId: marker.bodyRegionId,
+      coordinates: marker.coordinates,
+      startDate: timestamp,
+      endDate: undefined, // Pain markers are now active by default (can be updated/resolved)
+      status: 'active' as const,
+      initialSeverity: marker.severity,
+      currentSeverity: marker.severity,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    bodyMarkerEventRecords.push({
+      id: generateId(),
+      markerId,
+      userId: marker.userId,
+      eventType: 'created' as const,
+      timestamp,
+      severity: marker.severity,
+      notes: marker.notes,
+    });
+
+    bodyMarkerLocationRecords.push({
+      id: generateId(),
+      markerId,
+      userId: marker.userId,
+      bodyRegionId: marker.bodyRegionId,
+      coordinates: marker.coordinates,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    bodyMapLocationRecords.push({
+      ...marker,
+      markerId,
+      markerType: 'pain' as const,
+    });
+  }
+
+  // Process inflammation markers
+  for (const marker of inflammationMarkers) {
+    const markerId = marker.id;
+    const timestamp = marker.createdAt instanceof Date ? marker.createdAt.getTime() : marker.createdAt;
+
+    bodyMarkerRecords.push({
+      id: markerId,
+      userId: marker.userId,
+      type: 'inflammation' as const,
+      bodyRegionId: marker.bodyRegionId,
+      coordinates: marker.coordinates,
+      startDate: timestamp,
+      endDate: undefined, // Inflammation markers are now active by default (can be updated/resolved)
+      status: 'active' as const,
+      initialSeverity: marker.severity,
+      currentSeverity: marker.severity,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    bodyMarkerEventRecords.push({
+      id: generateId(),
+      markerId,
+      userId: marker.userId,
+      eventType: 'created' as const,
+      timestamp,
+      severity: marker.severity,
+      notes: marker.notes,
+    });
+
+    bodyMarkerLocationRecords.push({
+      id: generateId(),
+      markerId,
+      userId: marker.userId,
+      bodyRegionId: marker.bodyRegionId,
+      coordinates: marker.coordinates,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    bodyMapLocationRecords.push({
+      ...marker,
+      markerId,
+      markerType: 'inflammation' as const,
+    });
+  }
+
+  // Bulk insert all unified marker records
+  await db.bodyMarkers!.bulkAdd(bodyMarkerRecords as any);
+  await db.bodyMarkerEvents!.bulkAdd(bodyMarkerEventRecords as any);
+  await db.bodyMarkerLocations!.bulkAdd(bodyMarkerLocationRecords as any);
+  await db.bodyMapLocations!.bulkAdd(bodyMapLocationRecords as any);
 
   console.log(`[BodyMapLayers] Created ${painMarkers.length} pain markers and ${inflammationMarkers.length} inflammation markers`);
 

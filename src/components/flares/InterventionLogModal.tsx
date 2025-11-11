@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FlareRecord } from '@/lib/db/schema';
+import { BodyMarkerRecord } from '@/lib/db/schema';
 import { InterventionType } from '@/types/flare';
-import { flareRepository } from '@/lib/repositories/flareRepository';
+import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
 
 interface InterventionLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  flare: FlareRecord;
+  flare: BodyMarkerRecord;
   userId: string;
   onLog?: () => void;
 }
@@ -43,8 +43,8 @@ export function InterventionLogModal({
     setError(null);
 
     try {
-      // Create intervention FlareEvent record (append-only)
-      await flareRepository.addFlareEvent(userId, flare.id, {
+      // Create intervention BodyMarkerEvent record (append-only)
+      await bodyMarkerRepository.addMarkerEvent(userId, flare.id, {
         eventType: "intervention",
         timestamp,
         interventionType,

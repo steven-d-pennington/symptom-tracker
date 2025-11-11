@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
-import { FlareEventRecord } from '@/lib/db/schema';
+import { BodyMarkerEventRecord } from '@/lib/db/schema';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -31,7 +31,7 @@ ChartJS.register(
 );
 
 interface FlareHistoryChartProps {
-  events: FlareEventRecord[];
+  events: BodyMarkerEventRecord[];
 }
 
 export const FlareHistoryChart = React.memo(function FlareHistoryChart({ events }: FlareHistoryChartProps) {

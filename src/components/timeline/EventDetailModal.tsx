@@ -5,7 +5,7 @@ import { X, Save, Trash2, Camera, Link as LinkIcon } from 'lucide-react';
 import { TimelineEvent } from './TimelineView';
 import { medicationEventRepository } from '@/lib/repositories/medicationEventRepository';
 import { triggerEventRepository } from '@/lib/repositories/triggerEventRepository';
-import { flareRepository } from '@/lib/repositories/flareRepository';
+import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
 import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
 import { photoRepository } from '@/lib/repositories/photoRepository';
 import { PhotoCapture } from '@/components/photos/PhotoCapture';
@@ -190,35 +190,35 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
         case 'flare-created':
         case 'flare-updated':
         case 'flare-resolved':
-          // For flares, update the flare record using new repository API
-          const flareId = event.eventRef.id;
+          // For flares, update the marker record using unified marker system
+          const markerId = event.eventRef.id;
 
           // Detect what changed
           const severityChanged = severity !== event.eventRef.severity;
 
-          // Create FlareEvent record for the status update (append-only pattern)
+          // Create marker event record for the status update (append-only pattern)
           if (severityChanged) {
-            await flareRepository.addFlareEvent(userId, flareId, {
+            await bodyMarkerRepository.addMarkerEvent(userId, markerId, {
               eventType: "severity_update",
               timestamp: Date.now(),
               severity: severity,
               notes: notes.trim() || undefined,
             });
 
-            // Update FlareRecord current severity
-            await flareRepository.updateFlare(userId, flareId, {
+            // Update marker record current severity
+            await bodyMarkerRepository.updateMarker(userId, markerId, {
               currentSeverity: severity,
             });
           } else if (notes.trim()) {
             // If only notes changed, create a trend_change event
-            await flareRepository.addFlareEvent(userId, flareId, {
+            await bodyMarkerRepository.addMarkerEvent(userId, markerId, {
               eventType: "trend_change",
               timestamp: Date.now(),
               notes: notes.trim(),
             });
           }
 
-          // Note: photoIds are not part of FlareRecord schema in Epic 2 design
+          // Note: photoIds are not part of BodyMarkerRecord schema
           // Photo linking is handled separately via photoRepository with eventId
           break;
 
@@ -270,11 +270,12 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
         case 'flare-created':
         case 'flare-updated':
         case 'flare-resolved':
-          // Delete the entire flare
+          // Delete the entire marker
           if (!userId) {
             throw new Error('User not found');
           }
-          await flareRepository.deleteFlare(userId, event.eventRef.id);
+          // Resolve the marker (soft delete)
+          await bodyMarkerRepository.resolveMarker(userId, event.eventRef.id, Date.now(), 'Deleted by user');
           break;
 
         case 'food':

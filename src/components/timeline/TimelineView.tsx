@@ -5,7 +5,7 @@ import { ArrowRight, Loader2, Download } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { medicationEventRepository } from '@/lib/repositories/medicationEventRepository';
 import { triggerEventRepository } from '@/lib/repositories/triggerEventRepository';
-import { flareRepository } from '@/lib/repositories/flareRepository';
+import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
 import { medicationRepository } from '@/lib/repositories/medicationRepository';
 import { triggerRepository } from '@/lib/repositories/triggerRepository';
 import { foodEventRepository } from '@/lib/repositories/foodEventRepository';
@@ -116,11 +116,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       endOfDay.setHours(23, 59, 59, 999);
 
       // Query all event types in parallel
-      const [medicationEvents, triggerEvents, symptomInstances, flareRecords, foodEvents] = await Promise.all([
+      const [medicationEvents, triggerEvents, symptomInstances, markerRecords, foodEvents] = await Promise.all([
         medicationEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime()),
         triggerEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime()),
         symptomInstanceRepository.getByDateRange(userId, startOfDay, endOfDay),
-        flareRepository.getActiveFlares(userId), // Story 2.1: Use new API
+        bodyMarkerRepository.getActiveMarkers(userId, 'flare'), // Unified marker system with type filter
         foodEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime())
       ]);
 
@@ -135,7 +135,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           medicationEvents: medicationEvents.length,
           triggerEvents: triggerEvents.length,
           symptomInstances: symptomInstances.length,
-          flareRecords: flareRecords.length,
+          markerRecords: markerRecords.length,
           foodEvents: foodEvents.length,
         },
         foodEventDetails: foodEvents.map(e => ({
@@ -147,10 +147,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         })),
       });
 
-      // Story 2.1: Convert flareRecords to ActiveFlare format with trends
+      // Convert markerRecords to ActiveFlare format with trends
       const activeFlares = await Promise.all(
-        flareRecords.map(async (flare) => {
-          const events = await flareRepository.getFlareHistory(userId, flare.id);
+        markerRecords.map(async (marker) => {
+          const events = await bodyMarkerRepository.getMarkerHistory(userId, marker.id);
 
           // Calculate trend from event history
           const severityEvents = events.filter(
@@ -167,14 +167,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
           // Convert to ActiveFlare format
           return {
-            id: flare.id,
-            userId: flare.userId,
-            symptomName: flare.bodyRegionId,
-            bodyRegions: [flare.bodyRegionId],
-            severity: flare.currentSeverity,
-            status: flare.status,
-            startDate: new Date(flare.startDate),
-            endDate: flare.endDate ? new Date(flare.endDate) : undefined,
+            id: marker.id,
+            userId: marker.userId,
+            symptomName: marker.bodyRegionId,
+            bodyRegions: [marker.bodyRegionId],
+            severity: marker.currentSeverity,
+            status: marker.status,
+            startDate: new Date(marker.startDate),
+            endDate: marker.endDate ? new Date(marker.endDate) : undefined,
             notes: undefined, // Notes are in event history now
             trend,
           };

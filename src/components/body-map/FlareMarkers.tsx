@@ -32,8 +32,6 @@ export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMark
   const { data: flares = [], isLoading } = useFlares({
     userId,
     includeResolved: true
-  }, {
-    enabled: !markers  // Disable query if markers are provided
   });
   const markerGroupRef = useRef<SVGGElement | null>(null);
   const [svgElement, setSvgElement] = useState<SVGSVGElement | null>(null);
@@ -96,7 +94,6 @@ export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMark
       x: number;
       y: number;
       severity: number;
-      layer: string;
       timestamp: number;
     }> = [];
 
@@ -131,7 +128,6 @@ export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMark
         x,
         y,
         severity: marker.severity,
-        layer: marker.layer,
         timestamp: marker.createdAt instanceof Date ? marker.createdAt.getTime() : marker.createdAt,
       });
     });
@@ -254,7 +250,7 @@ export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMark
         <BodyMapMarker
           key={position.id}
           id={position.id}
-          layer={position.layer as 'flares' | 'pain' | 'inflammation'}
+          layer='flares'
           bodyRegionId={position.bodyRegionId}
           severity={position.severity}
           timestamp={position.timestamp}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "@/lib/db/client";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { useMarkers } from "./useMarkers";
 
 export interface QuickActionsData {
   activeFlares: number;
@@ -22,6 +23,14 @@ export interface QuickActionsData {
  */
 export function useQuickActionsData(): QuickActionsData {
   const { userId } = useCurrentUser();
+
+  // Use unified markers hook for flares
+  const { data: flareMarkers, isLoading: flaresLoading } = useMarkers({
+    userId: userId || '',
+    type: 'flare',
+    includeResolved: false
+  });
+
   const [data, setData] = useState<QuickActionsData>({
     activeFlares: 0,
     todayMedicationLogs: 0,
@@ -54,15 +63,8 @@ export function useQuickActionsData(): QuickActionsData {
         const startOfDay = today.getTime();
         const endOfDay = new Date(today).setHours(23, 59, 59, 999);
 
-        // Fetch all data in parallel
-        const [flares, medicationEvents, symptomInstances, foodEvents, triggerEvents] = await Promise.all([
-          // Active flares (status != "resolved")
-          db.flares
-            .where("userId")
-            .equals(userId)
-            .and(flare => flare.status !== "resolved")
-            .toArray(),
-
+        // Fetch all data in parallel (excluding flares which come from useMarkers hook)
+        const [medicationEvents, symptomInstances, foodEvents, triggerEvents] = await Promise.all([
           // Today's medication logs
           db.medicationEvents
             .where("userId")
@@ -95,7 +97,7 @@ export function useQuickActionsData(): QuickActionsData {
         if (!mounted) return;
 
         // Process the data
-        const activeFlares = flares.length;
+        const activeFlares = flareMarkers.length; // Use data from useMarkers hook
         const todayMedicationLogs = medicationEvents.filter(e => e.taken).length; // Only count taken meds
         const lastSymptomSeverity = symptomInstances.length > 0
           ? symptomInstances[0].severity
@@ -114,7 +116,7 @@ export function useQuickActionsData(): QuickActionsData {
           lastSymptomSeverity,
           todayFoodLogs,
           todayTriggerLogs,
-          isLoading: false,
+          isLoading: flaresLoading, // Include flares loading state
         });
       } catch (error) {
         console.error("Failed to fetch quick actions data:", error);
@@ -136,7 +138,7 @@ export function useQuickActionsData(): QuickActionsData {
     return () => {
       mounted = false;
     };
-  }, [userId]);
+  }, [userId, flareMarkers, flaresLoading]);
 
   return data;
 }

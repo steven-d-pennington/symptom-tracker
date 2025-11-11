@@ -4,12 +4,15 @@ import {
   AttachmentRecord,
   BodyMapLocationRecord,
   BodyMapPreferences, // Story 5.2
+  BodyMarkerRecord, // Unified marker system
+  BodyMarkerEventRecord, // Unified marker system
+  BodyMarkerLocationRecord, // Unified marker system
   CorrelationRecord, // Story 6.3
   DailyEntryRecord,
   DailyLogRecord, // Story 6.2
-  FlareRecord,
-  FlareEventRecord, // Story 2.1
-  FlareBodyLocationRecord, // Story 3.7.7
+  FlareRecord, // @deprecated - use BodyMarkerRecord
+  FlareEventRecord, // @deprecated - use BodyMarkerEventRecord
+  FlareBodyLocationRecord, // @deprecated - use BodyMarkerLocationRecord
   FoodCombinationRecord, // New
   FoodEventRecord,
   FoodRecord,
@@ -46,9 +49,16 @@ export class SymptomTrackerDatabase extends Dexie {
   bodyMapPreferences!: Table<BodyMapPreferences, string>; // Story 5.2
   photoAttachments!: Table<PhotoAttachmentRecord, string>;
   photoComparisons!: Table<PhotoComparisonRecord, string>;
-  flares!: Table<FlareRecord, string>;
-  flareEvents!: Table<FlareEventRecord, string>; // Story 2.1
-  flareBodyLocations!: Table<FlareBodyLocationRecord, string>; // Story 3.7.7
+  // UNIFIED MARKER SYSTEM (Schema v28)
+  bodyMarkers!: Table<BodyMarkerRecord, string>; // Replaces flares
+  bodyMarkerEvents!: Table<BodyMarkerEventRecord, string>; // Replaces flareEvents
+  bodyMarkerLocations!: Table<BodyMarkerLocationRecord, string>; // Replaces flareBodyLocations
+
+  // @deprecated - Use bodyMarkers instead (removed in v28)
+  // flares!: Table<FlareRecord, string>;
+  // flareEvents!: Table<FlareEventRecord, string>;
+  // flareBodyLocations!: Table<FlareBodyLocationRecord, string>;
+
   analysisResults!: Table<AnalysisResultRecord, string>;
   foods!: Table<FoodRecord, string>;
   foodEvents!: Table<FoodEventRecord, string>;
@@ -691,6 +701,49 @@ export class SymptomTrackerDatabase extends Dexie {
       correlations: "id, [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt], userId, type, item1, item2, calculatedAt",
       patternDetections: "id, [userId+type], [userId+correlationId], [userId+detectedAt], userId, type, correlationId, detectedAt",
       // Story 6.7: Treatment effectiveness tracking with compound indexes for efficient lookups
+      treatmentEffectiveness: "id, userId, [userId+treatmentId], [userId+effectivenessScore], [userId+lastCalculated], treatmentId, effectivenessScore, lastCalculated",
+      treatmentAlerts: "id, userId, [userId+treatmentId], [userId+alertType], [userId+dismissed], treatmentId, alertType, dismissed, createdAt",
+    });
+
+    // Version 28: UNIFIED MARKER SYSTEM - Replace flares/pain/inflammation with unified bodyMarkers (UNIFIED_MARKERS_PLAN.md)
+    // BREAKING CHANGE: User must delete database and start fresh (no migration from v27)
+    // All marker types (flares, pain, inflammation) now use the same data structure differentiated only by 'type' field
+    this.version(28).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      dailyLogs: "id, [userId+date], userId, date, createdAt",
+      attachments: "id, userId, relatedEntryId",
+      // Updated: bodyMapLocations now references bodyMarkers via markerId and markerType
+      bodyMapLocations: "id, userId, [markerId], [markerType], dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], [userId+layer+createdAt], createdAt",
+      bodyMapPreferences: "userId",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+
+      // NEW: Unified marker tables (replaces flares, flareEvents, flareBodyLocations)
+      bodyMarkers: "id, [userId+type+status], [userId+status], [userId+bodyRegionId], [userId+startDate], userId, type, status",
+      bodyMarkerEvents: "id, [markerId+timestamp], [userId+timestamp], [userId+eventType], markerId, userId, eventType",
+      bodyMarkerLocations: "id, [markerId], [userId+markerId], [userId+bodyRegionId], markerId, userId, bodyRegionId",
+
+      // REMOVED: Old flare-specific tables (v27 had these, v28 explicitly removes them)
+      flares: null,
+      flareEvents: null,
+      flareBodyLocations: null,
+
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+      moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      correlations: "id, [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt], userId, type, item1, item2, calculatedAt",
+      patternDetections: "id, [userId+type], [userId+correlationId], [userId+detectedAt], userId, type, correlationId, detectedAt",
       treatmentEffectiveness: "id, userId, [userId+treatmentId], [userId+effectivenessScore], [userId+lastCalculated], treatmentId, effectivenessScore, lastCalculated",
       treatmentAlerts: "id, userId, [userId+treatmentId], [userId+alertType], [userId+dismissed], treatmentId, alertType, dismissed, createdAt",
     });

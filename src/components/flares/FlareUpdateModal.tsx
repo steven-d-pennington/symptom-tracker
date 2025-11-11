@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FlareRecord } from '@/lib/db/schema';
+import { BodyMarkerRecord } from '@/lib/db/schema';
 import { FlareTrend } from '@/types/flare';
-import { flareRepository } from '@/lib/repositories/flareRepository';
+import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
 
 interface FlareUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  flare: FlareRecord;
+  flare: BodyMarkerRecord;
   userId: string;
   onUpdate?: () => void;
 }
@@ -45,8 +45,8 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
         ? "severity_update"
         : "trend_change";
 
-      // Create FlareEvent record (append-only)
-      await flareRepository.addFlareEvent(userId, flare.id, {
+      // Create BodyMarkerEvent record (append-only)
+      await bodyMarkerRepository.addMarkerEvent(userId, flare.id, {
         eventType,
         timestamp,
         severity: severityChanged ? severity : undefined,
@@ -54,9 +54,9 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
         notes: notes.trim() || undefined,
       });
 
-      // Update FlareRecord if severity changed
+      // Update BodyMarkerRecord if severity changed (handled by addMarkerEvent)
       if (severityChanged) {
-        await flareRepository.updateFlare(userId, flare.id, {
+        await bodyMarkerRepository.updateMarker(userId, flare.id, {
           currentSeverity: severity,
         });
       }

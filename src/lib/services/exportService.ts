@@ -284,16 +284,17 @@ export class ExportService {
       }
     }
 
-    // Flares
+    // Flares (now using bodyMarkers table filtered by type='flare')
     if (options.includeFlares !== false) {
-      data.flares = await db.flares
+      data.flares = await db.bodyMarkers
         .where("userId")
         .equals(userId)
+        .and((marker) => marker.type === 'flare')
         .toArray();
     }
 
     if (options.includeFlareEvents !== false) {
-      data.flareEvents = await db.flareEvents
+      data.flareEvents = await db.bodyMarkerEvents
         .where("userId")
         .equals(userId)
         .toArray();
@@ -514,8 +515,8 @@ export class ExportService {
         .toArray();
     }
 
-    // Flare Body Locations (Story 3.7.7 - Multi-location tracking)
-    data.flareBodyLocations = await db.flareBodyLocations
+    // Body Marker Locations (Story 3.7.7 - Multi-location tracking, now unified)
+    data.flareBodyLocations = await db.bodyMarkerLocations
       .where("userId")
       .equals(userId)
       .toArray();
@@ -812,8 +813,8 @@ export class ExportService {
       medicationEventRepository.findByUserId(userId),
       triggerEventRepository.findByUserId(userId),
       symptomInstanceRepository.getAll(userId),
-      db.flares.where("userId").equals(userId).toArray(),
-      db.flareEvents.where("userId").equals(userId).toArray(),
+      db.bodyMarkers.where("userId").equals(userId).and((marker) => marker.type === 'flare').toArray(),
+      db.bodyMarkerEvents.where("userId").equals(userId).toArray(),
     ]);
 
     return {

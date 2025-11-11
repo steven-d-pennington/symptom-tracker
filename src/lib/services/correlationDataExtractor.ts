@@ -210,10 +210,11 @@ export async function extractFlareTimeSeries(
   startDate: number,
   endDate: number
 ): Promise<Map<string, number>> {
-  // Query flares in date range
-  const flares = await db.flares
+  // Query body markers filtered by type='flare'
+  const flares = await db.bodyMarkers
     .where("userId")
     .equals(userId)
+    .and((marker) => marker.type === 'flare')
     .toArray();
 
   // Filter by date range and severity updates

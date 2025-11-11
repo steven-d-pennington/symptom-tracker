@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { flareRepository } from '@/lib/repositories';
-import { FlareEventRecord as FlareEventSchema } from '@/lib/db/schema';
+import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
+import { BodyMarkerEventRecord } from '@/lib/db/schema';
 import { FlareHistoryEntry } from './FlareHistoryEntry';
 import { FlareHistoryChart } from './FlareHistoryChart';
 
@@ -23,7 +23,7 @@ export const FlareHistory = React.memo(function FlareHistory({ flareId, userId }
     return 'all';
   });
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
-  const [events, setEvents] = useState<FlareEventSchema[]>([]);
+  const [events, setEvents] = useState<BodyMarkerEventRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -32,7 +32,7 @@ export const FlareHistory = React.memo(function FlareHistory({ flareId, userId }
     try {
       setIsLoading(true);
       setError(null);
-      const history = await flareRepository.getFlareHistory(userId, flareId);
+      const history = await bodyMarkerRepository.getMarkerHistory(userId, flareId);
       setEvents(history);
     } catch (err) {
       setError(err as Error);

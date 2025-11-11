@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { FlareRecord } from "@/lib/db/schema";
+import { BodyMarkerRecord } from "@/lib/db/schema";
 import { FRONT_BODY_REGIONS, BACK_BODY_REGIONS } from "@/lib/data/bodyRegions";
 
 interface ResolvedFlaresFiltersProps {
-  flares: FlareRecord[];
-  onFilterChange: (filtered: FlareRecord[]) => void;
+  flares: BodyMarkerRecord[];
+  onFilterChange: (filtered: BodyMarkerRecord[]) => void;
 }
 
 /**
