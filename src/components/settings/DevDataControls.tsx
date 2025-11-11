@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { generateComprehensiveData } from "@/lib/dev/generators/orchestrator";
 import { getScenarioConfig, getAllScenarios, ScenarioType } from "@/lib/dev/config/scenarios";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export function DevDataControls() {
   const { userId, userName, isLoading: userLoading } = useCurrentUser();
@@ -12,6 +13,7 @@ export function DevDataControls() {
   const [error, setError] = useState<string | null>(null);
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('comprehensive');
   const [selectedYears, setSelectedYears] = useState<number>(1);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const scenarios = getAllScenarios();
 
@@ -38,27 +40,30 @@ export function DevDataControls() {
 
       setMessage(
         `✅ Generated comprehensive test data:\\n\\n` +
-        `📊 **Event Counts:**\\n` +
+        `📊 **Health Events:**\\n` +
+        `• ${result.flaresCreated} flares\\n` +
+        `• ${result.flareEventsCreated} flare events\\n` +
         `• ${result.medicationEventsCreated} medication events\\n` +
         `• ${result.triggerEventsCreated} trigger events\\n` +
         `• ${result.symptomInstancesCreated} symptom instances\\n` +
-        `• ${result.flaresCreated} flares\\n` +
-        `• ${result.flareEventsCreated} flare events\\n` +
         `• ${result.foodEventsCreated} food events\\n` +
-        (result.moodEntriesCreated > 0 ? `• ${result.moodEntriesCreated} mood entries\\n` : '') +
-        (result.sleepEntriesCreated > 0 ? `• ${result.sleepEntriesCreated} sleep entries\\n` : '') +
-        (result.uxEventsCreated > 0 ? `• ${result.uxEventsCreated} UX events\\n` : '') +
         (result.bodyMapLocationsCreated > 0 ? `• ${result.bodyMapLocationsCreated} body map locations\\n` : '') +
         (result.photoAttachmentsCreated > 0 ? `• ${result.photoAttachmentsCreated} photos\\n` : '') +
+        (result.uxEventsCreated > 0 ? `• ${result.uxEventsCreated} UX events\\n` : '') +
         // Story 6.8: Analytics data section
         (result.dailyLogsCreated > 0 || result.correlationsGenerated > 0 || result.treatmentEffectivenessRecordsCreated > 0 || result.patternsGenerated > 0
-          ? `\\n📈 **Analytics Data:**\\n` +
-            (result.dailyLogsCreated > 0 ? `• ${result.dailyLogsCreated} daily logs (${coveragePercent}% coverage)\\n` : '') +
+          ? `\\n📈 **Analytics & Insights:**\\n` +
+            (result.dailyLogsCreated > 0 ? `• ${result.dailyLogsCreated} daily logs with mood + sleep (${coveragePercent}% coverage)\\n` : '') +
             (result.correlationsGenerated > 0 ? `• ${result.correlationsGenerated} correlations (${result.significantCorrelations} significant |ρ| >= 0.3)\\n` : '') +
             (result.treatmentEffectivenessRecordsCreated > 0 ? `• ${result.treatmentEffectivenessRecordsCreated} treatment effectiveness records\\n` : '') +
             (result.patternsGenerated > 0 ? `• ${result.patternsGenerated} intentional patterns\\n` : '')
           : '') +
         `\\n📅 **Time Range:** ${new Date(result.startDate).toLocaleDateString()} to ${new Date(result.endDate).toLocaleDateString()}\\n\\n` +
+        `**Where to view:**\\n` +
+        `• Daily Log page: View mood + sleep trends\\n` +
+        `• Body Map: See flare locations and progression\\n` +
+        `• Timeline: Browse all health events\\n` +
+        `• Insights: Explore correlations and patterns\\n\\n` +
         `**Refresh the page to see your data!**`
       );
     } catch (err) {
@@ -551,19 +556,20 @@ export function DevDataControls() {
 
   return (
     <div className="mt-10 space-y-6">
-      {/* Scenario Selection */}
+      {/* Primary Generate Section */}
       <div className="rounded-lg border-2 border-dashed border-purple-500/60 bg-purple-500/10 p-6">
         <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400">
-          📋 Test Data Scenarios
+          🎯 Generate Power User Data
         </h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Choose a scenario optimized for testing specific features. Each scenario generates realistic data patterns.
+          Generate realistic test data simulating years of health tracking by a power user.
+          Includes flares, symptoms, triggers, medications, food logs, daily logs, correlations, and body map data.
         </p>
 
         {/* Year Selector */}
-        <div className="mt-4 space-y-2">
+        <div className="mt-6 space-y-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Data Time Range (Years): {selectedYears} {selectedYears === 1 ? 'year' : 'years'}
+            Time Range: {selectedYears} {selectedYears === 1 ? 'year' : 'years'} of data
           </label>
           <input
             type="range"
@@ -582,9 +588,62 @@ export function DevDataControls() {
             <span>4 years</span>
             <span>5 years</span>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Generates approximately {selectedYears === 1 ? '15-25' : selectedYears === 2 ? '30-50' : selectedYears === 3 ? '45-75' : selectedYears === 4 ? '60-100' : '75-125'} flares,
+            {' '}{selectedYears === 1 ? '300-600' : selectedYears === 2 ? '600-1200' : selectedYears === 3 ? '900-1800' : selectedYears === 4 ? '1200-2400' : '1500-3000'} events,
+            and {selectedYears === 1 ? '220-290' : selectedYears === 2 ? '440-580' : selectedYears === 3 ? '660-870' : selectedYears === 4 ? '880-1160' : '1100-1450'} daily logs
+          </p>
         </div>
 
-        {/* Scenario Cards - Grouped (Story 6.8) */}
+        {/* Main Generate Button */}
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={() => handleGenerateScenario('comprehensive', selectedYears)}
+            disabled={isLoading}
+            className="w-full inline-flex items-center justify-center rounded-md bg-purple-600 px-8 py-4 text-base font-bold text-white shadow-lg hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70 transition-all"
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating {selectedYears} {selectedYears === 1 ? 'year' : 'years'} of data...
+              </>
+            ) : (
+              <>
+                ✨ Generate {selectedYears} {selectedYears === 1 ? 'Year' : 'Years'} of Power User Data
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Advanced Options Toggle */}
+        <div className="mt-6 border-t border-purple-300 dark:border-purple-700 pt-6">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 transition-colors"
+          >
+            {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            Advanced Options: Specific Scenarios
+          </button>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Choose specific test scenarios optimized for particular features (analytics, patterns, stress testing)
+          </p>
+        </div>
+
+        {/* Advanced Scenario Cards - Collapsible */}
+        {showAdvanced && (
+          <div className="mt-4 space-y-6 p-4 rounded-lg bg-white/50 dark:bg-gray-800/50 border border-purple-200 dark:border-purple-800">
+            <div className="space-y-2 mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Selected Scenario: {scenarios.find(s => s.id === selectedScenario)?.name || 'Comprehensive'}
+              </label>
+            </div>
+
+            {/* Scenario Cards - Grouped (Story 6.8) */}
         <div className="mt-6 space-y-6">
           {/* Basic Scenarios */}
           <div>
@@ -710,29 +769,42 @@ export function DevDataControls() {
           </div>
         </div>
 
-        {/* Generate Button */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => handleGenerateScenario(selectedScenario, selectedYears)}
-            disabled={isLoading}
-            className="inline-flex items-center rounded-md bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Generating…
-              </>
-            ) : (
-              <>
-                Generate {scenarios.find(s => s.id === selectedScenario)?.name}
-              </>
-            )}
-          </button>
+            {/* Generate Selected Scenario Button */}
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => handleGenerateScenario(selectedScenario, selectedYears)}
+                disabled={isLoading}
+                className="inline-flex items-center rounded-md bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generating…
+                  </>
+                ) : (
+                  <>
+                    Generate {scenarios.find(s => s.id === selectedScenario)?.name}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
+      {/* Database Utility Buttons */}
+      <div className="rounded-lg border-2 border-dashed border-blue-500/60 bg-blue-500/10 p-6">
+        <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
+          🛠️ Database Utilities
+        </h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Tools for managing default data, checking database state, and clearing test data.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={handleCheckDefaults}
