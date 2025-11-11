@@ -115,7 +115,7 @@ describe("Navigation Configuration", () => {
     it("should maintain pillar order in flattened destinations", () => {
       const destinations = getNavDestinations("desktop");
       const trackDestinations = destinations.filter((dest) =>
-        ["/dashboard", "/log", "/body-map", "/photos"].includes(dest.href)
+        ["/dashboard", "/daily-log", "/body-map", "/photos"].includes(dest.href)
       );
       const insightsDestinations = destinations.filter((dest) =>
         ["/insights", "/timeline"].includes(dest.href)
@@ -132,7 +132,7 @@ describe("Navigation Configuration", () => {
       const hrefs = destinations.map((d) => d.href);
 
       expect(hrefs).toContain("/dashboard");
-      expect(hrefs).toContain("/log");
+      expect(hrefs).toContain("/daily-log");
     });
 
     it("should include Health Insights for both desktop and mobile", () => {
@@ -184,7 +184,7 @@ describe("Navigation Configuration", () => {
   describe("getPageTitle", () => {
     it("should return correct title for known routes", () => {
       expect(getPageTitle("/dashboard")).toBe("Dashboard");
-      expect(getPageTitle("/log")).toBe("Daily Log");
+      expect(getPageTitle("/daily-log")).toBe("Daily Log");
       expect(getPageTitle("/insights")).toBe("Health Insights");
       expect(getPageTitle("/my-data")).toBe("My Data");
       expect(getPageTitle("/about")).toBe("About");
@@ -232,9 +232,9 @@ describe("Navigation Configuration", () => {
     });
 
     it("should return destination with complete properties", () => {
-      const destination = getDestinationByHref("/log");
+      const destination = getDestinationByHref("/daily-log");
       expect(destination).toBeDefined();
-      expect(destination!.href).toBe("/log");
+      expect(destination!.href).toBe("/daily-log");
       expect(destination!.label).toBeDefined();
       expect(destination!.ariaLabel).toBeDefined();
       expect(destination!.icon).toBeDefined();
@@ -346,7 +346,7 @@ describe("Navigation Configuration", () => {
 
       it("should return true for standard navigation routes", () => {
         expect(shouldShowNavigation("/dashboard")).toBe(true);
-        expect(shouldShowNavigation("/log")).toBe(true);
+        expect(shouldShowNavigation("/daily-log")).toBe(true);
         expect(shouldShowNavigation("/insights")).toBe(true);
         expect(shouldShowNavigation("/body-map")).toBe(true);
         expect(shouldShowNavigation("/settings")).toBe(true);
@@ -369,11 +369,11 @@ describe("Navigation Configuration", () => {
 
   describe("Title Rendering Integration (AC4)", () => {
     it("should provide consistent title for Log route", () => {
-      const title = getPageTitle("/log");
+      const title = getPageTitle("/daily-log");
       expect(title).toBe("Daily Log");
 
       // Verify it matches the destination label
-      const destination = getDestinationByHref("/log");
+      const destination = getDestinationByHref("/daily-log");
       expect(destination).toBeDefined();
       expect(destination!.label).toBe(title);
     });
@@ -406,8 +406,8 @@ describe("Navigation Configuration", () => {
       const desktopDests = getNavDestinations("desktop");
       const mobileDests = getNavDestinations("mobile");
 
-      const logDesktop = desktopDests.find((d) => d.href === "/log");
-      const logMobile = mobileDests.find((d) => d.href === "/log");
+      const logDesktop = desktopDests.find((d) => d.href === "/daily-log");
+      const logMobile = mobileDests.find((d) => d.href === "/daily-log");
 
       expect(logDesktop).toBeDefined();
       expect(logMobile).toBeDefined();

@@ -1418,28 +1418,6 @@ So that I can see at a glance when patterns occur and what precedes my symptoms.
 
 ---
 
-**Story 6.6: Body Map Gender & Body Type Customization**
-
-As a user who wants a body map that represents my body type,
-I want to select gender and body type options for the body map visualization,
-So that I feel comfortable using the tool and can mark locations more accurately on a body that looks like mine.
-
-**Acceptance Criteria:**
-1. Create body map settings UI in Settings > Preferences with gender selector (Female, Male, Neutral/Other) and body type selector (Slim, Average, Plus-size, Athletic)
-2. Design and implement 3 enhanced body map SVG variants: female anatomical variant (with appropriate chest/hip proportions), male anatomical variant (with broader shoulders/different proportions), neutral/gender-neutral variant (current enhanced)
-3. Store body map preferences in IndexedDB bodyMapPreferences table: userId, selectedGender, selectedBodyType, createdAt, updatedAt
-4. Implement SVG loading system: dynamically load selected variant SVG, maintain consistent region IDs across all variants, preserve existing marker coordinates (coordinate system stays normalized 0-1)
-5. Ensure all body regions present in all variants: groin regions in all maps, consistent labeling, same interaction patterns
-6. Create smooth transition: fade out old SVG, fade in new SVG (300ms transition), preserve zoom/pan state during variant switch, maintain visible markers
-7. Add body type customization (optional enhancement): scale proportions within variants, adjust marker positioning for body types, preserve medical accuracy
-8. Implement preview modal: before saving preference, show preview of selected variant, display sample markers, confirm button applies change
-9. Add accessibility features: screen reader announces body map variant change, high contrast mode support for all variants, keyboard navigation works identically
-10. Create comprehensive tests: variant loading, preference persistence, coordinate preservation, transition smoothness, accessibility compliance
-
-**Prerequisites:** Epic 1 complete (body map foundation with regions and coordinates)
-
----
-
 **Story 6.7: Treatment Effectiveness Tracker**
 
 As a user trying different treatments and interventions,
@@ -1459,6 +1437,57 @@ So that I can have data-driven conversations with my doctor about what's working
 10. Build comprehensive tests: effectiveness calculation accuracy, edge cases (insufficient data, changing treatments), UI rendering, alert triggering, export functionality
 
 **Prerequisites:** Story 6.3 (correlation engine), Story 6.4 (insights UI patterns), Story 6.2 (daily log integration)
+
+---
+
+**Story 6.8: DevData Controls Enhancement for Analytics Support**
+
+As a developer testing analytics features,
+I want DevDataControls to generate rich synthetic data including daily logs, correlations, and intentional patterns,
+So that I can comprehensively test and demonstrate all Epic 6 analytics capabilities with realistic test scenarios.
+
+**Acceptance Criteria:**
+1. Create `generateDailyLogs.ts` generator with 60-80% day coverage, mood/sleep correlated with flares, configurable date ranges
+2. Update orchestrator.ts to call daily log generator after existing data generation (Step 13)
+3. Integrate correlation engine into orchestrator: run `correlationCalculationService.recalculateCorrelations(userId)` after all data generated (Step 14)
+4. Add analytics-showcase scenario to scenarios.ts: high correlation strength (0.85), 20-25 flares, strong clustering, 80% daily log coverage, intentional patterns enabled
+5. Add pattern-detection scenario: focused 6-month timeframe, recurring sequences, consistent delay windows for timeline visualization
+6. Create `generatePatternData.ts` with intentional pattern functions: generateMondayStressPattern (day-of-week), generateDairyHeadachePattern (food delay 6-12hr), generateMedicationImprovementPattern
+7. Update orchestrator result reporting: include dailyLogsCreated, correlationsGenerated counts in generation summary
+8. DevDataControls UI displays generation statistics: correlation count, significant correlations (|ρ| >= 0.3), daily log coverage percentage
+9. Add scenario grouping in UI: Basic scenarios, Analytics scenarios, Performance scenarios with descriptions
+10. All generators follow offline-first pattern, handle edge cases (empty data, insufficient samples), include console logging for debugging
+
+**Technical Implementation Notes:**
+- Daily logs use date string format (YYYY-MM-DD) matching dailyLogs table schema
+- Correlation calculation happens AFTER all base data exists to ensure sufficient sample sizes
+- Pattern generators create 10+ instances of each pattern for statistical significance
+- Analytics-showcase scenario configured for demonstrating insights page and timeline pattern detection
+- Generation statistics help validate that correlation engine and pattern detection have sufficient data
+
+**Prerequisites:** Story 6.2 (daily logs schema), Story 6.3 (correlation engine), Story 6.5 (pattern detection), Epic 5 (multi-layer body map)
+
+---
+
+**Story 6.6: Body Map Gender & Body Type Customization**
+
+As a user who wants a body map that represents my body type,
+I want to select gender and body type options for the body map visualization,
+So that I feel comfortable using the tool and can mark locations more accurately on a body that looks like mine.
+
+**Acceptance Criteria:**
+1. Create body map settings UI in Settings > Preferences with gender selector (Female, Male, Neutral/Other) and body type selector (Slim, Average, Plus-size, Athletic)
+2. Design and implement 3 enhanced body map SVG variants: female anatomical variant (with appropriate chest/hip proportions), male anatomical variant (with broader shoulders/different proportions), neutral/gender-neutral variant (current enhanced)
+3. Store body map preferences in IndexedDB bodyMapPreferences table: userId, selectedGender, selectedBodyType, createdAt, updatedAt
+4. Implement SVG loading system: dynamically load selected variant SVG, maintain consistent region IDs across all variants, preserve existing marker coordinates (coordinate system stays normalized 0-1)
+5. Ensure all body regions present in all variants: groin regions in all maps, consistent labeling, same interaction patterns
+6. Create smooth transition: fade out old SVG, fade in new SVG (300ms transition), preserve zoom/pan state during variant switch, maintain visible markers
+7. Add body type customization (optional enhancement): scale proportions within variants, adjust marker positioning for body types, preserve medical accuracy
+8. Implement preview modal: before saving preference, show preview of selected variant, display sample markers, confirm button applies change
+9. Add accessibility features: screen reader announces body map variant change, high contrast mode support for all variants, keyboard navigation works identically
+10. Create comprehensive tests: variant loading, preference persistence, coordinate preservation, transition smoothness, accessibility compliance
+
+**Prerequisites:** Epic 1 complete (body map foundation with regions and coordinates)
 
 ---
 
