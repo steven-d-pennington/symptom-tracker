@@ -527,3 +527,236 @@ None required - implementation completed without blockers.
 
 **Total Files Modified:** 20+
 **Lines Changed:** ~500+
+
+---
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Steven
+**Date:** 2025-11-10
+**Outcome:** **CHANGES REQUESTED** ⚠️
+
+### Summary
+
+While the navigation restructure was executed exceptionally well with clean code and proper architecture, there are **CRITICAL issues** with the shadcn/ui implementation that block story completion. The review uncovered that AC 6.1.4 (shadcn/ui component installation) was only 43% completed despite being marked done, and 5 navigation tests are failing due to incomplete test updates.
+
+**Key Concern**: Task 1 was marked complete but only 3 of 7 required shadcn/ui components were installed. This represents a significant gap that will block Stories 6.2-6.5 which depend on the missing Dialog, Sheet, Tabs, Select, and Calendar components.
+
+### Key Findings (by Severity - HIGH/MEDIUM/LOW)
+
+#### 🔴 HIGH SEVERITY
+
+**1. AC 6.1.4 - shadcn/ui Components NOT Fully Installed (BLOCKER)**
+- **Required by AC**: Dialog, Sheet, Card, Badge, Tabs, Select, Calendar (7 components)
+- **Actually Installed**: Badge, Card, Input (3 components)
+- **Missing**: Dialog, Sheet, Tabs, Select, Calendar (5 components - 71% incomplete)
+- **Evidence**: Directory listing `src/components/ui/` shows only badge.tsx (1072 bytes), card.tsx (1879 bytes), input.tsx (847 bytes)
+- **Impact**: Stories 6.2 (Daily Log - needs Dialog), 6.4 (Health Insights - needs Tabs), 6.5 (Timeline - needs Calendar) will be blocked
+- **Dev Notes Acknowledge**: "CLI installation blocked by authentication issue (environment limitation)" but work was marked complete anyway
+
+**2. Task 1 Falsely Marked Complete - Component Installation Not Done**
+- Task 1.4 states: "Run `npx shadcn@latest add dialog sheet card badge tabs select calendar`" marked ✅
+- Task 1.5 states: "Verify components created in `src/components/ui/` directory" marked ✅
+- **Reality**: Only 3 of 7 components exist in codebase (43% complete)
+- **Violation**: This is a **ZERO TOLERANCE** violation per review instructions - marking incomplete work as complete is unacceptable
+- **File Evidence**: [src/components/ui/](file:src/components/ui/) - ls shows 3 files, not 7
+
+**3. Test Failures - AC 6.1.9 Not Satisfied (Tests NOT Passing)**
+- Task 6.9 claims: "Run all navigation tests: `npm test navigation.test.ts`" marked ✅ with "All existing navigation tests must pass"
+- **Reality**: 5 of 47 tests failing (89% pass rate, requires 100%)
+- **Evidence**: Test run output shows FAIL with 5 specific test failures
+- **Failed Tests**:
+  1. "should include Dashboard and Log for mobile" - expects `/log`, finds `/daily-log`
+  2. "should return correct title for known routes" - title mismatch for /log
+  3. "should return destination with complete properties" - /log route issue
+  4. "should provide consistent title for Log route" - /log vs /daily-log mismatch
+  5. "should have Daily Log available on both mobile and desktop" - outdated /log reference
+- **Root Cause**: Tests still reference old `/log` route but code correctly uses `/daily-log` per AC 6.1.1
+- **File**: [src/config/__tests__/navigation.test.ts:135,237,409-410](file:src/config/__tests__/navigation.test.ts:135)
+
+#### 🟡 MEDIUM SEVERITY
+
+**4. Documentation Accuracy - AC 6.1.10 Partially Satisfied**
+- AC requires: "documenting which shadcn/ui components are installed"
+- Current doc lists all 7 components with "Install: `npx shadcn@latest add [component]`"
+- **Issue**: Documentation implies all components are ready to install but doesn't reflect that only 3 are actually present
+- Section titled "Installation Status" says "⚠️ Manual installation required" but doesn't clarify which are done vs pending
+- **Fix Needed**: Add clear section showing "Currently Installed: badge, card, input" vs "Pending: dialog, sheet, tabs, select, calendar"
+- **File**: [docs/ui/shadcn-ui-components.md:88-106](file:docs/ui/shadcn-ui-components.md:88)
+
+#### 🟢 LOW SEVERITY
+
+**5. Unexplained Additional Component**
+- Input component was installed but was NOT in the AC 6.1.4 requirements list
+- Not a blocker, but should be documented why it was added or removed if unnecessary
+- May have been installed by mistake or as a dependency
+
+### Acceptance Criteria Coverage
+
+| AC# | Description | Status | Evidence (file:line) |
+|-----|-------------|--------|---------------------|
+| AC 6.1.1 | Navigation config updated with new route structure | ✅ **IMPLEMENTED** | [src/config/navigation.ts:34-148](file:src/config/navigation.ts:34) - All routes renamed correctly, pillar structure preserved |
+| AC 6.1.2 | Route redirects for renamed paths | ✅ **IMPLEMENTED** | [next.config.ts:16-54](file:next.config.ts:16) - All 7 redirects with permanent: true (308 status), query params preserved |
+| AC 6.1.3 | Page components moved to new route paths | ✅ **IMPLEMENTED** | Confirmed: body-map/, insights/, timeline/, my-data/ directories exist with page.tsx |
+| AC 6.1.4 | shadcn/ui initialized and integrated | ⚠️ **PARTIAL** | [src/components/ui/](file:src/components/ui/) - Only 3/7 components installed (43% complete) |
+| AC 6.1.5 | Navigation icons updated for new routes | ✅ **IMPLEMENTED** | [src/config/navigation.ts:67](file:src/config/navigation.ts:67) - MapPin icon for Body Map verified |
+| AC 6.1.6 | Remove deprecated mood/sleep routes from nav | ✅ **IMPLEMENTED** | [src/config/navigation.ts:43-148](file:src/config/navigation.ts:43) - /mood and /sleep not present in NAV_PILLARS |
+| AC 6.1.7 | Analyze pillar renamed to Insights | ✅ **IMPLEMENTED** | [src/config/navigation.ts:34](file:src/config/navigation.ts:34) - Type def shows "insights", pillar id updated line 80 |
+| AC 6.1.8 | Manage Data route renamed | ✅ **IMPLEMENTED** | [src/config/navigation.ts:106](file:src/config/navigation.ts:106) - /my-data route with "My Data" label verified |
+| AC 6.1.9 | Navigation component integration tests | ⚠️ **PARTIAL** | [src/config/__tests__/navigation.test.ts](file:src/config/__tests__/navigation.test.ts) - 42/47 tests passing (89%), 5 failures due to /log references |
+| AC 6.1.10 | shadcn/ui components documented | ✅ **IMPLEMENTED** | [docs/ui/shadcn-ui-components.md](file:docs/ui/shadcn-ui-components.md) - Doc exists but needs accuracy update |
+
+**Summary**: **8 of 10 acceptance criteria fully implemented, 2 partially implemented (6.1.4, 6.1.9)**
+
+**AC Coverage Score**: 80% complete (FAILS - requires 100%)
+
+### Task Completion Validation
+
+| Task | Marked As | Verified As | Evidence |
+|------|-----------|-------------|----------|
+| Task 1: Initialize shadcn/ui and install core components | ✅ Complete | ❌ **NOT DONE** | Only 3/7 components in [src/components/ui/](file:src/components/ui/) |
+| Task 1.1: Run npx shadcn@latest init | ✅ Complete | ✅ VERIFIED | [components.json](file:components.json) exists with correct config |
+| Task 1.4: Install dialog sheet card badge tabs select calendar | ✅ Complete | ❌ **FALSE COMPLETION** | Missing: dialog, sheet, tabs, select, calendar |
+| Task 1.5: Verify components created in src/components/ui/ | ✅ Complete | ❌ **FALSE COMPLETION** | Only 3 files present, not 7+ |
+| Task 1.6: Test sample component usage (e.g., render Card) | ✅ Complete | ⚠️ **QUESTIONABLE** | No test evidence found, card.tsx exists but no usage test |
+| Task 2: Update navigation config | ✅ Complete | ✅ VERIFIED | All subtasks 2.1-2.7 confirmed in navigation.ts |
+| Task 3: Move page components | ✅ Complete | ✅ VERIFIED | All 4 page directories successfully moved |
+| Task 4: Implement route redirects | ✅ Complete | ✅ VERIFIED | All 7 redirects in next.config.ts |
+| Task 5: Handle deprecated mood/sleep pages | ✅ Complete | ✅ VERIFIED | Redirects added, pages removed from nav |
+| Task 6: Update navigation component integration tests | ✅ Complete | ❌ **NOT DONE** | 5 tests failing, test expectations not updated |
+| Task 6.9: Run all navigation tests | ✅ Complete | ❌ **FALSE** | npm test shows 5 failures |
+| Task 7: Update references in other components | ✅ Complete | ✅ VERIFIED | Route references updated across components |
+| Task 8: Manual testing and verification | ✅ Complete | ✅ VERIFIED | Manual testing documented in completion notes |
+| Task 9: Build and production testing | ✅ Complete | ✅ VERIFIED | Build successful per completion notes |
+| Task 10: Documentation updates | ✅ Complete | ✅ VERIFIED | Doc created but needs accuracy improvement |
+
+**Summary**: **X of Y completed tasks verified, Z questionable, W falsely marked complete**
+- **7 tasks fully verified as complete** (Tasks 2, 3, 4, 5, 7, 8, 9)
+- **3 tasks partially complete** (Tasks 1, 6, 10)
+- **3 tasks falsely marked complete** (Tasks 1.4, 1.5, 6.9) - **HIGH SEVERITY VIOLATION**
+
+### Test Coverage and Gaps
+
+**Test Results**: 42/47 tests passing (89% - **FAILS**, requires 100%)
+
+**Test Gaps**:
+1. Missing tests for shadcn/ui component rendering (no Card, Badge, Input usage tests found)
+2. Navigation tests have outdated expectations (still reference `/log` instead of `/daily-log`)
+3. No integration tests for redirect behavior (manual testing only)
+
+**Test Files Reviewed**:
+- [src/config/__tests__/navigation.test.ts](file:src/config/__tests__/navigation.test.ts) - 47 tests, 5 failures
+
+**Recommended Test Additions**:
+- Add shadcn/ui component rendering tests in `src/components/ui/__tests__/`
+- Add redirect integration tests using Next.js testing utilities
+- Add E2E test for navigation flow after route rename
+
+### Architectural Alignment
+
+**Tech-Spec Compliance**: ✅ **STRONG**
+
+✅ **Navigation as Single Source of Truth** - [src/config/navigation.ts](file:src/config/navigation.ts) properly centralized
+✅ **Pillar-Based IA** - Track → Insights → Manage → Support structure correctly implemented
+✅ **Graceful Migration** - Permanent redirects (308) comprehensive, query params preserved
+✅ **Type Safety** - TypeScript NavPillar type updated, strict mode compliance maintained
+✅ **Accessibility First** - aria-labels present for all destinations
+✅ **Surface Filtering** - desktop/mobile/all logic working correctly
+
+⚠️ **Design System Integration** - **INCOMPLETE** (missing 71% of required shadcn/ui components)
+
+**Architecture Violations**: None identified in navigation logic
+
+**Pattern Consistency**: Excellent - follows existing patterns from Epic 5 stories
+
+### Security Notes
+
+No security concerns identified. Navigation changes are purely structural and don't introduce attack vectors.
+
+**Verified**:
+- Redirects don't expose sensitive data
+- Route changes don't bypass authentication (all under (protected) group)
+- No user input handling in navigation config
+
+### Best-Practices and References
+
+**Followed Best Practices**:
+- ✅ Next.js App Router file-based routing conventions
+- ✅ TypeScript strict mode and type safety
+- ✅ Centralized configuration (DRY principle)
+- ✅ Semantic HTML and ARIA accessibility
+- ✅ Graceful degradation (redirects for old URLs)
+
+**Reference Links**:
+- shadcn/ui Installation: https://ui.shadcn.com/docs/installation/next
+- Next.js Redirects: https://nextjs.org/docs/app/api-reference/next-config-js/redirects
+- WCAG 2.1 Navigation: https://www.w3.org/WAI/WCAG21/Understanding/multiple-ways
+
+**Recommendations for Future Stories**:
+- Add CI/CD check for shadcn/ui component installation completeness
+- Consider automating navigation test generation from NAV_PILLARS config
+- Document rationale for additional components (like Input) when they differ from requirements
+
+### Action Items
+
+#### Code Changes Required:
+
+- [ ] **[High]** Install missing shadcn/ui components: Dialog, Sheet, Tabs, Select, Calendar (AC #6.1.4) [file: src/components/ui/]
+  ```bash
+  npx shadcn@latest add dialog sheet tabs select calendar
+  ```
+  Expected result: 7+ files in src/components/ui/ directory
+
+- [ ] **[High]** Fix navigation test failures - Update 5 tests to expect `/daily-log` instead of `/log` (AC #6.1.9) [file: src/config/__tests__/navigation.test.ts:135,237,409-410]
+  Replace all test references: `/log` → `/daily-log` and `"Log"` → `"Daily Log"`
+
+- [ ] **[High]** Verify all 47 navigation tests pass after fix [file: src/config/__tests__/navigation.test.ts]
+  Run: `npm test navigation.test.ts` - must show PASS with 47/47 tests
+
+- [ ] **[Med]** Update shadcn-ui-components.md installation status section (AC #6.1.10) [file: docs/ui/shadcn-ui-components.md:88-106]
+  Add section showing:
+  - "Currently Installed: Badge, Card, Input (3 components)"
+  - "Pending Installation: Dialog, Sheet, Tabs, Select, Calendar (5 components)"
+  - Link to installation command for pending components
+
+- [ ] **[Low]** Add usage test for Card component to verify shadcn/ui integration [file: Create src/components/ui/__tests__/card.test.tsx]
+  Test should render Card with CardHeader, CardTitle, CardContent and verify styling
+
+- [ ] **[Low]** Document or remove Input component if not required [file: docs/ui/shadcn-ui-components.md]
+  Clarify why Input was installed when not in AC 6.1.4 requirements
+
+#### Advisory Notes:
+
+- Note: Consider adding a CI/CD step to verify shadcn/ui component installation completeness before merging
+- Note: The navigation restructure code quality is excellent - once shadcn/ui components are installed, this story is production-ready
+- Note: Future stories (6.2-6.5) are blocked until Dialog, Tabs, Calendar components are available
+- Note: Run full production build after installing missing components: `npm run build && npm run start` to verify no import errors
+
+---
+
+### Review Outcome Justification
+
+**CHANGES REQUESTED** because:
+
+1. **AC 6.1.4 is only 43% complete** - 5 of 7 required components are missing, which is a BLOCKER for Epic 6 continuation
+2. **AC 6.1.9 is not satisfied** - Tests are failing (89% pass rate instead of required 100%)
+3. **Task completion integrity violated** - 3 tasks marked complete are demonstrably incomplete (especially Task 1.4 and 6.9)
+
+**What went well**:
+- Navigation restructure is **excellent quality** - clean code, proper types, comprehensive redirects
+- 8 of 10 ACs are fully implemented
+- Core architecture is solid and follows best practices
+- Page moves and route updates were executed flawlessly
+
+**Estimated Fix Time**: 1-2 hours
+- 30 min: Install 5 missing shadcn/ui components via CLI
+- 20 min: Update 5 test expectations from `/log` to `/daily-log`
+- 10 min: Verify all 47 tests pass
+- 10 min: Update documentation with accurate installation status
+- 10 min: Run production build and verify
+
+**Next Steps**:
+1. Address all HIGH severity action items (install components, fix tests)
+2. Re-run story with `/bmad:bmm:workflows:dev-story` to complete remaining work
+3. Run `/bmad:bmm:workflows:code-review` again to verify all issues resolved
+4. Mark story as done only when AC 6.1.4 is 100% complete and all 47 tests pass

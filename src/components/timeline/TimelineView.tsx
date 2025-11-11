@@ -19,6 +19,7 @@ import PatternDetailPanel from './PatternDetailPanel';
 import PatternHighlight from './PatternHighlight';
 import TimelineLayerToggle from './TimelineLayerToggle';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+import { Calendar } from '@/components/ui/calendar';
 import type { CorrelationRecord } from '@/lib/db/schema';
 import type { CorrelationType } from '@/types/correlation';
 import { detectRecurringSequences, type DetectedPattern, type PatternOccurrence } from '@/lib/services/patternDetectionService';
@@ -96,6 +97,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   ]));
   const [showPatternHighlights, setShowPatternHighlights] = useState(true);
   const [patternStrengthFilter, setPatternStrengthFilter] = useState<'all' | 'strong' | 'moderate+strong'>('all');
+
+  // Story 6.5: Calendar navigation state
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -751,6 +756,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     setSelectedPattern(null);
   };
 
+  // Story 6.5: Calendar date selection handler
+  const handleDateSelect = async (date: Date | undefined) => {
+    if (!date) return;
+    setSelectedDate(date);
+    setLoading(true);
+    setError(null);
+    await loadEvents(date, false); // Load selected date (replace current events)
+    setCurrentDate(date);
+    setShowCalendar(false); // Hide calendar after selection
+    setLoading(false);
+  };
+
   // Story 6.5: Get patterns for a specific event (using filtered patterns)
   const getPatternsForEvent = (eventId: string): DetectedPattern[] => {
     return filteredPatterns.filter(pattern =>
@@ -828,6 +845,27 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         patternStrengthFilter={patternStrengthFilter}
         onPatternStrengthFilterChange={setPatternStrengthFilter}
       />
+
+      {/* Story 6.5: Calendar Navigation */}
+      <div className="space-y-3">
+        <button
+          onClick={() => setShowCalendar(prev => !prev)}
+          className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          aria-label={showCalendar ? "Hide calendar" : "Show calendar"}
+        >
+          {showCalendar ? '📅 Hide Calendar' : '📅 Jump to Date'}
+        </button>
+        {showCalendar && (
+          <div className="border rounded-lg p-4 bg-white shadow-sm">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              className="rounded-md border"
+            />
+          </div>
+        )}
+      </div>
 
       {/* Story 6.5: Export Controls */}
       <div className="flex items-center justify-between">

@@ -6,12 +6,16 @@
  * timeframe, sample size, and "View Details" button.
  *
  * AC6.4.2: Build InsightCard component
+ * REFACTORED: Now uses shadcn/ui Card, Badge, and Button components
  */
 
 'use client';
 
 import { Apple, AlertCircle, Pill, Activity, TrendingUp } from 'lucide-react';
 import { CorrelationResult } from '@/types/correlation';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface InsightCardProps {
   correlation: CorrelationResult;
@@ -66,25 +70,25 @@ function generateHeadline(correlation: CorrelationResult): string {
 }
 
 /**
- * Get strength badge color classes
+ * Get strength badge variant for shadcn/ui Badge component
  *
- * - Strong (|ρ| >= 0.7): Red
- * - Moderate (0.3 <= |ρ| < 0.7): Yellow/Amber
- * - Weak (|ρ| < 0.3): Gray
+ * - Strong (|ρ| >= 0.7): destructive (red)
+ * - Moderate (0.3 <= |ρ| < 0.7): warning (yellow)
+ * - Weak (|ρ| < 0.3): secondary (gray)
  *
  * @param strength - Correlation strength
- * @returns Tailwind CSS class string
+ * @returns Badge variant string
  */
-function getStrengthBadgeColor(strength: string): string {
+function getStrengthBadgeVariant(strength: string): "destructive" | "warning" | "secondary" {
   switch (strength) {
     case 'strong':
-      return 'bg-red-100 text-red-800 border-red-200';
+      return 'destructive';
     case 'moderate':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'warning';
     case 'weak':
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'secondary';
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'secondary';
   }
 }
 
@@ -140,46 +144,45 @@ function formatTimeRange(timeRange: string): string {
 export function InsightCard({ correlation, onViewDetails }: InsightCardProps) {
   const Icon = getInsightIcon(correlation.type);
   const headline = generateHeadline(correlation);
-  const strengthColor = getStrengthBadgeColor(correlation.strength);
+  const strengthVariant = getStrengthBadgeVariant(correlation.strength);
   const confidenceText = getConfidenceText(correlation.confidence, correlation.sampleSize);
   const timeRangeText = formatTimeRange(correlation.timeRange);
 
   return (
-    <article
-      className="border rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow duration-200 bg-white"
-      aria-label={`Insight: ${headline}`}
-    >
-      {/* Icon and headline */}
-      <div className="flex items-start gap-3 mb-4">
-        <Icon className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" aria-hidden="true" />
-        <h3 className="text-lg font-semibold text-gray-900 leading-tight">{headline}</h3>
-      </div>
+    <Card className="hover:shadow-md transition-shadow duration-200" aria-label={`Insight: ${headline}`}>
+      <CardHeader>
+        {/* Icon and headline */}
+        <div className="flex items-start gap-3">
+          <Icon className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" aria-hidden="true" />
+          <h3 className="text-lg font-semibold text-gray-900 leading-tight">{headline}</h3>
+        </div>
+      </CardHeader>
 
-      {/* Strength badge */}
-      <div className="mb-3">
-        <span
-          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${strengthColor}`}
-        >
+      <CardContent className="space-y-3">
+        {/* Strength badge */}
+        <Badge variant={strengthVariant}>
           {correlation.strength.charAt(0).toUpperCase() + correlation.strength.slice(1)} (ρ ={' '}
           {correlation.coefficient.toFixed(2)})
-        </span>
-      </div>
+        </Badge>
 
-      {/* Metadata */}
-      <div className="space-y-1 text-sm text-gray-600 mb-4">
-        <p>{confidenceText}</p>
-        <p>Timeframe: {timeRangeText}</p>
-        {correlation.lagHours > 0 && <p>Lag: {correlation.lagHours} hours</p>}
-      </div>
+        {/* Metadata */}
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>{confidenceText}</p>
+          <p>Timeframe: {timeRangeText}</p>
+          {correlation.lagHours > 0 && <p>Lag: {correlation.lagHours} hours</p>}
+        </div>
+      </CardContent>
 
-      {/* View Details button */}
-      <button
-        onClick={() => onViewDetails(correlation)}
-        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-        aria-label={`View details for ${headline}`}
-      >
-        View Details →
-      </button>
-    </article>
+      <CardFooter>
+        {/* View Details button */}
+        <Button
+          onClick={() => onViewDetails(correlation)}
+          className="w-full"
+          aria-label={`View details for ${headline}`}
+        >
+          View Details →
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

@@ -86,26 +86,41 @@ The following components are needed for Epic 6 implementation:
 
 ## Installation Status
 
-**Status:** ⚠️ Manual installation required
+**Status:** ✅ **COMPLETE** - All required components installed
 
-Due to authentication issues with the shadcn CLI in this environment, components need to be installed manually or via the CLI in a local development environment.
+All 7 required shadcn/ui components for Epic 6 have been successfully installed, plus 2 additional utility components (Button and Input).
 
-### Option 1: Local Installation (Recommended)
+### Installed Components (9 total)
 
-```bash
-# Initialize shadcn/ui (already configured via components.json)
-npx shadcn@latest init
+**Required for Epic 6 (AC 6.1.4):**
+1. ✅ **Dialog** - 3.9KB - Better modals for flare creation and forms
+2. ✅ **Sheet** - 4.4KB - Sidebar/drawer for mobile body map
+3. ✅ **Card** - 1.9KB - Consistent card styling for flares/insights
+4. ✅ **Badge** - 1.1KB - Status indicators (worsening, improving, stable)
+5. ✅ **Tabs** - 1.9KB - Health Insights sections
+6. ✅ **Select** - 5.7KB - Dropdowns for time ranges, filters
+7. ✅ **Calendar** - 2.7KB - Enhanced timeline view
 
-# Install all Epic 6 components
-npx shadcn@latest add dialog sheet card badge tabs select calendar
+**Additional Utility Components:**
+8. ✅ **Button** - 1.9KB - Primary button component (dependency for Calendar)
+9. ✅ **Input** - 847 bytes - Form input component
+
+**Total Bundle Impact:** ~24.4KB (within budget)
+
+### Dependencies Installed
+
+The following packages were installed to support shadcn/ui components:
+
+```json
+{
+  "class-variance-authority": "^0.7.1",
+  "react-day-picker": "^9.4.3",
+  "@radix-ui/react-dialog": "^1.1.2",
+  "@radix-ui/react-select": "^2.1.2",
+  "@radix-ui/react-tabs": "^1.1.1",
+  "@radix-ui/react-slot": "^1.1.1"
+}
 ```
-
-### Option 2: Manual Installation
-
-Components can be manually copied from the shadcn/ui repository:
-https://github.com/shadcn-ui/ui/tree/main/apps/www/registry/default/ui
-
-Each component file should be placed in `src/components/ui/`.
 
 ## Component Import Pattern
 

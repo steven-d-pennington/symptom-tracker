@@ -6,14 +6,21 @@
  * Implements accessibility features: focus trap, Escape key, click outside.
  *
  * AC6.4.9: Create insight detail modal
+ * REFACTORED: Now uses shadcn/ui Dialog component
  */
 
 'use client';
 
-import { useEffect } from 'react';
-import { X } from 'lucide-react';
 import { CorrelationResult } from '@/types/correlation';
 import { CorrelationScatterPlot } from './CorrelationScatterPlot';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface InsightDetailModalProps {
   isOpen: boolean;
@@ -25,45 +32,20 @@ interface InsightDetailModalProps {
  * InsightDetailModal Component
  *
  * Features:
- * - Modal overlay with backdrop
+ * - Modal overlay with backdrop (via shadcn/ui Dialog)
  * - Correlation headline in header
  * - Full correlation data (coefficient, p-value, sample size, lag, confidence)
  * - Embedded scatter plot visualization
  * - Related events timeline (simplified for now)
- * - Close functionality: Escape key, click outside, X button
- * - Focus trap for accessibility
+ * - Close functionality: Escape key, click outside, X button (built into Dialog)
+ * - Focus trap for accessibility (built into Dialog)
  *
  * @param isOpen - Whether modal is open
  * @param onClose - Callback to close modal
  * @param correlation - Correlation result to display
  */
 export function InsightDetailModal({ isOpen, onClose, correlation }: InsightDetailModalProps) {
-  // Handle Escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  if (!isOpen || !correlation) {
+  if (!correlation) {
     return null;
   }
 
@@ -81,41 +63,15 @@ export function InsightDetailModal({ isOpen, onClose, correlation }: InsightDeta
     date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString(),
   }));
 
-  /**
-   * Handle click outside modal to close
-   */
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-      {/* Modal container */}
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
-        {/* Header */}
-        <div className="flex items-start justify-between p-6 border-b sticky top-0 bg-white">
-          <h2 id="modal-title" className="text-2xl font-semibold text-gray-900">
-            {headline}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
-            aria-label="Close modal"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl">{headline}</DialogTitle>
+        </DialogHeader>
 
         {/* Body */}
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           {/* Full correlation data */}
           <section aria-labelledby="correlation-data-heading">
             <h3 id="correlation-data-heading" className="text-lg font-semibold mb-3">
@@ -177,7 +133,7 @@ export function InsightDetailModal({ isOpen, onClose, correlation }: InsightDeta
             <h3 id="timeline-heading" className="text-lg font-semibold mb-3">
               Related Events Timeline
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Timeline showing {correlation.item1} and {correlation.item2} events will be displayed
               here. This feature can be enhanced in future iterations to show a chronological list
               of relevant events in the time range.
@@ -186,26 +142,16 @@ export function InsightDetailModal({ isOpen, onClose, correlation }: InsightDeta
 
           {/* Export button (placeholder) */}
           <section>
-            <button
-              disabled
-              className="px-4 py-2 bg-gray-200 text-gray-500 rounded-md cursor-not-allowed"
-              aria-label="Export as PDF (coming soon)"
-            >
+            <Button disabled variant="secondary">
               Export as PDF (Coming Soon)
-            </button>
+            </Button>
           </section>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

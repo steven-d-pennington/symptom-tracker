@@ -1,6 +1,6 @@
 # Story 6.3: Correlation Engine and Spearman Algorithm
 
-Status: drafted
+Status: done
 
 ## Story
 
