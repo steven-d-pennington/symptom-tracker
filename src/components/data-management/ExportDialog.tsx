@@ -20,17 +20,8 @@ export function ExportDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<"json" | "csv">("json");
-  const [includeOptions, setIncludeOptions] = useState({
-    symptoms: true,
-    medications: true,
-    triggers: true,
-    dailyEntries: true,
-    userData: true,
-    photos: false, // NEW - opt-in
-    foodJournal: true, // NEW - food events export
-    correlations: true, // NEW - correlation summary export
-  });
-  const [decryptPhotos, setDecryptPhotos] = useState(false); // NEW
+  const [includePhotos, setIncludePhotos] = useState(false); // Photos opt-in
+  const [decryptPhotos, setDecryptPhotos] = useState(false);
   const [photoStats, setPhotoStats] = useState<{
     count: number;
     totalSize: number;
@@ -74,18 +65,42 @@ export function ExportDialog() {
         return;
       }
 
+      // Export ENTIRE database - all tables by default
       const options: ExportOptions = {
         format: exportFormat,
-        includeSymptoms: includeOptions.symptoms,
-        includeMedications: includeOptions.medications,
-        includeTriggers: includeOptions.triggers,
-        includeDailyEntries: includeOptions.dailyEntries,
-        includeUserData: includeOptions.userData,
-        includePhotos: includeOptions.photos, // NEW
-        decryptPhotos: decryptPhotos, // NEW
-        includeFoodJournal: includeOptions.foodJournal,
-        includeCorrelations: includeOptions.correlations,
-        onlySignificant: true,
+        // User and core data
+        includeUserData: true,
+        // Symptom tracking
+        includeSymptoms: true,
+        includeSymptomInstances: true,
+        // Medication tracking
+        includeMedications: true,
+        includeMedicationEvents: true,
+        // Trigger tracking
+        includeTriggers: true,
+        includeTriggerEvents: true,
+        // Daily tracking
+        includeDailyEntries: true,
+        // Flare tracking
+        includeFlares: true,
+        includeFlareEvents: true,
+        // Food tracking
+        includeFoods: true,
+        includeFoodEvents: true,
+        includeFoodCombinations: true,
+        includeFoodJournal: true,
+        // Analytics and insights
+        includeCorrelations: true,
+        onlySignificant: false, // Include all correlations
+        includeAnalysisResults: true,
+        // Body map data
+        includeBodyMapLocations: true,
+        includePhotoComparisons: true,
+        // UX events
+        includeUxEvents: true,
+        // Photos (opt-in)
+        includePhotos: includePhotos,
+        decryptPhotos: decryptPhotos,
         onProgress: (progress: ExportProgress) => {
           setExportProgress(progress);
         },
@@ -172,38 +187,42 @@ export function ExportDialog() {
           </div>
         </div>
 
-        {/* Include Options */}
+        {/* Export Info */}
+        <div className="mb-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
+          <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
+            📦 Complete Database Export
+          </h3>
+          <p className="text-xs text-blue-700 dark:text-blue-300">
+            This will export your ENTIRE IndexedDB database including all:
+            <br/>• Health events (symptoms, medications, triggers, flares)
+            <br/>• Food tracking (meals, foods, combinations)
+            <br/>• Daily logs (mood, sleep, reflections)
+            <br/>• Analytics (correlations, patterns, insights)
+            <br/>• Body map data and preferences
+            <br/>• All timestamps and metadata
+          </p>
+        </div>
+
+        {/* Photos Option */}
         <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-foreground">
-            Include in Export
+          <label className="flex items-center text-foreground">
+            <input
+              type="checkbox"
+              checked={includePhotos}
+              onChange={(e) => setIncludePhotos(e.target.checked)}
+              className="mr-2"
+            />
+            <span className="text-sm font-medium">
+              Include Photos{photoStats ? ` (${photoStats.count} photos, ${formatBytes(photoStats.totalSize)})` : ""}
+            </span>
           </label>
-          <div className="space-y-2">
-            {Object.entries(includeOptions).map(([key, value]) => (
-              <label key={key} className="flex items-center text-foreground">
-                <input
-                  type="checkbox"
-                  checked={value}
-                  onChange={(e) =>
-                    setIncludeOptions({
-                      ...includeOptions,
-                      [key]: e.target.checked,
-                    })
-                  }
-                  className="mr-2"
-                />
-                {key === "photos"
-                  ? `Photos${photoStats ? ` (${photoStats.count} photos, ${formatBytes(photoStats.totalSize)})` : ""}`
-                  : key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1")}
-              </label>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            ✓ For complete profile transfer, keep all options checked
+          <p className="mt-1 ml-6 text-xs text-muted-foreground">
+            Photos can significantly increase export file size
           </p>
         </div>
 
         {/* Decrypt Photos Option */}
-        {includeOptions.photos && (
+        {includePhotos && (
           <div className="mb-4 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 p-3">
             <label className="flex items-start text-foreground">
               <input
@@ -298,7 +317,7 @@ export function ExportDialog() {
             disabled={isExporting}
             className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 font-medium"
           >
-            {isExporting ? "Exporting..." : "Export"}
+            {isExporting ? "Exporting Complete Database..." : "Export Complete Database"}
           </button>
           <button
             onClick={() => setIsOpen(false)}
