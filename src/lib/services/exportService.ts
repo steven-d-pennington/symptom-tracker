@@ -18,10 +18,12 @@ import type {
   MedicationRecord,
   TriggerRecord,
   DailyEntryRecord,
+  DailyLogRecord,
   MedicationEventRecord,
   TriggerEventRecord,
   FlareRecord,
   FlareEventRecord,
+  FlareBodyLocationRecord,
   FoodRecord,
   FoodEventRecord,
   FoodCombinationRecord,
@@ -32,6 +34,8 @@ import type {
   AnalysisResultRecord,
   MoodEntryRecord,
   SleepEntryRecord,
+  CorrelationRecord,
+  PatternDetectionRecord,
 } from "../db/schema";
 import type { Symptom } from "../types/symptoms";
 import type { PhotoAttachment } from "../types/photo";
@@ -96,6 +100,7 @@ export interface ExportData {
   medications?: MedicationRecord[];
   triggers?: TriggerRecord[];
   dailyEntries?: DailyEntryRecord[];
+  dailyLogs?: DailyLogRecord[]; // Story 6.2 - Unified daily reflection
   photos?: PhotoExportData[];
   photoCount?: number;
   photosTotalSize?: number; // in bytes
@@ -105,6 +110,7 @@ export interface ExportData {
   symptomInstances?: Symptom[];
   flares?: FlareRecord[];
   flareEvents?: FlareEventRecord[];
+  flareBodyLocations?: FlareBodyLocationRecord[]; // Story 3.7.7 - Multi-location tracking
   // Food Journal (hydrated for convenience)
   foodJournal?: FoodJournalRow[];
   foods?: FoodRecord[];
@@ -112,6 +118,10 @@ export interface ExportData {
   foodCombinations?: FoodCombinationRecord[];
   // Correlation summaries (optional)
   correlations?: CorrelationSummary[];
+  // Direct correlation records (Story 6.3)
+  correlationRecords?: CorrelationRecord[];
+  // Pattern detections (Story 6.5)
+  patternDetections?: PatternDetectionRecord[];
   // UX instrumentation events
   uxEvents?: UxEventRecord[];
   // Body map and photo comparisons
@@ -488,6 +498,59 @@ export class ExportService {
     // Body Map Preferences (Story 5.2)
     // Preferences are not date-range filtered - always export current preferences
     data.bodyMapPreferences = await db.bodyMapPreferences.get(userId);
+
+    // Daily Logs (Story 6.2 - Unified daily reflection)
+    if (options.dateRange) {
+      const startDate = options.dateRange.start;
+      const endDate = options.dateRange.end;
+      data.dailyLogs = await db.dailyLogs
+        .where("[userId+date]")
+        .between([userId, startDate], [userId, endDate])
+        .toArray();
+    } else {
+      data.dailyLogs = await db.dailyLogs
+        .where("userId")
+        .equals(userId)
+        .toArray();
+    }
+
+    // Flare Body Locations (Story 3.7.7 - Multi-location tracking)
+    data.flareBodyLocations = await db.flareBodyLocations
+      .where("userId")
+      .equals(userId)
+      .toArray();
+
+    // Correlation Records (Story 6.3 - Direct correlation records)
+    if (options.dateRange) {
+      const startTimestamp = new Date(options.dateRange.start).getTime();
+      const endTimestamp = new Date(options.dateRange.end).getTime();
+      data.correlationRecords = await db.correlations
+        .where("userId")
+        .equals(userId)
+        .and((record) => record.calculatedAt >= startTimestamp && record.calculatedAt <= endTimestamp)
+        .toArray();
+    } else {
+      data.correlationRecords = await db.correlations
+        .where("userId")
+        .equals(userId)
+        .toArray();
+    }
+
+    // Pattern Detections (Story 6.5 - Timeline patterns)
+    if (options.dateRange) {
+      const startTimestamp = new Date(options.dateRange.start).getTime();
+      const endTimestamp = new Date(options.dateRange.end).getTime();
+      data.patternDetections = await db.patternDetections
+        .where("userId")
+        .equals(userId)
+        .and((record) => record.detectedAt >= startTimestamp && record.detectedAt <= endTimestamp)
+        .toArray();
+    } else {
+      data.patternDetections = await db.patternDetections
+        .where("userId")
+        .equals(userId)
+        .toArray();
+    }
 
     return data;
   }

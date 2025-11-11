@@ -30,6 +30,7 @@ import { generatePhotoAttachments } from "./generatePhotoAttachments";
 import { generateId } from "@/lib/utils/idGenerator";
 import { seedFoodsService } from "@/lib/services/food/seedFoodsService";
 import { generateDailyLogs } from "./generateDailyLogs";
+import { generateAllIntentionalPatterns } from "./generatePatternData";
 
 /**
  * Main orchestrator - generates complete dataset with all features
@@ -199,23 +200,13 @@ export async function generateComprehensiveData(
     }
   }
 
-  // Step 11: Generate mood entries (Story 3.5.2)
-  console.log("[Orchestrator] Step 11: Generating mood entries");
-  const moodEntries = generateMoodEntries(context);
-  if (moodEntries.length > 0) {
-    await db.moodEntries!.bulkAdd(moodEntries);
-    console.log(`[Orchestrator] Generated ${moodEntries.length} mood entries`);
-  }
-
-  // Step 12: Generate sleep entries (Story 3.5.2)
-  console.log("[Orchestrator] Step 12: Generating sleep entries");
-  const sleepEntries = generateSleepEntries(context);
-  if (sleepEntries.length > 0) {
-    await db.sleepEntries!.bulkAdd(sleepEntries);
-    console.log(`[Orchestrator] Generated ${sleepEntries.length} sleep entries`);
-  }
+  // Step 11 & 12: REMOVED - Mood/sleep now consolidated in daily logs (Story 6.2)
+  // Daily logs (Step 13 below) provide unified mood + sleep tracking in single entry per day.
+  // Separate mood/sleep entries (Story 3.5.2) are deprecated in favor of daily logs architecture.
+  // See Story 6.8 Code Review for details on eliminating this data redundancy.
 
   // Step 13: Generate daily logs (Story 6.8)
+  // Daily logs consolidate mood + sleep + notes in unified end-of-day reflection
   console.log("[Orchestrator] Step 13: Generating daily logs");
   let dailyLogsCreated = 0;
   const dailyLogCoverage = config.dailyLogCoverage ?? 0.6; // Default 60% coverage
@@ -229,6 +220,17 @@ export async function generateComprehensiveData(
     });
     dailyLogsCreated = dailyLogResult.dailyLogsCreated;
     console.log(`[Orchestrator] Generated ${dailyLogsCreated} daily logs (${Math.round(dailyLogCoverage * 100)}% coverage)`);
+  }
+
+  // Step 13.5: Generate intentional patterns (Story 6.8 - AC 6.8.7)
+  console.log("[Orchestrator] Step 13.5: Generating intentional patterns");
+  let patternsGenerated = 0;
+  if (config.intentionalPatterns) {
+    const patternResult = await generateAllIntentionalPatterns(context, config);
+    patternsGenerated = patternResult.totalPatternsGenerated;
+    console.log(`[Orchestrator] Generated ${patternsGenerated} intentional pattern instances (Monday stress: ${patternResult.mondayStressPatterns}, Dairy headache: ${patternResult.dairyHeadachePatterns}, Medication improvement: ${patternResult.medicationImprovementPatterns})`);
+  } else {
+    console.log("[Orchestrator] ⏭️ Skipping intentional patterns (config.intentionalPatterns = false)");
   }
 
   // Step 14: Calculate correlations (Story 6.8 - Story 6.3 integration)
@@ -296,8 +298,8 @@ export async function generateComprehensiveData(
     uxEventsCreated: uxEvents.length,
     bodyMapLocationsCreated: bodyMapLocations.length,
     photoAttachmentsCreated: photoAttachments.length,
-    moodEntriesCreated: moodEntries.length,
-    sleepEntriesCreated: sleepEntries.length,
+    moodEntriesCreated: 0, // Deprecated - mood now in daily logs
+    sleepEntriesCreated: 0, // Deprecated - sleep now in daily logs
     symptomsCreated: symptoms.length,
     medicationsCreated: medications.length,
     triggersCreated: triggers.length,
@@ -310,7 +312,7 @@ export async function generateComprehensiveData(
     correlationsGenerated,
     significantCorrelations,
     treatmentEffectivenessRecordsCreated,
-    patternsGenerated: 0, // Will be populated when pattern generation implemented
+    patternsGenerated, // AC 6.8.7 - Intentional patterns for timeline detection
   };
 
   console.log("[Orchestrator] ✅ Generation complete:", result);
