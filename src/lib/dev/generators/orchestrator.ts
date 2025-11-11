@@ -30,6 +30,7 @@ import { generatePhotoAttachments } from "./generatePhotoAttachments";
 import { generateId } from "@/lib/utils/idGenerator";
 import { seedFoodsService } from "@/lib/services/food/seedFoodsService";
 import { generateDailyLogs } from "./generateDailyLogs";
+import { generateAllIntentionalPatterns } from "./generatePatternData";
 
 /**
  * Main orchestrator - generates complete dataset with all features
@@ -221,6 +222,17 @@ export async function generateComprehensiveData(
     console.log(`[Orchestrator] Generated ${dailyLogsCreated} daily logs (${Math.round(dailyLogCoverage * 100)}% coverage)`);
   }
 
+  // Step 13.5: Generate intentional patterns (Story 6.8 - AC 6.8.7)
+  console.log("[Orchestrator] Step 13.5: Generating intentional patterns");
+  let patternsGenerated = 0;
+  if (config.intentionalPatterns) {
+    const patternResult = await generateAllIntentionalPatterns(context, config);
+    patternsGenerated = patternResult.totalPatternsGenerated;
+    console.log(`[Orchestrator] Generated ${patternsGenerated} intentional pattern instances (Monday stress: ${patternResult.mondayStressPatterns}, Dairy headache: ${patternResult.dairyHeadachePatterns}, Medication improvement: ${patternResult.medicationImprovementPatterns})`);
+  } else {
+    console.log("[Orchestrator] ⏭️ Skipping intentional patterns (config.intentionalPatterns = false)");
+  }
+
   // Step 14: Calculate correlations (Story 6.8 - Story 6.3 integration)
   console.log("[Orchestrator] Step 14: Calculating correlations");
   let correlationsGenerated = 0;
@@ -300,7 +312,7 @@ export async function generateComprehensiveData(
     correlationsGenerated,
     significantCorrelations,
     treatmentEffectivenessRecordsCreated,
-    patternsGenerated: 0, // Will be populated when pattern generation implemented
+    patternsGenerated, // AC 6.8.7 - Intentional patterns for timeline detection
   };
 
   console.log("[Orchestrator] ✅ Generation complete:", result);
