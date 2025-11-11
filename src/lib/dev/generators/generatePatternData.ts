@@ -181,14 +181,16 @@ export async function generateDairyHeadachePattern(
     dairyTime.setHours(dairyHour, Math.floor(Math.random() * 60), 0, 0);
 
     const randomDairy = dairyFoods[Math.floor(Math.random() * dairyFoods.length)];
+    const mealId = generateId();
 
     const foodEvent: FoodEventRecord = {
       id: generateId(),
       userId,
-      foodId: randomDairy.id,
+      mealId,
+      foodIds: JSON.stringify([randomDairy.id]),
       timestamp: dairyTime.getTime(),
       mealType: dairyHour < 10 ? "breakfast" : "lunch",
-      servingSize: "1 serving",
+      portionMap: JSON.stringify({ [randomDairy.id]: "medium" }),
       notes: "Pattern testing dairy",
       createdAt: dairyTime.getTime(),
       updatedAt: dairyTime.getTime(),
