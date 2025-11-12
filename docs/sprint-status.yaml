@@ -132,3 +132,16 @@ development_status:
   6-7-treatment-effectiveness-tracker: in-progress  # COMPLETE AFTER 6.6 - Needs AlertsPanel + component tests
   6-8-devdata-controls-enhancement-for-analytics-support: done
   epic-6-retrospective: optional
+
+  # EPIC 7 PLAN (2025-11-12):
+  # Cloud Sync - Manual Backup/Restore MVP
+  # - Story 7.1 READY FOR DEV (Cloud Sync Infrastructure Setup)
+  # - NEXT: Run dev-story workflow for Story 7.1
+  # - Epic 7 prioritized for multi-device support
+
+  epic-7: backlog
+  7-1-cloud-sync-infrastructure-setup: ready-for-dev
+  7-2-encryption-and-upload-implementation: backlog
+  7-3-download-and-restore-implementation: backlog
+  7-4-ui-and-user-experience-polish: backlog
+  epic-7-retrospective: optional

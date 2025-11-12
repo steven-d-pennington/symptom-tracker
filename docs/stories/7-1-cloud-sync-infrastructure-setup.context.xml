@@ -1,0 +1,384 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>1</storyId>
+    <title>Cloud Sync Infrastructure Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/7-1-cloud-sync-infrastructure-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer implementing cloud sync</asA>
+    <iWant>Vercel Blob Storage configured with edge functions for upload/download</iWant>
+    <soThat>we have secure cloud storage infrastructure ready for encrypted backups</soThat>
+    <tasks>
+- Task 1: Initialize Vercel Blob Storage in project (AC: #7.1.1)
+  - 1.1: Install @vercel/blob npm package
+  - 1.2: Create Vercel Blob Store in Vercel dashboard (name: "symptom-tracker-backups")
+  - 1.3: Generate Blob Storage access token (read/write permissions)
+  - 1.4: Configure storage quota (1GB per user backup)
+  - 1.5: Configure retention policy (90-day minimum, keep most recent)
+  - 1.6: Add BLOB_READ_WRITE_TOKEN to Vercel environment variables
+  - 1.7: Test Blob Storage connection from development environment
+  - 1.8: Verify permissions (read, write, delete operations)
+
+- Task 2: Create /api/sync/upload edge function (AC: #7.1.2)
+  - 2.1: Create directory structure: /api/sync/upload/route.ts
+  - 2.2: Import Vercel Blob SDK
+  - 2.3: Define request handler: export async function POST(request: Request)
+  - 2.4: Parse request body: extract encrypted blob data, storage key, metadata
+  - 2.5: Validate request: check blob size (<1GB), validate storage key format (SHA-256)
+  - 2.6: Generate blob identifier: ${storageKey}-${timestamp}.blob
+  - 2.7: Upload blob to Vercel Blob Storage using put() API
+  - 2.8: Handle upload errors (413, 503) and return appropriate status codes
+  - 2.9: Return success response with metadata
+  - 2.10: Add console logging
+
+- Task 3: Create /api/sync/download edge function (AC: #7.1.3)
+  - 3.1: Create directory structure: /api/sync/download/route.ts
+  - 3.2: Import Vercel Blob SDK
+  - 3.3: Define request handler: export async function GET(request: Request)
+  - 3.4: Parse query parameter: extract storage key from URL
+  - 3.5: List blobs matching storage key pattern (handle multiple versions)
+  - 3.6: Select most recent backup if multiple versions exist
+  - 3.7: Retrieve blob using get() API
+  - 3.8: Stream blob data in response
+  - 3.9: Set response headers: Content-Type, Content-Length, Last-Modified
+  - 3.10: Handle download errors (404, 503)
+  - 3.11: Add console logging
+
+- Task 4: Implement error handling for edge functions (AC: #7.1.4)
+  - 4.1: Define error response schema
+  - 4.2: Create error handler utility function
+  - 4.3: Implement upload error handling
+  - 4.4: Implement download error handling
+  - 4.5: Add structured error logging
+  - 4.6: Never log sensitive data
+  - 4.7: Test error handling with mock failures
+
+- Task 5: Implement rate limiting (AC: #7.1.5)
+  - 5.1: Decide on rate limiting approach
+  - 5.2: Install rate limiting library if needed
+  - 5.3: Initialize rate limiter with Redis/KV connection
+  - 5.4: Implement upload rate limit: max 10 uploads per hour
+  - 5.5: Implement download rate limit: max 5 downloads per minute
+  - 5.6: Return 429 status code when rate limit exceeded
+  - 5.7: Add rate limit headers
+  - 5.8: Add Retry-After header for 429 responses
+  - 5.9: Test rate limiting with multiple rapid requests
+
+- Task 6: Implement operation logging (AC: #7.1.6)
+  - 6.1: Define structured log format (JSON)
+  - 6.2: Create logging utility function
+  - 6.3: Add upload operation logging
+  - 6.4: Add download operation logging
+  - 6.5: Truncate storage key hash to first 8 chars
+  - 6.6: Never log passphrases, unencrypted data, or PII
+  - 6.7: Test logging output in Vercel dashboard
+  - 6.8: Verify logs are structured and parseable
+
+- Task 7: Configure blob retention policy and storage limits (AC: #7.1.7)
+  - 7.1: Set retention policy: 90-day minimum
+  - 7.2: Configure automatic cleanup of old backups
+  - 7.3: Ensure most recent backup per user is never deleted
+  - 7.4: Set per-user storage limit: 1GB
+  - 7.5: Set project-wide storage quota with alerts
+  - 7.6: Create Vercel Cron job for daily cleanup
+  - 7.7: Implement cleanup logic
+  - 7.8: Test cleanup job with mock old backups
+
+- Task 8: Create test suite for edge functions (AC: #7.1.8)
+  - 8.1: Create test directory: /api/sync/__tests__/
+  - 8.2: Create mock encrypted blob data
+  - 8.3: Create mock storage key hashes
+  - 8.4: Test upload function
+  - 8.5: Test download function
+  - 8.6: Integration test: complete upload → download cycle
+  - 8.7: Test multiple backup versions
+  - 8.8: Run tests in CI/CD pipeline
+
+- Task 9: Write API documentation (AC: #7.1.9)
+  - 9.1: Create documentation file: docs/api/cloud-sync.md
+  - 9.2: Write overview section
+  - 9.3: Document /api/sync/upload endpoint
+  - 9.4: Document /api/sync/download endpoint
+  - 9.5: Add usage examples with curl commands
+  - 9.6: Create error response catalog
+  - 9.7: Document rate limiting policies
+  - 9.8: Document storage limits and retention policy
+  - 9.9: Add security notes
+  - 9.10: Add request/response examples
+
+- Task 10: Configure environment variables (AC: #7.1.10)
+  - 10.1: Add BLOB_READ_WRITE_TOKEN to Vercel (Production)
+  - 10.2: Add BLOB_STORE_NAME to Vercel (Production)
+  - 10.3: Add RATE_LIMIT_REDIS_URL if using upstash
+  - 10.4: Configure variables for Preview environment
+  - 10.5: Configure variables for Development environment
+  - 10.6: Create separate test Blob stores
+  - 10.7: Document environment variable setup
+  - 10.8: Test environment variable access
+  - 10.9: Verify connection to Blob Storage
+  - 10.10: Add logging for missing environment variables
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC7.1.1 — Vercel Blob Storage project setup: Initialize Vercel Blob Storage in the symptom-tracker Vercel project with appropriate storage limits configured for health data backups. Configure retention policy for encrypted backup blobs (minimum 90-day retention, automatic cleanup of older backups). Set storage quota limits (initial: 1GB per user backup, monitor and adjust based on actual usage). Add Vercel Blob Storage SDK to project dependencies (@vercel/blob npm package). Configure environment variables for Blob Storage credentials in Vercel project settings (BLOB_READ_WRITE_TOKEN). Test Blob Storage connection and permissions from development environment.
+
+AC7.1.2 — Create /api/sync/upload edge function: Implement Vercel edge function at /api/sync/upload that accepts encrypted blob uploads from client. Function accepts POST request with: encrypted blob data (binary), storage key (SHA-256 hash of passphrase), metadata (timestamp, original size). Generate unique blob identifier combining storage key + timestamp for versioning (allows multiple backups per user). Store encrypted blob in Vercel Blob Storage using put() API with storage key as filename. Return response metadata: upload timestamp (ISO 8601), blob size in bytes, storage key hash (for client verification), blob version ID. Implement proper HTTP status codes: 200 (success), 413 (payload too large), 503 (storage unavailable). Edge function runs on Vercel Edge Network for low latency.
+
+AC7.1.3 — Create /api/sync/download edge function: Implement Vercel edge function at /api/sync/download that retrieves encrypted blobs for restore. Function accepts GET request with query parameter: storage key (SHA-256 hash of passphrase). Retrieve encrypted blob from Vercel Blob Storage using get() API with storage key. If multiple versions exist (timestamped backups), return most recent backup by default. Return encrypted blob data (binary stream) with headers: Content-Type: application/octet-stream, Content-Length (blob size), Last-Modified (upload timestamp). Implement proper HTTP status codes: 200 (success), 404 (blob not found), 503 (storage unavailable). Edge function streams blob efficiently without loading entire file into memory.
+
+AC7.1.4 — Error handling for edge functions: Implement comprehensive error handling in both upload and download edge functions. Handle upload errors: blob not found (404), storage quota exceeded (413), invalid request format (400), network failures (503). Handle download errors: blob not found (404), corrupted blob data (500), network failures (503). Return structured JSON error responses: { error: string, code: string, message: string, timestamp: ISO8601 }. Log all errors to Vercel logs for debugging (timestamp, operation, storage key hash - never log passphrase, success/failure, error details).
+
+AC7.1.5 — Rate limiting for abuse prevention: Implement rate limiting on edge functions to prevent abuse and ensure fair usage. Upload rate limits: max 10 uploads per hour per passphrase hash (storage key), 429 status code if exceeded with Retry-After header. Download rate limits: max 5 downloads per minute per passphrase hash, 429 status code if exceeded with Retry-After header. Use Vercel Edge Config or upstash/ratelimit for distributed rate limiting across edge nodes. Track rate limits by storage key hash (not IP address - users may sync from different networks). Store rate limit state in ephemeral edge storage (Redis/KV) with automatic expiration. Return clear rate limit headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset.
+
+AC7.1.6 — Operation logging for debugging: Implement comprehensive logging for all cloud sync operations without exposing sensitive data. Log upload operations: timestamp (ISO 8601), operation type ("upload"), storage key hash (first 8 chars only), blob size in bytes, success/failure status, error code if failure, duration (ms), edge region. Log download operations: timestamp, operation type ("download"), storage key hash (first 8 chars), blob size, success/failure, error code if failure, duration (ms), edge region. Use Vercel's built-in logging (console.log/error writes to Vercel logs). Never log: user passphrases, full storage keys, unencrypted data content, personal identifiable information. Structured log format (JSON) for easy parsing and monitoring. Logs accessible via Vercel dashboard and CLI for debugging production issues.
+
+AC7.1.7 — Blob retention policy and storage limits: Configure appropriate retention policy and storage limits for health data backups. Retention policy: minimum 90-day retention for encrypted backups, automatic cleanup of backups older than 90 days (configurable), keep most recent backup per user regardless of age (prevent accidental data loss). Storage limits per user: initial limit 1GB (sufficient for ~1-2 years of symptom data), monitor actual usage and adjust limits based on real-world data, warn users approaching limit (via UI in Story 7.4). Total project storage quota: monitor and scale as user base grows, set alerts at 80% capacity threshold. Implement storage cleanup cron job (Vercel Cron): runs daily at 2 AM UTC, identifies and deletes backups older than retention period, logs cleanup operations.
+
+AC7.1.8 — Test edge functions with mock data: Create comprehensive test suite for edge functions using mock encrypted data payloads. Upload function tests: successful upload with valid blob, upload with oversized blob (>1GB), upload with invalid storage key format, upload exceeding rate limit, upload during storage outage (503 error). Download function tests: successful download with existing blob, download with non-existent storage key (404), download with corrupted blob data, download exceeding rate limit, download during storage outage. Integration tests: complete upload → download cycle with mock encrypted JSON, verify blob integrity (uploaded bytes = downloaded bytes), test multiple backup versions (timestamps), test blob retrieval with partial storage key match. Mock data includes: realistic encrypted blob sizes (1KB-10MB), valid storage key hashes (SHA-256 format), various timestamp formats.
+
+AC7.1.9 — API endpoint documentation: Create comprehensive API documentation for cloud sync endpoints in docs/api/cloud-sync.md. Documentation includes: endpoint overview (purpose, authentication model, security considerations), API specifications (HTTP method, URL, headers, request body, response format, status codes), usage examples with curl commands, error response catalog with resolution steps, rate limiting policies, storage limits and retention policy, security notes (client-side encryption, zero-knowledge architecture, passphrase security). Include request/response examples: upload example (POST /api/sync/upload with encrypted blob), download example (GET /api/sync/download?storageKey=...), error examples (404, 413, 429, 503). Document storage key derivation (SHA-256 hash of passphrase). Markdown format with code examples and tables for easy reference.
+
+AC7.1.10 — Environment variables configured: Configure all required environment variables for Vercel Blob Storage in Vercel project settings. Required variables: BLOB_READ_WRITE_TOKEN (Vercel Blob Storage access token with read/write permissions), BLOB_STORE_NAME (Vercel Blob store identifier - e.g., "symptom-tracker-backups"), RATE_LIMIT_REDIS_URL (optional - for distributed rate limiting, if using upstash). Configure variables in Vercel dashboard for: Production environment (main branch deploys), Preview environments (PR deploys - use separate test Blob store), Development environment (local development - use separate test Blob store). Document environment variable setup in docs/api/cloud-sync.md Setup section. Test environment variable access from edge functions: verify BLOB_READ_WRITE_TOKEN is accessible, verify connection to Blob Storage succeeds, log warning if required variables missing.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 7: Cloud Sync (Manual Backup/Restore)</title>
+        <section>Story 7.1: Cloud Sync Infrastructure Setup</section>
+        <snippet>Enable users to manually sync their IndexedDB data to cloud storage using encrypted backups. This MVP implementation uses Vercel Blob Storage with client-side encryption, providing a simple "backup and restore" model. Story 7.1 establishes the foundational cloud infrastructure with Vercel Blob Storage configured for encrypted backup blobs and edge functions for upload/download operations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 7 Technical Architecture Notes</title>
+        <section>Security Considerations</section>
+        <snippet>Client-side encryption only (zero-knowledge). Passphrase never sent to server. Storage key is hash of passphrase (server cannot reverse-engineer passphrase). Salt randomized per backup for key derivation security. Authentication tag validates data integrity.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Technology Stack and Library Decisions</section>
+        <snippet>Next.js 15.5.4 with App Router, React 19.1.0, TypeScript 5.x. Vercel deployment (existing). IndexedDB via Dexie 4.2.0. Testing with Jest 30.x + React Testing Library 16.x. No backend API currently - pure client-side PWA pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Project Structure</title>
+        <section>Repository and Service Architecture</section>
+        <snippet>Next.js App Router structure with src/app/ for routes, src/app/api/ for API routes (currently has correlation endpoints), src/components/ for UI components, src/lib/ for business logic (db, repositories, services, utils, hooks).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/app/api/correlation/compute/route.ts</path>
+        <kind>API route</kind>
+        <symbol>POST, GET handlers</symbol>
+        <lines>1-103</lines>
+        <reason>Reference implementation for Next.js API route pattern using NextRequest/NextResponse. Shows error handling, request validation, JSON response formatting, and proper status codes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/api/correlation/cron/route.ts</path>
+        <kind>Cron API route</kind>
+        <symbol>GET handler with cron authorization</symbol>
+        <lines>19-125</lines>
+        <reason>Example of Vercel Cron job implementation with authorization header verification (CRON_SECRET), structured logging, error handling, and cleanup logic. Demonstrates pattern for scheduled tasks.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/api/correlation/enhanced/__tests__/route.test.ts</path>
+        <kind>Test file</kind>
+        <symbol>API route tests</symbol>
+        <lines>1-100</lines>
+        <reason>Testing pattern for API routes using Jest with NextRequest mocking, service mocking, and response validation. Shows how to test POST/GET endpoints.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>next</package>
+        <version>15.5.4</version>
+        <purpose>Framework for API routes and edge functions</purpose>
+      </package>
+      <package>react</package>
+        <version>19.1.0</version>
+        <purpose>Required by Next.js</purpose>
+      </package>
+      <package>typescript</package>
+        <version>5.x</version>
+        <purpose>Type safety for API routes</purpose>
+      </package>
+      <package>@vercel/blob</package>
+        <version>To be installed</version>
+        <purpose>Vercel Blob Storage SDK for upload/download operations</purpose>
+      </package>
+      <package>@upstash/ratelimit</package>
+        <version>To be installed</version>
+        <purpose>Distributed rate limiting for edge functions</purpose>
+      </package>
+      <package>@upstash/redis</package>
+        <version>To be installed</version>
+        <purpose>Redis client for rate limiting state storage</purpose>
+      </package>
+      <package>jest</package>
+        <version>30.2.0</version>
+        <purpose>Test framework for API route testing</purpose>
+      </package>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+1. **Next.js App Router Pattern:** Use Next.js 15.x App Router with route handlers at /api/sync/upload/route.ts and /api/sync/download/route.ts. Export named functions (POST, GET) as async request handlers.
+
+2. **Error Handling Standard:** Return structured JSON errors with { error: string, code: string, message: string, timestamp: ISO8601 } format. Use proper HTTP status codes: 200 (success), 400 (bad request), 404 (not found), 413 (payload too large), 429 (rate limit), 500 (server error), 503 (service unavailable).
+
+3. **Zero-Knowledge Security:** Never log passphrases, full storage keys, or unencrypted data. Log only storage key hash (first 8 chars). All encryption/decryption happens client-side (Story 7.2). Server only handles encrypted blobs.
+
+4. **Vercel Edge Runtime:** Edge functions run on Vercel Edge Network for low latency. Use Edge Runtime compatible code (no Node.js-specific APIs). Environment variables accessed via process.env.
+
+5. **Testing Requirements:** Write Jest tests for all API routes following existing pattern (see src/app/api/correlation/enhanced/__tests__/route.test.ts). Mock Vercel Blob SDK. Test success cases, error cases, and edge cases. Tests run in Node environment (@jest-environment node).
+
+6. **Cron Job Pattern:** Use GET handler with authorization header verification (Bearer ${process.env.CRON_SECRET}). Return structured results with duration, counts, and errors. Support both GET (cron) and POST (manual trigger) methods.
+
+7. **Logging Standard:** Use console.log/console.error for structured JSON logging. Include: timestamp (ISO 8601), operation type, success/failure, duration (ms), error details if failure. Logs accessible via Vercel dashboard.
+
+8. **Environment Variables:** Store secrets in Vercel environment variables (BLOB_READ_WRITE_TOKEN, CRON_SECRET). Access via process.env. Configure for Production, Preview, and Development environments separately.
+
+9. **TypeScript Strict Mode:** Use strict TypeScript types. Import types from Next.js (NextRequest, NextResponse). Define interfaces for request/response payloads.
+
+10. **Rate Limiting:** Use distributed rate limiting (upstash/ratelimit) to track limits across edge nodes. Return X-RateLimit-* headers and Retry-After header for 429 responses.
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>/api/sync/upload - Request</name>
+      <kind>REST POST endpoint</kind>
+      <signature>POST /api/sync/upload
+Headers: Content-Type: application/json
+Body: { blob: string (base64), storageKey: string (SHA-256), metadata: { timestamp: number, originalSize: number } }</signature>
+      <path>src/app/api/sync/upload/route.ts (to be created)</path>
+    </interface>
+
+    <interface>
+      <name>/api/sync/upload - Response</name>
+      <kind>REST POST response</kind>
+      <signature>Success (200): { success: true, uploadedAt: string (ISO8601), blobSize: number, storageKeyHash: string, versionId: string }
+Error (4xx/5xx): { error: string, code: string, message: string, timestamp: string (ISO8601) }</signature>
+      <path>src/app/api/sync/upload/route.ts (to be created)</path>
+    </interface>
+
+    <interface>
+      <name>/api/sync/download - Request</name>
+      <kind>REST GET endpoint</kind>
+      <signature>GET /api/sync/download?storageKey={sha256-hash}
+Headers: None required</signature>
+      <path>src/app/api/sync/download/route.ts (to be created)</path>
+    </interface>
+
+    <interface>
+      <name>/api/sync/download - Response</name>
+      <kind>REST GET response</kind>
+      <signature>Success (200): Binary stream with headers: Content-Type: application/octet-stream, Content-Length: {bytes}, Last-Modified: {ISO8601}
+Error (4xx/5xx): { error: string, code: string, message: string, timestamp: string (ISO8601) }</signature>
+      <path>src/app/api/sync/download/route.ts (to be created)</path>
+    </interface>
+
+    <interface>
+      <name>NextRequest</name>
+      <kind>Next.js API type</kind>
+      <signature>import { NextRequest } from 'next/server';
+request.json() → Promise&lt;any&gt;
+request.headers.get(name: string) → string | null
+new URL(request.url).searchParams.get(name: string) → string | null</signature>
+      <path>node_modules/next/dist/server/web/spec-extension/request.d.ts</path>
+    </interface>
+
+    <interface>
+      <name>NextResponse</name>
+      <kind>Next.js API type</kind>
+      <signature>import { NextResponse } from 'next/server';
+NextResponse.json(data: any, options?: { status?: number, headers?: HeadersInit }) → NextResponse
+new Response(body: BodyInit, options?: { status?: number, headers?: HeadersInit }) → Response</signature>
+      <path>node_modules/next/dist/server/web/spec-extension/response.d.ts</path>
+    </interface>
+
+    <interface>
+      <name>Vercel Blob Storage SDK</name>
+      <kind>External library API</kind>
+      <signature>import { put, get, list, del } from '@vercel/blob';
+await put(pathname: string, body: string | ReadableStream, options: { access: 'public', token: string }) → Promise&lt;{ url: string, downloadUrl: string }&gt;
+await get(url: string, options: { token: string }) → Promise&lt;{ url: string, size: number, uploadedAt: Date, stream: () =&gt; ReadableStream }&gt;
+await list(options: { prefix?: string, token: string }) → Promise&lt;{ blobs: Array&lt;{ pathname: string, url: string, uploadedAt: Date, size: number }&gt; }&gt;
+await del(url: string, options: { token: string }) → Promise&lt;void&gt;</signature>
+      <path>Documentation: https://vercel.com/docs/storage/vercel-blob</path>
+    </interface>
+
+    <interface>
+      <name>Upstash Rate Limiting SDK</name>
+      <kind>External library API</kind>
+      <signature>import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+const redis = Redis.fromEnv();
+const ratelimit = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(limit: number, window: string), analytics: boolean });
+await ratelimit.limit(identifier: string) → Promise&lt;{ success: boolean, limit: number, remaining: number, reset: number }&gt;</signature>
+      <path>Documentation: https://upstash.com/docs/redis/sdks/ratelimit-ts/overview</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Testing follows Jest 30.x + React Testing Library 16.x pattern established in the project. API route tests use @jest-environment node directive and mock external dependencies (Vercel Blob SDK, Upstash Rate Limiter). Tests verify request validation, error handling, success paths, and proper HTTP status codes. Mock NextRequest with body/headers/query params. Assert NextResponse status and JSON payload structure. Coverage threshold: 80% for branches, functions, lines, and statements.
+    </standards>
+    <locations>
+- API route tests: src/app/api/{route-name}/__tests__/route.test.ts
+- General test pattern: **/__tests__/**/*.+(ts|tsx|js) or **/?(*.)+(spec|test).+(ts|tsx|js)
+- Test configuration: jest.config.js (root)
+- Test setup: jest.setup.js (root)
+    </locations>
+    <ideas>
+**AC7.1.2 - Upload Edge Function Tests:**
+- Test successful upload with valid encrypted blob (200 response)
+- Test upload with oversized blob >1GB (413 Payload Too Large)
+- Test upload with invalid storage key format (400 Bad Request)
+- Test upload exceeding rate limit (429 with Retry-After header)
+- Test upload during Blob Storage outage (503 Service Unavailable)
+- Verify blob metadata returned: uploadedAt, blobSize, storageKeyHash
+- Mock Vercel Blob SDK put() function to return success/failure
+
+**AC7.1.3 - Download Edge Function Tests:**
+- Test successful download with existing blob (200 with binary stream)
+- Test download with non-existent storage key (404 Not Found)
+- Test download with multiple backup versions (returns most recent)
+- Test download exceeding rate limit (429 with Retry-After header)
+- Test download during Blob Storage outage (503 Service Unavailable)
+- Verify response headers: Content-Type, Content-Length, Last-Modified
+- Mock Vercel Blob SDK get() and list() functions
+
+**AC7.1.4 - Error Handling Tests:**
+- Test structured error response format: { error, code, message, timestamp }
+- Test error logging includes timestamp, operation, storageKeyHash (first 8 chars)
+- Verify passphrases and full storage keys never logged
+
+**AC7.1.5 - Rate Limiting Tests:**
+- Test upload rate limit enforcement (10/hour per storage key)
+- Test download rate limit enforcement (5/min per storage key)
+- Verify 429 response includes X-RateLimit-* headers and Retry-After
+- Mock Upstash Ratelimit to simulate limit exceeded
+
+**AC7.1.7 - Cleanup Cron Job Tests:**
+- Test cron authorization with CRON_SECRET header (401 if missing)
+- Test cleanup identifies old backups (>90 days)
+- Test cleanup preserves most recent backup per user
+- Test cleanup returns count of deleted blobs
+- Mock Vercel Blob SDK list() and del() functions
+
+**AC7.1.8 - Integration Tests:**
+- Test complete upload → download cycle with mock encrypted blob
+- Verify blob integrity: uploaded bytes === downloaded bytes
+- Test multiple backup versions with different timestamps
+- Verify most recent backup retrieved when multiple exist
+    </ideas>
+  </tests>
+</story-context>
