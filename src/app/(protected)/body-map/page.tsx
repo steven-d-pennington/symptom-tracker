@@ -50,6 +50,14 @@ export default function FlaresPage() {
   const [isMapCollapsed, setIsMapCollapsed] = useState(false);
   const bodyMapRef = useRef<BodyMapViewerRef>(null);
 
+  // Force data refresh on mount to prevent stale cache issues
+  useEffect(() => {
+    // Invalidate any cached data when component mounts
+    refetchFlares();
+    refreshMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - dependencies intentionally omitted
+
   // Collapse body map by default on mobile
   useEffect(() => {
     const checkMobile = () => {

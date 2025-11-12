@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Database, ChevronRight, Plus, Edit, Trash2, Download, Search, X } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import {
+  Database,
+  ChevronRight,
+  Plus,
+  Edit,
+  Trash2,
+  Download,
+  Search,
+  X,
+  FileJson,
+  Check,
+} from "lucide-react";
 import { db } from "@/lib/db/client";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
-import { toast } from "@/components/common/Toast";
 
-// Define all table names from the database
+// All tables from schema v28
 const TABLES = [
   "users",
   "symptoms",
@@ -18,22 +28,33 @@ const TABLES = [
   "foods",
   "foodEvents",
   "foodCombinations",
-  "flares",
-  "flareEvents",
+  "bodyMarkers",
+  "bodyMarkerEvents",
+  "bodyMarkerLocations",
   "moodEntries",
   "sleepEntries",
   "dailyEntries",
+  "dailyLogs",
   "photoAttachments",
   "photoComparisons",
   "bodyMapLocations",
+  "bodyMapPreferences",
   "attachments",
   "analysisResults",
   "uxEvents",
+  "correlations",
+  "patternDetections",
+  "treatmentEffectiveness",
+  "treatmentAlerts",
 ] as const;
 
-type TableName = typeof TABLES[number];
+type TableName = (typeof TABLES)[number];
 
-export default function MyDataPage() {
+interface DatabaseManagerProps {
+  onClose?: () => void;
+}
+
+export function DatabaseManager({ onClose }: DatabaseManagerProps) {
   const { userId } = useCurrentUser();
   const [selectedTable, setSelectedTable] = useState<TableName | null>(null);
   const [records, setRecords] = useState<any[]>([]);
@@ -43,6 +64,10 @@ export default function MyDataPage() {
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   // Load record counts for all tables
   useEffect(() => {
@@ -50,8 +75,8 @@ export default function MyDataPage() {
       const counts: Record<string, number> = {};
       for (const tableName of TABLES) {
         try {
-          const count = await (db as any)[tableName].count();
-          counts[tableName] = count;
+          const count = await (db as any)[tableName]?.count();
+          counts[tableName] = count || 0;
         } catch (error) {
           console.error(`Error counting ${tableName}:`, error);
           counts[tableName] = 0;
@@ -78,8 +103,9 @@ export default function MyDataPage() {
         setRecords(allRecords);
       } catch (error) {
         console.error(`Error loading ${selectedTable}:`, error);
-        toast.error("Failed to load data", {
-          description: String(error),
+        setMessage({
+          type: "error",
+          text: `Failed to load ${selectedTable}: ${error}`,
         });
       } finally {
         setIsLoading(false);
@@ -90,17 +116,29 @@ export default function MyDataPage() {
   }, [selectedTable]);
 
   // Filter records based on search term
-  const filteredRecords = records.filter((record) => {
-    if (!searchTerm) return true;
+  const filteredRecords = useMemo(() => {
+    if (!searchTerm) return records;
     const searchLower = searchTerm.toLowerCase();
-    return JSON.stringify(record).toLowerCase().includes(searchLower);
-  });
+    return records.filter((record) =>
+      JSON.stringify(record).toLowerCase().includes(searchLower)
+    );
+  }, [records, searchTerm]);
+
+  // Total records across all tables
+  const totalRecords = useMemo(
+    () => Object.values(recordCount).reduce((sum, count) => sum + count, 0),
+    [recordCount]
+  );
 
   // Handle delete record
   const handleDelete = async (id: string) => {
     if (!selectedTable) return;
 
-    if (!confirm("Are you sure you want to delete this record? This action cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this record? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -114,11 +152,12 @@ export default function MyDataPage() {
         [selectedTable]: recordCount[selectedTable] - 1,
       });
 
-      toast.success("Record deleted successfully");
+      setMessage({ type: "success", text: "Record deleted successfully" });
     } catch (error) {
       console.error("Error deleting record:", error);
-      toast.error("Failed to delete record", {
-        description: String(error),
+      setMessage({
+        type: "error",
+        text: `Failed to delete record: ${error}`,
       });
     }
   };
@@ -132,14 +171,14 @@ export default function MyDataPage() {
 
       if (isCreating) {
         await table.add(editingRecord);
-        toast.success("Record created successfully");
+        setMessage({ type: "success", text: "Record created successfully" });
         setRecordCount({
           ...recordCount,
           [selectedTable]: recordCount[selectedTable] + 1,
         });
       } else {
         await table.put(editingRecord);
-        toast.success("Record updated successfully");
+        setMessage({ type: "success", text: "Record updated successfully" });
       }
 
       // Reload records
@@ -151,17 +190,18 @@ export default function MyDataPage() {
       setIsCreating(false);
     } catch (error) {
       console.error("Error saving record:", error);
-      toast.error("Failed to save record", {
-        description: String(error),
+      setMessage({
+        type: "error",
+        text: `Failed to save record: ${error}`,
       });
     }
   };
 
   // Handle export table
-  const handleExport = () => {
+  const handleExportTable = () => {
     if (!selectedTable || records.length === 0) return;
 
-    const dataStr = JSON.stringify(records, null, 2);
+    const dataStr = JSON.stringify(filteredRecords, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
@@ -170,7 +210,49 @@ export default function MyDataPage() {
     link.click();
     URL.revokeObjectURL(url);
 
-    toast.success("Data exported successfully");
+    setMessage({
+      type: "success",
+      text: `Exported ${filteredRecords.length} records from ${selectedTable}`,
+    });
+  };
+
+  // Handle export all data
+  const handleExportAll = async () => {
+    try {
+      const allData: Record<string, any[]> = {};
+
+      for (const tableName of TABLES) {
+        try {
+          const table = (db as any)[tableName];
+          const records = await table?.toArray();
+          if (records && records.length > 0) {
+            allData[tableName] = records;
+          }
+        } catch (error) {
+          console.error(`Error exporting ${tableName}:`, error);
+        }
+      }
+
+      const dataStr = JSON.stringify(allData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `symptom_tracker_backup_${new Date().toISOString()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      setMessage({
+        type: "success",
+        text: `Exported complete database (${totalRecords} total records)`,
+      });
+    } catch (error) {
+      console.error("Error exporting all data:", error);
+      setMessage({
+        type: "error",
+        text: `Failed to export data: ${error}`,
+      });
+    }
   };
 
   // Format value for display
@@ -194,7 +276,12 @@ export default function MyDataPage() {
 
   // Get field type for input
   const getFieldType = (key: string, value: any): string => {
-    if (key.includes("timestamp") || key.includes("Date") || key.includes("At")) return "number";
+    if (
+      key.includes("timestamp") ||
+      key.includes("Date") ||
+      key.includes("At")
+    )
+      return "number";
     if (typeof value === "boolean") return "boolean";
     if (typeof value === "number") return "number";
     if (typeof value === "object") return "json";
@@ -202,35 +289,76 @@ export default function MyDataPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-          <Database className="w-8 h-8" />
-          My Data
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          View and manage your IndexedDB data
-        </p>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Database className="w-5 h-5" />
+            Database Manager
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {totalRecords} total records across {TABLES.length} tables
+          </p>
+        </div>
+        <button
+          onClick={handleExportAll}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 transition-colors flex items-center gap-2"
+        >
+          <FileJson className="w-4 h-4" />
+          Export All Data
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* Message */}
+      {message && (
+        <div
+          className={`p-3 rounded-lg border flex items-start gap-2 ${
+            message.type === "success"
+              ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-900 dark:text-green-200"
+              : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-900 dark:text-red-200"
+          }`}
+        >
+          {message.type === "success" ? (
+            <Check className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          ) : (
+            <X className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          )}
+          <p className="text-sm flex-1">{message.text}</p>
+          <button
+            onClick={() => setMessage(null)}
+            className="text-current opacity-70 hover:opacity-100"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Table List */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-2">
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="p-4 border-b border-border bg-muted/50">
-              <h2 className="font-semibold text-foreground">Tables</h2>
+            <div className="p-3 border-b border-border bg-muted/50">
+              <h4 className="font-medium text-foreground text-sm">Tables</h4>
             </div>
-            <div className="divide-y divide-border max-h-[calc(100vh-250px)] overflow-y-auto">
+            <div className="divide-y divide-border max-h-[calc(100vh-400px)] overflow-y-auto">
               {TABLES.map((tableName) => (
                 <button
                   key={tableName}
-                  onClick={() => setSelectedTable(tableName)}
+                  onClick={() => {
+                    setSelectedTable(tableName);
+                    setSearchTerm("");
+                  }}
                   className={`w-full p-3 text-left hover:bg-muted/50 transition-colors ${
-                    selectedTable === tableName ? "bg-primary/10 text-primary" : "text-foreground"
+                    selectedTable === tableName
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium truncate">{tableName}</span>
+                    <span className="text-sm font-medium truncate">
+                      {tableName}
+                    </span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs bg-muted px-2 py-0.5 rounded">
                         {recordCount[tableName] || 0}
@@ -251,25 +379,32 @@ export default function MyDataPage() {
               {/* Header */}
               <div className="p-4 border-b border-border bg-muted/50">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-semibold text-foreground">
+                  <h4 className="font-medium text-foreground">
                     {selectedTable} ({filteredRecords.length} records)
-                  </h2>
+                  </h4>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
                         setIsCreating(true);
-                        setEditingRecord({ id: `new-${Date.now()}`, userId });
+                        setEditingRecord({
+                          id: `new-${Date.now()}`,
+                          userId,
+                          createdAt: Date.now(),
+                          updatedAt: Date.now(),
+                        });
                         setShowEditor(true);
                       }}
                       className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 transition-colors flex items-center gap-1"
+                      title="Add new record"
                     >
                       <Plus className="w-4 h-4" />
                       Add
                     </button>
                     <button
-                      onClick={handleExport}
+                      onClick={handleExportTable}
                       disabled={records.length === 0}
                       className="px-3 py-1.5 bg-muted text-foreground rounded-lg text-sm hover:bg-muted/80 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Export table to JSON"
                     >
                       <Download className="w-4 h-4" />
                       Export
@@ -291,6 +426,7 @@ export default function MyDataPage() {
                     <button
                       onClick={() => setSearchTerm("")}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      title="Clear search"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -299,7 +435,7 @@ export default function MyDataPage() {
               </div>
 
               {/* Records List */}
-              <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
+              <div className="max-h-[calc(100vh-450px)] overflow-y-auto">
                 {isLoading ? (
                   <div className="p-8 text-center text-muted-foreground">
                     <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mb-2" />
@@ -308,14 +444,23 @@ export default function MyDataPage() {
                 ) : filteredRecords.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">
                     <Database className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>No records found</p>
+                    <p>
+                      {searchTerm
+                        ? "No matching records found"
+                        : "No records in this table"}
+                    </p>
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
                     {filteredRecords.map((record, index) => (
-                      <div key={record.id || index} className="p-4 hover:bg-muted/30 transition-colors">
+                      <div
+                        key={record.id || index}
+                        className="p-4 hover:bg-muted/30 transition-colors"
+                      >
                         <div className="flex items-start justify-between mb-2">
-                          <code className="text-xs text-muted-foreground">ID: {record.id}</code>
+                          <code className="text-xs text-muted-foreground">
+                            ID: {record.id}
+                          </code>
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => {
@@ -324,14 +469,14 @@ export default function MyDataPage() {
                                 setShowEditor(true);
                               }}
                               className="p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded"
-                              title="Edit"
+                              title="Edit record"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(record.id)}
                               className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded"
-                              title="Delete"
+                              title="Delete record"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -340,8 +485,12 @@ export default function MyDataPage() {
                         <pre className="text-xs bg-muted/50 p-3 rounded overflow-x-auto">
                           {Object.entries(record).map(([key, value]) => (
                             <div key={key} className="mb-1">
-                              <span className="text-primary font-semibold">{key}:</span>{" "}
-                              <span className="text-foreground">{formatValue(value)}</span>
+                              <span className="text-primary font-semibold">
+                                {key}:
+                              </span>{" "}
+                              <span className="text-foreground">
+                                {formatValue(value)}
+                              </span>
                             </div>
                           ))}
                         </pre>
@@ -354,7 +503,9 @@ export default function MyDataPage() {
           ) : (
             <div className="bg-card border border-border rounded-lg p-12 text-center">
               <Database className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Select a Table</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Select a Table
+              </h3>
               <p className="text-sm text-muted-foreground">
                 Choose a table from the list to view and manage its records
               </p>
@@ -381,7 +532,9 @@ export default function MyDataPage() {
                   <div key={key}>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       {key}
-                      <span className="text-xs text-muted-foreground ml-2">({fieldType})</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({fieldType})
+                      </span>
                     </label>
 
                     {fieldType === "boolean" ? (
@@ -408,11 +561,7 @@ export default function MyDataPage() {
                               [key]: JSON.parse(e.target.value),
                             });
                           } catch (error) {
-                            // Invalid JSON, update raw
-                            setEditingRecord({
-                              ...editingRecord,
-                              [key]: e.target.value,
-                            });
+                            // Invalid JSON, keep editing
                           }
                         }}
                         rows={4}
@@ -425,7 +574,10 @@ export default function MyDataPage() {
                         onChange={(e) =>
                           setEditingRecord({
                             ...editingRecord,
-                            [key]: fieldType === "number" ? Number(e.target.value) : e.target.value,
+                            [key]:
+                              fieldType === "number"
+                                ? Number(e.target.value)
+                                : e.target.value,
                           })
                         }
                         className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground"

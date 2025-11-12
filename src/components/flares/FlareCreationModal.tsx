@@ -3,13 +3,11 @@
 import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import { Save, X } from "lucide-react";
 import { bodyMarkerRepository, type CreateMarkerInput } from "@/lib/repositories/bodyMarkerRepository";
-import type { BodyMarkerRecord } from "@/lib/db/schema";
+import type { BodyMarkerRecord, MarkerType, LayerType } from "@/lib/db/schema";
 import { toast } from "@/components/common/Toast";
 import { BodyMapViewer } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
-import { bodyMapLocationRepository } from "@/lib/repositories/bodyMapLocationRepository";
-import type { LayerType } from "@/lib/db/schema";
 
 type Coordinates = {
   x: number;
@@ -253,22 +251,31 @@ export function FlareCreationModal({
     try {
       const trimmedNotes = notes.trim();
 
-      // Handle different layer types
+      // Handle different layer types - all use unified marker system
       if (selectedLayer === 'pain' || selectedLayer === 'inflammation') {
-        // For pain/inflammation, create bodyMapLocation records directly
-        const markerPromises = selectionsArray.map(sel =>
-          bodyMapLocationRepository.create({
-            userId,
-            symptomId: 'manual-marker', // Placeholder for manual markers
-            bodyRegionId: sel.bodyRegionId,
-            coordinates: sel.coordinates,
-            severity,
-            layer: selectedLayer as LayerType,
-            notes: trimmedNotes.length > 0 ? trimmedNotes : undefined,
-          })
-        );
+        // Use unified marker system for pain/inflammation (same as flares)
+        const bodyLocations = selectionsArray.map(sel => ({
+          bodyRegionId: sel.bodyRegionId,
+          coordinates: sel.coordinates,
+        }));
 
-        await Promise.all(markerPromises);
+        const primarySelection = selectionsArray[0];
+        const markerType: MarkerType = selectedLayer; // 'pain' or 'inflammation'
+
+        const createPayload: CreateMarkerInput = {
+          type: markerType,
+          bodyRegionId: primarySelection.bodyRegionId,
+          coordinates: primarySelection.coordinates,
+          initialSeverity: severity,
+          currentSeverity: severity,
+          startDate: timestamp,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          initialEventNotes: trimmedNotes && trimmedNotes.length > 0 ? trimmedNotes : undefined,
+          bodyLocations,
+        };
+
+        const createdMarker = await bodyMarkerRepository.createMarker(userId, createPayload);
 
         const locationsText = selectionsArray.length === 1
           ? (selectionsArray[0].bodyRegionName || selectionsArray[0].bodyRegionId)
@@ -281,8 +288,7 @@ export function FlareCreationModal({
           duration: 3000,
         });
 
-        // Call onCreated with a dummy marker object for compatibility
-        onCreated?.({} as BodyMarkerRecord, submitAction === 'save-and-add-more');
+        onCreated?.(createdMarker, submitAction === 'save-and-add-more');
       } else {
         // For flares, use existing flare creation logic
         const saveHandler = onSave ?? defaultSave;

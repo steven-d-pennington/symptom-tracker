@@ -72,20 +72,6 @@ export const NAV_PILLARS: NavPillar[] = [
         surface: "all",
       },
       {
-        href: "/active-flares",
-        label: "Active Flares",
-        ariaLabel: "Active Flares - View and manage ongoing flares",
-        icon: AlertCircle,
-        surface: "desktop",
-      },
-      {
-        href: "/log",
-        label: "Quick Log",
-        ariaLabel: "Quick Log - Rapidly record health events",
-        icon: Plus,
-        surface: "desktop",
-      },
-      {
         href: "/photos",
         label: "Photos",
         ariaLabel: "Photos - Visual documentation",
@@ -127,13 +113,6 @@ export const NAV_PILLARS: NavPillar[] = [
     label: "Manage",
     order: 3,
     destinations: [
-      {
-        href: "/my-data",
-        label: "My Data",
-        ariaLabel: "My Data - Customize tracked items and preferences",
-        icon: Sliders,
-        surface: "desktop",
-      },
       {
         href: "/export",
         label: "Export Data",

@@ -84,14 +84,8 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
 
       case 'b':
         e.preventDefault();
-        // Navigate to body map / active flares
-        router.push('/active-flares');
-        break;
-
-      case 'l':
-        e.preventDefault();
-        // Navigate to log page
-        router.push('/log');
+        // Navigate to body map
+        router.push('/body-map');
         break;
 
       case 's':

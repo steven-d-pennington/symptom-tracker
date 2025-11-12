@@ -1,7 +1,7 @@
 // Service Worker for Pocket Symptom Tracker PWA
-// Version: 1.0.0
+// Version: 1.1.0 - Fixed HTML caching to prevent stale content
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `symptom-tracker-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `symptom-tracker-dynamic-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `symptom-tracker-runtime-${CACHE_VERSION}`;
@@ -94,14 +94,22 @@ self.addEventListener('fetch', (event) => {
     strategy = CACHE_STRATEGIES.CACHE_FIRST;
   }
 
-  // API calls - network first
+  // API calls - network first (no caching for API)
   if (url.pathname.startsWith('/api/')) {
+    strategy = CACHE_STRATEGIES.NETWORK_ONLY;
+  }
+
+  // HTML pages - network first to prevent stale content
+  // This ensures users always see the latest version after code changes
+  if (request.headers.get('accept')?.includes('text/html')) {
     strategy = CACHE_STRATEGIES.NETWORK_FIRST;
   }
 
-  // HTML pages - stale while revalidate
-  if (request.headers.get('accept')?.includes('text/html')) {
-    strategy = CACHE_STRATEGIES.STALE_WHILE_REVALIDATE;
+  // Special handling for dynamic pages - always fetch fresh
+  if (url.pathname.startsWith('/body-map') ||
+      url.pathname.startsWith('/dashboard') ||
+      url.pathname.startsWith('/insights')) {
+    strategy = CACHE_STRATEGIES.NETWORK_ONLY;
   }
 
   // Apply the selected strategy
@@ -114,6 +122,9 @@ self.addEventListener('fetch', (event) => {
       break;
     case CACHE_STRATEGIES.STALE_WHILE_REVALIDATE:
       event.respondWith(staleWhileRevalidate(request));
+      break;
+    case CACHE_STRATEGIES.NETWORK_ONLY:
+      event.respondWith(fetch(request));
       break;
     default:
       event.respondWith(fetch(request));
