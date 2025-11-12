@@ -1521,3 +1521,148 @@ So that [benefit/value].
 ---
 
 **For implementation:** Use the `create-story` workflow to generate individual story implementation plans from this epic breakdown.
+
+---
+
+## Epic 7: Cloud Sync (Manual Backup/Restore)
+
+### Expanded Goal
+
+Enable users to manually sync their IndexedDB data to cloud storage using encrypted backups, allowing seamless multi-device usage without real-time synchronization complexity. This MVP implementation uses Vercel Blob Storage with client-side encryption, providing a simple "backup and restore" model that can evolve into more sophisticated sync capabilities in the future.
+
+### Value Proposition
+
+- **Multi-device support** - Users can sync data between devices (phone, tablet, desktop) without cumbersome export/import workflows
+- **Zero-knowledge encryption** - All data encrypted client-side using user passphrase; server never sees unencrypted data
+- **Future-ready foundation** - Manual sync sets groundwork for future real-time sync, AI analytics, and advanced features
+- **Privacy-first design** - Opt-in feature with clear disclaimers; users control their data and encryption keys
+- **Simple implementation** - Leverages existing export logic and Vercel infrastructure for rapid delivery
+
+### Story Breakdown
+
+**Story 7.1: Cloud Sync Infrastructure Setup**
+
+As a developer implementing cloud sync,
+I want Vercel Blob Storage configured with edge functions for upload/download,
+So that we have secure cloud storage infrastructure ready for encrypted backups.
+
+**Acceptance Criteria:**
+1. Vercel Blob Storage set up in project with appropriate storage limits configured
+2. Create `/api/sync/upload` edge function that accepts encrypted blob, generates unique storage key from passphrase hash, stores blob in Vercel Blob, returns metadata (upload timestamp, blob size, storage key)
+3. Create `/api/sync/download` edge function that accepts storage key (passphrase hash), retrieves encrypted blob from Vercel Blob, returns blob to client
+4. Implement error handling for edge functions: blob not found, storage quota exceeded, invalid request format, network failures
+5. Add rate limiting to prevent abuse: max 10 uploads per hour per passphrase hash, max 5 downloads per minute per passphrase hash
+6. Edge functions log operations for debugging (timestamp, operation, storage key hash, success/failure)
+7. Set blob retention policy and storage limits appropriate for health data
+8. Test edge functions with mock encrypted data payloads
+9. Documentation for API endpoints in `docs/api/cloud-sync.md`
+10. Environment variables configured for Vercel Blob credentials
+
+**Prerequisites:** None (foundational infrastructure story)
+
+---
+
+**Story 7.2: Encryption & Upload Implementation**
+
+As a user wanting to back up my health data,
+I want to encrypt my data with a passphrase and upload it to the cloud,
+So that my data is securely backed up and accessible from other devices.
+
+**Acceptance Criteria:**
+1. Implement passphrase → encryption key derivation using PBKDF2: 100,000 iterations, SHA-256 hash, random 16-byte salt, produces 256-bit AES-GCM key
+2. Implement passphrase → storage key derivation using SHA-256: hash passphrase to create unique blob identifier
+3. Leverage existing IndexedDB export logic to serialize all data to JSON
+4. Encrypt exported JSON using AES-GCM with derived key: prepend salt to encrypted blob for later decryption, include authentication tag
+5. Upload encrypted blob to `/api/sync/upload` edge function with storage key
+6. Store sync metadata locally in IndexedDB: lastSyncTimestamp, lastSyncSuccess, blobSizeBytes, storageKey hash
+7. Implement upload progress indicator showing encryption and upload stages
+8. Handle upload errors gracefully: network failures, quota exceeded, authentication errors
+9. Add client-side validation: passphrase minimum 12 characters, passphrase confirmation required
+10. Unit tests for encryption logic, PBKDF2 derivation, upload flow
+
+**Prerequisites:** Story 7.1 (cloud infrastructure exists)
+
+---
+
+**Story 7.3: Download & Restore Implementation**
+
+As a user restoring my data on a new device,
+I want to download my encrypted backup and decrypt it using my passphrase,
+So that I can restore my health data and continue tracking seamlessly.
+
+**Acceptance Criteria:**
+1. Download encrypted blob from `/api/sync/download` using storage key derived from passphrase
+2. Extract salt from beginning of encrypted blob
+3. Derive decryption key from passphrase using PBKDF2 with extracted salt
+4. Decrypt blob using AES-GCM with derived key and validate authentication tag
+5. Parse decrypted JSON and validate data structure before restoring
+6. Create backup of current IndexedDB data before restore (export to temporary local file)
+7. Restore data to IndexedDB with transaction-based atomic writes
+8. Update sync metadata after successful restore
+9. Implement restore progress indicator showing download, decryption, and restore stages
+10. Handle restore errors gracefully: wrong passphrase (decryption failure), corrupted data, network failures, validation errors
+11. Provide rollback mechanism if restore fails (restore from backup)
+12. Unit tests for decryption logic, data validation, restore flow
+
+**Prerequisites:** Story 7.2 (encryption and upload working)
+
+---
+
+**Story 7.4: UI & User Experience Polish**
+
+As a user setting up cloud sync,
+I want clear UI with guidance on creating secure passphrases and managing backups,
+So that I feel confident using cloud sync without confusion or data loss.
+
+**Acceptance Criteria:**
+1. Add "Cloud Sync" section to Settings with clear description and opt-in toggle
+2. Create "Upload to Cloud" button with passphrase input modal: passphrase field with show/hide toggle, passphrase confirmation field, strength indicator (weak/medium/strong), warning message: "⚠️ Write this down! If you forget your passphrase, your cloud backup cannot be recovered.", QR code option for secure offline passphrase storage (optional)
+3. Create "Download from Cloud" button with passphrase input modal: passphrase field with show/hide toggle, warning message: "⚠️ This will replace all local data. Current data will be backed up first.", confirmation checkbox: "I understand this will overwrite my local data"
+4. Implement progress indicators for both upload and download: encryption/decryption progress, network transfer progress, data restore progress (download only)
+5. Add success/error toast messages: "✓ Backup uploaded successfully! Synced [X] MB at [timestamp]", "✓ Data restored successfully! [X] records restored", "✗ Upload failed: [error message]", "✗ Restore failed: [error message]"
+6. Display sync status information: last successful sync timestamp, data size, sync health indicator (green/yellow/red)
+7. Add "Cloud Sync" help documentation: explains encryption, passphrase security best practices, multi-device workflow, troubleshooting common issues
+8. Implement passphrase strength validation with visual feedback: minimum 12 characters required, warns if weak (no numbers/symbols), recommends strong passphrase (16+ chars, mixed case, numbers, symbols)
+9. Add confirmation dialogs for destructive actions: restore confirms data overwrite, passphrase change confirms re-encryption needed
+10. Mobile-responsive design for all sync UI components
+11. WCAG AA accessibility compliance: keyboard navigation, screen reader support, sufficient color contrast
+12. User acceptance testing with multiple devices and scenarios
+
+**Prerequisites:** Story 7.3 (download and restore complete)
+
+---
+
+### Technical Architecture Notes
+
+**Encryption Flow:**
+```
+User Passphrase
+  ├─→ PBKDF2(100k iterations, salt, SHA-256) → AES-256-GCM Key (encryption)
+  └─→ SHA-256 → Storage Key (blob identifier)
+
+Data Flow:
+  IndexedDB → JSON Export → AES-GCM Encrypt → Vercel Blob Storage
+  Vercel Blob Storage → AES-GCM Decrypt → JSON Parse → IndexedDB Restore
+```
+
+**Security Considerations:**
+- Client-side encryption only (zero-knowledge)
+- Passphrase never sent to server
+- Storage key is hash of passphrase (server cannot reverse-engineer passphrase)
+- Salt randomized per backup for key derivation security
+- Authentication tag validates data integrity
+
+**Future Evolution Path:**
+- **Phase 2:** Incremental sync (track changed records, sync deltas)
+- **Phase 3:** Conflict resolution (multi-device simultaneous edits)
+- **Phase 4:** Real-time sync (WebSocket-based live updates)
+- **Phase 5:** AI analytics (move to Supabase Postgres for server-side processing)
+
+**Data Migration Strategy:**
+When migrating to structured storage (Supabase) later:
+1. Maintain encrypted blob backup as fallback
+2. Add versioning metadata to backup format
+3. Implement backward-compatible restore (supports both blob and structured formats)
+4. Gradual migration: read from blob, write to both, eventually deprecate blob
+
+---
