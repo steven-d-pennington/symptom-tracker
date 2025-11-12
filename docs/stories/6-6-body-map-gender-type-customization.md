@@ -1,6 +1,6 @@
 # Story 6.6: Body Map Gender & Body Type Customization
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -497,7 +497,7 @@ Body type scaling adds significant complexity:
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/6-6-body-map-gender-type-customization.context.xml
 
 ### Agent Model Used
 
