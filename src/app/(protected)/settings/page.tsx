@@ -1,13 +1,16 @@
 "use client";
 
-import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database, Keyboard } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database, Keyboard, User } from "lucide-react";
 import DevDataControls from "@/components/settings/DevDataControls";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { ManageDataSettings } from "@/components/settings/ManageDataSettings";
+import { BodyMapPreferencesForm } from "@/components/settings/BodyMapPreferencesForm";
 import { useState } from "react";
 import Link from "next/link";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 export default function SettingsPage() {
+  const { userId } = useCurrentUser();
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const settingsSections = [
@@ -17,6 +20,13 @@ export default function SettingsPage() {
       description: "Show or hide default symptoms, medications, triggers, and foods",
       comingSoon: false,
       content: <ManageDataSettings />,
+    },
+    {
+      title: "Body Map Preferences",
+      icon: User,
+      description: "Customize body map gender and body type for personalized tracking",
+      comingSoon: false,
+      content: <BodyMapPreferencesForm userId={userId} />,
     },
     {
       title: "Notifications",

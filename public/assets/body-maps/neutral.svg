@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 800" width="400" height="800">
+  <defs>
+    <style>
+      .body-region {
+        fill: #e0e0e0;
+        stroke: #404040;
+        stroke-width: 1.5;
+        cursor: pointer;
+        transition: fill 0.2s;
+      }
+      .body-region:hover {
+        fill: #c0c0c0;
+      }
+    </style>
+  </defs>
+
+  <!-- Head and Neck -->
+  <ellipse id="head-front" class="body-region" cx="200" cy="60" rx="35" ry="45"/>
+  <path id="neck-front" class="body-region" d="M 185 100 L 185 145 L 215 145 L 215 100 Z"/>
+
+  <!-- Shoulders -->
+  <ellipse id="shoulder-left" class="body-region" cx="120" cy="170" rx="28" ry="22"/>
+  <ellipse id="shoulder-right" class="body-region" cx="280" cy="170" rx="28" ry="22"/>
+
+  <!-- Armpits (HS-specific) -->
+  <ellipse id="armpit-left" class="body-region" cx="145" cy="195" rx="12" ry="18"/>
+  <ellipse id="armpit-right" class="body-region" cx="255" cy="195" rx="12" ry="18"/>
+
+  <!-- Chest -->
+  <path id="chest-left" class="body-region" d="M 145 160 L 145 235 L 200 235 L 200 160 Z"/>
+  <path id="chest-right" class="body-region" d="M 200 160 L 200 235 L 255 235 L 255 160 Z"/>
+
+  <!-- Under breast (HS-specific) -->
+  <ellipse id="under-breast-left" class="body-region" cx="165" cy="250" rx="18" ry="10"/>
+  <ellipse id="under-breast-right" class="body-region" cx="235" cy="250" rx="18" ry="10"/>
+
+  <!-- Upper Arms -->
+  <path id="upper-arm-left" class="body-region" d="M 85 210 L 80 305 L 110 305 L 105 210 Z"/>
+  <path id="upper-arm-right" class="body-region" d="M 295 210 L 290 305 L 320 305 L 315 210 Z"/>
+
+  <!-- Elbows -->
+  <ellipse id="elbow-left" class="body-region" cx="95" cy="325" rx="18" ry="14"/>
+  <ellipse id="elbow-right" class="body-region" cx="305" cy="325" rx="18" ry="14"/>
+
+  <!-- Abdomen -->
+  <path id="abdomen-upper" class="body-region" d="M 155 260 L 150 330 L 250 330 L 245 260 Z"/>
+  <path id="abdomen-lower" class="body-region" d="M 150 330 L 145 385 L 255 385 L 250 330 Z"/>
+
+  <!-- Forearms -->
+  <path id="forearm-left" class="body-region" d="M 88 340 L 85 450 L 99 450 L 102 340 Z"/>
+  <path id="forearm-right" class="body-region" d="M 298 340 L 301 450 L 315 450 L 312 340 Z"/>
+
+  <!-- Hips -->
+  <ellipse id="hip-left" class="body-region" cx="145" cy="385" rx="20" ry="18"/>
+  <ellipse id="hip-right" class="body-region" cx="255" cy="385" rx="20" ry="18"/>
+
+  <!-- Groin (HS-specific - CRITICAL) -->
+  <path id="left-groin" class="body-region" d="M 155 390 L 160 430 L 185 430 L 190 390 Z"/>
+  <path id="center-groin" class="body-region" d="M 185 395 L 185 435 L 215 435 L 215 395 Z"/>
+  <path id="right-groin" class="body-region" d="M 210 390 L 215 430 L 240 430 L 245 390 Z"/>
+
+  <!-- Wrists -->
+  <ellipse id="wrist-left" class="body-region" cx="92" cy="465" rx="10" ry="12"/>
+  <ellipse id="wrist-right" class="body-region" cx="308" cy="465" rx="10" ry="12"/>
+
+  <!-- Hands -->
+  <ellipse id="hand-left" class="body-region" cx="92" cy="495" rx="14" ry="18"/>
+  <ellipse id="hand-right" class="body-region" cx="308" cy="495" rx="14" ry="18"/>
+
+  <!-- Thighs -->
+  <path id="thigh-left" class="body-region" d="M 145 435 L 155 555 L 180 555 L 175 435 Z"/>
+  <path id="thigh-right" class="body-region" d="M 225 435 L 220 555 L 245 555 L 255 435 Z"/>
+
+  <!-- Inner Thighs (HS-specific) -->
+  <path id="inner-thigh-left" class="body-region" d="M 175 440 L 180 555 L 195 555 L 195 440 Z"/>
+  <path id="inner-thigh-right" class="body-region" d="M 205 440 L 205 555 L 220 555 L 225 440 Z"/>
+
+  <!-- Knees -->
+  <ellipse id="knee-left" class="body-region" cx="167" cy="565" rx="16" ry="18"/>
+  <ellipse id="knee-right" class="body-region" cx="233" cy="565" rx="16" ry="18"/>
+
+  <!-- Calves -->
+  <path id="calf-left" class="body-region" d="M 155 585 L 162 705 L 176 705 L 180 585 Z"/>
+  <path id="calf-right" class="body-region" d="M 220 585 L 224 705 L 238 705 L 245 585 Z"/>
+
+  <!-- Ankles -->
+  <ellipse id="ankle-left" class="body-region" cx="169" cy="720" rx="12" ry="10"/>
+  <ellipse id="ankle-right" class="body-region" cx="231" cy="720" rx="12" ry="10"/>
+
+  <!-- Feet -->
+  <ellipse id="foot-left" class="body-region" cx="169" cy="755" rx="16" ry="22" transform="rotate(5 169 755)"/>
+  <ellipse id="foot-right" class="body-region" cx="231" cy="755" rx="16" ry="22" transform="rotate(-5 231 755)"/>
+</svg>

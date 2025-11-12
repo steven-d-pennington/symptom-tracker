@@ -128,7 +128,7 @@ development_status:
   6-3-correlation-engine-and-spearman-algorithm: done
   6-4-health-insights-hub-ui: done
   6-5-timeline-pattern-detection: done
-  6-6-body-map-gender-type-customization: ready-for-dev
+  6-6-body-map-gender-type-customization: in-progress
   6-7-treatment-effectiveness-tracker: in-progress  # COMPLETE AFTER 6.6 - Needs AlertsPanel + component tests
   6-8-devdata-controls-enhancement-for-analytics-support: done
   epic-6-retrospective: optional

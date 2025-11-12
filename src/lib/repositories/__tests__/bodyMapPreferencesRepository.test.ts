@@ -302,4 +302,207 @@ describe("bodyMapPreferencesRepository", () => {
       expect(prefs.defaultViewMode).toBe("single");
     });
   });
+
+  // Story 6.6: Gender and Body Type Preferences Tests
+  describe("setGenderPreference (Story 6.6)", () => {
+    it("should persist gender preference to female", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setGenderPreference(testUserId1, "female");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.selectedGender).toBe("female");
+    });
+
+    it("should persist gender preference to male", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setGenderPreference(testUserId1, "male");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.selectedGender).toBe("male");
+    });
+
+    it("should persist gender preference to neutral", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setGenderPreference(testUserId1, "neutral");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.selectedGender).toBe("neutral");
+    });
+
+    it("should update updatedAt timestamp", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      const before = Date.now();
+      await bodyMapPreferencesRepository.setGenderPreference(testUserId1, "female");
+      const after = Date.now();
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.updatedAt).toBeGreaterThanOrEqual(before);
+      expect(prefs.updatedAt).toBeLessThanOrEqual(after);
+    });
+
+    it("should handle errors gracefully", async () => {
+      const originalUpdate = db.bodyMapPreferences.update;
+      db.bodyMapPreferences.update = jest.fn().mockRejectedValue(new Error("DB Error"));
+
+      await expect(
+        bodyMapPreferencesRepository.setGenderPreference(testUserId1, "female")
+      ).resolves.not.toThrow();
+
+      db.bodyMapPreferences.update = originalUpdate;
+    });
+  });
+
+  describe("setBodyTypePreference (Story 6.6)", () => {
+    it("should persist body type preference to slim", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setBodyTypePreference(testUserId1, "slim");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.selectedBodyType).toBe("slim");
+    });
+
+    it("should persist body type preference to average", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setBodyTypePreference(testUserId1, "average");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.selectedBodyType).toBe("average");
+    });
+
+    it("should persist body type preference to plus-size", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setBodyTypePreference(testUserId1, "plus-size");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.selectedBodyType).toBe("plus-size");
+    });
+
+    it("should persist body type preference to athletic", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setBodyTypePreference(testUserId1, "athletic");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.selectedBodyType).toBe("athletic");
+    });
+
+    it("should update updatedAt timestamp", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      const before = Date.now();
+      await bodyMapPreferencesRepository.setBodyTypePreference(testUserId1, "slim");
+      const after = Date.now();
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.updatedAt).toBeGreaterThanOrEqual(before);
+      expect(prefs.updatedAt).toBeLessThanOrEqual(after);
+    });
+
+    it("should handle errors gracefully", async () => {
+      const originalUpdate = db.bodyMapPreferences.update;
+      db.bodyMapPreferences.update = jest.fn().mockRejectedValue(new Error("DB Error"));
+
+      await expect(
+        bodyMapPreferencesRepository.setBodyTypePreference(testUserId1, "slim")
+      ).resolves.not.toThrow();
+
+      db.bodyMapPreferences.update = originalUpdate;
+    });
+  });
+
+  describe("setGenderAndBodyType (Story 6.6)", () => {
+    it("should update both gender and body type atomically", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setGenderAndBodyType(testUserId1, "female", "athletic");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      expect(prefs.selectedGender).toBe("female");
+      expect(prefs.selectedBodyType).toBe("athletic");
+    });
+
+    it("should update both preferences with single timestamp", async () => {
+      await bodyMapPreferencesRepository.get(testUserId1);
+
+      await bodyMapPreferencesRepository.setGenderAndBodyType(testUserId1, "male", "slim");
+
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+      const timestamp = prefs.updatedAt;
+
+      // Both should have same timestamp (atomic operation)
+      expect(prefs.selectedGender).toBe("male");
+      expect(prefs.selectedBodyType).toBe("slim");
+      expect(timestamp).toBeGreaterThan(0);
+    });
+
+    it("should handle errors gracefully", async () => {
+      const originalUpdate = db.bodyMapPreferences.update;
+      db.bodyMapPreferences.update = jest.fn().mockRejectedValue(new Error("DB Error"));
+
+      await expect(
+        bodyMapPreferencesRepository.setGenderAndBodyType(testUserId1, "female", "average")
+      ).resolves.not.toThrow();
+
+      db.bodyMapPreferences.update = originalUpdate;
+    });
+  });
+
+  describe("getOrCreateDefaults (Story 6.6)", () => {
+    it("should return existing preferences", async () => {
+      // Create preferences with non-default values
+      await bodyMapPreferencesRepository.setGenderAndBodyType(testUserId1, "male", "athletic");
+
+      const prefs = await bodyMapPreferencesRepository.getOrCreateDefaults(testUserId1);
+      expect(prefs.selectedGender).toBe("male");
+      expect(prefs.selectedBodyType).toBe("athletic");
+    });
+
+    it("should create defaults for new user", async () => {
+      const prefs = await bodyMapPreferencesRepository.getOrCreateDefaults(testUserId1);
+
+      expect(prefs.userId).toBe(testUserId1);
+      expect(prefs.selectedGender).toBe("neutral");
+      expect(prefs.selectedBodyType).toBe("average");
+    });
+  });
+
+  describe("gender and body type defaults (Story 6.6)", () => {
+    it("should use neutral gender and average body type as defaults", async () => {
+      const prefs = await bodyMapPreferencesRepository.get(testUserId1);
+
+      expect(prefs.selectedGender).toBe("neutral");
+      expect(prefs.selectedBodyType).toBe("average");
+    });
+  });
+
+  describe("gender and body type isolation (Story 6.6)", () => {
+    it("should isolate gender preferences by userId", async () => {
+      await bodyMapPreferencesRepository.setGenderPreference(testUserId1, "female");
+      await bodyMapPreferencesRepository.setGenderPreference(testUserId2, "male");
+
+      const prefs1 = await bodyMapPreferencesRepository.get(testUserId1);
+      const prefs2 = await bodyMapPreferencesRepository.get(testUserId2);
+
+      expect(prefs1.selectedGender).toBe("female");
+      expect(prefs2.selectedGender).toBe("male");
+    });
+
+    it("should isolate body type preferences by userId", async () => {
+      await bodyMapPreferencesRepository.setBodyTypePreference(testUserId1, "slim");
+      await bodyMapPreferencesRepository.setBodyTypePreference(testUserId2, "athletic");
+
+      const prefs1 = await bodyMapPreferencesRepository.get(testUserId1);
+      const prefs2 = await bodyMapPreferencesRepository.get(testUserId2);
+
+      expect(prefs1.selectedBodyType).toBe("slim");
+      expect(prefs2.selectedBodyType).toBe("athletic");
+    });
+  });
 });

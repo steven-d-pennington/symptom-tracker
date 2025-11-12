@@ -8,6 +8,18 @@ export type BodySide = 'left' | 'right' | 'center';
 export type BodyViewType = 'front' | 'back' | 'left' | 'right';
 
 /**
+ * Gender variants for body map visualization (Story 6.6)
+ * Used to select anatomically appropriate body map SVG variants
+ */
+export type GenderType = 'female' | 'male' | 'neutral';
+
+/**
+ * Body type variants for body map visualization (Story 6.6)
+ * Used for optional body type customization (AC 6.6.7)
+ */
+export type BodyType = 'slim' | 'average' | 'plus-size' | 'athletic';
+
+/**
  * Defines a selectable region on the body map
  */
 export interface BodyRegion {

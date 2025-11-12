@@ -237,6 +237,7 @@ export const LAYER_CONFIG: Record<LayerType, LayerMetadata> = {
 
 /**
  * User preferences for body map layer selection and view mode (Story 5.2).
+ * Extended in Story 6.6 to include gender and body type preferences.
  * Persists layer preferences between sessions for consistent user experience.
  * Each user has their own isolated preferences keyed by userId.
  */
@@ -249,6 +250,10 @@ export interface BodyMapPreferences {
   visibleLayers: LayerType[];
   /** Preferred view mode: single layer or all layers visible */
   defaultViewMode: 'single' | 'all';
+  /** Selected gender for body map variant (Story 6.6) */
+  selectedGender?: 'female' | 'male' | 'neutral';
+  /** Selected body type for body map variant (Story 6.6) */
+  selectedBodyType?: 'slim' | 'average' | 'plus-size' | 'athletic';
   /** Unix timestamp when preferences were last updated */
   updatedAt: number;
 }
@@ -256,12 +261,15 @@ export interface BodyMapPreferences {
 /**
  * Default body map preferences for new users (Story 5.2).
  * Maintains backward compatibility by defaulting to 'flares' layer only.
+ * Story 6.6: Defaults to neutral gender and average body type for inclusivity.
  * Applied when user has no existing preferences in IndexedDB.
  */
 export const DEFAULT_BODY_MAP_PREFERENCES: Omit<BodyMapPreferences, 'userId'> = {
   lastUsedLayer: 'flares',
   visibleLayers: ['flares'],
   defaultViewMode: 'single',
+  selectedGender: 'neutral',
+  selectedBodyType: 'average',
   updatedAt: Date.now()
 };
 

@@ -1,9 +1,10 @@
 import { db } from "../db/client";
 import { BodyMapPreferences, DEFAULT_BODY_MAP_PREFERENCES, LayerType } from "../db/schema";
+import type { GenderType, BodyType } from "../types/body-mapping";
 
 /**
- * Repository for managing user body map layer preferences (Story 5.2).
- * Handles persistence of last-used layer, visible layers, and view mode.
+ * Repository for managing user body map preferences (Story 5.2, extended in Story 6.6).
+ * Handles persistence of layer preferences, gender variant, and body type.
  * All operations are user-scoped to maintain preference isolation.
  */
 export class BodyMapPreferencesRepository {
@@ -100,6 +101,82 @@ export class BodyMapPreferencesRepository {
     } catch (error) {
       console.error('Failed to save viewMode:', error);
     }
+  }
+
+  /**
+   * Update gender preference for body map variant (Story 6.6).
+   * Controls which anatomical SVG variant is displayed.
+   *
+   * @param userId - User ID to update preferences for
+   * @param gender - Gender type ('female', 'male', or 'neutral')
+   */
+  async setGenderPreference(userId: string, gender: GenderType): Promise<void> {
+    try {
+      // Ensure preferences exist before updating
+      await this.get(userId);
+
+      await db.bodyMapPreferences.update(userId, {
+        selectedGender: gender,
+        updatedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Failed to save gender preference:', error);
+    }
+  }
+
+  /**
+   * Update body type preference for body map variant (Story 6.6).
+   * Used for optional body type customization.
+   *
+   * @param userId - User ID to update preferences for
+   * @param bodyType - Body type ('slim', 'average', 'plus-size', or 'athletic')
+   */
+  async setBodyTypePreference(userId: string, bodyType: BodyType): Promise<void> {
+    try {
+      // Ensure preferences exist before updating
+      await this.get(userId);
+
+      await db.bodyMapPreferences.update(userId, {
+        selectedBodyType: bodyType,
+        updatedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Failed to save body type preference:', error);
+    }
+  }
+
+  /**
+   * Update both gender and body type preferences atomically (Story 6.6).
+   * Preferred method when updating both values simultaneously (e.g., from settings form).
+   *
+   * @param userId - User ID to update preferences for
+   * @param gender - Gender type ('female', 'male', or 'neutral')
+   * @param bodyType - Body type ('slim', 'average', 'plus-size', or 'athletic')
+   */
+  async setGenderAndBodyType(userId: string, gender: GenderType, bodyType: BodyType): Promise<void> {
+    try {
+      // Ensure preferences exist before updating
+      await this.get(userId);
+
+      await db.bodyMapPreferences.update(userId, {
+        selectedGender: gender,
+        selectedBodyType: bodyType,
+        updatedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Failed to save gender and body type preferences:', error);
+    }
+  }
+
+  /**
+   * Get user preferences, or create with defaults if they don't exist (Story 6.6).
+   * Convenience alias for get() method that emphasizes default creation behavior.
+   *
+   * @param userId - User ID to fetch preferences for
+   * @returns Promise resolving to user's body map preferences with defaults applied
+   */
+  async getOrCreateDefaults(userId: string): Promise<BodyMapPreferences> {
+    return this.get(userId);
   }
 }
 
