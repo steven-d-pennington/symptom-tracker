@@ -117,13 +117,18 @@ development_status:
   5-6-create-layer-legend-and-accessibility-features: ready-for-dev
   epic-5-retrospective: optional
 
+  # EPIC 6 PLAN (2025-11-12):
+  # - NEXT: Run create-story for 6-6-body-map-gender-type-customization
+  # - THEN: Complete 6-7-treatment-effectiveness-tracker (needs AlertsPanel component and component tests)
+  # - Story 6-8 is DONE and approved
+
   epic-6: backlog
   6-1-navigation-restructure-and-shadcn-ui-integration: done
   6-2-daily-log-page: done
   6-3-correlation-engine-and-spearman-algorithm: done
   6-4-health-insights-hub-ui: done
   6-5-timeline-pattern-detection: done
-  6-6-body-map-gender-type-customization: backlog
-  6-7-treatment-effectiveness-tracker: in-progress
+  6-6-body-map-gender-type-customization: backlog  # NEXT STORY - Run create-story workflow
+  6-7-treatment-effectiveness-tracker: in-progress  # COMPLETE AFTER 6.6 - Needs AlertsPanel + component tests
   6-8-devdata-controls-enhancement-for-analytics-support: done
   epic-6-retrospective: optional
