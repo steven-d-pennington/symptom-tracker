@@ -229,16 +229,17 @@ export class BodyMapLocationRepository {
    *
    * @param userId - User ID to filter by
    * @param layer - Layer type ('flares', 'pain', or 'inflammation')
-   * @param options - Optional filters: limit, startTime, endTime
+   * @param options - Optional filters: limit, startTime, endTime, includeResolved
    * @returns Array of body map location records for the specified layer
    */
   async getMarkersByLayer(
     userId: string,
     layer: LayerType,
-    options?: { limit?: number; startTime?: Date; endTime?: Date }
+    options?: { limit?: number; startTime?: Date; endTime?: Date; includeResolved?: boolean }
   ): Promise<BodyMapLocationRecord[]> {
     const startTime = options?.startTime || new Date(0);
     const endTime = options?.endTime || new Date();
+    const includeResolved = options?.includeResolved ?? false;
 
     let query = db.bodyMapLocations
       .where('[userId+layer+createdAt]')
@@ -253,7 +254,36 @@ export class BodyMapLocationRepository {
       query = query.limit(options.limit);
     }
 
-    return query.reverse().toArray();
+    const locations = await query.reverse().toArray();
+
+    // Filter out resolved markers if includeResolved is false
+    if (!includeResolved) {
+      // Get marker IDs that need status checking
+      const markerIds = locations
+        .map(loc => loc.markerId)
+        .filter((id): id is string => id !== undefined);
+
+      if (markerIds.length === 0) {
+        return locations; // No markerIds to check, return all
+      }
+
+      // Fetch marker statuses in bulk
+      const markers = await db.bodyMarkers
+        .where('id')
+        .anyOf(markerIds)
+        .toArray();
+
+      const resolvedMarkerIds = new Set(
+        markers.filter(m => m.status === 'resolved').map(m => m.id)
+      );
+
+      // Filter out locations with resolved markers
+      return locations.filter(loc =>
+        !loc.markerId || !resolvedMarkerIds.has(loc.markerId)
+      );
+    }
+
+    return locations;
   }
 
   /**
@@ -262,13 +292,13 @@ export class BodyMapLocationRepository {
    *
    * @param userId - User ID to filter by
    * @param layers - Array of layer types to retrieve
-   * @param options - Optional filters: limit (per layer), startTime, endTime
+   * @param options - Optional filters: limit (per layer), startTime, endTime, includeResolved
    * @returns Combined and sorted array of markers from all specified layers
    */
   async getMarkersByLayers(
     userId: string,
     layers: LayerType[],
-    options?: { limit?: number; startTime?: Date; endTime?: Date }
+    options?: { limit?: number; startTime?: Date; endTime?: Date; includeResolved?: boolean }
   ): Promise<BodyMapLocationRecord[]> {
     const results = await Promise.all(
       layers.map(layer => this.getMarkersByLayer(userId, layer, options))

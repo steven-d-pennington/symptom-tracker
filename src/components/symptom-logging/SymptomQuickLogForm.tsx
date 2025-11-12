@@ -7,6 +7,7 @@ import { symptomInstanceRepository } from "@/lib/repositories/symptomInstanceRep
 import { toast } from "@/components/common/Toast";
 import { SymptomRecord } from "@/lib/db/schema";
 import { SymptomSelectionList } from "./SymptomSelectionList";
+import { scheduleRecalculation } from "@/lib/services/correlationCalculationService";
 
 interface SymptomQuickLogFormProps {
   userId: string;
@@ -170,6 +171,9 @@ export function SymptomQuickLogForm({ userId }: SymptomQuickLogFormProps) {
         description: `${selectedSymptom.name} logged at severity ${severity}/10`,
         duration: 3000,
       });
+
+      // Schedule correlation recalculation (debounced, runs after 5 minutes)
+      scheduleRecalculation(userId);
 
       // Navigate back to dashboard with refresh flag
       // Additional delay ensures IndexedDB commit completes (Story 3.5.13)

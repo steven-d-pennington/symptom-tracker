@@ -8,6 +8,7 @@ import { foodEventRepository } from "@/lib/repositories/foodEventRepository";
 import { userRepository } from "@/lib/repositories/userRepository";
 import { generateId } from "@/lib/utils/idGenerator";
 import { toast } from "@/components/common/Toast";
+import { scheduleRecalculation } from "@/lib/services/correlationCalculationService";
 import { FoodCategory } from "./FoodCategory";
 import { FoodSearchInput } from "./FoodSearchInput";
 import { MealComposer } from "@/components/food/MealComposer";
@@ -331,6 +332,9 @@ export function FoodQuickLogForm({ userId }: FoodQuickLogFormProps) {
         description: foodCount === 1 ? foodNames : `${foodCount} foods logged`,
         duration: 3000,
       });
+
+      // Schedule correlation recalculation (debounced, runs after 5 minutes)
+      scheduleRecalculation(userId);
 
       // Navigate back to dashboard with refresh flag
       router.push("/dashboard?refresh=food");

@@ -28,6 +28,10 @@ export interface UseBodyMapLayersResult {
   isLoadingMarkers: boolean;
   /** Story 5.5: Refresh markers and counts */
   refresh: () => Promise<void>;
+  /** Show history (resolved markers) toggle state */
+  showHistory: boolean;
+  /** Toggle showing resolved markers */
+  toggleShowHistory: () => void;
 }
 
 /**
@@ -74,6 +78,7 @@ export function useBodyMapLayers(userId: string | null): UseBodyMapLayersResult 
   });
   const [markers, setMarkers] = useState<BodyMapLocationRecord[]>([]);
   const [isLoadingMarkers, setIsLoadingMarkers] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Load preferences on mount or userId change (Story 5.3 + Story 5.5)
   useEffect(() => {
@@ -140,13 +145,15 @@ export function useBodyMapLayers(userId: string | null): UseBodyMapLayersResult 
         // Single layer mode: fetch only current layer
         fetchedMarkers = await bodyMapLocationRepository.getMarkersByLayer(
           userId,
-          currentLayer
+          currentLayer,
+          { includeResolved: showHistory }
         );
       } else {
         // All layers mode: fetch all visible layers
         fetchedMarkers = await bodyMapLocationRepository.getMarkersByLayers(
           userId,
-          visibleLayers
+          visibleLayers,
+          { includeResolved: showHistory }
         );
       }
 
@@ -157,7 +164,7 @@ export function useBodyMapLayers(userId: string | null): UseBodyMapLayersResult 
     } finally {
       setIsLoadingMarkers(false);
     }
-  }, [userId, viewMode, currentLayer, visibleLayers]);
+  }, [userId, viewMode, currentLayer, visibleLayers, showHistory]);
 
   useEffect(() => {
     void loadMarkers();
@@ -209,6 +216,11 @@ export function useBodyMapLayers(userId: string | null): UseBodyMapLayersResult 
     ]);
   }, [loadMarkers, loadMarkerCounts]);
 
+  // Toggle show history (resolved markers)
+  const toggleShowHistory = useCallback(() => {
+    setShowHistory(prev => !prev);
+  }, []);
+
   return {
     currentLayer,
     lastUsedLayer,
@@ -222,6 +234,9 @@ export function useBodyMapLayers(userId: string | null): UseBodyMapLayersResult 
     markerCounts,
     markers,
     isLoadingMarkers,
-    refresh
+    refresh,
+    // History toggle
+    showHistory,
+    toggleShowHistory
   };
 }

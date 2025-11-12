@@ -13,7 +13,7 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useMarkers } from "@/lib/hooks/useMarkers";
 import { useBodyMapLayers } from "@/lib/hooks/useBodyMapLayers";
 import { cn } from "@/lib/utils/cn";
-import { Plus, X, Maximize2, TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
+import { Plus, X, Maximize2, TrendingUp, TrendingDown, Activity, BarChart3, History } from "lucide-react";
 import Link from "next/link";
 
 export default function FlaresPage() {
@@ -23,6 +23,7 @@ export default function FlaresPage() {
   // Layer management hook (Story 5.3, 5.5)
   const {
     currentLayer,
+    lastUsedLayer,
     changeLayer,
     viewMode,
     changeViewMode,
@@ -31,7 +32,9 @@ export default function FlaresPage() {
     markerCounts,
     markers,
     isLoadingMarkers,
-    refresh: refreshMarkers
+    refresh: refreshMarkers,
+    showHistory,
+    toggleShowHistory
   } = useBodyMapLayers(userId);
 
   const [selectedFlareId, setSelectedFlareId] = useState<string | null>(null);
@@ -266,12 +269,26 @@ export default function FlaresPage() {
             </div>
 
             <div className="p-4 flex-1 flex flex-col min-h-0">
-              {/* Layer Selector */}
-              <div className="mb-3">
-                <LayerSelector
-                  currentLayer={currentLayer}
-                  onLayerChange={changeLayer}
-                />
+              {/* Layer Selector with History Toggle */}
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex-1">
+                  <LayerSelector
+                    currentLayer={currentLayer}
+                    onLayerChange={changeLayer}
+                    lastUsedLayer={lastUsedLayer}
+                  />
+                </div>
+                <button
+                  onClick={toggleShowHistory}
+                  className={cn(
+                    "icon-btn flex items-center gap-2 px-3 transition-colors",
+                    showHistory ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-primary/10"
+                  )}
+                  title={showHistory ? "Hide resolved markers" : "Show history (resolved markers)"}
+                >
+                  <History className="h-4 w-4" />
+                  {showHistory && <span className="text-xs font-medium">History</span>}
+                </button>
               </div>
 
               <div className="flex-1 bg-card border border-border rounded-xl overflow-hidden mb-4 flex items-center justify-center" style={{ minHeight: '400px' }}>

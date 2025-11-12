@@ -8,6 +8,7 @@ import { medicationEventRepository } from "@/lib/repositories/medicationEventRep
 import { toast } from "@/components/common/Toast";
 import { MedicationCategory } from "./MedicationCategory";
 import type { MedicationRecord } from "@/lib/db/schema";
+import { scheduleRecalculation } from "@/lib/services/correlationCalculationService";
 
 interface MedicationQuickLogFormProps {
   userId: string;
@@ -304,6 +305,9 @@ export function MedicationQuickLogForm({ userId }: MedicationQuickLogFormProps) 
         description: selectedMedication.name,
         duration: 3000,
       });
+
+      // Schedule correlation recalculation (debounced, runs after 5 minutes)
+      scheduleRecalculation(userId);
 
       // Navigate back to dashboard with refresh flag
       router.push("/dashboard?refresh=medication");

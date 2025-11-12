@@ -1,9 +1,10 @@
 "use client";
 
-import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database, Keyboard } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database, Keyboard, Activity } from "lucide-react";
 import DevDataControls from "@/components/settings/DevDataControls";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { ManageDataSettings } from "@/components/settings/ManageDataSettings";
+import { CorrelationSettings } from "@/components/settings/CorrelationSettings";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -17,6 +18,13 @@ export default function SettingsPage() {
       description: "Show or hide default symptoms, medications, triggers, and foods",
       comingSoon: false,
       content: <ManageDataSettings />,
+    },
+    {
+      title: "Correlation Analysis",
+      icon: Activity,
+      description: "Recalculate food-symptom correlations and health insights",
+      comingSoon: false,
+      content: <CorrelationSettings />,
     },
     {
       title: "Notifications",

@@ -9,6 +9,7 @@ import { generateId } from "@/lib/utils/idGenerator";
 import { toast } from "@/components/common/Toast";
 import { TriggerCategory } from "./TriggerCategory";
 import type { TriggerRecord } from "@/lib/db/schema";
+import { scheduleRecalculation } from "@/lib/services/correlationCalculationService";
 
 interface TriggerQuickLogFormProps {
   userId: string;
@@ -272,6 +273,9 @@ export function TriggerQuickLogForm({ userId }: TriggerQuickLogFormProps) {
         description: selectedTrigger.name,
         duration: 3000,
       });
+
+      // Schedule correlation recalculation (debounced, runs after 5 minutes)
+      scheduleRecalculation(userId);
 
       // Navigate back to dashboard with refresh flag
       // Delay ensures IndexedDB commit completes before navigation

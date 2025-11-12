@@ -6,6 +6,7 @@ import { OfflineIndicator, InstallPrompt, UpdateNotification } from "@/component
 import { NavLayout } from "@/components/navigation/NavLayout";
 import { MigrationProvider } from "@/components/providers/MigrationProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { CorrelationAutoCalculationProvider } from "@/components/providers/CorrelationAutoCalculationProvider";
 import { ToastContainer } from "@/components/common/ToastContainer";
 
 export const metadata: Metadata = {
@@ -55,14 +56,16 @@ export default function RootLayout({
       <body className="bg-background text-foreground antialiased font-sans">
         <ThemeProvider>
           <MigrationProvider>
-            <OnboardingRedirectGate />
-            <NavLayout>{children}</NavLayout>
-            {/* PWA Components */}
-            <OfflineIndicator />
-            <InstallPrompt />
-            <UpdateNotification />
-            {/* Toast Notifications */}
-            <ToastContainer />
+            <CorrelationAutoCalculationProvider>
+              <OnboardingRedirectGate />
+              <NavLayout>{children}</NavLayout>
+              {/* PWA Components */}
+              <OfflineIndicator />
+              <InstallPrompt />
+              <UpdateNotification />
+              {/* Toast Notifications */}
+              <ToastContainer />
+            </CorrelationAutoCalculationProvider>
           </MigrationProvider>
         </ThemeProvider>
       </body>

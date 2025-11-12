@@ -45,11 +45,5 @@
       "source": "/(.*)",
       "destination": "/"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/correlation/cron",
-      "schedule": "0 2 * * *"
-    }
   ]
 }

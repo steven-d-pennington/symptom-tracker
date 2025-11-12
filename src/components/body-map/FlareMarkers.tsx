@@ -9,14 +9,14 @@ import { calculateRadialOffsets } from '@/lib/utils/flareMarkers';
 import { denormalizeCoordinates, getRegionBounds, RegionBounds } from '@/lib/utils/coordinates';
 import { BodyMapMarker } from '@/components/body-map/markers/BodyMapMarker';
 import { calculateMarkerOffset } from '@/lib/utils/markerCalculations';
-import { BodyMapLocation } from '@/lib/types/body-mapping';
+import { BodyMapLocationRecord, LayerType } from '@/lib/db/schema';
 
 interface FlareMarkersProps {
   viewType: 'front' | 'back' | 'left' | 'right';
   zoomLevel: number;
   userId: string;
   /** Optional: Provide markers from external source (bodyMapLocations table) */
-  markers?: BodyMapLocation[];
+  markers?: BodyMapLocationRecord[];
 }
 
 interface MarkerPosition {
@@ -95,6 +95,7 @@ export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMark
       y: number;
       severity: number;
       timestamp: number;
+      layer: LayerType;
     }> = [];
 
     // Get regions for current view
@@ -122,6 +123,9 @@ export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMark
         bounds
       );
 
+      // Convert MarkerType to LayerType (handle 'flare' -> 'flares' conversion)
+      const layer: LayerType = marker.layer || 'flares';
+
       positions.push({
         id: marker.id,
         bodyRegionId: marker.bodyRegionId,
@@ -129,6 +133,7 @@ export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMark
         y,
         severity: marker.severity,
         timestamp: marker.createdAt instanceof Date ? marker.createdAt.getTime() : marker.createdAt,
+        layer,
       });
     });
 
@@ -250,7 +255,7 @@ export function FlareMarkers({ viewType, zoomLevel, userId, markers }: FlareMark
         <BodyMapMarker
           key={position.id}
           id={position.id}
-          layer='flares'
+          layer={position.layer}
           bodyRegionId={position.bodyRegionId}
           severity={position.severity}
           timestamp={position.timestamp}
