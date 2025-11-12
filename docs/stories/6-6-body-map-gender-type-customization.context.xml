@@ -1,0 +1,236 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>6.6</storyId>
+    <title>Body Map Gender & Body Type Customization</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-6-body-map-gender-type-customization.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user who wants a body map that represents my body type</asA>
+    <iWant>to select gender and body type options for the body map visualization</iWant>
+    <soThat>I feel comfortable using the tool and can mark locations more accurately on a body that looks like mine</soThat>
+    <tasks>
+      <task id="1" ac="6.6.1">Create body map settings UI in Settings > Preferences with gender selector (Female, Male, Neutral/Other) and body type selector (Slim, Average, Plus-size, Athletic), preview thumbnail, save/reset buttons, form validation</task>
+      <task id="2" ac="6.6.2">Design and create 3 enhanced body map SVG variants (female, male, neutral) with consistent region IDs, groin regions, and normalized 0-1 coordinate system. Store in public/assets/body-maps/</task>
+      <task id="3" ac="6.6.3">Create bodyMapPreferences table in IndexedDB (schema v28) with userId, selectedGender, selectedBodyType, timestamps. Create bodyMapPreferencesRepository with get/update/getOrCreateDefaults methods</task>
+      <task id="4" ac="6.6.4">Implement SVG loading system with getSVGPathForPreferences utility, lazy loading, caching, region ID validation, coordinate preservation when switching variants</task>
+      <task id="5" ac="6.6.5">Verify all required body regions present in all three SVG variants with consistent IDs (groin, standard regions), labels, interaction patterns, region bounds calculation</task>
+      <task id="6" ac="6.6.6">Create smooth 600ms fade transition when switching variants, preserve zoom/pan state, maintain visible markers during transition, loading indicator</task>
+      <task id="7" ac="6.6.7">Add body type customization (OPTIONAL): scaling within variants (slim 0.9x, plus 1.15x), preserve coordinate system, medical accuracy. May defer if complex</task>
+      <task id="8" ac="6.6.8">Implement BodyMapPreviewModal component showing full-size preview with sample markers, Confirm/Cancel buttons, keyboard support (Tab, Enter, Escape), follows existing modal patterns</task>
+      <task id="9" ac="6.6.9">Add accessibility: screen reader announcements for variant changes using announce() utility, high contrast mode support, consistent keyboard navigation, ARIA labels, focus management</task>
+      <task id="10" ac="6.6.10">Write comprehensive tests: unit tests for repository and SVG loading, component tests for settings UI and modal, integration tests for variant switching, accessibility tests. All pass with npm test</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="6.6.1">Create body map settings UI in Settings > Preferences with gender selector (Female, Male, Neutral/Other), body type selector (Slim, Average, Plus-size, Athletic), preview thumbnail, save/reset buttons. Follows existing settings patterns, accessible via Settings > Preferences. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.2">Design and implement 3 enhanced body map SVG variants: female (wider hips, narrower shoulders), male (broader shoulders, narrower hips), neutral (current enhanced, balanced). All maintain consistent region IDs and include groin regions. SVG files in public/assets/body-maps/. Coordinate system normalized 0-1 across all. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.3">Store body map preferences in IndexedDB bodyMapPreferences table with fields: userId (indexed), selectedGender ('female'|'male'|'neutral'), selectedBodyType ('slim'|'average'|'plus-size'|'athletic'), timestamps. Increment schema to next version (v28). Repository with getUserPreferences, updatePreferences, getOrCreateDefaults. Defaults: gender='neutral', bodyType='average'. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.4">Dynamically load selected variant SVG based on user preferences. getSVGPathForPreferences(gender, bodyType) utility maps to file path. Lazy load SVG on component mount, cache to avoid redundant requests. Maintain consistent region IDs across variants. Preserve marker coordinates (normalized 0-1). Validate SVG structure on load. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.5">Ensure all body regions present in all variants: left-groin, right-groin, center-groin (from Epic 1), all standard regions. Region IDs consistent across SVGs. Region labeling consistent for accessibility. Interaction patterns identical (click, hover, keyboard). Region bounds calculated correctly for zoom. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.6">Smooth transition when changing preference: fade out current SVG (300ms), swap source, fade in new (300ms), total 600ms. Preserve zoom/pan state during switch. Maintain visible markers during transition (no flicker). Loading indicator during swap. CSS transitions. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.7">OPTIONAL: Body type customization with scaling (slim 0.9x, plus 1.15x, athletic varies). Preserves medical accuracy and coordinate system. If complex, defer to future story. Focus on gender variants for this story. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.8">BodyMapPreviewModal displays before save: full-size preview with selected variant, 3-5 sample markers, explanatory text, Confirm button applies change, Cancel discards. Opens on Save click. Keyboard accessible (Tab, Enter, Escape). Uses existing modal patterns. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.9">Accessibility features: Screen reader announces variant changes ("Body map updated to female variant"), high contrast mode support for all SVGs, keyboard navigation identical across variants (Tab order, Enter/Space, Arrow keys), ARIA labels updated (aria-label="Female body map"), focus management during transition. [Source: docs/epics.md#Story-6.6]</criterion>
+    <criterion id="6.6.10">Comprehensive tests: Unit tests for bodyMapPreferencesRepository (get, update, defaults), SVG loading (getSVGPathForPreferences, validation, coordinates). Component tests for settings UI and modal. Integration tests for variant switching (loads SVG, transition, markers persist, zoom preserved). Accessibility tests (announcements, keyboard, ARIA). [Source: docs/epics.md#Story-6.6]</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 6 Breakdown</title>
+        <section>Story 6.6: Body Map Gender & Body Type Customization</section>
+        <snippet>Transform body map with gender/body type options (Female, Male, Neutral). Create 3 SVG variants with consistent regions. Store preferences in IndexedDB. Smooth transitions with zoom/pan preservation. Accessibility with screen reader announcements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Repository and Service Architecture</section>
+        <snippet>Project uses repository pattern for data access (Dexie/IndexedDB). Existing bodyMapRepository and bodyMapPreferencesRepository (Story 5.2 for layer preferences). Story 6.6 extends preferences for gender/body type.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Health Insights & Correlation Analytics</section>
+        <snippet>Epic 6 delivers correlation analytics and enhanced user experience. Story 6.6 adds personalized body map variants for user comfort and accuracy.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-50</lines>
+        <reason>Primary body map component to extend with dynamic SVG variant loading based on user preferences. Already handles zoom/pan, markers, regions. Add preference loading and variant switching logic here.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMapPreferencesRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>BodyMapPreferencesRepository</symbol>
+        <lines>1-108</lines>
+        <reason>Existing repository for layer preferences (Story 5.2). Story 6.6 needs similar pattern for gender/body type preferences. May extend this repository or create separate methods for gender/body type. Current schema has lastUsedLayer, visibleLayers, defaultViewMode.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/types/body-mapping.ts</path>
+        <kind>types</kind>
+        <symbol>BodyRegion, BodyMapLocation, BodyView, LayerType</symbol>
+        <lines>1-122</lines>
+        <reason>Core body mapping type definitions. Need to add GenderType and BodyType type definitions here. Also BodyMapGenderPreferences interface for gender/body type preferences separate from layer preferences.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>BodyMapPreferences, DEFAULT_BODY_MAP_PREFERENCES</symbol>
+        <lines>243-266</lines>
+        <reason>Existing bodyMapPreferences interface for layer preferences. Need to add new fields (selectedGender, selectedBodyType) or create separate interface for gender preferences. Current schema includes userId, lastUsedLayer, visibleLayers, defaultViewMode.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase</symbol>
+        <lines>1-100, 640-680</lines>
+        <reason>Dexie database schema. Current version 27 (Story 6.7). Story 6.6 needs to extend bodyMapPreferences table with gender/body type fields or create new table. Must increment to v28 or modify v27 if not yet deployed.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/settings/page.tsx</path>
+        <kind>page</kind>
+        <symbol>SettingsPage</symbol>
+        <lines>1-80</lines>
+        <reason>Settings page with collapsible sections. Add "Body Map Preferences" section under Appearance or create new section. Current sections: Manage Data, Notifications, Privacy, Appearance, Language. Follow existing pattern with icon, description, expandable content.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/settings/ThemeToggle.tsx</path>
+        <kind>component</kind>
+        <symbol>ThemeToggle</symbol>
+        <lines>1-50</lines>
+        <reason>Example settings component pattern for Appearance section. Use as reference for BodyMapPreferencesForm component structure, state management, save pattern.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/announce.ts</path>
+        <kind>utility</kind>
+        <symbol>announce</symbol>
+        <lines>1-30</lines>
+        <reason>Accessibility utility from Story 3.7.6 for screen reader announcements. Use for announcing body map variant changes: announce("Body map updated to female variant")</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/timeline/PatternDetailPanel.tsx</path>
+        <kind>component</kind>
+        <symbol>PatternDetailPanel</symbol>
+        <lines>1-216</lines>
+        <reason>Modal pattern from Story 6.5. Use as reference for BodyMapPreviewModal: side panel with backdrop, close handlers (X, Escape, click outside), keyboard navigation, ARIA attributes.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="react" version="19.1.0" />
+        <package name="next" version="15.5.4" />
+        <package name="typescript" version="^5" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="react-zoom-pan-pinch" version="^3.6.1" />
+        <package name="lucide-react" version="^0.544.0" />
+        <package name="tailwindcss" version="^4" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" />
+        <package name="@radix-ui/react-select" version="^2.2.6" />
+        <package name="@radix-ui/react-tabs" version="^1.1.13" />
+        <package name="jest" version="^30.2.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+        <package name="@testing-library/user-event" version="^14.6.1" />
+        <package name="fake-indexeddb" version="^6.2.4" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use existing BodyMapViewer component - DO NOT recreate or duplicate. Extend with preference loading and dynamic SVG source switching.</constraint>
+    <constraint>Follow repository pattern established in bodyMapPreferencesRepository.ts (Story 5.2). Use similar structure for gender/body type preferences.</constraint>
+    <constraint>IndexedDB schema version: Current is v27 (Story 6.7). Story 6.6 needs to extend bodyMapPreferences table. Check if v27 deployed; if not, may modify v27, otherwise increment to v28.</constraint>
+    <constraint>Coordinate system MUST remain normalized 0-1 across all SVG variants to ensure marker positioning works consistently when switching variants.</constraint>
+    <constraint>Region IDs MUST be consistent across all three SVG variants (female, male, neutral). Same IDs for same anatomical regions (e.g., "left-shoulder" in all three).</constraint>
+    <constraint>Settings page pattern: Collapsible sections with icon, title, description, expandable content. Add Body Map Preferences section to existing settings structure.</constraint>
+    <constraint>Modal pattern: Use established modal patterns from Story 6.5 (PatternDetailPanel) for BodyMapPreviewModal. Side panel with backdrop, keyboard accessible, ARIA attributes.</constraint>
+    <constraint>Accessibility: Use announce() utility from src/lib/utils/announce.ts for screen reader announcements. High contrast mode support required. WCAG AA compliance.</constraint>
+    <constraint>Testing framework: Jest + React Testing Library. Mock IndexedDB with fake-indexeddb. Follow existing test patterns in src/components/body-map/__tests__/</constraint>
+    <constraint>Body type scaling (AC 6.6.7) is OPTIONAL. If complex (coordinate system breaks, medical accuracy concerns), defer to future story and focus on gender variants only.</constraint>
+    <constraint>SVG files location: public/assets/body-maps/ directory. Files: female.svg, male.svg, neutral.svg. All publicly accessible for dynamic loading.</constraint>
+    <constraint>Smooth transition requirement: Total 600ms (300ms fade out + 300ms fade in). Use CSS transitions, not JavaScript animation. Preserve zoom/pan state during transition.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>BodyMapGenderPreferences</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface BodyMapGenderPreferences { userId: string; selectedGender: 'female' | 'male' | 'neutral'; selectedBodyType: 'slim' | 'average' | 'plus-size' | 'athletic'; createdAt: Date; updatedAt: Date; }</signature>
+      <path>src/lib/db/schema.ts (NEW - to be added)</path>
+    </interface>
+    <interface>
+      <name>BodyMapPreferencesRepository.getUserPreferences</name>
+      <kind>Repository method</kind>
+      <signature>async getUserPreferences(userId: string): Promise&lt;BodyMapGenderPreferences&gt;</signature>
+      <path>src/lib/repositories/bodyMapPreferencesRepository.ts (extend existing or create new)</path>
+    </interface>
+    <interface>
+      <name>BodyMapPreferencesRepository.updatePreferences</name>
+      <kind>Repository method</kind>
+      <signature>async updatePreferences(userId: string, preferences: Partial&lt;BodyMapGenderPreferences&gt;): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/bodyMapPreferencesRepository.ts (extend existing or create new)</path>
+    </interface>
+    <interface>
+      <name>BodyMapPreferencesRepository.getOrCreateDefaults</name>
+      <kind>Repository method</kind>
+      <signature>async getOrCreateDefaults(userId: string): Promise&lt;BodyMapGenderPreferences&gt;</signature>
+      <path>src/lib/repositories/bodyMapPreferencesRepository.ts (extend existing or create new)</path>
+    </interface>
+    <interface>
+      <name>getSVGPathForPreferences</name>
+      <kind>Utility function</kind>
+      <signature>function getSVGPathForPreferences(gender: 'female' | 'male' | 'neutral', bodyType: string): string</signature>
+      <path>src/lib/utils/bodyMapVariants.ts (NEW - to be created)</path>
+    </interface>
+    <interface>
+      <name>BodyMapPreviewModalProps</name>
+      <kind>Component props interface</kind>
+      <signature>interface BodyMapPreviewModalProps { isOpen: boolean; onClose: () => void; onConfirm: () => void; gender: 'female' | 'male' | 'neutral'; bodyType: 'slim' | 'average' | 'plus-size' | 'athletic'; }</signature>
+      <path>src/components/settings/BodyMapPreviewModal.tsx (NEW - to be created)</path>
+    </interface>
+    <interface>
+      <name>announce</name>
+      <kind>Accessibility utility function</kind>
+      <signature>function announce(message: string, politeness?: 'polite' | 'assertive'): void</signature>
+      <path>src/lib/utils/announce.ts (EXISTING - from Story 3.7.6)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing uses Jest (v30.2.0) with React Testing Library (v16.3.0) for component tests and @testing-library/jest-dom for assertions. IndexedDB operations mocked with fake-indexeddb (v6.2.4). Tests located in __tests__/ directories alongside components/modules. Unit tests for repositories and utilities, component tests for React components, integration tests for feature flows. Coverage target: 80%+ for new code. All tests must pass with npm test before merge.</standards>
+
+    <locations>
+      <location>src/lib/repositories/__tests__/bodyMapPreferencesRepository.test.ts</location>
+      <location>src/lib/utils/__tests__/bodyMapVariants.test.ts</location>
+      <location>src/components/settings/__tests__/BodyMapPreferencesForm.test.tsx</location>
+      <location>src/components/settings/__tests__/BodyMapPreviewModal.test.tsx</location>
+      <location>src/components/body-mapping/__tests__/BodyMapViewer.variants.test.tsx</location>
+    </locations>
+
+    <ideas>
+      <idea ac="6.6.1">Test BodyMapPreferencesForm: gender selector changes state, body type selector changes state, save button triggers updatePreferences, reset button restores defaults, form validation requires gender selection, preview thumbnail updates on selection change</idea>
+      <idea ac="6.6.2">Test SVG variant files exist: female.svg in public/assets/body-maps/, male.svg exists, neutral.svg exists. Validate each SVG has required region IDs (left-groin, right-groin, center-groin, left-shoulder, etc.). Verify coordinate system viewBox normalized to 0-1 range</idea>
+      <idea ac="6.6.3">Test bodyMapPreferencesRepository: getUserPreferences retrieves correct preferences for user, returns defaults for new user (gender='neutral', bodyType='average'), updatePreferences persists changes to IndexedDB, getOrCreateDefaults creates entry if missing with correct defaults</idea>
+      <idea ac="6.6.4">Test getSVGPathForPreferences utility: returns '/assets/body-maps/female.svg' for gender='female', returns male.svg for gender='male', returns neutral.svg for gender='neutral', returns neutral.svg for invalid gender (fallback). Test SVG loading caches loaded SVG, validates region IDs on load, preserves marker coordinates during variant switch</idea>
+      <idea ac="6.6.5">Test region consistency across variants: load all three SVGs, extract region IDs from each, compare lists for exact match (same IDs in all three), verify groin regions present, verify standard regions present</idea>
+      <idea ac="6.6.6">Test smooth transition: changing preference triggers fade-out animation (opacity 0), SVG source swaps during fade, fade-in animation completes (opacity 1), total transition duration ~600ms, zoom level preserved before and after transition, pan offset preserved, markers visible throughout transition (no flicker)</idea>
+      <idea ac="6.6.7">Test body type scaling (if implemented): slim variant has correct scale factor (0.9x width), plus-size variant has correct scale (1.15x width), coordinate system remains normalized 0-1 after scaling, marker positions accurate on scaled variants. If deferred, document decision in test file</idea>
+      <idea ac="6.6.8">Test BodyMapPreviewModal: modal opens when isOpen=true, displays BodyMapViewer with selected gender variant, shows 3-5 sample markers on preview, Confirm button calls onConfirm and closes modal, Cancel button calls onClose without saving, Escape key closes modal, Tab key navigates between Confirm/Cancel buttons, Enter key activates focused button</idea>
+      <idea ac="6.6.9">Test accessibility: announce() called with "Body map updated to female variant" when gender changes to female, announce() called for male/neutral variants, ARIA label updates (aria-label="Female body map"), keyboard navigation works (Tab through regions), focus preserved during variant transition, high contrast mode renders SVG regions with visible outlines</idea>
+      <idea ac="6.6.10">Integration test for full flow: User opens settings, expands Body Map Preferences section, selects gender='female' and bodyType='average', clicks Save, preview modal opens, user clicks Confirm, preferences saved to IndexedDB, BodyMapViewer reloads with female variant, screen reader announces change, markers persist at correct positions, zoom/pan state preserved</idea>
+    </ideas>
+  </tests>
+</story-context>
