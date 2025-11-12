@@ -81,11 +81,11 @@ BMAD rules have been installed to: `.cursor/rules/bmad/`
 ### CIS
 
 **Agents:**
+- @bmad/cis/agents/README - README
 - @bmad/cis/agents/brainstorming-coach - brainstorming-coach
 - @bmad/cis/agents/creative-problem-solver - creative-problem-solver
 - @bmad/cis/agents/design-thinking-coach - design-thinking-coach
 - @bmad/cis/agents/innovation-strategist - innovation-strategist
-- @bmad/cis/agents/README - README
 - @bmad/cis/agents/storyteller - storyteller
 
 **Workflows:**
