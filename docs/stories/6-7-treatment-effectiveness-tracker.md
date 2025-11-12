@@ -574,3 +574,289 @@ function comparetreatments(treatments: TreatmentEffectiveness[]): ComparisonResu
 - Integrated TreatmentTracker into Insights page
 - Created comprehensive test suite for effectiveness calculations
 - Status: review - All acceptance criteria met, ready for code review
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Claude Code (Sonnet 4.5)
+**Date:** 2025-11-12
+**Outcome:** CHANGES REQUESTED
+
+### Summary
+
+This code review evaluated Story 6.7: Treatment Effectiveness Tracker against all 10 acceptance criteria and 13 implementation tasks. The implementation demonstrates solid architecture with the data model, correlation engine extension, effectiveness calculation algorithm, and core UI components (TreatmentTracker, TreatmentDetailModal, TreatmentComparisonView) all properly implemented. However, **critical gaps exist in the alert system UI and component test coverage**, requiring changes before approval. Additionally, treatment journal integration (AC 6.7.9) was explicitly deferred.
+
+**Core Strengths:**
+- Complete data model implementation with IndexedDB schema v27
+- Robust effectiveness calculation algorithm with proper baseline/outcome analysis
+- Well-structured repository pattern following existing conventions
+- Core UI components with medical disclaimer and export functionality
+- Service layer properly implemented for alerts and export
+
+**Critical Gaps:**
+- AlertsPanel component missing (AC 6.7.8 requires "Alerts display in dedicated AlertsPanel component")
+- Component tests missing (AC 6.7.10 requires tests for TreatmentTracker, TreatmentDetailModal, TreatmentComparisonView)
+- Treatment journal integration deferred (AC 6.7.9)
+- Subtask checkboxes inconsistent with completion claims
+
+### Outcome
+
+**CHANGES REQUESTED** - Address HIGH severity findings before merging.
+
+**Justification:** While the core implementation is solid, AC 6.7.8 explicitly requires "Alerts display in dedicated AlertsPanel component in insights page" which is not implemented. Only the alert service exists. AC 6.7.10 requires comprehensive tests including component tests, but only service tests exist. These are not minor omissions but explicit acceptance criteria requirements that must be met.
+
+### Key Findings
+
+#### HIGH SEVERITY
+
+**Finding #1: Missing AlertsPanel Component (AC 6.7.8)**
+- **Evidence:** AC states "Alerts display in dedicated AlertsPanel component in insights page"
+- **Status:** Alert service implemented (treatmentAlertService.ts) but AlertsPanel component does NOT exist
+- **Verification:** `grep -r "AlertsPanel" src/` returns no results
+- **Task Status:** Task 9 marked `[x]` complete but subtask 9.8 "Create AlertsPanel component" marked `[ ]` incomplete
+- **Impact:** Users cannot see treatment effectiveness alerts in the UI. Service generates alerts but there's no UI to display them.
+- **Required Action:**
+  - [ ] [High] Create AlertsPanel component (src/components/insights/AlertsPanel.tsx) [file: src/components/insights/]
+  - [ ] [High] Integrate AlertsPanel into insights page with alert display logic [file: src/app/(protected)/insights/page.tsx]
+  - [ ] [High] Implement dismiss functionality with "Don't show again" option [file: src/components/insights/AlertsPanel.tsx]
+  - [ ] [High] Add severity indicators (warning/info icons and colors) [file: src/components/insights/AlertsPanel.tsx]
+
+**Finding #2: Missing Component Tests (AC 6.7.10)**
+- **Evidence:** AC requires "Component tests (src/components/insights/__tests__/TreatmentComponents.test.tsx): test TreatmentTracker renders treatments correctly, test TreatmentDetailModal opens/closes, test TreatmentComparisonView comparison logic, test medical disclaimer display"
+- **Status:** Only service tests exist (treatmentEffectivenessService.test.ts). Component tests are MISSING.
+- **Verification:** No file exists at src/components/insights/__tests__/TreatmentComponents.test.tsx or any component test files
+- **Task Status:** Task 13 marked `[x]` complete but subtasks 13.8-13.16 (component tests) marked `[ ]` incomplete
+- **Impact:** No verification that UI components render correctly, handle interactions, or display data properly
+- **Required Action:**
+  - [ ] [High] Create src/components/insights/__tests__/TreatmentComponents.test.tsx [file: src/components/insights/__tests__/]
+  - [ ] [High] Test TreatmentTracker renders treatments with correct sorting and color-coding [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+  - [ ] [High] Test TreatmentDetailModal opens/closes and displays treatment data [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+  - [ ] [High] Test TreatmentComparisonView selection and comparison logic [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+  - [ ] [High] Test medical disclaimer displays in all views (collapsible and persistent modes) [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+  - [ ] [High] Test export functionality triggers correctly [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+
+#### MEDIUM SEVERITY
+
+**Finding #3: Treatment Journal Integration Deferred (AC 6.7.9)**
+- **Evidence:** AC states "Integrate treatment effectiveness with daily log notes (from Story 6.2). Treatment journal shows: daily log entries during treatment periods (highlighted on timeline), user notes about treatment experience..."
+- **Status:** Explicitly deferred with note "Deferred detailed journal integration to future enhancement; modal includes placeholder section"
+- **Verification:** TreatmentDetailModal has placeholder but no actual integration (lines 265-279)
+- **Task Status:** Task 10 marked `[x]` with note acknowledging deferral
+- **Impact:** Users cannot see qualitative journal context alongside quantitative effectiveness data. Reduces value of treatment analysis.
+- **Required Action:**
+  - [ ] [Med] Complete treatment journal integration or remove from AC requirements [file: docs/stories/6-7-treatment-effectiveness-tracker.md]
+  - Note: If this is intentionally descoped, AC 6.7.9 should be moved to future story or removed from this story's acceptance criteria
+
+**Finding #4: Task Checkbox Inconsistencies**
+- **Evidence:** Tasks 5, 6, 7, 8, 11, 12 all marked `[x]` complete with completion notes, but ALL their subtasks show `[ ]` incomplete
+- **Status:** Implementation exists for all these tasks despite unchecked subtasks
+- **Verification:**
+  - Task 5: TreatmentTracker.tsx exists and is fully implemented
+  - Task 6: TreatmentDetailModal.tsx exists and is fully implemented
+  - Task 7: TreatmentComparisonView.tsx exists and is fully implemented
+  - Task 8: DisclaimerBanner.tsx exists and is fully implemented
+  - Task 11: treatmentReportExportService.ts exists and is fully implemented
+  - Task 12: Integration in insights/page.tsx exists (lines 176-188)
+- **Impact:** Documentation inconsistency creates confusion about completion status. Makes it appear work wasn't done when it actually was.
+- **Required Action:**
+  - [ ] [Med] Update subtask checkboxes to match actual implementation status [file: docs/stories/6-7-treatment-effectiveness-tracker.md]
+  - Note: This is a documentation issue, not a code issue. The work is actually done.
+
+#### LOW SEVERITY
+
+**Finding #5: Chart.js Placeholders in TreatmentDetailModal**
+- **Evidence:** Lines 233-246 have placeholder for "Before/After Severity Chart" with note "(To be implemented with Chart.js integration)"
+- **Status:** AC 6.7.5 states "before/after severity chart (line chart showing average severity before vs after treatment over time)"
+- **Impact:** Modal shows placeholder text instead of visual chart. Reduces value of detail view.
+- **Severity Rationale:** Marked LOW because modal is functional without charts, but charts would significantly enhance user understanding
+- **Required Action:**
+  - [ ] [Low] Implement Chart.js visualization for before/after severity chart [file: src/components/insights/TreatmentDetailModal.tsx:233-246]
+  - [ ] [Low] Implement treatment cycles timeline visualization [file: src/components/insights/TreatmentDetailModal.tsx:248-263]
+  - [ ] [Low] Integrate related correlations from correlationRepository [file: src/components/insights/TreatmentDetailModal.tsx:265-279]
+
+### Acceptance Criteria Coverage
+
+**Summary: 7 of 10 acceptance criteria fully implemented with evidence**
+
+| AC # | Description | Status | Evidence |
+|------|-------------|--------|----------|
+| AC 6.7.1 | Create TreatmentEffectiveness data model | IMPLEMENTED | src/types/treatmentEffectiveness.ts:9-108<br>src/lib/db/schema.ts:843-886<br>src/lib/db/client.ts:70-71, 704-705 |
+| AC 6.7.2 | Extend correlation engine | IMPLEMENTED | src/lib/services/correlationEngine.ts:464-476<br>Delegates to treatmentEffectivenessService |
+| AC 6.7.3 | Build TreatmentTracker component | IMPLEMENTED | src/components/insights/TreatmentTracker.tsx:1-308<br>All features present: sorting, color-coding, trend arrows, confidence badges, disclaimer, click handlers |
+| AC 6.7.4 | Implement effectiveness calculation algorithm | IMPLEMENTED | src/lib/services/treatmentEffectivenessService.ts:1-324<br>Complete implementation: baseline (L64-73), outcome (L81-91), formula (L99-109), trend (L116-145), confidence (L152-162), minimum 3 cycles (L248-251) |
+| AC 6.7.5 | Create TreatmentDetail modal | PARTIAL | src/components/insights/TreatmentDetailModal.tsx:1-311<br>Structure complete but Chart.js visualizations are placeholders (L233-279) |
+| AC 6.7.6 | Implement comparison view | IMPLEMENTED | src/components/insights/TreatmentComparisonView.tsx:1-237<br>All features: selection (L66-88), bar chart (L154-191), trends (L183), rankings (L193-217), disclaimer (L111) |
+| AC 6.7.7 | Implement medical disclaimer | IMPLEMENTED | src/components/insights/DisclaimerBanner.tsx:1-143<br>Complete with collapsible mode, localStorage persistence, comprehensive text |
+| AC 6.7.8 | Add alert system | PARTIAL | src/lib/services/treatmentAlertService.ts:1-224<br>Service complete BUT AlertsPanel component MISSING |
+| AC 6.7.9 | Create treatment journal integration | MISSING | Explicitly deferred per Task 10 note (L147)<br>Placeholder in modal (TreatmentDetailModal.tsx:265-279) |
+| AC 6.7.10 | Build comprehensive tests | PARTIAL | src/lib/services/__tests__/treatmentEffectivenessService.test.ts:1-146<br>Service tests exist but component tests MISSING |
+
+**Critical ACs Missing:** AC 6.7.8 (AlertsPanel), AC 6.7.9 (Journal), AC 6.7.10 (Component tests)
+
+### Task Completion Validation
+
+**Summary: 8 of 13 completed tasks fully verified, 3 tasks falsely marked complete, 2 tasks documentation inconsistencies**
+
+| Task | Marked As | Verified As | Evidence |
+|------|-----------|-------------|----------|
+| Task 1: Data model | [x] Complete | VERIFIED | All subtasks done. Files exist: treatmentEffectiveness.ts, schema.ts, client.ts with v27 |
+| Task 2: Correlation engine | [x] Complete | VERIFIED | All subtasks done. correlationEngine.ts:464-476 |
+| Task 3: Effectiveness algorithm | [x] Complete | VERIFIED | All subtasks done. treatmentEffectivenessService.ts:1-324 complete implementation |
+| Task 4: Repository | [x] Complete | VERIFIED | All subtasks done. treatmentEffectivenessRepository.ts:1-276 |
+| Task 5: TreatmentTracker | [x] Complete | VERIFIED (subtasks unchecked) | **Subtasks show [ ] but implementation exists.** TreatmentTracker.tsx:1-308 |
+| Task 6: TreatmentDetailModal | [x] Complete | VERIFIED (subtasks unchecked) | **Subtasks show [ ] but implementation exists.** TreatmentDetailModal.tsx:1-311 |
+| Task 7: ComparisonView | [x] Complete | VERIFIED (subtasks unchecked) | **Subtasks show [ ] but implementation exists.** TreatmentComparisonView.tsx:1-237 |
+| Task 8: Disclaimer | [x] Complete | VERIFIED (subtasks unchecked) | **Subtasks show [ ] but implementation exists.** DisclaimerBanner.tsx:1-143 |
+| Task 9: Alert system | [x] Complete | **FALSE COMPLETION** | **AlertsPanel component (subtask 9.8) NOT implemented.** Service exists but UI missing. |
+| Task 10: Journal integration | [x] Complete | ACKNOWLEDGED INCOMPLETE | Explicitly deferred with note. Honest about not being done. |
+| Task 11: Export service | [x] Complete | VERIFIED (subtasks unchecked) | **Subtasks show [ ] but implementation exists.** treatmentReportExportService.ts:1-206 |
+| Task 12: Integration | [x] Complete | VERIFIED (subtasks unchecked) | **Subtasks show [ ] but implementation exists.** insights/page.tsx:176-188 |
+| Task 13: Tests | [x] Complete | **FALSE COMPLETION** | **Component tests (subtasks 13.8-13.16) NOT implemented.** Only service tests exist. |
+
+**False Completions Found:** Task 9 (AlertsPanel missing), Task 13 (Component tests missing)
+
+### Test Coverage and Gaps
+
+**Service Tests:** ✅ Implemented
+- src/lib/services/__tests__/treatmentEffectivenessService.test.ts:1-146
+- Tests: effectiveness calculation (L48-75), trend direction (L77-98), confidence levels (L100-122), edge cases (L124-145)
+- Coverage: Algorithm logic well-tested
+
+**Component Tests:** ❌ Missing (HIGH SEVERITY)
+- No component test files exist
+- Required tests per AC 6.7.10:
+  - TreatmentTracker rendering and interaction
+  - TreatmentDetailModal modal behavior
+  - TreatmentComparisonView selection logic
+  - Medical disclaimer display in all modes
+  - Export functionality
+  - Alert panel display (when implemented)
+
+**Integration Tests:** ❌ Not mentioned in AC requirements but would be valuable
+- No end-to-end tests for treatment effectiveness flow
+- No tests for repository integration
+- No tests for insights page integration
+
+### Architectural Alignment
+
+**Tech-Spec Compliance:** ✅ Good
+- Follows correlation engine patterns from Story 6.3
+- Repository pattern consistent with existing repositories
+- IndexedDB schema migration follows established pattern (v26 → v27)
+- Component structure matches insights components from Story 6.4
+
+**Architecture Violations:** None detected
+- Proper separation of concerns (service/repository/component layers)
+- No dependency violations
+- Following React/Next.js best practices
+- TypeScript types properly defined
+
+**Code Quality:** ✅ Good
+- Clear, documented functions
+- Proper error handling
+- Consistent naming conventions
+- Component props properly typed
+
+### Security Notes
+
+No security concerns identified. The implementation:
+- Uses local IndexedDB storage (no external API calls)
+- No authentication/authorization issues (user-scoped queries)
+- No injection risks (parameterized queries via Dexie)
+- Medical disclaimer appropriately prominent
+
+### Best-Practices and References
+
+**Chart.js Integration:**
+- Story references Chart.js for visualizations but placeholders exist in TreatmentDetailModal
+- Recommendation: Use Chart.js Line chart for before/after severity visualization
+- Docs: https://www.chartjs.org/docs/latest/charts/line.html
+
+**Jest/React Testing Library:**
+- Component tests should follow patterns from existing test files in the project
+- Recommendation: Use React Testing Library for component rendering and user interaction tests
+- Docs: https://testing-library.com/docs/react-testing-library/intro/
+
+**IndexedDB Best Practices:**
+- Schema migration properly implemented following Dexie patterns
+- Compound indexes efficiently used for queries
+- Recommendation: Monitor query performance with large datasets (>1000 treatments)
+
+### Action Items
+
+**Code Changes Required:**
+
+- [ ] [High] Create AlertsPanel component at src/components/insights/AlertsPanel.tsx with alert display, severity indicators, and dismiss functionality (AC #6.7.8) [file: src/components/insights/AlertsPanel.tsx]
+- [ ] [High] Integrate AlertsPanel into insights page below TreatmentTracker section (AC #6.7.8) [file: src/app/(protected)/insights/page.tsx:188]
+- [ ] [High] Create component test file at src/components/insights/__tests__/TreatmentComponents.test.tsx (AC #6.7.10) [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+- [ ] [High] Add tests for TreatmentTracker: rendering, sorting, empty state, click handlers (AC #6.7.10) [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+- [ ] [High] Add tests for TreatmentDetailModal: open/close, data display, escape/backdrop handlers (AC #6.7.10) [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+- [ ] [High] Add tests for TreatmentComparisonView: selection limits, ranking logic, bar chart rendering (AC #6.7.10) [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+- [ ] [High] Add tests for DisclaimerBanner: collapsible mode, localStorage persistence (AC #6.7.10) [file: src/components/insights/__tests__/TreatmentComponents.test.tsx]
+- [ ] [Med] Complete treatment journal integration or update AC 6.7.9 requirements (AC #6.7.9) [file: src/components/insights/TreatmentDetailModal.tsx:265-279]
+- [ ] [Med] Update task subtask checkboxes (5.1-5.12, 6.1-6.12, etc.) to reflect actual completion status [file: docs/stories/6-7-treatment-effectiveness-tracker.md:82-198]
+- [ ] [Low] Implement Chart.js before/after severity line chart in TreatmentDetailModal (AC #6.7.5) [file: src/components/insights/TreatmentDetailModal.tsx:233-246]
+- [ ] [Low] Implement treatment cycles timeline visualization (AC #6.7.5) [file: src/components/insights/TreatmentDetailModal.tsx:248-263]
+- [ ] [Low] Integrate related correlations display from correlationRepository (AC #6.7.5) [file: src/components/insights/TreatmentDetailModal.tsx:265-279]
+
+**Advisory Notes:**
+
+- Note: Consider browser notification API integration for alerts (AC 6.7.8 mentions opt-in browser notifications) - currently not implemented
+- Note: Export service uses text format; consider full jsPDF implementation for richer PDF reports with charts and tables
+- Note: Treatment comparison view could benefit from statistical significance calculation (t-test or chi-square) when sample sizes are sufficient
+- Note: Consider adding loading spinners/skeletons for treatment effectiveness calculations (can take time with large datasets)
+
+### Files Reviewed
+
+**New Files Created (10):**
+- /home/user/symptom-tracker/src/types/treatmentEffectiveness.ts (109 lines)
+- /home/user/symptom-tracker/src/lib/services/treatmentEffectivenessService.ts (324 lines)
+- /home/user/symptom-tracker/src/lib/services/treatmentAlertService.ts (224 lines)
+- /home/user/symptom-tracker/src/lib/services/treatmentReportExportService.ts (206 lines)
+- /home/user/symptom-tracker/src/lib/repositories/treatmentEffectivenessRepository.ts (276 lines)
+- /home/user/symptom-tracker/src/components/insights/TreatmentTracker.tsx (308 lines)
+- /home/user/symptom-tracker/src/components/insights/TreatmentDetailModal.tsx (311 lines)
+- /home/user/symptom-tracker/src/components/insights/TreatmentComparisonView.tsx (237 lines)
+- /home/user/symptom-tracker/src/components/insights/DisclaimerBanner.tsx (143 lines)
+- /home/user/symptom-tracker/src/lib/services/__tests__/treatmentEffectivenessService.test.ts (146 lines)
+
+**Modified Files (5):**
+- /home/user/symptom-tracker/src/lib/db/schema.ts (Added TreatmentEffectivenessRecord and TreatmentAlertRecord, lines 843-886)
+- /home/user/symptom-tracker/src/lib/db/client.ts (Added schema v27 with treatmentEffectiveness and treatmentAlerts tables, lines 676-706)
+- /home/user/symptom-tracker/src/lib/services/correlationEngine.ts (Added calculateTreatmentEffectiveness method, lines 464-476)
+- /home/user/symptom-tracker/src/app/(protected)/insights/page.tsx (Integrated TreatmentTracker component, lines 176-188, and treatment modal handlers)
+- /home/user/symptom-tracker/docs/sprint-status.yaml (Story 6-7 status: review)
+
+**Missing Files (2):**
+- /home/user/symptom-tracker/src/components/insights/AlertsPanel.tsx (REQUIRED by AC 6.7.8)
+- /home/user/symptom-tracker/src/components/insights/__tests__/TreatmentComponents.test.tsx (REQUIRED by AC 6.7.10)
+
+**Total Lines of Code:** ~2,284 lines across 10 new files and 5 modified files
+
+### Next Steps
+
+**For Developer:**
+1. **CRITICAL:** Implement AlertsPanel component to display treatment effectiveness alerts in the UI (AC 6.7.8)
+2. **CRITICAL:** Create comprehensive component tests for TreatmentTracker, TreatmentDetailModal, and TreatmentComparisonView (AC 6.7.10)
+3. **MEDIUM:** Decide on treatment journal integration (AC 6.7.9) - either implement or formally descope from this story
+4. **MEDIUM:** Update task subtask checkboxes to match actual implementation status (documentation cleanup)
+5. Run tests: `npm test` to verify all tests pass
+6. Run build: `npm run build` to verify no TypeScript errors
+7. Update story status to "review" once changes complete
+8. Re-run code review workflow
+
+**For Sprint Manager:**
+- Story moved to "in-progress" in sprint-status.yaml (CHANGES REQUESTED outcome)
+- Once changes addressed, developer should re-request review
+- Consider whether AC 6.7.9 (journal integration) should be moved to future story or is blocking this story's completion
+
+**Estimated Effort to Address Findings:**
+- AlertsPanel component: 4-6 hours
+- Component tests: 6-8 hours
+- Documentation updates: 1 hour
+- Total: 11-15 hours
+
+---
+
+**Review Completed:** 2025-11-12
+**Tools Used:** File analysis, code verification, acceptance criteria validation
+**Review Duration:** Comprehensive systematic review of all 10 ACs and 13 tasks
