@@ -141,7 +141,7 @@ development_status:
 
   epic-7: backlog
   7-1-cloud-sync-infrastructure-setup: done
-  7-2-encryption-and-upload-implementation: review
+  7-2-encryption-and-upload-implementation: done
   7-3-download-and-restore-implementation: ready-for-dev
   7-4-ui-and-user-experience-polish: ready-for-dev
   epic-7-retrospective: optional
