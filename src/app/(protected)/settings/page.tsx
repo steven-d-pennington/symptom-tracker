@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database, Keyboard, Activity, Pill, Zap, Utensils } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database, Keyboard, Activity, Pill, Zap, Utensils, Cloud } from "lucide-react";
 import DevDataControls from "@/components/settings/DevDataControls";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { CorrelationSettings } from "@/components/settings/CorrelationSettings";
@@ -9,6 +9,7 @@ import { SymptomList } from "@/components/manage/SymptomList";
 import { TriggerList } from "@/components/manage/TriggerList";
 import { FoodList } from "@/components/manage/FoodList";
 import { DatabaseManager } from "@/components/settings/DatabaseManager";
+import { CloudSyncSection } from "@/components/cloud-sync/CloudSyncSection";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -92,6 +93,13 @@ export default function SettingsPage() {
       description: "Recalculate food-symptom correlations and health insights",
       comingSoon: false,
       content: <CorrelationSettings />,
+    },
+    {
+      title: "Cloud Sync",
+      icon: Cloud,
+      description: "Back up and restore your data with encrypted cloud storage",
+      comingSoon: false,
+      content: <CloudSyncSection />,
     },
     {
       title: "Notifications",

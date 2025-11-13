@@ -1,0 +1,83 @@
+# Workflow Status - BMad Method Brownfield Track
+# This tracks progress through BMM methodology phases
+# Phase 3 (Implementation) story details are tracked in sprint-status.yaml
+# Last updated: 2025-11-13
+
+# generated: 2025-11-13
+# project: symptom-tracker
+# project_type: web
+# selected_track: method
+# field_type: brownfield
+# workflow_path: method-brownfield.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-13"
+project: "symptom-tracker"
+project_type: "web"
+selected_track: "method"
+field_type: "brownfield"
+workflow_path: "method-brownfield.yaml"
+
+workflow_status:
+  # ========================================
+  # PREREQUISITE: Documentation (if_undocumented)
+  # ========================================
+  document-project: skipped  # Project was sufficiently documented already
+
+  # ========================================
+  # PHASE 0: Discovery (Optional)
+  # ========================================
+  brainstorm-project: skipped
+  research: skipped
+  product-brief: skipped
+
+  # ========================================
+  # PHASE 1: Planning
+  # ========================================
+  prd: docs/prd.md  # Assumed location based on typical BMM structure
+  validate-prd: skipped
+  create-design: docs/ux-design.html  # Referenced in decision log as completed
+
+  # ========================================
+  # PHASE 2: Solutioning
+  # ========================================
+  create-architecture: docs/architecture.md  # Assumed location
+  validate-architecture: skipped
+  solutioning-gate-check: completed  # Mentioned as complete in markdown
+
+  # ========================================
+  # PHASE 3: Implementation
+  # ========================================
+  sprint-planning: docs/sprint-status.yaml  # Active sprint tracking
+
+# ========================================
+# MIGRATION NOTES
+# ========================================
+# This file was migrated from the legacy bmm-workflow-status.md format on 2025-11-13
+#
+# Current Implementation Status (from legacy file):
+# - Epic 6 (Health Insights & Correlation Analytics) - IN PROGRESS
+# - Stories 6.1 & 6.3: DONE
+# - Stories 6.2 & 6.4: IN PROGRESS
+# - Story 6.5: READY FOR DEV
+# - Stories 6.7, 6.8, 6.6: BACKLOG
+#
+# Epic 7 (Cloud Sync) also appears to have started based on recent commits
+#
+# For detailed story tracking, see:
+# - docs/sprint-status.yaml (if it exists)
+# - docs/stories/*.md (individual story files)
+# - Legacy tracking: docs/bmm-workflow-status.md (archived)
+#
+# Next Action: Continue with Epic 6 Story 6.7 or verify Epic 7 cloud sync work

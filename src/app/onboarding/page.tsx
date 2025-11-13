@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { OnboardingFlow } from "./components/OnboardingFlow";
 import { OnboardingProvider } from "./hooks/useOnboarding";
-import { OnboardingImportOption } from "./components/OnboardingImportOption";
+import { OnboardingCloudRestoreOption } from "./components/OnboardingCloudRestoreOption";
 import { OnboardingSelectionsProvider } from "./contexts/OnboardingSelectionsContext";
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ const OnboardingPage = () => {
       <OnboardingProvider>
         <OnboardingSelectionsProvider>
           <OnboardingFlow />
-          <OnboardingImportOption />
+          <OnboardingCloudRestoreOption />
         </OnboardingSelectionsProvider>
       </OnboardingProvider>
     </div>

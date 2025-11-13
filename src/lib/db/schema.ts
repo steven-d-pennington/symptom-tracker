@@ -49,6 +49,8 @@ export interface UserPreferences {
   foodFavorites?: string[]; // array of foodIds favorited by the user
   // Flare view preferences (Story 0.3)
   flareViewMode?: "cards" | "map" | "both";
+  // Cloud sync preferences (Story 7.4)
+  cloudSyncEnabled?: boolean;
 }
 
 export interface UserRecord {
@@ -890,10 +892,17 @@ export interface TreatmentAlertRecord {
 export interface SyncMetadataRecord {
   id: "primary"; // Single-row table (always 'primary')
 
-  // Sync status
+  // Upload status (Story 7.2)
   lastSyncTimestamp: number; // Date.now() of last sync attempt (Unix timestamp)
   lastSyncSuccess: boolean; // true = success, false = failure
   blobSizeBytes: number; // Size of last successful backup in bytes (0 if failed)
   storageKeyHash: string; // First 8 characters of storage key for display
   errorMessage?: string; // User-friendly error message if lastSyncSuccess = false
+
+  // Restore status (Story 7.3)
+  lastRestoreTimestamp?: number; // Date.now() of last restore attempt (Unix timestamp)
+  lastRestoreSuccess?: boolean; // true = restore succeeded, false = failed
+  restoredBlobSize?: number; // Size of restored backup in bytes
+  restoredStorageKeyHash?: string; // First 8 characters of storage key
+  restoreErrorMessage?: string; // User-friendly error message if lastRestoreSuccess = false
 }
