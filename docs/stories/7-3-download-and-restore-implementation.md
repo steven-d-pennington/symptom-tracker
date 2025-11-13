@@ -626,7 +626,7 @@ src/lib/services/__tests__/
 
 ### Context Reference
 
-- .bmad-ephemeral/stories/7-3-download-and-restore-implementation.context.xml
+- docs/stories/7-3-download-and-restore-implementation.context.xml
 
 ### Agent Model Used
 
