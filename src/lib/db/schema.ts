@@ -885,15 +885,21 @@ export interface TreatmentAlertRecord {
   createdAt: number; // Unix timestamp when alert was created (epoch ms)
 }
 
-// Sync Metadata - Cloud sync status tracking (Story 7.2)
+// Sync Metadata - Cloud sync status tracking (Story 7.2, extended in Story 7.3)
 
 export interface SyncMetadataRecord {
   id: "primary"; // Single-row table (always 'primary')
 
-  // Sync status
-  lastSyncTimestamp: number; // Date.now() of last sync attempt (Unix timestamp)
-  lastSyncSuccess: boolean; // true = success, false = failure
+  // Upload status (Story 7.2)
+  lastSyncTimestamp: number; // Date.now() of last upload attempt (Unix timestamp)
+  lastSyncSuccess: boolean; // true = upload success, false = upload failure
   blobSizeBytes: number; // Size of last successful backup in bytes (0 if failed)
   storageKeyHash: string; // First 8 characters of storage key for display
   errorMessage?: string; // User-friendly error message if lastSyncSuccess = false
+
+  // Restore status (Story 7.3)
+  lastRestoreTimestamp?: number; // Date.now() of last restore attempt (Unix timestamp)
+  lastRestoreSuccess?: boolean; // true = restore success, false = restore failure
+  restoredBlobSize?: number; // Size of restored backup in bytes (0 if failed)
+  restoredStorageKeyHash?: string; // First 8 characters of storage key used for restore
 }

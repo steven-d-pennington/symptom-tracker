@@ -1,0 +1,148 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>7.3</storyId>
+    <title>Download & Restore Implementation</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/7-3-download-and-restore-implementation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>As a user restoring my data on a new device</asA>
+    <iWant>I want to download my encrypted backup and decrypt it using my passphrase</iWant>
+    <soThat>So that I can restore my health data and continue tracking seamlessly</soThat>
+    <tasks>
+      - Task 1: Implement blob download from edge function (AC: #7.3.1)
+      - Task 2: Implement metadata extraction from encrypted blob (AC: #7.3.2)
+      - Task 3: Implement AES-GCM decryption (AC: #7.3.3, #7.3.4)
+      - Task 4: Implement JSON validation (AC: #7.3.5)
+      - Task 5: Implement current data backup before restore (AC: #7.3.6)
+      - Task 6: Implement atomic restore to IndexedDB (AC: #7.3.7)
+      - Task 7: Implement restore metadata storage (AC: #7.3.8)
+      - Task 8: Implement restore progress tracking (AC: #7.3.9)
+      - Task 9: Implement error handling and user messages (AC: #7.3.10)
+      - Task 10: Implement rollback mechanism (AC: #7.3.11)
+      - Task 11: Create unit test suite for restore (AC: #7.3.12)
+      - Task 12: Integration testing and validation (AC: all)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC7.3.1 — Download encrypted blob from edge function: Download encrypted blob from `/api/sync/download` edge function using storage key derived from user's passphrase. Derive storage key from passphrase using same SHA-256 hash function as Story 7.2: `deriveStorageKey(passphrase)` produces 64-char hex string. Send GET request to `/api/sync/download?storageKey={storageKeyHex}` using fetch API. Handle HTTP status codes: 200 (success - blob found), 404 (blob not found - wrong passphrase or no backup exists), 429 (rate limit exceeded - too many downloads), 503 (service unavailable - Vercel Blob Storage down). Parse response headers: Content-Length (blob size), Last-Modified (upload timestamp). Read response body as ArrayBuffer (binary blob data). Function signature: `async downloadBackup(storageKey: string): Promise<ArrayBuffer>`.
+
+    2. AC7.3.2 — Extract salt from encrypted blob: Extract salt from beginning of encrypted blob to enable PBKDF2 key derivation for decryption. Encrypted blob structure (from Story 7.2): Bytes 0-15: salt (16 bytes), Bytes 16-27: IV (12 bytes), Bytes 28+: ciphertext + auth tag. Extract salt: `const salt = new Uint8Array(encryptedBlob, 0, 16);`. Extract IV: `const iv = new Uint8Array(encryptedBlob, 16, 12);`. Extract ciphertext: `const ciphertext = new Uint8Array(encryptedBlob, 28);`. Validate blob size is at least 28 bytes (salt + IV minimum) before extraction. Function signature: `extractMetadata(encryptedBlob: ArrayBuffer): { salt: Uint8Array, iv: Uint8Array, ciphertext: Uint8Array }`.
+
+    3. AC7.3.3 — Derive decryption key from passphrase and salt: Derive decryption key from user's passphrase and extracted salt using same PBKDF2 parameters as encryption (Story 7.2). Reuse `deriveEncryptionKey(passphrase, salt)` function from Story 7.2 cloudSyncService. PBKDF2 parameters must match encryption: 100,000 iterations, SHA-256 hash, 256-bit key output. Use extracted salt (not a new random salt) to derive the same key used during encryption. Validate passphrase is non-empty before derivation. If derivation succeeds but decryption fails later, passphrase is likely wrong (show user-friendly error).
+
+    4. AC7.3.4 — Decrypt blob using AES-GCM and validate auth tag: Decrypt encrypted blob using AES-256-GCM with derived key and extracted IV, validating authentication tag to ensure data integrity. Use Web Crypto API's `crypto.subtle.decrypt()` with algorithm: AES-GCM, key: derived CryptoKey (from AC #3), iv: extracted IV (12 bytes), ciphertext: extracted ciphertext. AES-GCM validates authentication tag automatically - decryption will throw if tag is invalid (indicates tampering or wrong passphrase). Catch decryption errors and map to user-friendly messages: "Wrong passphrase" (most common), "Backup corrupted" (auth tag invalid but not due to passphrase). Return decrypted plaintext as string (UTF-8 decode). Function signature: `async decryptData(encryptedBlob: ArrayBuffer, passphrase: string): Promise<string>`.
+
+    5. AC7.3.5 — Parse and validate decrypted JSON before restore: Parse decrypted JSON and validate data structure before writing to IndexedDB to prevent corrupted data from breaking the application. Parse JSON string: `const data = JSON.parse(decryptedJson);`. Validate required structure: `data.version` (number), `data.timestamp` (number), `data.data` (object with table keys). Validate schema version is compatible (initially only version 1 exists, future versions may require migration logic). Validate table data structure: each table should be an array, check for required fields in critical tables (flares, symptoms, etc.). Reject restore if validation fails: throw error with message "Backup data is corrupted or incompatible - cannot restore." Log validation errors to console for debugging. Function signature: `validateBackupData(data: any): { valid: boolean, error?: string }`.
+
+    6. AC7.3.6 — Create backup of current data before restore: Create backup of current IndexedDB data before restoring downloaded backup to enable rollback if restore fails. Export current data using same `exportAllData()` function from Story 7.2. Save exported JSON to temporary local file or IndexedDB backup table (avoid overwriting production data). Use browser's IndexedDB "backup" database or save to `localStorage` if small enough (warn if >5MB). Store backup with timestamp: `backup-{timestamp}.json`. Keep backup accessible for manual recovery if needed. Display warning to user: "⚠️ Current data will be backed up before restore. If restore fails, your current data will not be lost." Function signature: `async backupCurrentData(): Promise<string>` (returns backup location/ID).
+
+    7. AC7.3.7 — Restore data to IndexedDB with atomic transactions: Restore validated backup data to IndexedDB using transaction-based atomic writes to ensure all-or-nothing restore (prevents partial restore if errors occur). Use Dexie transaction API: `db.transaction('rw', db.tables, async () => {...})`. Clear all existing tables before restore (within transaction): `await Promise.all(db.tables.map(t => t.clear()))`. Write backup data to tables (within transaction): `await db.{tableName}.bulkAdd(data.data.{tableName})`. If any write fails, transaction rolls back automatically (no partial restore). Update sync metadata after successful restore: `await saveSyncMetadata({ lastSyncTimestamp: Date.now(), lastRestoreSuccess: true, ... })`. Commit transaction (automatic if no errors thrown). Function signature: `async restoreData(backupData: BackupData): Promise<void>`.
+
+    8. AC7.3.8 — Update sync metadata after restore: Update local sync metadata after successful restore to reflect restored backup's timestamp and size. Store restore metadata in `syncMetadata` table (same table as upload metadata from Story 7.2). Update fields: `lastRestoreTimestamp: number` (Date.now() when restore completed), `lastRestoreSuccess: boolean` (true if restore succeeded, false if failed), `restoredBlobSize: number` (size of restored backup), `restoredStorageKeyHash: string` (first 8 chars of storage key). Keep separate fields for upload vs restore (allows UI to show both "last backup" and "last restore"). If restore fails, set `lastRestoreSuccess: false` and store error message. Function signature: `async saveRestoreMetadata(metadata: RestoreMetadata): Promise<void>`.
+
+    9. AC7.3.9 — Implement restore progress indicator: Implement progress indicator showing download, decryption, and restore stages for user feedback during potentially long operations. Track progress through three stages: Stage 1 - Download (0-30%): "Downloading backup from cloud...", Stage 2 - Decryption (30-60%): "Decrypting backup with your passphrase...", Stage 3 - Restore (60-100%): "Restoring data to IndexedDB...". Use same progress callback pattern as Story 7.2: `type ProgressCallback = (progress: ProgressUpdate) => void`. Update progress state at stage transitions and during restore (if possible - Dexie may not support per-record progress). Display progress in UI (Story 7.4 implements the UI component). Function signature: `async restoreBackup(passphrase: string, onProgress: ProgressCallback): Promise<void>`.
+
+    10. AC7.3.10 — Handle restore errors with rollback: Handle restore errors gracefully with user-friendly messages, rollback mechanism, and guidance for recovery. Wrong passphrase (decryption fails): "Restore failed: Wrong passphrase. Please check and try again." Corrupted backup (auth tag invalid, JSON parse failure): "Restore failed: Backup data is corrupted. Try a different backup or contact support." Network failure (download fails): "Restore failed: Network error. Check your connection and try again." Blob not found (404): "Restore failed: No backup found. Check your passphrase or create a new backup on another device." Validation failure (invalid schema): "Restore failed: Backup format is incompatible with this app version." Rollback on failure: if restore transaction fails, original data is preserved (Dexie transaction auto-rollback). If rollback fails, restore from temporary backup created in AC #6. Log all errors to console for debugging. Function signature: `mapRestoreError(error: Error): string` for user-friendly messages.
+
+    11. AC7.3.11 — Provide rollback mechanism if restore fails: Implement rollback mechanism to restore original data if restore operation fails, preventing data loss. Use temporary backup created in AC #6 before restore attempt. If restore transaction fails (Dexie auto-rollback), original data is already preserved - no action needed. If restore partially succeeds but app state is corrupted (unlikely with atomic transactions), manually restore from temporary backup. Rollback process: parse temporary backup JSON, clear all tables, write backup data using atomic transaction (same as restore logic). Notify user of rollback: "Restore failed, but your original data has been preserved." Function signature: `async rollbackRestore(backupId: string): Promise<void>`.
+
+    12. AC7.3.12 — Unit tests for decryption and restore: Create comprehensive unit test suite for decryption logic, data validation, and restore flow to ensure cryptographic correctness and data integrity. Test `extractMetadata()`: correct salt/IV/ciphertext sizes (16/12/variable bytes), handles edge case of exactly 28-byte blob. Test `decryptData()`: successfully decrypts blob encrypted in Story 7.2 (round-trip test), throws error for wrong passphrase, throws error for tampered ciphertext (invalid auth tag). Test `validateBackupData()`: accepts valid schema (version 1), rejects missing required fields, rejects unsupported schema versions. Test `restoreData()`: writes all tables correctly, rolls back on error (mock Dexie transaction failure), updates sync metadata on success. Test `restoreBackup()`: progress callback invoked at each stage (download, decrypt, restore), handles 404/429/503 errors correctly. Mock Web Crypto API, Dexie database, and fetch for isolated testing. Test file: `src/lib/services/__tests__/cloudSyncService.restore.test.ts`.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Epic 7: Cloud Sync (Manual Backup/Restore)">
+        Epic 7 overview and story breakdown. Story 7.3 acceptance criteria defined: download encrypted blob, extract salt, derive decryption key, decrypt with AES-GCM, validate JSON, backup current data, atomic restore, update metadata, progress tracking, error handling, rollback mechanism, unit tests.
+      </doc>
+      <doc path="docs/stories/7-2-encryption-and-upload-implementation.md" title="Story 7.2: Encryption & Upload Implementation" section="Dev Notes">
+        Story 7.2 implementation details: blob structure (salt 16B + IV 12B + ciphertext), encryption functions (`deriveEncryptionKey`, `deriveStorageKey`, `encryptData`), export logic (`exportAllData`), progress tracking pattern (`ProgressCallback`), error handling patterns. Critical: blob structure must match for decryption.
+      </doc>
+      <doc path="docs/stories/7-1-cloud-sync-infrastructure-setup.md" title="Story 7.1: Cloud Sync Infrastructure Setup" section="Dev Notes">
+        Download endpoint contract: `/api/sync/download?storageKey={hex}` returns encrypted blob with Content-Length and Last-Modified headers. Rate limiting: 5 downloads/minute per storage key. Error codes: 200 (success), 404 (blob not found), 429 (rate limit), 503 (unavailable).
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/lib/services/cloudSyncService.ts" kind="service" symbol="deriveEncryptionKey" lines="87-122" reason="Reuse for decryption key derivation - must use same PBKDF2 parameters (100K iterations, SHA-256, 256-bit key)"/>
+      <artifact path="src/lib/services/cloudSyncService.ts" kind="service" symbol="deriveStorageKey" lines="155-176" reason="Reuse for storage key derivation - same SHA-256 hash function produces deterministic storage key for download"/>
+      <artifact path="src/lib/services/cloudSyncService.ts" kind="service" symbol="exportAllData" lines="215-273" reason="Reuse for temporary backup creation before restore - exports all IndexedDB tables to JSON"/>
+      <artifact path="src/lib/services/cloudSyncService.ts" kind="service" symbol="ProgressCallback" lines="29" reason="Reuse progress callback type for restore progress tracking - same pattern as upload"/>
+      <artifact path="src/lib/services/cloudSyncService.ts" kind="service" symbol="ProgressUpdate" lines="20-24" reason="Reuse progress update interface - includes 'download', 'decrypt', 'restore' stages"/>
+      <artifact path="src/lib/services/cloudSyncService.ts" kind="service" symbol="saveSyncMetadata" lines="544-567" reason="Extend for restore metadata - update syncMetadata table with restore-specific fields"/>
+      <artifact path="src/lib/db/schema.ts" kind="schema" symbol="SyncMetadataRecord" lines="890-899" reason="Extend schema with restore fields: lastRestoreTimestamp, lastRestoreSuccess, restoredBlobSize, restoredStorageKeyHash"/>
+      <artifact path="src/lib/db/client.ts" kind="database" symbol="syncMetadata table" lines="787" reason="syncMetadata table added in schema v29 - use for storing restore status alongside upload status"/>
+      <artifact path="src/lib/db/client.ts" kind="database" symbol="db.transaction" lines="383" reason="Use Dexie transaction API for atomic restore - ensures all-or-nothing restore with automatic rollback"/>
+    </code>
+    <dependencies>
+      <ecosystem name="Node.js">
+        <package name="dexie" version="^3.x" reason="IndexedDB wrapper - used for atomic transactions and bulk operations"/>
+      </ecosystem>
+      <ecosystem name="Browser APIs">
+        <package name="Web Crypto API" reason="Built-in crypto.subtle.decrypt() for AES-GCM decryption - no external dependencies"/>
+        <package name="fetch API" reason="Built-in fetch() for downloading encrypted blob from edge function"/>
+        <package name="IndexedDB" reason="Built-in database for temporary backup storage and restore operations"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>CRITICAL: Use extracted salt from blob for key derivation (NOT a new random salt) - wrong salt = wrong key = decryption fails</constraint>
+    <constraint>Validate backup data structure BEFORE writing to IndexedDB (prevent corrupted backups from breaking app)</constraint>
+    <constraint>Use atomic transactions for restore (all-or-nothing) - partial restore causes data inconsistency</constraint>
+    <constraint>Create temporary backup before restore (safety net if transaction rollback fails)</constraint>
+    <constraint>PBKDF2 parameters must match Story 7.2 encryption: 100,000 iterations, SHA-256 hash, 256-bit key output</constraint>
+    <constraint>AES-GCM decryption validates auth tag automatically - decryption throws if tag invalid (wrong passphrase or tampering)</constraint>
+    <constraint>Blob structure must match Story 7.2 format: Bytes 0-15 (salt), Bytes 16-27 (IV), Bytes 28+ (ciphertext + auth tag)</constraint>
+    <constraint>Follow project patterns: TypeScript strict mode, functional components, repository pattern, comprehensive error handling</constraint>
+    <constraint>Test coverage requirement: >80% code coverage for restore functions</constraint>
+    <constraint>User-friendly error messages required - map technical errors to actionable guidance</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="downloadBackup" kind="function signature" signature="async downloadBackup(storageKey: string): Promise<ArrayBuffer>" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="extractMetadata" kind="function signature" signature="extractMetadata(encryptedBlob: ArrayBuffer): { salt: Uint8Array, iv: Uint8Array, ciphertext: Uint8Array }" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="decryptData" kind="function signature" signature="async decryptData(encryptedBlob: ArrayBuffer, passphrase: string): Promise<string>" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="validateBackupData" kind="function signature" signature="validateBackupData(data: any): { valid: boolean, error?: string }" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="backupCurrentData" kind="function signature" signature="async backupCurrentData(): Promise<string>" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="restoreData" kind="function signature" signature="async restoreData(backupData: BackupData): Promise<void>" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="saveRestoreMetadata" kind="function signature" signature="async saveRestoreMetadata(metadata: RestoreMetadata): Promise<void>" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="restoreBackup" kind="function signature" signature="async restoreBackup(passphrase: string, onProgress: ProgressCallback): Promise<void>" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="mapRestoreError" kind="function signature" signature="mapRestoreError(error: Error): string" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="rollbackRestore" kind="function signature" signature="async rollbackRestore(backupId: string): Promise<void>" path="src/lib/services/cloudSyncService.ts"/>
+    <interface name="/api/sync/download" kind="REST endpoint" signature="GET /api/sync/download?storageKey={storageKeyHex}" path="src/app/api/sync/download/route.ts">
+      Returns encrypted blob (ArrayBuffer) with headers: Content-Length, Last-Modified. Status codes: 200 (success), 404 (not found), 429 (rate limit), 503 (unavailable).
+    </interface>
+    <interface name="Dexie Transaction API" kind="database API" signature="db.transaction('rw', db.tables, async () => {...})" path="src/lib/db/client.ts">
+      Atomic transaction API - all writes succeed or all roll back. Used for all-or-nothing restore.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing uses Jest with React Testing Library. Tests located in `__tests__` subdirectories alongside source files. Mock Web Crypto API, Dexie database (fake-indexeddb), and fetch API for isolated testing. Achieve >80% code coverage. Test all error paths (network failures, wrong passphrase, corrupted data, validation failures). Integration tests verify round-trip encryption/decryption (Story 7.2 → Story 7.3).
+    </standards>
+    <locations>
+      <location>src/lib/services/__tests__/cloudSyncService.restore.test.ts</location>
+      <location>src/lib/services/__tests__/cloudSyncService.test.ts</location>
+    </locations>
+    <ideas>
+      <test ac="AC7.3.1">Test downloadBackup(): successful download returns ArrayBuffer, handles 404/429/503 errors, parses Content-Length and Last-Modified headers</test>
+      <test ac="AC7.3.2">Test extractMetadata(): correct salt/IV/ciphertext sizes (16/12/variable bytes), validates minimum blob size (28 bytes), handles edge case of exactly 28-byte blob</test>
+      <test ac="AC7.3.3">Test deriveEncryptionKey() reuse: same passphrase + salt produces same key (deterministic), different salt produces different key</test>
+      <test ac="AC7.3.4">Test decryptData(): successfully decrypts blob encrypted in Story 7.2 (round-trip test), throws error for wrong passphrase, throws error for tampered ciphertext (invalid auth tag), decodes UTF-8 correctly</test>
+      <test ac="AC7.3.5">Test validateBackupData(): accepts valid schema (version 1), rejects missing required fields (version, timestamp, data), rejects unsupported schema versions, validates critical tables exist and are arrays</test>
+      <test ac="AC7.3.6">Test backupCurrentData(): exports current data using exportAllData(), saves to temporary storage (IndexedDB or localStorage), returns backup ID, cleans up old backups (keeps last 3)</test>
+      <test ac="AC7.3.7">Test restoreData(): writes all tables correctly using bulkAdd(), clears existing tables before restore, rolls back on error (mock Dexie transaction failure), updates sync metadata on success</test>
+      <test ac="AC7.3.8">Test saveRestoreMetadata(): stores restore fields (lastRestoreTimestamp, lastRestoreSuccess, restoredBlobSize, restoredStorageKeyHash), merges with existing upload metadata, stores error message on failure</test>
+      <test ac="AC7.3.9">Test restoreBackup(): progress callback invoked at each stage (download 0-30%, decrypt 30-60%, restore 60-100%), emits final progress on success</test>
+      <test ac="AC7.3.10">Test mapRestoreError(): maps WRONG_PASSPHRASE, BLOB_NOT_FOUND, MALFORMED_BLOB, VALIDATION_FAILED, RATE_LIMIT, SERVICE_UNAVAILABLE, NETWORK_ERROR to user-friendly messages</test>
+      <test ac="AC7.3.11">Test rollbackRestore(): retrieves temporary backup by ID, parses backup JSON, clears tables and writes backup data using atomic transaction, notifies user of rollback</test>
+      <test ac="AC7.3.12">Integration test: encrypt (Story 7.2) → decrypt (Story 7.3) round-trip with realistic data sizes (1MB, 10MB), verify all data restored correctly, test wrong passphrase handling, test atomic transaction rollback</test>
+    </ideas>
+  </tests>
+</story-context>
