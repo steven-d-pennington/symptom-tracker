@@ -884,3 +884,16 @@ export interface TreatmentAlertRecord {
   // Timestamps
   createdAt: number; // Unix timestamp when alert was created (epoch ms)
 }
+
+// Sync Metadata - Cloud sync status tracking (Story 7.2)
+
+export interface SyncMetadataRecord {
+  id: "primary"; // Single-row table (always 'primary')
+
+  // Sync status
+  lastSyncTimestamp: number; // Date.now() of last sync attempt (Unix timestamp)
+  lastSyncSuccess: boolean; // true = success, false = failure
+  blobSizeBytes: number; // Size of last successful backup in bytes (0 if failed)
+  storageKeyHash: string; // First 8 characters of storage key for display
+  errorMessage?: string; // User-friendly error message if lastSyncSuccess = false
+}
