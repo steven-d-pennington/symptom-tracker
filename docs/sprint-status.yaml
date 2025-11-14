@@ -154,3 +154,21 @@ development_status:
   7-3-download-and-restore-implementation: done
   7-4-ui-and-user-experience-polish: review
   epic-7-retrospective: optional
+
+  # EPIC 8 PLAN (2025-11-14):
+  # HS Flare Lifecycle Tracking - Medical stage progression tracking
+  # - Story 8.1 DRAFTED - HS Flare Lifecycle Schema & Repository Layer (2025-11-14)
+  #   * Database schema v30 with lifecycle stage fields
+  #   * Six lifecycle stages: onset → growth → rupture → draining → healing → resolved
+  #   * Migration logic for existing flares (active→onset, resolved→resolved)
+  #   * Repository methods: updateLifecycleStage(), getLifecycleStageHistory()
+  #   * Utility functions: getNextLifecycleStage(), isValidStageTransition()
+  #   * Comprehensive testing (35+ test cases)
+  # - NEXT: Run story-context for 8-1, then implement
+  # - Story 8.2 (UI Integration) follows after 8.1 complete
+
+  epic-8: backlog
+  8-1-hs-flare-lifecycle-schema-and-repository-layer: ready-for-dev
+  8-2-lifecycle-stage-ui-components-and-integration: backlog
+  8-3-lifecycle-stage-timeline-visualization: backlog
+  epic-8-retrospective: optional
