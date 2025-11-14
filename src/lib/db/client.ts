@@ -786,6 +786,71 @@ export class SymptomTrackerDatabase extends Dexie {
       // Story 7.2: Cloud sync metadata tracking
       syncMetadata: "id", // Single-row table (id = 'primary')
     });
+
+    // Version 30: Add lifecycle stage fields to bodyMarkers and bodyMarkerEvents (Story 8.1)
+    this.version(30).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      dailyLogs: "id, [userId+date], userId, date, createdAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, [markerId], [markerType], dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], [userId+layer+createdAt], createdAt",
+      bodyMapPreferences: "userId",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      bodyMarkers: "id, [userId+type+status], [userId+status], [userId+bodyRegionId], [userId+startDate], userId, type, status",
+      bodyMarkerEvents: "id, [markerId+timestamp], [userId+timestamp], [userId+eventType], markerId, userId, eventType",
+      bodyMarkerLocations: "id, [markerId], [userId+markerId], [userId+bodyRegionId], markerId, userId, bodyRegionId",
+      flares: null,
+      flareEvents: null,
+      flareBodyLocations: null,
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+      moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      correlations: "id, [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt], userId, type, item1, item2, calculatedAt",
+      patternDetections: "id, [userId+type], [userId+correlationId], [userId+detectedAt], userId, type, correlationId, detectedAt",
+      treatmentEffectiveness: "id, userId, [userId+treatmentId], [userId+effectivenessScore], [userId+lastCalculated], treatmentId, effectivenessScore, lastCalculated",
+      treatmentAlerts: "id, userId, [userId+treatmentId], [userId+alertType], [userId+dismissed], treatmentId, alertType, dismissed, createdAt",
+      syncMetadata: "id",
+    }).upgrade(async (trans) => {
+      console.log('[Migration v30] Starting: Adding lifecycle stage fields to bodyMarkers (Story 8.1)...');
+
+      try {
+        // Query all existing body markers
+        const markers = await trans.table('bodyMarkers').toArray();
+
+        for (const marker of markers) {
+          // Only migrate flare-type markers
+          if (marker.type === 'flare') {
+            if (marker.status === 'resolved') {
+              // Resolved flares get 'resolved' lifecycle stage
+              marker.currentLifecycleStage = 'resolved';
+            } else if (marker.status === 'active') {
+              // Active flares get 'onset' lifecycle stage
+              marker.currentLifecycleStage = 'onset';
+            }
+            // Update the marker record
+            await trans.table('bodyMarkers').put(marker);
+          }
+          // Other marker types (pain, inflammation) remain unchanged (currentLifecycleStage stays undefined)
+        }
+
+        const flareCount = markers.filter(m => m.type === 'flare').length;
+        console.log(`[Migration v30] Successfully migrated ${flareCount} flare markers with lifecycle stages`);
+      } catch (error) {
+        console.error('[Migration v30] Error during migration:', error);
+        throw error;
+      }
+    });
   }
 }
 

@@ -1,4 +1,4 @@
-# generated: 2025-10-27
+# generated: 2025-11-14
 # project: symptom-tracker
 # project_key: symptom-tracker
 # tracking_system: file-system
@@ -29,7 +29,7 @@
 # - SM typically drafts next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
 
-generated: 2025-10-27
+generated: 2025-11-14
 project: symptom-tracker
 project_key: symptom-tracker
 tracking_system: file-system
@@ -154,3 +154,40 @@ development_status:
   7-3-download-and-restore-implementation: done
   7-4-ui-and-user-experience-polish: review
   epic-7-retrospective: optional
+
+  # EPIC 8 PLAN (2025-11-14):
+  # HS Flare Lifecycle Tracking - Medical stage progression tracking
+  # - Story 8.1 DRAFTED - HS Flare Lifecycle Schema & Repository Layer (2025-11-14)
+  #   * Database schema v30 with lifecycle stage fields
+  #   * Six lifecycle stages: onset → growth → rupture → draining → healing → resolved
+  #   * Migration logic for existing flares (active→onset, resolved→resolved)
+  #   * Repository methods: updateLifecycleStage(), getLifecycleStageHistory()
+  #   * Utility functions: getNextLifecycleStage(), isValidStageTransition()
+  #   * Comprehensive testing (35+ test cases)
+  # - NEXT: Run story-context for 8-1, then implement
+  # - Story 8.2 (UI Integration) follows after 8.1 complete
+
+  epic-8: backlog
+  8-1-hs-flare-lifecycle-schema-and-repository-layer: done
+  8-2-lifecycle-stage-ui-components-and-integration: in-progress  # CHANGES REQUESTED - See Senior Developer Review in story file
+  8-3-lifecycle-stage-timeline-visualization: backlog
+  epic-8-retrospective: optional
+
+  # EPIC 9 PLAN (2025-11-14):
+  # Flare Creation UX Redesign - Modal to Full-Page Flow
+  # - PRD: Epic-9-Flare-Creation-UX-Redesign-PRD.md
+  # - Architecture: Epic-9-Architecture-Addendum.md
+  # - Pattern: Consistent full-page flow matching symptom/trigger/food logging
+  # - Stories 9.1-9.4: Required (MVP)
+  # - Story 9.5: Optional (Onboarding enhancement)
+  # - Story 9.1 context generated 2025-11-14
+  # - Story 9.2 context generated 2025-11-14
+  # - NEXT: Run dev-story for 9-2-flare-details-page
+
+  epic-9: contexted
+  9-1-body-map-placement-page: review
+  9-2-flare-details-page: review
+  9-3-success-screen-with-add-another-flow: ready-for-dev
+  9-4-body-map-entry-point-and-component-cleanup: backlog
+  9-5-multi-flare-onboarding-guidance: backlog  # Optional enhancement
+  epic-9-retrospective: optional

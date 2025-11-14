@@ -6,9 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils/cn';
 import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
-import { BodyMarkerRecord } from '@/lib/db/schema';
+import { BodyMarkerRecord, FlareLifecycleStage } from '@/lib/db/schema';
 import { getBodyRegionById } from '@/lib/data/bodyRegions';
 import { FlareQuickUpdate } from '@/types/daily-log';
+import { LifecycleStageSelector } from '@/components/LifecycleStageSelector';
+import { formatLifecycleStage, getLifecycleStageIcon } from '@/lib/utils/lifecycleUtils';
 
 export interface FlareQuickUpdateListProps {
   /** User ID for fetching flares */
@@ -35,6 +37,24 @@ function FlareUpdateForm({ flare, userId, onSave, onCancel }: FlareUpdateFormPro
   const [notes, setNotes] = useState('');
   const [interventions, setInterventions] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [showLifecycleDetails, setShowLifecycleDetails] = useState(false);
+
+  // Handle lifecycle stage change (immediate save for quick updates)
+  const handleLifecycleStageChange = async (stage: FlareLifecycleStage, notes?: string) => {
+    if (isSaving) return;
+
+    try {
+      setIsSaving(true);
+      await bodyMarkerRepository.updateLifecycleStage(userId, flare.id, stage, notes);
+      // Success - stage updated immediately
+    } catch (error) {
+      console.error('Failed to update lifecycle stage:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update lifecycle stage';
+      alert(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -167,6 +187,36 @@ function FlareUpdateForm({ flare, userId, onSave, onCancel }: FlareUpdateFormPro
           {notes.length}/500
         </p>
       </div>
+
+      {/* Lifecycle Stage Selector (for flare-type markers) */}
+      {flare.type === 'flare' && flare.currentLifecycleStage && (
+        <div className="space-y-2 border-t pt-3">
+          <button
+            type="button"
+            onClick={() => setShowLifecycleDetails(!showLifecycleDetails)}
+            className="flex items-center justify-between w-full text-left text-sm font-medium text-foreground hover:text-primary"
+            aria-expanded={showLifecycleDetails}
+          >
+            <span>Lifecycle Stage</span>
+            <Badge variant="outline" className="gap-1.5">
+              <span>{getLifecycleStageIcon(flare.currentLifecycleStage)}</span>
+              <span>{formatLifecycleStage(flare.currentLifecycleStage)}</span>
+            </Badge>
+          </button>
+
+          {showLifecycleDetails && (
+            <div className="mt-2">
+              <LifecycleStageSelector
+                currentStage={flare.currentLifecycleStage}
+                onStageChange={handleLifecycleStageChange}
+                showSuggestion={false}
+                compact={true}
+                disabled={isSaving}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex gap-2 justify-end">
@@ -317,11 +367,17 @@ export function FlareQuickUpdateList({
               className="p-3 bg-background rounded-lg border border-border"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1">
+                <div className="flex items-center gap-2 flex-1 flex-wrap">
                   <span className="text-sm font-medium">{regionName}</span>
                   <Badge variant={severityVariant}>
                     {flare.currentSeverity}/10
                   </Badge>
+                  {flare.type === 'flare' && flare.currentLifecycleStage && (
+                    <Badge variant="outline" className="gap-1">
+                      <span className="text-xs">{getLifecycleStageIcon(flare.currentLifecycleStage)}</span>
+                      <span className="text-xs">{formatLifecycleStage(flare.currentLifecycleStage)}</span>
+                    </Badge>
+                  )}
                   <span
                     className={cn("text-lg font-bold", statusColor)}
                     aria-label={`Status: ${flare.status}`}

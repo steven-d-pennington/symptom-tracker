@@ -13,18 +13,9 @@ const nextConfig: NextConfig = {
 
   /* Route Redirects - Epic 6 Navigation Restructure */
   // Permanent redirects (308) for renamed routes to preserve bookmarks and links
+  // Epic 9: Removed /flares redirect - now using /flares/place for new flare creation flow
   redirects: async () => {
     return [
-      {
-        source: "/flares",
-        destination: "/body-map",
-        permanent: true,
-      },
-      {
-        source: "/flares/:path*",
-        destination: "/body-map/:path*",
-        permanent: true,
-      },
       {
         source: "/analytics",
         destination: "/insights",

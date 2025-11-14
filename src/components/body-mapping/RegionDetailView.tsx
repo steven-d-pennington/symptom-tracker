@@ -167,9 +167,10 @@ export function RegionDetailView({
       bodyRegionId: marker.bodyRegionId,
       layer: 'flares', // Default layer - could be extended to support multiple layers
       coordinates: marker.coordinates,
+      userId: userId, // Required for fetching lifecycle stage data (Story 8.2)
     });
     setIsModalOpen(true);
-  }, []);
+  }, [userId]);
 
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);

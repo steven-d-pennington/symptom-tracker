@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BodyMarkerRecord } from '@/lib/db/schema';
+import { BodyMarkerRecord, FlareLifecycleStage } from '@/lib/db/schema';
 import { FlareTrend } from '@/types/flare';
 import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
+import { LifecycleStageSelector } from '@/components/LifecycleStageSelector';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface FlareUpdateModalProps {
   isOpen: boolean;
@@ -20,6 +22,11 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
   const [timestamp, setTimestamp] = useState(Date.now());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Lifecycle stage state
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
+  const [newLifecycleStage, setNewLifecycleStage] = useState<FlareLifecycleStage | null>(null);
+  const [lifecycleStageNotes, setLifecycleStageNotes] = useState<string | undefined>(undefined);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -29,8 +36,18 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
       setNotes('');
       setTimestamp(Date.now());
       setError(null);
+      setShowAdditionalDetails(false);
+      setNewLifecycleStage(null);
+      setLifecycleStageNotes(undefined);
     }
   }, [isOpen, flare]);
+
+  // Handle lifecycle stage change from selector
+  const handleLifecycleStageChange = (stage: FlareLifecycleStage, notes?: string) => {
+    setNewLifecycleStage(stage);
+    setLifecycleStageNotes(notes);
+    setError(null); // Clear any previous errors
+  };
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -39,22 +56,46 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
     try {
       // Detect what changed
       const severityChanged = severity !== flare.currentSeverity;
+      const lifecycleStageChanged = newLifecycleStage !== null && 
+        newLifecycleStage !== flare.currentLifecycleStage;
 
-      // Determine event type
+      // Update lifecycle stage first if changed (this creates the lifecycle_stage_change event)
+      if (lifecycleStageChanged && newLifecycleStage) {
+        try {
+          await bodyMarkerRepository.updateLifecycleStage(
+            userId,
+            flare.id,
+            newLifecycleStage,
+            lifecycleStageNotes
+          );
+        } catch (lifecycleErr) {
+          // Handle lifecycle stage validation errors
+          const errorMessage = lifecycleErr instanceof Error 
+            ? lifecycleErr.message 
+            : 'Invalid lifecycle stage transition';
+          setError(errorMessage);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Determine event type for severity/trend update
       const eventType: "severity_update" | "trend_change" = severityChanged
         ? "severity_update"
         : "trend_change";
 
-      // Create BodyMarkerEvent record (append-only)
-      await bodyMarkerRepository.addMarkerEvent(userId, flare.id, {
-        eventType,
-        timestamp,
-        severity: severityChanged ? severity : undefined,
-        trend,
-        notes: notes.trim() || undefined,
-      });
+      // Create BodyMarkerEvent record (append-only) if severity or trend changed
+      if (severityChanged || trend !== FlareTrend.Stable) {
+        await bodyMarkerRepository.addMarkerEvent(userId, flare.id, {
+          eventType,
+          timestamp,
+          severity: severityChanged ? severity : undefined,
+          trend,
+          notes: notes.trim() || undefined,
+        });
+      }
 
-      // Update BodyMarkerRecord if severity changed (handled by addMarkerEvent)
+      // Update BodyMarkerRecord if severity changed
       if (severityChanged) {
         await bodyMarkerRepository.updateMarker(userId, flare.id, {
           currentSeverity: severity,
@@ -181,7 +222,7 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
         </div>
 
         {/* Timestamp */}
-        <div className="mb-6">
+        <div className="mb-4">
           <label htmlFor="timestamp" className="block text-sm font-medium mb-2">
             Timestamp
           </label>
@@ -192,6 +233,41 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
             onChange={(e) => setTimestamp(new Date(e.target.value).getTime())}
             className="w-full border rounded px-3 py-2"
           />
+        </div>
+
+        {/* Additional Details Section */}
+        <div className="mb-6 border-t pt-4">
+          <button
+            type="button"
+            onClick={() => setShowAdditionalDetails(!showAdditionalDetails)}
+            className="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 hover:text-gray-900 mb-2"
+            aria-expanded={showAdditionalDetails}
+            aria-controls="additional-details-content"
+          >
+            <span>Additional Details</span>
+            {showAdditionalDetails ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+
+          {showAdditionalDetails && (
+            <div id="additional-details-content" className="mt-4 space-y-4">
+              {/* Lifecycle Stage Selector */}
+              {flare.type === 'flare' && (
+                <div>
+                  <LifecycleStageSelector
+                    currentStage={flare.currentLifecycleStage}
+                    onStageChange={handleLifecycleStageChange}
+                    showSuggestion={true}
+                    compact={false}
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}

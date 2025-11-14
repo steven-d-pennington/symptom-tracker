@@ -12,6 +12,7 @@
  */
 
 import { db } from "@/lib/db/client";
+import { FlareLifecycleStage } from "@/lib/db/schema";
 import { generateId } from "@/lib/utils/idGenerator";
 import {
   subDays,
@@ -58,12 +59,24 @@ export interface PowerUserDataResult {
   startDate: string;
   endDate: string;
   daysGenerated: number;
+
+  // Lifecycle coverage
+  lifecycleStageEvents: number;
 }
 
 export interface PowerUserDataConfig {
   years: number;
   userId: string;
 }
+
+const LIFECYCLE_STAGE_ORDER: FlareLifecycleStage[] = [
+  "onset",
+  "growth",
+  "rupture",
+  "draining",
+  "healing",
+  "resolved",
+];
 
 /**
  * Main entry point - generates complete power user data
@@ -137,6 +150,7 @@ export async function generatePowerUserData(
     startDate: format(startDate, "yyyy-MM-dd"),
     endDate: format(endDate, "yyyy-MM-dd"),
     daysGenerated,
+    lifecycleStageEvents: flares.lifecycleEventsCreated,
   };
 
   console.log("[PowerUserData] ✅ Generation complete:", result);
@@ -296,6 +310,7 @@ async function generateFlares(
   const flares = [];
   const flareEvents = [];
   const bodyMapLocations = [];
+  let lifecycleStageEventCount = 0;
 
   // Valid body region IDs from bodyRegions.ts
   // Mix of commonly affected areas for realistic flare patterns
@@ -364,6 +379,23 @@ async function generateFlares(
     const coordinates = generateRegionCoordinates(bodyRegion);
     const locationId = generateId();
 
+    const stageSequence = buildLifecycleStageSequence(isActive);
+    const finalStage = stageSequence[stageSequence.length - 1];
+    const lifecycleStageEndTimestamp = !isActive
+      ? (flareEnd <= endDate ? flareEnd.getTime() : endDate.getTime())
+      : Math.min(Date.now(), endDate.getTime());
+
+    const lifecycleStageEvents = createLifecycleStageEvents({
+      flareId,
+      userId,
+      stages: stageSequence,
+      startTimestamp: flareStart.getTime(),
+      endTimestamp: lifecycleStageEndTimestamp,
+    });
+
+    lifecycleStageEventCount += lifecycleStageEvents.length;
+    flareEvents.push(...lifecycleStageEvents);
+
     flares.push({
       id: flareId,
       userId,
@@ -374,6 +406,7 @@ async function generateFlares(
       bodyRegions: [bodyRegion], // Array of regions (flare can span multiple)
       initialSeverity,
       currentSeverity: isActive ? initialSeverity : 2, // Active flares keep initial severity, resolved drop to 2
+      currentLifecycleStage: finalStage,
       coordinates: [{ // Array of coordinate objects for each region
         regionId: bodyRegion,
         x: coordinates.x,
@@ -447,6 +480,7 @@ async function generateFlares(
     status: f.status,
     initialSeverity: f.initialSeverity,
     currentSeverity: f.currentSeverity,
+    currentLifecycleStage: f.currentLifecycleStage,
     createdAt: f.createdAt,
     updatedAt: f.updatedAt,
   })));
@@ -459,6 +493,12 @@ async function generateFlares(
     timestamp: e.timestamp,
     severity: e.severity,
     trend: e.trend,
+    notes: e.notes,
+    lifecycleStage: e.lifecycleStage,
+    interventionType: e.interventionType,
+    interventionDetails: e.interventionDetails,
+    resolutionDate: e.resolutionDate,
+    resolutionNotes: e.resolutionNotes,
   })));
 
   // Create bodyMarkerLocations for each flare
@@ -487,7 +527,60 @@ async function generateFlares(
     flaresCreated: flares.length,
     eventsCreated: flareEvents.length,
     flares,
+    lifecycleEventsCreated: lifecycleStageEventCount,
   };
+}
+
+function buildLifecycleStageSequence(isActive: boolean): FlareLifecycleStage[] {
+  if (!isActive) {
+    return [...LIFECYCLE_STAGE_ORDER];
+  }
+
+  const earliestActiveStageIndex = 2; // At least rupture
+  const latestActiveStageIndex = 4; // Up to healing
+  const randomIndex =
+    earliestActiveStageIndex +
+    Math.floor(Math.random() * (latestActiveStageIndex - earliestActiveStageIndex + 1));
+
+  return LIFECYCLE_STAGE_ORDER.slice(0, randomIndex + 1);
+}
+
+interface LifecycleStageEventArgs {
+  flareId: string;
+  userId: string;
+  stages: FlareLifecycleStage[];
+  startTimestamp: number;
+  endTimestamp: number;
+}
+
+function createLifecycleStageEvents({
+  flareId,
+  userId,
+  stages,
+  startTimestamp,
+  endTimestamp,
+}: LifecycleStageEventArgs) {
+  const safeEndTimestamp =
+    endTimestamp <= startTimestamp ? startTimestamp + 6 * 60 * 60 * 1000 : endTimestamp;
+  const intervalCount = Math.max(1, stages.length - 1);
+  const totalDuration = safeEndTimestamp - startTimestamp;
+  const increment = Math.max(60 * 60 * 1000, Math.floor(totalDuration / intervalCount));
+
+  return stages.map((stage, index) => {
+    const timestamp =
+      index === stages.length - 1
+        ? safeEndTimestamp
+        : startTimestamp + increment * index;
+
+    return {
+      id: generateId(),
+      flareId,
+      userId,
+      eventType: "lifecycle_stage_change" as const,
+      lifecycleStage: stage,
+      timestamp,
+    };
+  });
 }
 
 /**
