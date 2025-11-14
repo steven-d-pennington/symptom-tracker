@@ -269,8 +269,24 @@ These enhancements will transform the body map from a general location indicator
 
 ---
 
-**Total Estimated Stories:** 20-24 stories
-**Total Epics:** 4 (3 high-priority + 1 lower priority)
+### Epic 8: HS Flare Lifecycle Tracking
+**Goal:** Enable tracking of flare progression through medically-defined lifecycle stages (onset → growth → rupture → draining → healing → resolved) based on dermatologist consultation.
+
+**Scope:**
+- Database schema for lifecycle stage tracking
+- Repository methods for stage updates and history
+- UI components for stage selection in flare update modals
+- Auto-suggestion of next logical stage
+- Visual timeline of stage progression (optional)
+- Integration with existing flare tracking system
+
+**Estimated Stories:** 2-3 stories (13-18 points)
+**Priority:** MEDIUM - enhances existing flare tracking with medical insights
+
+---
+
+**Total Estimated Stories:** 22-27 stories
+**Total Epics:** 5 (3 high-priority + 2 medium/lower priority)
 
 > **Note:** Detailed epic breakdown with full story specifications is available in [epics.md](./epics.md)
 

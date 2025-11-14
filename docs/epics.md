@@ -1666,3 +1666,182 @@ When migrating to structured storage (Supabase) later:
 4. Gradual migration: read from blob, write to both, eventually deprecate blob
 
 ---
+
+## Epic 8: HS Flare Lifecycle Tracking
+
+### Expanded Goal
+
+Enable users to track the progression of HS flares through medically-defined lifecycle stages, providing deeper insights into flare patterns and supporting better clinical communication. Based on dermatologist consultation, this epic implements the six-stage flare lifecycle: onset → growth → rupture → draining → healing → resolved.
+
+### Value Proposition
+
+Users can monitor how individual flares progress through distinct medical stages, enabling them to:
+- **Identify patterns** in flare behavior and typical progression timelines
+- **Communicate effectively** with healthcare providers using medical terminology
+- **Predict future progression** by understanding how their flares typically evolve
+- **Track treatment impact** by correlating interventions with stage transitions
+- **Improve self-management** through better understanding of flare lifecycles
+
+### Story Breakdown
+
+**Story 8.1: HS Flare Lifecycle Schema & Repository Layer**
+
+As a developer building the lifecycle tracking system,
+I want to implement the database schema and repository methods for lifecycle stages,
+So that flare lifecycle progression can be tracked and queried efficiently.
+
+**Acceptance Criteria:**
+1. Database schema updated to v30 with lifecycle stage fields
+2. `FlareLifecycleStage` type added: 'onset' | 'growth' | 'rupture' | 'draining' | 'healing' | 'resolved'
+3. `BodyMarkerRecord.currentLifecycleStage` field added (optional, flare-specific)
+4. `BodyMarkerEventRecord.lifecycleStage` field added (optional)
+5. New event type `'lifecycle_stage_change'` added to event type union
+6. Migration handles existing flares (defaults to 'onset' or 'resolved' based on status)
+7. Repository methods: `updateLifecycleStage()`, `getLifecycleStageHistory()`
+8. Lifecycle validation functions: `getNextLifecycleStage()`, `isValidStageTransition()`
+9. Stage transitions are atomic (transaction-based)
+10. Comprehensive unit tests for repository methods and validation logic
+
+**Technical Notes:**
+- Schema changes in `src/lib/db/schema.ts`
+- Migration in `src/lib/db/client.ts` (v29 → v30)
+- Repository updates in `src/lib/repositories/bodyMarkerRepository.ts`
+- Utility functions in `src/lib/utils/lifecycleUtils.ts`
+- Forward-only stage transitions (except 'resolved' can be set from any stage)
+- Setting stage to 'resolved' automatically updates marker status and endDate
+
+**Implementation Details:**
+```typescript
+// Key functions to implement:
+- updateLifecycleStage(userId, markerId, newStage, notes?)
+- getLifecycleStageHistory(userId, markerId)
+- getNextLifecycleStage(currentStage): FlareLifecycleStage | null
+- isValidStageTransition(from, to): boolean
+- formatLifecycleStage(stage): string
+- getLifecycleStageDescription(stage): string
+- getLifecycleStageIcon(stage): string
+- getDaysInStage(marker, events): number
+```
+
+**Prerequisites:** Epic 2 complete (body marker system with events)
+
+---
+
+**Story 8.2: Lifecycle Stage UI Components & Integration**
+
+As a user tracking HS flares,
+I want to update lifecycle stages when I update my flares,
+So that I can track how my flares progress through different stages.
+
+**Acceptance Criteria:**
+1. `FlareUpdateModal.tsx` includes lifecycle stage selector in "Additional Details" section
+2. Current stage displayed prominently when section expanded
+3. Auto-suggests next logical stage with "💡 Suggest next: [stage]" button
+4. Dropdown allows manual selection of any valid stage
+5. Stage description shown for selected stage
+6. `FlareQuickUpdateList.tsx` includes lifecycle stage selector in expandable details
+7. `MarkerDetailsModal.tsx` displays current lifecycle stage (read-only)
+8. Stage updates are optional (user can update severity without changing stage)
+9. Stage changes create `lifecycle_stage_change` events
+10. Validation prevents invalid stage transitions with clear error messages
+
+**Technical Notes:**
+- Create reusable `LifecycleStageSelector.tsx` component
+- Update `FlareUpdateModal.tsx` with lifecycle section
+- Update `FlareQuickUpdateList.tsx` with lifecycle quick update
+- Update `MarkerDetailsModal.tsx` with lifecycle display
+- Lifecycle stage selector only shown for flare-type markers
+- Stage update integrated with existing save handlers
+
+**UI/UX Considerations:**
+- Stage selector in expandable "Additional Details" section (non-intrusive)
+- Current stage badge shown when section expanded
+- Auto-suggestion as helpful hint, not automatic advancement
+- Stage descriptions provide medical context (e.g., "Flare is draining fluid")
+- Responsive design for mobile and desktop
+
+**Prerequisites:** Story 8.1 (schema and repository complete)
+
+---
+
+**Story 8.3: Lifecycle Stage Timeline Visualization (Optional Enhancement)**
+
+As a user reviewing my flare history,
+I want to see a visual timeline of how my flare progressed through stages,
+So that I can understand the typical lifecycle pattern of my flares.
+
+**Acceptance Criteria:**
+1. `LifecycleStageTimeline.tsx` component displays horizontal stage progression
+2. Completed stages shown as filled markers
+3. Current stage highlighted with distinct styling
+4. Future stages shown as grayed-out markers
+5. Each stage marker shows date when stage was entered
+6. Clicking stage marker shows event details and notes
+7. Timeline displays days spent in each stage
+8. Timeline integrated in `MarkerDetailsModal.tsx` for detailed view
+9. Responsive design adapts to mobile screens (vertical stacking if needed)
+
+**Technical Notes:**
+- Create `LifecycleStageTimeline.tsx` component
+- Query lifecycle stage history from events
+- Calculate duration for each stage
+- Use icons/emojis for visual stage representation
+- Integrate with existing modal components
+
+**Future Enhancements:**
+- Average stage durations across all user's flares
+- Pattern detection: "Your flares typically progress from growth to rupture in 3-5 days"
+- Stage-specific analytics in reports
+
+**Prerequisites:** Story 8.2 (UI components exist)
+
+---
+
+### Epic 8 Summary
+
+**Total Story Count:** 2-3 stories (Story 8.3 optional)
+- Story 8.1: Schema & Repository Layer (Required) - 5 points
+- Story 8.2: UI Components & Integration (Required) - 8 points
+- Story 8.3: Timeline Visualization (Optional Enhancement) - 5 points
+- **Total Estimated Points:** 13-18 points
+
+**Implementation Timeline:**
+- Story 8.1: 1-2 days (schema, migration, repository)
+- Story 8.2: 2-3 days (UI components, integration)
+- Story 8.3: 1-2 days (timeline visualization - optional)
+- **Total: 4-7 days**
+
+**Medical Context:**
+Based on dermatologist consultation, HS flares progress through distinct lifecycle stages:
+1. **Onset** - Initial appearance of flare
+2. **Growth** - Flare is growing/increasing in size
+3. **Rupture** - Flare has ruptured/broken open
+4. **Draining** - Flare is draining fluid
+5. **Healing** - Flare is healing/closing up
+6. **Resolved** - Flare is fully resolved (terminal stage)
+
+**Integration Points:**
+- Integrates with existing unified marker system (Epic 2)
+- Enhances flare tracking without disrupting existing workflows
+- Lifecycle data can be included in reports (Epic 3)
+- Stage analytics can be added to insights engine (Epic 6 - future)
+- Search can filter by lifecycle stage (Epic 2 - future)
+
+**Success Metrics:**
+- Users can track lifecycle stages for all active flares
+- Stage transitions are accurately recorded in event history
+- Auto-suggest logic helps users track progression efficiently
+- Zero performance degradation for existing queries
+- 100% backward compatibility with existing flare data
+
+**Dependencies:**
+- Epic 2 complete (unified marker system with events)
+- No blocking dependencies on other in-progress work
+
+**Enables:**
+- Better clinical communication using medical terminology
+- Pattern recognition in flare progression
+- Foundation for predictive analytics (future)
+- Enhanced reporting with lifecycle progression data
+
+---
