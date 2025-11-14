@@ -9,13 +9,7 @@ import {
   getLifecycleStageDescription,
   getLifecycleStageIcon,
 } from '@/lib/utils/lifecycleUtils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SimpleSelect, SimpleSelectOption } from '@/components/SimpleSelect';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
@@ -144,56 +138,31 @@ export function LifecycleStageSelector({
         >
           Lifecycle Stage
         </label>
-        <Select
+        <SimpleSelect
+          id="lifecycle-stage-select"
           value={selectedStage}
-          onValueChange={handleStageSelect}
+          onValueChange={(value) => handleStageSelect(value as FlareLifecycleStage)}
           disabled={disabled}
-        >
-          <SelectTrigger
-            id="lifecycle-stage-select"
-            className={cn(
-              'w-full',
-              compact && 'h-9 text-sm',
-              'min-h-[44px]' // Mobile touch target requirement
-            )}
-            aria-label="Select lifecycle stage"
-          >
-            <SelectValue placeholder="Select a stage">
-              {selectedStage && (
-                <div className="flex items-center gap-2">
-                  <span>{getLifecycleStageIcon(selectedStage)}</span>
-                  <span>{formatLifecycleStage(selectedStage)}</span>
-                </div>
-              )}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {allStages.map((stage) => {
-              const isDisabled = currentStage
-                ? !isValidStageTransition(currentStage, stage)
-                : false;
-              const isSelected = selectedStage === stage;
+          aria-label="Select lifecycle stage"
+          options={allStages.map((stage) => {
+            const isDisabled = currentStage
+              ? !isValidStageTransition(currentStage, stage)
+              : false;
 
-              return (
-                <SelectItem
-                  key={stage}
-                  value={stage}
-                  disabled={isDisabled}
-                  className={cn(
-                    'min-h-[44px]', // Mobile touch target
-                    isDisabled && 'opacity-50 cursor-not-allowed',
-                    isSelected && 'bg-accent'
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{getLifecycleStageIcon(stage)}</span>
-                    <span>{formatLifecycleStage(stage)}</span>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+            return {
+              value: stage,
+              label: (
+                <div className="flex items-center gap-2">
+                  <span>{getLifecycleStageIcon(stage)}</span>
+                  <span>{formatLifecycleStage(stage)}</span>
+                </div>
+              ),
+              disabled: isDisabled,
+            } as SimpleSelectOption;
+          })}
+          placeholder="Select a stage"
+          className="w-full"
+        />
       </div>
 
       {/* Validation Error */}

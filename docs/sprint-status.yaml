@@ -181,11 +181,12 @@ development_status:
   # - Stories 9.1-9.4: Required (MVP)
   # - Story 9.5: Optional (Onboarding enhancement)
   # - Story 9.1 context generated 2025-11-14
-  # - NEXT: Run dev-story for 9-1-body-map-placement-page
+  # - Story 9.2 context generated 2025-11-14
+  # - NEXT: Run dev-story for 9-2-flare-details-page
 
   epic-9: contexted
-  9-1-body-map-placement-page: ready-for-dev
-  9-2-flare-details-page: backlog
+  9-1-body-map-placement-page: review
+  9-2-flare-details-page: review
   9-3-success-screen-with-add-another-flow: backlog
   9-4-body-map-entry-point-and-component-cleanup: backlog
   9-5-multi-flare-onboarding-guidance: backlog  # Optional enhancement

@@ -65,7 +65,7 @@ export function MarkerDetailsModal({
       setIsLoadingLifecycle(true);
       try {
         // Fetch the full marker record to get currentLifecycleStage
-        const markerRecord = await bodyMarkerRepository.getMarker(marker.userId, marker.id);
+        const markerRecord = await bodyMarkerRepository.getMarkerById(marker.userId, marker.id);
         
         if (markerRecord && markerRecord.currentLifecycleStage) {
           setLifecycleStage(markerRecord.currentLifecycleStage);

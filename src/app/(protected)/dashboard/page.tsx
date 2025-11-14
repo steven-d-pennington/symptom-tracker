@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { RefreshCw, Download } from "lucide-react";
 import { QuickLogButtons } from "@/components/quick-log/QuickLogButtons";
-import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
+// Story 9.1: FlareCreationModal deprecated, flare creation now uses dedicated page at /flares/place
 // Story 3.5.5: MedicationLogModal deprecated, medication logging now uses dedicated page at /log/medication
 // Story 3.5.3: SymptomLogModal deprecated, symptom logging now uses dedicated page at /log/symptom
 // Story 3.5.4: FoodLogModal deprecated, food logging now uses dedicated page at /log/food
@@ -214,7 +214,8 @@ function DashboardContent() {
     void recordUxEvent("quickAction.flare", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
-    router.push("/dashboard?quickAction=flare");
+    // Story 9.1: Navigate to dedicated flare placement page
+    router.push("/flares/place?source=dashboard");
   }, [recordUxEvent, router]);
 
   const handleLogMedication = useCallback(() => {
@@ -304,21 +305,7 @@ function DashboardContent() {
       </div>
 
       {/* Route-based Quick Action Modals */}
-      {userId && quickAction === "flare" && (
-        <FlareCreationModal
-          isOpen={true}
-          onClose={handleCloseQuickAction}
-          userId={userId}
-          selection={null}
-          onCreated={(_flare, _stayInRegion) => {
-            // Refresh the dashboard after flare creation
-            setRefreshKey(prev => prev + 1);
-            router.push("/dashboard");
-            // Note: stayInRegion doesn't apply in dashboard context
-          }}
-        />
-      )}
-
+      {/* Story 9.1: Flare creation moved to dedicated page at /flares/place */}
       {/* Story 3.5.5: Medication logging moved to dedicated page at /log/medication */}
       {/* Story 3.5.3: Symptom logging moved to dedicated page at /log/symptom */}
       {/* Story 3.5.5: Trigger logging moved to dedicated page at /log/trigger */}
