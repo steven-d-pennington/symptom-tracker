@@ -408,6 +408,19 @@ export interface UxEventRecord {
 export type MarkerType = 'flare' | 'pain' | 'inflammation';
 
 /**
+ * Flare lifecycle stage for HS flare progression tracking (Story 8.1).
+ * Represents the six distinct stages a flare progresses through medically.
+ * Only applies to flare-type markers (type: 'flare').
+ */
+export type FlareLifecycleStage =
+  | 'onset'
+  | 'growth'
+  | 'rupture'
+  | 'draining'
+  | 'healing'
+  | 'resolved';
+
+/**
  * Unified body marker record for tracking flares, pain, and inflammation.
  * Replaces the old FlareRecord with a unified approach for all body markers.
  *
@@ -455,6 +468,9 @@ export interface BodyMarkerRecord {
   /** Current severity level (1-10 scale, updated via events) */
   currentSeverity: number;
 
+  /** Current lifecycle stage (Story 8.1) - only populated for flare-type markers */
+  currentLifecycleStage?: FlareLifecycleStage;
+
   /** Unix timestamp when record was created */
   createdAt: number;
 
@@ -478,7 +494,7 @@ export interface BodyMarkerEventRecord {
   userId: string;
 
   /** Type of event */
-  eventType: 'created' | 'severity_update' | 'trend_change' | 'intervention' | 'resolved';
+  eventType: 'created' | 'severity_update' | 'trend_change' | 'intervention' | 'resolved' | 'lifecycle_stage_change';
 
   /** Unix timestamp when event occurred */
   timestamp: number;
@@ -503,6 +519,9 @@ export interface BodyMarkerEventRecord {
 
   /** Resolution notes for resolution events */
   resolutionNotes?: string;
+
+  /** Lifecycle stage at time of event (Story 8.1) - used for lifecycle_stage_change events */
+  lifecycleStage?: FlareLifecycleStage;
 }
 
 /**

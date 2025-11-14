@@ -1,0 +1,330 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>2</storyId>
+    <title>Lifecycle Stage UI Components &amp; Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/8-2-lifecycle-stage-ui-components-and-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user tracking HS flares</asA>
+    <iWant>to update lifecycle stages when I update my flares</iWant>
+    <soThat>I can track how my flares progress through different stages</soThat>
+    <tasks>
+- Task 1: Create reusable LifecycleStageSelector component (AC: #8.2.10)
+  - 1.1: Create new file `src/components/LifecycleStageSelector.tsx`
+  - 1.2: Import FlareLifecycleStage type and utility functions from lifecycleUtils
+  - 1.3: Define component props interface
+  - 1.4: Implement dropdown using Select component from existing UI library
+  - 1.5: Populate dropdown options with all FlareLifecycleStage values
+  - 1.6: Add stage icon display using getLifecycleStageIcon()
+  - 1.7: Implement stage description display
+  - 1.8: Add "💡 Suggest next" button
+  - 1.9: Implement validation using isValidStageTransition()
+  - 1.10: Add optional notes input field
+  - 1.11: Style component for both regular and compact modes
+  - 1.12: Add proper ARIA labels and keyboard navigation
+
+- Task 2: Integrate lifecycle selector into FlareUpdateModal (AC: #8.2.1, #8.2.2, #8.2.3, #8.2.4, #8.2.7, #8.2.8, #8.2.9)
+  - 2.1-2.14: Add expandable "Additional Details" section with lifecycle selector
+
+- Task 3: Integrate lifecycle selector into FlareQuickUpdateList (AC: #8.2.5, #8.2.8, #8.2.9)
+  - 3.1-3.11: Add compact lifecycle selector for quick updates
+
+- Task 4: Add lifecycle stage display to MarkerDetailsModal (AC: #8.2.6)
+  - 4.1-4.10: Add read-only lifecycle display with history
+
+- Task 5: Implement responsive design and mobile optimization (AC: #8.2.11)
+  - 5.1-5.7: Ensure mobile-friendly touch targets and responsive layouts
+
+- Task 6: Write integration tests (AC: #8.2.12)
+  - 6.1-6.13: Comprehensive testing including component and integration tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC8.2.1 — FlareUpdateModal includes lifecycle stage selector in "Additional Details" expandable section with current stage badge, dropdown with all valid stages, and stage description display.
+
+AC8.2.2 — Auto-suggest next logical stage with "💡 Suggest next: [stage]" button using getNextLifecycleStage(). Button disabled if current stage is 'resolved'.
+
+AC8.2.3 — Manual stage selection dropdown with all FlareLifecycleStage values, current stage selected, using formatLifecycleStage() for display labels.
+
+AC8.2.4 — Stage descriptions display below dropdown using getLifecycleStageDescription() with reactive updates on selection change.
+
+AC8.2.5 — FlareQuickUpdateList includes lifecycle stage selector in expandable details section with compact UI for quick updates.
+
+AC8.2.6 — MarkerDetailsModal displays read-only lifecycle stage with icon (getLifecycleStageIcon()), days in current stage (getDaysInStage()), only for flare-type markers.
+
+AC8.2.7 — Stage updates are optional - users can update severity without changing stage. Stage selector in expandable section, defaults to keeping current stage if unchanged.
+
+AC8.2.8 — Stage changes create lifecycle_stage_change events by calling bodyMarkerRepository.updateLifecycleStage() with optional notes.
+
+AC8.2.9 — Validation prevents invalid stage transitions using isValidStageTransition() with clear error messages and disabled invalid dropdown options.
+
+AC8.2.10 — Reusable LifecycleStageSelector component with props: currentStage, onStageChange, showSuggestion, compact. Handles validation, descriptions, and suggestions.
+
+AC8.2.11 — Responsive design for mobile and desktop. Mobile: full-width dropdown, 44x44px minimum touch targets. Desktop: inline layout with spacing. Test on iOS, Android, tablet, desktop browsers.
+
+AC8.2.12 — Integration testing: complete flow from create flare → update with stage → verify event → check history. Test invalid transitions, stage+severity updates, resolved status updates. Minimum 10 integration test cases.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 8: HS Flare Lifecycle Tracking</title>
+        <section>Story 8.2: Lifecycle Stage UI Components &amp; Integration</section>
+        <snippet>Enable users to track the progression of HS flares through medically-defined lifecycle stages (onset → growth → rupture → draining → healing → resolved). Story 8.2 adds UI components for updating lifecycle stages in FlareUpdateModal, FlareQuickUpdateList, and MarkerDetailsModal.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/8-1-hs-flare-lifecycle-schema-and-repository-layer.md</path>
+        <title>Story 8.1: HS Flare Lifecycle Schema &amp; Repository Layer</title>
+        <section>Implementation Complete</section>
+        <snippet>Completed: Database schema v30 with currentLifecycleStage field, repository methods (updateLifecycleStage, getLifecycleStageHistory), utility functions in lifecycleUtils.ts, and comprehensive testing (49 test cases). Migration applied for existing flares.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Technology Stack</title>
+        <section>Testing</section>
+        <snippet>Jest 30.x + React Testing Library 16.x for unit and integration tests. fake-indexeddb 6.2.4 for mocking IndexedDB in tests.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Component Design Patterns</section>
+        <snippet>Radix UI for accessible components (Select, Dialog, Tabs, Tooltip). Tailwind CSS for styling. Lucide React for consistent iconography.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Utility Functions from Story 8.1 -->
+      <artifact>
+        <path>src/lib/utils/lifecycleUtils.ts</path>
+        <kind>utility</kind>
+        <symbol>getNextLifecycleStage</symbol>
+        <lines>17-30</lines>
+        <reason>Returns next logical stage for auto-suggestion feature (AC8.2.2)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/lifecycleUtils.ts</path>
+        <kind>utility</kind>
+        <symbol>isValidStageTransition</symbol>
+        <lines>45-70</lines>
+        <reason>Validates stage transitions to prevent invalid changes (AC8.2.9)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/lifecycleUtils.ts</path>
+        <kind>utility</kind>
+        <symbol>formatLifecycleStage</symbol>
+        <lines>78-80</lines>
+        <reason>Formats stage names for display in dropdowns (AC8.2.3)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/lifecycleUtils.ts</path>
+        <kind>utility</kind>
+        <symbol>getLifecycleStageDescription</symbol>
+        <lines>88-99</lines>
+        <reason>Provides medical descriptions for stages (AC8.2.4)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/lifecycleUtils.ts</path>
+        <kind>utility</kind>
+        <symbol>getLifecycleStageIcon</symbol>
+        <lines>107-118</lines>
+        <reason>Returns emoji icons for visual stage representation (AC8.2.6)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/lifecycleUtils.ts</path>
+        <kind>utility</kind>
+        <symbol>getDaysInStage</symbol>
+        <lines>127-153</lines>
+        <reason>Calculates days in current stage for MarkerDetailsModal (AC8.2.6)</reason>
+      </artifact>
+
+      <!-- Repository Methods from Story 8.1 -->
+      <artifact>
+        <path>src/lib/repositories/bodyMarkerRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>updateLifecycleStage</symbol>
+        <lines>431-491</lines>
+        <reason>Updates stage atomically with validation and creates lifecycle_stage_change event (AC8.2.8, AC8.2.9)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMarkerRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getLifecycleStageHistory</symbol>
+        <lines>500-515</lines>
+        <reason>Retrieves lifecycle stage change history for timeline/history display (AC8.2.6)</reason>
+      </artifact>
+
+      <!-- Components to Modify -->
+      <artifact>
+        <path>src/components/flares/FlareUpdateModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareUpdateModal</symbol>
+        <lines>1-100</lines>
+        <reason>Primary update interface - needs lifecycle selector integration (AC8.2.1-AC8.2.4, AC8.2.7-AC8.2.9)</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/daily-log/FlareQuickUpdateList.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareQuickUpdateList, FlareUpdateForm</symbol>
+        <lines>1-80</lines>
+        <reason>Quick update interface - needs compact lifecycle selector (AC8.2.5, AC8.2.8, AC8.2.9)</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/MarkerDetailsModal.tsx</path>
+        <kind>component</kind>
+        <symbol>MarkerDetailsModal</symbol>
+        <lines>1-100</lines>
+        <reason>Read-only details view - needs lifecycle stage display (AC8.2.6)</reason>
+      </artifact>
+
+      <!-- UI Components Available -->
+      <artifact>
+        <path>src/components/ui/select.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>Select (Radix UI)</symbol>
+        <lines>all</lines>
+        <reason>Radix UI Select component for accessible dropdown implementation (AC8.2.3)</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/ui/badge.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>Badge</symbol>
+        <lines>all</lines>
+        <reason>Badge component for displaying current stage (AC8.2.1, AC8.2.5)</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/ui/button.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>Button</symbol>
+        <lines>all</lines>
+        <reason>Button component for "Suggest next" feature (AC8.2.2)</reason>
+      </artifact>
+
+      <!-- Database Schema -->
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FlareLifecycleStage, BodyMarkerRecord</symbol>
+        <lines>relevant</lines>
+        <reason>Type definitions for FlareLifecycleStage and currentLifecycleStage field</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <dependency name="react" version="19.1.0" />
+        <dependency name="next" version="15.5.4" />
+        <dependency name="typescript" version="^5" />
+        <dependency name="@radix-ui/react-select" version="^2.2.6" />
+        <dependency name="@radix-ui/react-dialog" version="^1.1.15" />
+        <dependency name="@radix-ui/react-tooltip" version="^1.2.8" />
+        <dependency name="lucide-react" version="^0.544.0" />
+        <dependency name="dexie" version="^4.2.0" />
+        <dependency name="date-fns" version="^4.1.0" />
+        <dependency name="class-variance-authority" version="^0.7.1" />
+      </node>
+      <node-dev>
+        <dependency name="jest" version="^30.2.0" />
+        <dependency name="@testing-library/react" version="^16.3.0" />
+        <dependency name="@testing-library/jest-dom" version="^6.9.1" />
+        <dependency name="@testing-library/user-event" version="^14.6.1" />
+        <dependency name="fake-indexeddb" version="^6.2.4" />
+        <dependency name="jest-environment-jsdom" version="^30.2.0" />
+      </node-dev>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Lifecycle stage selector must be in expandable "Additional Details" section to maintain non-intrusive UX (AC8.2.1, AC8.2.7)</constraint>
+    <constraint>Stage updates are optional - users can update severity without changing stage (AC8.2.7)</constraint>
+    <constraint>Use bodyMarkerRepository.updateLifecycleStage() for all stage updates - it handles validation and event creation (AC8.2.8)</constraint>
+    <constraint>Lifecycle stages only apply to flare-type markers (layer: 'flares') - not symptoms, triggers, or other layers (AC8.2.6)</constraint>
+    <constraint>Forward-only stage transitions except 'resolved' can be set from any stage (AC8.2.9)</constraint>
+    <constraint>Resolved is terminal stage - cannot transition from resolved to any other stage (AC8.2.9)</constraint>
+    <constraint>All stage transitions must be validated using isValidStageTransition() before submission (AC8.2.9)</constraint>
+    <constraint>Component must be reusable - used by both FlareUpdateModal and FlareQuickUpdateList (AC8.2.10)</constraint>
+    <constraint>Mobile touch targets must be minimum 44x44px for accessibility (AC8.2.11)</constraint>
+    <constraint>Use Radix UI Select component for accessibility and keyboard navigation (existing pattern)</constraint>
+    <constraint>Use existing UI components (Badge, Button, Select) from src/components/ui for consistency</constraint>
+    <constraint>Setting stage to 'resolved' automatically updates marker.status and marker.endDate (handled by repository)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>bodyMarkerRepository.updateLifecycleStage</name>
+      <kind>Repository Method</kind>
+      <signature>async updateLifecycleStage(userId: string, markerId: string, newStage: FlareLifecycleStage, notes?: string): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/bodyMarkerRepository.ts</path>
+      <description>Updates lifecycle stage atomically. Validates transition, updates marker.currentLifecycleStage, creates lifecycle_stage_change event. If newStage='resolved', also sets marker.status='resolved' and marker.endDate.</description>
+    </interface>
+    <interface>
+      <name>bodyMarkerRepository.getLifecycleStageHistory</name>
+      <kind>Repository Method</kind>
+      <signature>async getLifecycleStageHistory(userId: string, markerId: string): Promise&lt;BodyMarkerEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/bodyMarkerRepository.ts</path>
+      <description>Returns all lifecycle_stage_change events for a marker in chronological order (oldest first).</description>
+    </interface>
+    <interface>
+      <name>LifecycleStageSelectorProps</name>
+      <kind>Component Props Interface</kind>
+      <signature>interface LifecycleStageSelectorProps { currentStage?: FlareLifecycleStage; onStageChange: (stage: FlareLifecycleStage, notes?: string) =&gt; void; showSuggestion?: boolean; compact?: boolean; disabled?: boolean; }</signature>
+      <path>src/components/LifecycleStageSelector.tsx (NEW)</path>
+      <description>Props for reusable LifecycleStageSelector component. Component handles dropdown, validation, suggestions, descriptions, and notes input.</description>
+    </interface>
+    <interface>
+      <name>FlareLifecycleStage</name>
+      <kind>Type Definition</kind>
+      <signature>type FlareLifecycleStage = 'onset' | 'growth' | 'rupture' | 'draining' | 'healing' | 'resolved'</signature>
+      <path>src/lib/db/schema.ts</path>
+      <description>Six medically-defined lifecycle stages for HS flares based on dermatologist consultation.</description>
+    </interface>
+    <interface>
+      <name>Radix UI Select</name>
+      <kind>UI Component</kind>
+      <signature>import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'</signature>
+      <path>src/components/ui/select.tsx</path>
+      <description>Accessible dropdown component from Radix UI. Use for stage selection dropdown (AC8.2.3).</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing uses Jest 30.x with React Testing Library 16.x and fake-indexeddb 6.2.4 for IndexedDB mocking. Component tests verify rendering, user interactions, and accessibility. Integration tests verify complete flows including repository calls and event creation. All async operations must be properly awaited. Use screen queries from @testing-library/react and userEvent from @testing-library/user-event for interactions.</standards>
+
+    <locations>
+      <location>src/components/__tests__/LifecycleStageSelector.test.tsx (NEW)</location>
+      <location>src/components/__tests__/FlareUpdateModal.lifecycle.test.tsx (NEW)</location>
+      <location>src/components/flares/__tests__/FlareUpdateModal.test.tsx (EXISTING - may need updates)</location>
+      <location>src/components/daily-log/__tests__/FlareQuickUpdateList.test.tsx (EXISTING - may need updates)</location>
+      <location>src/components/body-mapping/__tests__/MarkerDetailsModal.test.tsx (EXISTING - may need updates)</location>
+      <location>src/lib/utils/__tests__/lifecycleUtils.test.ts (EXISTING from Story 8.1 - 28 tests)</location>
+      <location>src/lib/repositories/__tests__/bodyMarkerRepository.lifecycleStages.test.ts (EXISTING from Story 8.1 - 21 tests)</location>
+    </locations>
+
+    <ideas>
+      <test_idea ac="AC8.2.1">FlareUpdateModal renders lifecycle selector in "Additional Details" expandable section</test_idea>
+      <test_idea ac="AC8.2.1">Current stage badge displays when Additional Details section is expanded</test_idea>
+      <test_idea ac="AC8.2.2">Suggest next button shows correct next stage using getNextLifecycleStage()</test_idea>
+      <test_idea ac="AC8.2.2">Suggest next button is disabled when current stage is 'resolved'</test_idea>
+      <test_idea ac="AC8.2.3">Stage dropdown shows all FlareLifecycleStage values with formatted labels</test_idea>
+      <test_idea ac="AC8.2.4">Stage description updates reactively when dropdown selection changes</test_idea>
+      <test_idea ac="AC8.2.5">FlareQuickUpdateList renders compact lifecycle selector in expandable section</test_idea>
+      <test_idea ac="AC8.2.6">MarkerDetailsModal displays lifecycle stage with icon for flare-type markers only</test_idea>
+      <test_idea ac="AC8.2.6">MarkerDetailsModal shows days in current stage calculated correctly</test_idea>
+      <test_idea ac="AC8.2.7">Can save severity update without changing lifecycle stage</test_idea>
+      <test_idea ac="AC8.2.8">Stage change calls bodyMarkerRepository.updateLifecycleStage() with correct parameters</test_idea>
+      <test_idea ac="AC8.2.8">lifecycle_stage_change event is created when stage is updated</test_idea>
+      <test_idea ac="AC8.2.9">Invalid stage transition shows error message (e.g., draining → growth)</test_idea>
+      <test_idea ac="AC8.2.9">Invalid stage options are disabled in dropdown</test_idea>
+      <test_idea ac="AC8.2.10">LifecycleStageSelector component accepts all required props</test_idea>
+      <test_idea ac="AC8.2.11">Mobile view renders with full-width dropdown and 44x44px touch targets</test_idea>
+      <test_idea ac="AC8.2.12">Integration test: Create flare → Update with stage → Verify event created → Check history</test_idea>
+      <test_idea ac="AC8.2.12">Integration test: Setting stage to 'resolved' updates marker status</test_idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -29,6 +29,281 @@ Each epic includes:
 
 ---
 
+## Epic 9: Flare Creation UX Redesign
+
+### Expanded Goal
+
+Redesign the flare creation user experience by eliminating modal-based workflows in favor of full-page flows that match the established pattern used for symptoms, triggers, foods, and medications. This redesign addresses UI inconsistency, improves mobile usability, and establishes a scalable pattern for future tracking features.
+
+### Value Proposition
+
+- **Consistency:** Flare creation matches symptom/trigger/food logging pattern (zero learning curve)
+- **Mobile-first:** Full-page flow eliminates cramped modal UI on small screens
+- **Onboarding:** Multi-flare logging in single session supports new users tracking existing active flares
+- **Pattern establishment:** Reusable full-page flow architecture for future features
+- **Component simplification:** Eliminating CreateFlareModal reduces code complexity
+
+### Epic Structure
+
+This epic delivers the new flare creation flow through 4 required stories + 1 optional enhancement:
+
+1. **Foundation (Stories 9.1-9.2):** Body map placement page + details page
+2. **Flow Completion (Story 9.3):** Success screen with "Add another" workflow
+3. **Integration (Story 9.4):** Wire all entry points, cleanup legacy modals
+4. **Enhancement (Story 9.5):** Optional onboarding guidance
+
+**Total Estimated Points:** 34 points (29 required + 5 optional)
+
+### Story Breakdown
+
+**Story 9.1: Body Map Placement Page (Foundation)**
+
+As a user logging a new flare,
+I want to mark the precise body location on a dedicated placement page,
+So that I can capture flare location data in a full-page interface without modal constraints.
+
+**Acceptance Criteria:**
+
+**Given** I am on the dashboard
+**When** I tap the "Flare" quick log button
+**Then** the system navigates to `/flares/place` with `source=dashboard` context
+**And** the layer selector displays at the top with "Flares" layer pre-selected
+**And** the full body map fills the viewport for region selection
+
+**Given** I am viewing the body map placement page
+**When** I tap a body region (e.g., "Left Armpit")
+**Then** the region zooms to fill the viewport
+**And** I can place one or more markers within the region by tapping precise locations
+**And** each marker placement captures normalized X/Y coordinates (0-1 scale) relative to the region
+**And** the "Next" button becomes enabled after at least 1 marker is placed
+
+**Given** I have placed 3 markers in the "Left Armpit" region
+**When** I tap the "Next" button
+**Then** the system navigates to `/flares/details` with params: `layer=flares`, `bodyRegionId=left-armpit`, `markerCoordinates=[{x,y},{x,y},{x,y}]`, `source=dashboard`
+
+**Given** I entered from body-map view with a pre-selected region
+**When** the placement page loads
+**Then** the layer selector is hidden (layer auto-inherited from body-map view)
+**And** the region is already zoomed
+**And** I can immediately place markers
+
+**Prerequisites:** None (foundational story)
+
+**Technical Notes:**
+- Create route: `/flares/place` in routing config
+- Component: `FlareBodyMapPlacementPage.tsx`
+- Reuse existing body map SVG rendering and zoom/pan controls from Epic 1
+- Layer selector component: conditional rendering based on entry source
+- URL state management for browser back button support (NFR9.9)
+- Multi-marker placement preserves existing Epic 3.7 behavior
+- Navigation context tracking via URL params and/or React context
+- Touch targets meet 44x44px minimum (NFR9.3)
+
+---
+
+**Story 9.2: Flare Details Page**
+
+As a user who has marked a flare location,
+I want to enter flare details (severity, lifecycle stage, notes) on a dedicated page,
+So that I can provide complete flare information in a spacious, mobile-friendly interface.
+
+**Acceptance Criteria:**
+
+**Given** I have navigated from the placement page with marker data
+**When** the details page loads at `/flares/details`
+**Then** the page displays the body region name prominently (e.g., "Left Armpit")
+**And** shows marker count if multiple: "3 markers placed in Left Armpit"
+**And** displays the selected layer as a read-only badge
+
+**Given** I am on the flare details page
+**When** I interact with the form
+**Then** I see a severity slider (1-10) with real-time visual feedback
+**And** I see the LifecycleStageSelector component with "onset" auto-suggested for new flares
+**And** I see a notes textarea with 500-character limit and counter
+**And** the "Save" button is disabled until severity is selected (required field)
+
+**Given** I have filled in all required fields (severity selected)
+**When** I tap "Save"
+**Then** the system creates a new flare entity with unique UUID
+**And** all marker locations are saved to the `bodyMapLocations` table
+**And** the flare is created with status "Active"
+**And** data persists to IndexedDB immediately (NFR9.10)
+**And** the system navigates to the success screen with flare summary
+
+**Given** the save operation fails (network error, validation error)
+**When** the error occurs
+**Then** the system displays a user-friendly error message
+**And** preserves all form state for retry
+**And** the "Save" button remains enabled for retry
+
+**Prerequisites:** Story 9.1 (placement page provides marker data)
+
+**Technical Notes:**
+- Create route: `/flares/details` in routing config
+- Component: `FlareDetailsPage.tsx`
+- Reuse: `LifecycleStageSelector` component from Epic 8
+- Form validation: Severity required, notes optional (max 500 chars)
+- Save handler creates FlareRecord + multiple bodyMapLocations records in single transaction
+- URL params: `layer`, `bodyRegionId`, `markerCoordinates[]`, `source`
+- Accessibility: ARIA labels, keyboard navigation, screen reader announcements (NFR9.6-9.8)
+- Performance: Page transitions < 200ms (NFR9.1)
+- Repository: `bodyMarkerRepository.createFlare(flareData, locations[])`
+
+---
+
+**Story 9.3: Success Screen with "Add Another" Flow**
+
+As a user who has successfully saved a flare,
+I want to see confirmation and easy options to log another flare or return to where I started,
+So that I can efficiently log multiple flares in one session or return to my workflow.
+
+**Acceptance Criteria:**
+
+**Given** I have successfully saved a flare
+**When** the success screen loads
+**Then** I see a success message: "✅ Flare saved with {n} locations!"
+**And** I see a flare summary showing: Region name, Severity (X/10), Lifecycle Stage
+**And** the summary is clearly formatted and easy to read
+
+**Given** I am viewing the success screen
+**When** I review the next action buttons
+**Then** I see a "🔄 Add another flare" button
+**And** I see a contextual return button based on entry source:
+  - "🏠 Back to dashboard" if `source=dashboard`
+  - "🗺️ Back to body-map" if `source=body-map`
+
+**Given** I am on the success screen
+**When** I tap "🔄 Add another flare"
+**Then** the system navigates to `/flares/place` with clean state (no pre-filled data)
+**And** I can immediately start logging a new flare
+
+**Given** I entered the flow from the dashboard
+**When** I tap "🏠 Back to dashboard"
+**Then** the system navigates to `/dashboard`
+**And** the newly created flare is visible in the Active Flares list
+
+**Given** I entered the flow from body-map view
+**When** I tap "🗺️ Back to body-map"
+**Then** the system navigates to `/body-map`
+**And** the body-map view shows the same layer and region I was viewing
+**And** the new flare marker is visible on the body map
+
+**Prerequisites:** Story 9.2 (details page saves flare and provides summary data)
+
+**Technical Notes:**
+- Create route: `/flares/success` in routing config
+- Component: `FlareSuccessScreen.tsx`
+- Receive flare summary via route state or query params
+- Context-aware navigation using `source` param
+- "Add another" resets form state completely (no data carryover)
+- Return navigation preserves view state for body-map (layer, zoom, region)
+- Analytics events: `flare_creation_saved`, `flare_creation_add_another_clicked` (FR9.5)
+- Mobile-optimized button layout with thumb-friendly positioning
+
+---
+
+**Story 9.4: Body-Map Entry Point & Component Cleanup**
+
+As a developer maintaining the flare creation system,
+I want to wire the body-map entry point and remove legacy modal code,
+So that both entry points (dashboard and body-map) work seamlessly and technical debt is eliminated.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing the body map with a region zoomed
+**When** I place a marker and tap the "+" button (flare creation button)
+**Then** the system navigates to `/flares/details` with marker data pre-filled
+**And** layer is auto-inherited from current body-map view (no layer selection needed)
+**And** bodyRegionId and markerCoordinates are passed from body-map state
+**And** `source=body-map` context is included for return navigation
+
+**Given** the new full-page flow is complete and tested
+**When** performing component cleanup
+**Then** the `CreateFlareModal` component is removed from the codebase
+**And** all imports/references to CreateFlareModal are removed or updated
+**And** the `FlareUpdateModal` component is refactored to handle only updates (not creation)
+**And** any creation logic in FlareUpdateModal is removed
+
+**Given** the dashboard "Flare" button
+**When** I click it
+**Then** it routes to `/flares/place` (not opening a modal)
+**And** no modal backdrop or dialog is rendered
+
+**Given** I am mid-flow on the placement or details page
+**When** I press the browser back button
+**Then** the browser navigates to the previous step in the flow
+**And** no data is lost (URL state management working)
+**And** I can navigate forward again if needed (NFR9.9)
+
+**Given** all changes are implemented
+**When** running analytics tracking
+**Then** the following events fire correctly:
+  - `flare_creation_started` (with source: dashboard | body-map)
+  - `flare_creation_placement_completed` (with markerCount)
+  - `flare_creation_details_completed` (with severity, lifecycleStage)
+  - `flare_creation_saved` (on successful save)
+  - `flare_creation_abandoned` (when user navigates away mid-flow)
+
+**Prerequisites:** Stories 9.1-9.3 (complete flow exists)
+
+**Technical Notes:**
+- Wire body-map "+" button → `/flares/details` route
+- Update dashboard "Flare" button onClick handler
+- Remove files: `CreateFlareModal.tsx`, related tests
+- Refactor: `FlareUpdateModal.tsx` (remove creation mode)
+- Update: Navigation wiring in `Dashboard.tsx`, `BodyMapView.tsx`
+- Add analytics tracking: 6 event types per FR9.5
+- URL state management: Use URLSearchParams for state preservation
+- End-to-end testing: Both entry points (dashboard → success, body-map → success)
+- Regression testing: Ensure existing flare update/resolve workflows unaffected
+- Performance validation: Page transitions < 200ms (NFR9.1)
+
+---
+
+**Story 9.5: Multi-Flare Onboarding Guidance (Optional Enhancement)**
+
+As a new user with multiple existing active flares,
+I want helpful guidance after logging my first flare,
+So that I know I can continue logging additional flares in the same session.
+
+**Acceptance Criteria:**
+
+**Given** I am a new user (account < 7 days old, < 3 flares logged)
+**When** I reach the success screen after my first flare
+**Then** I see an educational prompt: "💡 Tip: Have more active flares? Use 'Add another flare' to log them all now!"
+**And** the prompt is visually distinct but non-intrusive (info card style)
+**And** the prompt includes a "Got it" dismiss button
+
+**Given** I have dismissed the onboarding prompt once
+**When** I log subsequent flares during onboarding period
+**Then** the educational prompt does not appear again
+**And** my dismissal preference is stored in localStorage
+
+**Given** the onboarding enhancement is active
+**When** tracking adoption metrics
+**Then** the system logs the following events:
+  - `onboarding_multi_flare_prompt_shown`
+  - `onboarding_multi_flare_prompt_dismissed`
+  - `onboarding_multi_flare_add_another_clicked` (if user clicked "Add another" during onboarding)
+
+**Given** I am not in the onboarding window (account > 7 days or > 3 flares)
+**When** I view the success screen
+**Then** the educational prompt does not appear
+**And** the success screen shows standard UI without onboarding messages
+
+**Prerequisites:** Story 9.3 (success screen exists)
+
+**Technical Notes:**
+- Onboarding detection: Check user account age and flare count
+- Onboarding window: First 7 days AND < 3 flares logged
+- Educational prompt: Collapsible info card component
+- Dismissal state: localStorage key `flare-onboarding-dismissed`
+- Analytics: 3 new event types for adoption tracking
+- A/B testing ready: Can toggle feature via feature flag if needed
+- Non-blocking: Story is truly optional and doesn't affect core flow
+
+---
+
 ## Epic 0: UI/UX Revamp & Navigation Harmonization _(NEW)_
 
 ### Expanded Goal

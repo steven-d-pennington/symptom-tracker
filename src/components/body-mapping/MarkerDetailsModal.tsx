@@ -1,8 +1,15 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { X, MapPin, Activity, Calendar, Layers } from "lucide-react";
 import { format } from "date-fns";
+import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository";
+import {
+  getLifecycleStageIcon,
+  formatLifecycleStage,
+  getDaysInStage,
+} from "@/lib/utils/lifecycleUtils";
+import { BodyMarkerRecord, BodyMarkerEventRecord } from "@/lib/db/schema";
 
 export interface MarkerDetails {
   id: string;
@@ -15,6 +22,7 @@ export interface MarkerDetails {
     x: number;
     y: number;
   };
+  userId?: string; // Required for fetching lifecycle stage data
 }
 
 export interface MarkerDetailsModalProps {
@@ -40,6 +48,59 @@ export function MarkerDetailsModal({
   onClose,
   isOpen,
 }: MarkerDetailsModalProps) {
+  // Lifecycle stage state (for flare-type markers only)
+  const [lifecycleStage, setLifecycleStage] = useState<string | null>(null);
+  const [daysInStage, setDaysInStage] = useState<number | null>(null);
+  const [isLoadingLifecycle, setIsLoadingLifecycle] = useState(false);
+
+  // Fetch lifecycle stage data when modal opens for flare-type markers
+  useEffect(() => {
+    async function fetchLifecycleData() {
+      if (!marker || marker.layer !== 'flares' || !marker.userId) {
+        setLifecycleStage(null);
+        setDaysInStage(null);
+        return;
+      }
+
+      setIsLoadingLifecycle(true);
+      try {
+        // Fetch the full marker record to get currentLifecycleStage
+        const markerRecord = await bodyMarkerRepository.getMarker(marker.userId, marker.id);
+        
+        if (markerRecord && markerRecord.currentLifecycleStage) {
+          setLifecycleStage(markerRecord.currentLifecycleStage);
+          
+          // Fetch lifecycle stage history to calculate days in current stage
+          const history = await bodyMarkerRepository.getLifecycleStageHistory(
+            marker.userId,
+            marker.id
+          );
+          
+          // Calculate days in current stage
+          const days = getDaysInStage(markerRecord, history);
+          setDaysInStage(days);
+        } else {
+          setLifecycleStage(null);
+          setDaysInStage(null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch lifecycle stage data:', error);
+        setLifecycleStage(null);
+        setDaysInStage(null);
+      } finally {
+        setIsLoadingLifecycle(false);
+      }
+    }
+
+    if (isOpen && marker) {
+      fetchLifecycleData();
+    } else {
+      // Reset when modal closes
+      setLifecycleStage(null);
+      setDaysInStage(null);
+    }
+  }, [isOpen, marker]);
+
   // Handle ESC key to close modal
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -178,6 +239,40 @@ export function MarkerDetailsModal({
                   <div className="text-base text-gray-900 capitalize">
                     {marker.layer.replace(/-/g, " ")}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Lifecycle Stage (for flare-type markers only) */}
+            {marker.layer === 'flares' && (
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <span className="text-2xl">
+                    {lifecycleStage ? getLifecycleStageIcon(lifecycleStage as any) : '📊'}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-700">Lifecycle Stage</div>
+                  {isLoadingLifecycle ? (
+                    <div className="text-base text-gray-500">Loading...</div>
+                  ) : lifecycleStage ? (
+                    <>
+                      <div className="text-base text-gray-900 font-medium">
+                        {formatLifecycleStage(lifecycleStage as any)}
+                      </div>
+                      {daysInStage !== null && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          {daysInStage === 0
+                            ? 'Less than 1 day'
+                            : daysInStage === 1
+                            ? '1 day'
+                            : `${daysInStage} days`} in current stage
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-base text-gray-500">No lifecycle stage set</div>
+                  )}
                 </div>
               </div>
             )}

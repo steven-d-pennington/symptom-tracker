@@ -20,8 +20,10 @@ import {
   BodyMarkerLocationRecord,
   BodyMapLocationRecord,
   MarkerType,
+  FlareLifecycleStage,
 } from "../db/schema";
 import { v4 as uuidv4 } from "uuid";
+import { isValidStageTransition } from "../utils/lifecycleUtils";
 
 /**
  * Input contract for creating a marker.
@@ -416,6 +418,103 @@ export async function resolveMarker(
 }
 
 /**
+ * Updates the lifecycle stage of a flare marker (Story 8.1).
+ * Performs atomic transaction: validates transition, updates marker, creates event.
+ *
+ * @param userId - User ID for multi-user support
+ * @param markerId - Marker ID to update
+ * @param newStage - New lifecycle stage to set
+ * @param notes - Optional notes for the stage change event
+ * @returns Promise that resolves when update is complete
+ * @throws Error if marker not found, not a flare, or invalid transition
+ */
+export async function updateLifecycleStage(
+  userId: string,
+  markerId: string,
+  newStage: FlareLifecycleStage,
+  notes?: string
+): Promise<void> {
+  // Fetch existing marker record
+  const marker = await getMarkerById(userId, markerId);
+
+  if (!marker) {
+    throw new Error(`updateLifecycleStage: Marker ${markerId} not found for user ${userId}`);
+  }
+
+  // Validate marker is a flare (lifecycle stages only for flares)
+  if (marker.type !== 'flare') {
+    throw new Error('updateLifecycleStage: Lifecycle stages only apply to flare-type markers');
+  }
+
+  // Get current lifecycle stage (default to 'onset' if undefined)
+  const currentStage: FlareLifecycleStage = marker.currentLifecycleStage ?? 'onset';
+
+  // Validate stage transition
+  if (!isValidStageTransition(currentStage, newStage)) {
+    throw new Error(
+      `updateLifecycleStage: Invalid stage transition from ${currentStage} to ${newStage}`
+    );
+  }
+
+  // Perform atomic transaction
+  await db.transaction('rw', [db.bodyMarkers, db.bodyMarkerEvents], async () => {
+    const now = Date.now();
+
+    // Update marker.currentLifecycleStage
+    await db.bodyMarkers.update(markerId, {
+      currentLifecycleStage: newStage,
+      updatedAt: now,
+    });
+
+    // If newStage is 'resolved', also update marker status and endDate
+    if (newStage === 'resolved') {
+      await db.bodyMarkers.update(markerId, {
+        status: 'resolved',
+        endDate: now,
+        updatedAt: now,
+      });
+    }
+
+    // Create lifecycle_stage_change event
+    const event: BodyMarkerEventRecord = {
+      id: uuidv4(),
+      markerId,
+      userId,
+      eventType: 'lifecycle_stage_change',
+      timestamp: now,
+      lifecycleStage: newStage,
+      notes: notes?.trim() || undefined,
+    };
+
+    await db.bodyMarkerEvents.add(event);
+  });
+}
+
+/**
+ * Retrieves lifecycle stage change history for a marker (Story 8.1).
+ *
+ * @param userId - User ID for multi-user support
+ * @param markerId - Marker ID to retrieve history for
+ * @returns Promise resolving to array of lifecycle_stage_change events (chronological order, oldest first)
+ */
+export async function getLifecycleStageHistory(
+  userId: string,
+  markerId: string
+): Promise<BodyMarkerEventRecord[]> {
+  // Query all events for this marker
+  const allEvents = await db.bodyMarkerEvents
+    .where('[markerId+timestamp]')
+    .between([markerId, 0], [markerId, Date.now() + 1])
+    .and((event) => event.userId === userId)
+    .toArray();
+
+  // Filter to lifecycle_stage_change events and sort chronologically (oldest first)
+  return allEvents
+    .filter((event) => event.eventType === 'lifecycle_stage_change')
+    .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+/**
  * Repository object with all marker operations.
  */
 export const bodyMarkerRepository = {
@@ -429,4 +528,6 @@ export const bodyMarkerRepository = {
   updateMarker,
   addMarkerEvent,
   resolveMarker,
+  updateLifecycleStage,
+  getLifecycleStageHistory,
 };

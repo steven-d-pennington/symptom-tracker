@@ -37,6 +37,7 @@ export function DevDataControls() {
         `• ${result.foodsCreated} foods\\n\\n` +
         `📈 **Health Events:**\\n` +
         `• ${result.flaresCreated} flares (with ${result.flareEventsCreated} events)\\n` +
+        `• ${result.lifecycleStageEvents} lifecycle stage transitions (onset → resolved when possible)\\n` +
         `• ${result.symptomInstances} symptom instances\\n` +
         `• ${result.medicationEvents} medication events\\n` +
         `• ${result.triggerEvents} trigger events\\n` +
