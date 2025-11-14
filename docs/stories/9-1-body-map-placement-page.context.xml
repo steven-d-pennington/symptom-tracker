@@ -1,0 +1,258 @@
+<story-context id="{bmad_folder}/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>1</storyId>
+    <title>Body Map Placement Page</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/9-1-body-map-placement-page.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user tracking HS flares</asA>
+    <iWant>to select flare locations on a full-page body map</iWant>
+    <soThat>I can precisely mark where my flares are occurring using a spacious, mobile-friendly interface</soThat>
+    <tasks>
+      - Task 1: Create route structure and page component (AC: #9.1.1)
+      - Task 2: Implement layer selector with conditional rendering (AC: #9.1.2)
+      - Task 3: Integrate body map with region selection (AC: #9.1.3)
+      - Task 4: Implement multi-marker placement (AC: #9.1.4)
+      - Task 5: Implement "Next" button with marker count (AC: #9.1.5)
+      - Task 6: Implement navigation to details page (AC: #9.1.6)
+      - Task 7: Wire dashboard entry point (AC: #9.1.7)
+      - Task 8: Implement mobile-responsive design (AC: #9.1.8)
+      - Task 9: Implement accessibility features (AC: #9.1.9)
+      - Task 10: Implement analytics tracking (AC: #9.1.10)
+      - Task 11: Write unit and integration tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC9.1.1: Route `/flares/place` exists and renders - System shall provide route `/flares/place` that renders a full-page body map placement interface. Route shall be accessible from dashboard and body-map views. Page shall parse URL params: `source` (required), `layer` (optional, defaults to 'flares').
+
+    AC9.1.2: Layer selector displayed conditionally - When `source=dashboard`, display layer selector at top of page with tabs: Flares | Pain | Custom. When `source=body-map`, hide layer selector (layer inherited from current view). Selected layer defaults to 'flares' when entered from dashboard.
+
+    AC9.1.3: Body map renders with interactive region selection - Page shall render full-page body map using existing `BodyMapInteractive` component. User can click any body region → region fills viewport (zoom behavior from Epic 3.7). Body map shall support all regions from existing schema.
+
+    AC9.1.4: Multi-marker placement within single region - After region selected, user shall be able to place multiple markers within that region by tapping/clicking. System shall capture precise X/Y coordinates for each marker relative to region SVG. Markers shall render with visual feedback (e.g., red dots with border).
+
+    AC9.1.5: "Next" button enabled after marker placement - "Next" button shall be disabled initially. Button becomes enabled when at least 1 marker has been placed. Button shall display marker count when enabled: "Next (2 markers)" if 2 markers placed.
+
+    AC9.1.6: Navigation to details page with marker data - Clicking "Next" shall navigate to `/flares/details` with URL params: `source`, `layer`, `bodyRegionId`, `markerCoordinates` (JSON array of {x, y} objects).
+
+    AC9.1.7: Dashboard entry point wiring - Dashboard "Flare" quick action button shall navigate to `/flares/place?source=dashboard` (not open modal). Remove any `CreateFlareModal` state/handlers from dashboard page.
+
+    AC9.1.8: Mobile-first responsive design - Full-page layout shall work on mobile (iOS/Android), tablet, and desktop browsers. Touch targets shall meet WCAG 2.1 Level AA (44x44px minimum). Body map shall be scrollable/zoomable on small screens without modal scroll container conflicts.
+
+    AC9.1.9: Accessibility compliance - All interactive elements shall have proper ARIA labels. Page transition shall announce "Flare placement" to screen readers via aria-live region. Keyboard navigation: Tab to region/markers, Enter to select, Escape to cancel/return.
+
+    AC9.1.10: Analytics event tracking - Fire `flare_creation_started` event when page loads with source param. Fire `flare_creation_placement_completed` event when "Next" clicked with markerCount. Fire `flare_creation_abandoned` event if user navigates away without completing.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/Epic-9-Flare-Creation-UX-Redesign-PRD.md</path>
+        <title>Epic 9: Flare Creation UX Redesign - Product Requirements</title>
+        <section>FR9.1: Body Map Placement Page</section>
+        <snippet>System shall provide route `/flares/place` for body map placement. Dashboard "Flare" quick log button shall navigate to `/flares/place` with context: `source=dashboard`. Layer selector shall display at top of placement page with tabs.</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9: Architecture Addendum</title>
+        <section>Route Definitions - /flares/place</section>
+        <snippet>Full-page body map with zoom/pan (reuses Epic 1/3.7 components). Layer selector at top (conditional: hidden if source=body-map). Multi-marker placement within single region. URL-based state management for browser navigation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9: Architecture Addendum</title>
+        <section>Component Reuse Strategy</section>
+        <snippet>Reuse existing body map, lifecycle, and layer components without modification. Epic 9 pages must adapt to existing component APIs. Components: BodyMapInteractive (Epic 1), RegionDetailView (Epic 3.7), LayerSelector (Epic 5).</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Full-Page Flow Pattern</section>
+        <snippet>Established pattern for symptom/trigger/food logging. Progressive disclosure: Step 1 (placement) → Step 2 (details) → Step 3 (success). Mobile-first with 44x44px minimum touch targets.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/body-map/LayerSelector.tsx</path>
+        <kind>component</kind>
+        <symbol>LayerSelector</symbol>
+        <reason>Layer selection component for flares/pain/custom tabs (Epic 5). Will be conditionally rendered in placement page based on source param.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/RegionDetailView.tsx</path>
+        <kind>component</kind>
+        <symbol>RegionDetailView</symbol>
+        <reason>Region zoom and multi-marker placement logic (Epic 3.7). Handles coordinate capture, marker rendering, and session marker tracking.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/types/body-mapping.ts</path>
+        <kind>types</kind>
+        <symbol>BodyRegion, LayerType, BodyMapLocation</symbol>
+        <reason>Type definitions for body regions, layers, and marker coordinates. Used throughout placement page for type safety.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>normalizeCoordinates, denormalizeCoordinates</symbol>
+        <reason>Coordinate normalization utilities for converting between screen and SVG coordinate systems.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/dashboard/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DashboardPage</symbol>
+        <reason>Dashboard page with "Flare" quick action button. Will be modified to route to /flares/place instead of opening modal.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>next</package>
+        <version>15.5.4</version>
+        <reason>Next.js App Router for route /flares/place, useRouter, useSearchParams</reason>
+      </node>
+      <node>
+        <package>react</package>
+        <version>19.1.0</version>
+        <reason>React hooks: useState, useCallback, useEffect for component state management</reason>
+      </node>
+      <node>
+        <package>@radix-ui/react-tabs</package>
+        <version>^1.1.13</version>
+        <reason>Layer selector tabs (if needed, though LayerSelector already exists)</reason>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>^0.544.0</version>
+        <reason>Icons for UI elements (ArrowLeft, ZoomIn, etc.)</reason>
+      </node>
+      <node>
+        <package>tailwindcss</package>
+        <version>^4</version>
+        <reason>Styling with responsive breakpoints and WCAG-compliant touch targets</reason>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - URL-based state management: All navigation state passed via URL params (source, layer)
+    - Component reuse only: Do NOT modify existing Epic 1/3.7/5 components
+    - Mobile-first design: 44x44px minimum touch targets (WCAG 2.1 Level AA)
+    - No modal patterns: Full-page layout only (matches symptom/trigger/food logging)
+    - Browser back button support: URL params enable natural browser navigation
+    - No CreateFlareModal: Dashboard button routes to /flares/place, not modal
+    - Preserve marker coordinates: Use normalized 0-1 coordinate system from RegionDetailView
+    - Layer inheritance: When source=body-map, layer is inherited from current view (no selector shown)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>LayerSelector Component API</name>
+      <kind>React Component Props</kind>
+      <signature>LayerSelector({ currentLayer: LayerType, onLayerChange: (layer: LayerType) => void, disabled?: boolean, lastUsedLayer?: LayerType })</signature>
+      <path>src/components/body-map/LayerSelector.tsx</path>
+    </interface>
+    <interface>
+      <name>RegionDetailView Component API</name>
+      <kind>React Component Props</kind>
+      <signature>RegionDetailView({ regionId: string, viewType: 'front'|'back'|'left'|'right', userId: string, layer?: LayerType, markers?: BodyMapLocation[], onBack: () => void, onMarkerPlace?: (regionId, coordinates, details?) => void, readOnly?: boolean })</signature>
+      <path>src/components/body-mapping/RegionDetailView.tsx</path>
+    </interface>
+    <interface>
+      <name>Next.js Router (useRouter)</name>
+      <kind>Next.js Hook</kind>
+      <signature>const router = useRouter(); router.push(url: string)</signature>
+      <path>next/navigation</path>
+    </interface>
+    <interface>
+      <name>URL Search Params (useSearchParams)</name>
+      <kind>Next.js Hook</kind>
+      <signature>const searchParams = useSearchParams(); searchParams.get(key: string)</signature>
+      <path>next/navigation</path>
+    </interface>
+    <interface>
+      <name>Navigation URL Format</name>
+      <kind>URL Pattern</kind>
+      <signature>/flares/details?source={source}&layer={layer}&bodyRegionId={regionId}&markerCoordinates=[{x,y},{x,y}]</signature>
+      <path>Epic 9 Architecture</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Testing Framework: Jest with @testing-library/react
+      - Test Location: src/app/(protected)/flares/place/__tests__/page.test.tsx
+      - Coverage Target: 100% for new page component
+      - Test Patterns: Unit tests for logic, integration tests for navigation flow
+      - Accessibility Testing: ARIA labels, keyboard navigation, screen reader announcements
+      - Device Testing: Document actual device tests with model, OS version, screenshots
+      - Test Execution: RUN tests and document pass/fail results (Story 8.2 lesson learned)
+    </standards>
+    <locations>
+      - Unit tests: src/app/(protected)/flares/place/__tests__/page.test.tsx
+      - Integration tests: Same file, separate describe blocks
+      - Component tests: Verify LayerSelector and RegionDetailView integration
+      - E2E tests: Dashboard → placement → details flow
+    </locations>
+    <ideas>
+      <test ac="AC9.1.1">
+        - Test: Page component renders at /flares/place route
+        - Test: URL param parsing (source=dashboard, layer=flares)
+        - Test: Invalid source param redirects to /dashboard
+        - Test: Missing source param redirects to /dashboard
+      </test>
+      <test ac="AC9.1.2">
+        - Test: Layer selector visible when source=dashboard
+        - Test: Layer selector hidden when source=body-map
+        - Test: Selected layer defaults to 'flares'
+        - Test: Layer change updates local state (not URL yet)
+      </test>
+      <test ac="AC9.1.3">
+        - Test: Body map renders with RegionDetailView component
+        - Test: Region click triggers zoom behavior
+        - Test: All body regions are clickable
+      </test>
+      <test ac="AC9.1.4">
+        - Test: Marker placement adds to markers array
+        - Test: Multiple markers can be placed in single region
+        - Test: Marker coordinates captured correctly (normalized 0-1)
+        - Test: Markers render with visual feedback
+      </test>
+      <test ac="AC9.1.5">
+        - Test: "Next" button disabled when markers.length === 0
+        - Test: "Next" button enabled when markers.length > 0
+        - Test: Button displays marker count: "Next (2 markers)"
+      </test>
+      <test ac="AC9.1.6">
+        - Test: Navigation to /flares/details with correct URL params
+        - Test: markerCoordinates JSON-encoded correctly
+        - Test: source and layer params preserved in navigation
+      </test>
+      <test ac="AC9.1.7">
+        - Test: Dashboard "Flare" button routes to /flares/place?source=dashboard
+        - Test: CreateFlareModal state/handlers removed from dashboard
+      </test>
+      <test ac="AC9.1.8">
+        - Test: Responsive styles for mobile (320px+), tablet (768px+), desktop (1024px+)
+        - Test: Touch targets minimum 44x44px
+        - Test: Actual device testing documented (iPhone, Android, iPad)
+      </test>
+      <test ac="AC9.1.9">
+        - Test: ARIA labels on all interactive elements
+        - Test: Page announces "Flare placement" to screen readers
+        - Test: Keyboard navigation (Tab, Enter, Escape)
+        - Test: Screen reader testing documented (NVDA, VoiceOver)
+      </test>
+      <test ac="AC9.1.10">
+        - Test: flare_creation_started event fires on page load
+        - Test: flare_creation_placement_completed event fires on "Next" click
+        - Test: flare_creation_abandoned event fires on unmount without completion
+        - Test: Event data includes source, markerCount, timestamp
+      </test>
+    </ideas>
+  </tests>
+</story-context>

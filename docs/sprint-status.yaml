@@ -1,4 +1,4 @@
-# generated: 2025-10-27
+# generated: 2025-11-14
 # project: symptom-tracker
 # project_key: symptom-tracker
 # tracking_system: file-system
@@ -29,7 +29,7 @@
 # - SM typically drafts next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
 
-generated: 2025-10-27
+generated: 2025-11-14
 project: symptom-tracker
 project_key: symptom-tracker
 tracking_system: file-system
@@ -172,3 +172,21 @@ development_status:
   8-2-lifecycle-stage-ui-components-and-integration: in-progress  # CHANGES REQUESTED - See Senior Developer Review in story file
   8-3-lifecycle-stage-timeline-visualization: backlog
   epic-8-retrospective: optional
+
+  # EPIC 9 PLAN (2025-11-14):
+  # Flare Creation UX Redesign - Modal to Full-Page Flow
+  # - PRD: Epic-9-Flare-Creation-UX-Redesign-PRD.md
+  # - Architecture: Epic-9-Architecture-Addendum.md
+  # - Pattern: Consistent full-page flow matching symptom/trigger/food logging
+  # - Stories 9.1-9.4: Required (MVP)
+  # - Story 9.5: Optional (Onboarding enhancement)
+  # - Story 9.1 context generated 2025-11-14
+  # - NEXT: Run dev-story for 9-1-body-map-placement-page
+
+  epic-9: contexted
+  9-1-body-map-placement-page: ready-for-dev
+  9-2-flare-details-page: backlog
+  9-3-success-screen-with-add-another-flow: backlog
+  9-4-body-map-entry-point-and-component-cleanup: backlog
+  9-5-multi-flare-onboarding-guidance: backlog  # Optional enhancement
+  epic-9-retrospective: optional
