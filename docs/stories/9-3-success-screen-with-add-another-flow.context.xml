@@ -1,0 +1,232 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>3</storyId>
+    <title>Success Screen with Add Another Flow</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>c:\projects\symptom-tracker\docs\stories\9-3-success-screen-with-add-another-flow.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user who has successfully saved a flare</asA>
+    <iWant>to see a confirmation screen with options to add another flare or return to my entry point</iWant>
+    <soThat>I can efficiently log multiple flares in a single session or return to where I started</soThat>
+    <tasks>
+- Task 1: Create route structure and page component (AC: #9.3.1)
+  - 1.1: Create directory structure: src/app/(protected)/flares/success/
+  - 1.2: Create page.tsx file with FlareSuccessScreen component
+  - 1.3: Import Next.js routing hooks: useRouter, useSearchParams
+  - 1.4: Parse URL params: source, flareId, region, severity, lifecycleStage, locations
+  - 1.5: Add param validation: redirect to /dashboard if source missing or invalid
+  - 1.6: Set up page layout with full-viewport responsive design
+  - 1.7: Add TypeScript types for URL params and component props
+
+- Task 2: Display success message with location count (AC: #9.3.2)
+  - 2.1: Parse locations param from URL (default to 1 if not provided)
+  - 2.2: Render h1 or h2 element with success message
+  - 2.3: Style success message prominently
+  - 2.4: Add checkmark emoji or icon for visual confirmation
+  - 2.5: Test message renders correctly for 1 location and multiple locations
+
+- Task 3: Display flare summary card (AC: #9.3.3)
+  - 3.1-3.8: Summary card with region, severity, lifecycle stage
+
+- Task 4: Implement "Add another flare" button (AC: #9.3.4)
+  - 4.1-4.6: Primary button with navigation to /flares/place?source={source}
+
+- Task 5: Implement contextual return button (AC: #9.3.5)
+  - 5.1-5.7: Dynamic button based on source (dashboard vs body-map)
+
+- Task 6: Navigation context preservation (AC: #9.3.6)
+  - 6.1-6.6: Preserve source param through workflow chain
+
+- Task 7: Implement analytics tracking (AC: #9.3.7)
+  - 7.1-7.5: Fire flare_creation_add_another_clicked event
+
+- Task 8: Implement mobile-responsive and accessible design (AC: #9.3.8)
+  - 8.1-8.8: WCAG 2.1 Level AA compliance, ARIA attributes
+
+- Task 9: Performance optimization (AC: #9.3.9)
+  - 9.1-9.5: Target <200ms page load, synchronous param parsing
+
+- Task 10: Multi-flare workflow validation (AC: #9.3.10)
+  - 10.1-10.6: Test complete multi-flare workflow chain
+
+- Task 11: Write unit and integration tests
+  - 11.1-11.14: Comprehensive test coverage for all acceptance criteria
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC9.3.1 — Route /flares/success exists and renders with URL params: source (required), flareId, region, severity, lifecycleStage, locations. Redirect to /dashboard if source missing/invalid.
+
+AC9.3.2 — Display success message: "✅ Flare saved with {n} locations!" where n defaults to 1.
+
+AC9.3.3 — Display flare summary card showing: body region name, severity (X/10), lifecycle stage (title case). Display "N/A" for missing fields.
+
+AC9.3.4 — "Add another flare" button navigates to /flares/place?source={source}, preserving entry point context. Primary styling, minimum 44x44px touch target.
+
+AC9.3.5 — Contextual return button based on source:
+- source=dashboard: "Back to dashboard" → /dashboard
+- source=body-map: "Back to body-map" → /body-map
+Secondary styling, minimum 44x44px touch target.
+
+AC9.3.6 — Navigation preserves entry point context throughout workflow chain via source param.
+
+AC9.3.7 — Fire flare_creation_add_another_clicked analytics event when "Add another" clicked. Include source metadata.
+
+AC9.3.8 — Mobile-responsive and accessible: WCAG 2.1 Level AA compliance, ARIA landmarks (role="main"), ARIA live regions (role="status"), keyboard navigation (Tab/Enter), visible focus states.
+
+AC9.3.9 — Performance target: Page load <200ms on mobile. No async data fetching (all data from URL params).
+
+AC9.3.10 — Multi-flare workflow support: User can loop success → place → details → success N times, then exit via contextual return. Source preserved throughout.
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/Epic-9-Flare-Creation-UX-Redesign-PRD.md</path>
+        <title>Epic 9: Flare Creation UX Redesign - Product Requirements Document</title>
+        <section>FR9.3: Success Screen</section>
+        <snippet>Success screen displays confirmation message with flare summary (region, severity, lifecycle stage), "Add another flare" button for multi-flare logging workflow, and contextual return button (dashboard vs body-map) based on entry point. Supports multi-flare onboarding use case.</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Flare-Creation-UX-Redesign-PRD.md</path>
+        <title>Epic 9 PRD</title>
+        <section>Key User Journeys - Journey 2: Onboarding Multiple Active Flares</section>
+        <snippet>"Add another" workflow enables users to log multiple flares in single session: create flare → success screen → click "Add another" → repeat N times → click contextual return. Critical for onboarding users with existing active flares.</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9 Architecture Addendum</title>
+        <section>Route Definitions - /flares/success</section>
+        <snippet>URL params: source (required), flareId, region, severity, lifecycleStage, locations (optional). Component: FlareSuccessScreen. Navigation targets: "Add another" → /flares/place?source={preserved}, Return → /dashboard or /body-map based on source.</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9 Architecture Addendum</title>
+        <section>State Management Architecture - Navigation Context Pattern</section>
+        <snippet>Source parameter carried through entire flow chain to enable correct return destination. Preserved in all navigation URLs. Example: router.push('/flares/place?source=dashboard').</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9 Architecture Addendum</title>
+        <section>Accessibility - NFR9.3-9.8</section>
+        <snippet>WCAG 2.1 Level AA compliance: 44x44px touch targets, ARIA labels, keyboard navigation (Tab/Enter), screen reader announcements (role="status" for success message), ARIA live regions for announcements.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/app/(protected)/flares/place/page.tsx</path>
+        <kind>page component</kind>
+        <symbol>FlareBodyMapPlacementPage</symbol>
+        <lines>1-242</lines>
+        <reason>Story 9.1 implementation - URL state management pattern (useRouter, useSearchParams), source param validation, navigation to details page. Demonstrates analytics tracking pattern (console.log events), ARIA attributes (role="main", role="status"), keyboard navigation (Escape key), and 48px touch target buttons.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/details/page.tsx</path>
+        <kind>page component</kind>
+        <symbol>FlareDetailsPage</symbol>
+        <lines>1-381</lines>
+        <reason>Story 9.2 implementation - URL param parsing/validation pattern, navigation to success page with flare summary params (lines 175-184), analytics event tracking, error handling with ARIA live regions, lifecycle stage integration. Shows how to format region names (lines 100-105) and construct URLSearchParams for navigation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/announce.ts</path>
+        <kind>utility</kind>
+        <symbol>announce</symbol>
+        <lines>N/A</lines>
+        <reason>Screen reader announcement utility used in Stories 9.1 and 9.2. Use for announcing success message to screen readers (ARIA live region pattern).</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/ui/button.tsx</path>
+        <kind>component</kind>
+        <symbol>Button</symbol>
+        <lines>N/A</lines>
+        <reason>Shadcn/ui button component used in details page. Use for "Add another flare" and contextual return buttons to maintain consistent styling.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/ui/badge.tsx</path>
+        <kind>component</kind>
+        <symbol>Badge</symbol>
+        <lines>N/A</lines>
+        <reason>Shadcn/ui badge component. Could be used to display lifecycle stage or severity in summary card.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="15.5.4">App Router with useRouter, useSearchParams hooks</package>
+        <package name="react" version="19.1.0">Client components, hooks (useState, useEffect, useCallback)</package>
+        <package name="lucide-react" version="^0.544.0">Icons for buttons (optional)</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>URL-based state management: All page state from URL params (source, flareId, region, severity, lifecycleStage, locations). No React context or hidden state. Enables browser back button support.</constraint>
+    <constraint>Synchronous param parsing: Parse URL params immediately on render (not in useEffect) to avoid flash of empty content. Target page load &lt;200ms.</constraint>
+    <constraint>Navigation context preservation: source param must be preserved in "Add another" navigation to enable correct return destination after multi-flare workflow.</constraint>
+    <constraint>WCAG 2.1 Level AA compliance: All buttons minimum 44x44px touch targets. ARIA landmarks (role="main"). ARIA live regions (role="status") for success message announcements.</constraint>
+    <constraint>Analytics tracking pattern: Use console.log for event tracking (matches Stories 9.1 and 9.2). Events: flare_creation_add_another_clicked with source metadata.</constraint>
+    <constraint>Mobile-first responsive design: Full-page layout works on mobile (320px+), tablet (768px+), desktop (1024px+). Vertical stacking on mobile, centered content with max-width on desktop.</constraint>
+    <constraint>Component consistency: Follow Story 9.1/9.2 patterns for page structure, ARIA attributes, keyboard navigation (Tab/Enter), and error handling.</constraint>
+    <constraint>No data fetching: Success page is stateless - all data comes from URL params. No IndexedDB reads, no API calls. Performance optimized.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>useRouter (Next.js)</name>
+      <kind>React hook</kind>
+      <signature>const router = useRouter(); router.push(url: string)</signature>
+      <path>next/navigation</path>
+    </interface>
+    <interface>
+      <name>useSearchParams (Next.js)</name>
+      <kind>React hook</kind>
+      <signature>const searchParams = useSearchParams(); searchParams.get(key: string): string | null</signature>
+      <path>next/navigation</path>
+    </interface>
+    <interface>
+      <name>FlareCreationSource</name>
+      <kind>TypeScript type</kind>
+      <signature>type FlareCreationSource = 'dashboard' | 'body-map'</signature>
+      <path>Defined in Stories 9.1 and 9.2 page components</path>
+    </interface>
+    <interface>
+      <name>URLSearchParams Navigation Pattern</name>
+      <kind>Navigation pattern</kind>
+      <signature>const params = new URLSearchParams({ source, flareId, region, severity, lifecycleStage, locations }); router.push(`/path?${params.toString()}`)</signature>
+      <path>Used in /flares/details/page.tsx lines 175-184</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Testing framework: Jest with React Testing Library (@testing-library/react, @testing-library/jest-dom, @testing-library/user-event).
+
+Story 9.2 established comprehensive testing pattern with 55 tests covering all acceptance criteria. Follow same approach:
+- Unit tests for URL param parsing, validation, rendering, user interactions
+- Integration tests for navigation flows
+- Accessibility tests (ARIA attributes, keyboard navigation)
+- Error boundary tests
+- Mock Next.js routing hooks (useRouter, useSearchParams)
+
+Test execution: Run tests AND document actual output (Task 11.14 requirement from Story 9.2 learnings).
+    </standards>
+    <locations>
+      <location>src/app/(protected)/flares/success/__tests__/page.test.tsx</location>
+      <location>Pattern: Co-locate tests with page components in __tests__ subdirectory</location>
+    </locations>
+    <ideas>
+      <idea ac="AC9.3.1">Test route renders with valid URL params (source, flareId, region, severity, lifecycleStage, locations). Test redirect to /dashboard when source param missing or invalid.</idea>
+      <idea ac="AC9.3.2">Test success message displays with correct location count: "✅ Flare saved with 1 location!" and "✅ Flare saved with 3 locations!". Test default to 1 when locations param missing.</idea>
+      <idea ac="AC9.3.3">Test flare summary card displays region name, severity (X/10), lifecycle stage (title case). Test displays "N/A" for missing optional params (region, severity, lifecycleStage).</idea>
+      <idea ac="AC9.3.4">Test "Add another flare" button renders with correct text and emoji. Test navigation to /flares/place?source={source} with preserved source param. Test button has minimum 44x44px touch target.</idea>
+      <idea ac="AC9.3.5">Test contextual return button text/destination based on source: "🏠 Back to dashboard" → /dashboard when source=dashboard, "🗺️ Back to body-map" → /body-map when source=body-map. Test 44x44px touch target.</idea>
+      <idea ac="AC9.3.6">Test source param preservation through navigation: "Add another" click navigates to /flares/place?source=dashboard when source=dashboard, navigates to /flares/place?source=body-map when source=body-map.</idea>
+      <idea ac="AC9.3.7">Test analytics event fires on "Add another" button click: flare_creation_add_another_clicked with source metadata (dashboard | body-map).</idea>
+      <idea ac="AC9.3.8">Test ARIA attributes present: role="main" on page container, role="status" on success message. Test keyboard navigation: Tab through buttons, Enter activates. Test focus visible on interactive elements.</idea>
+      <idea ac="AC9.3.9">Test page renders synchronously without async data fetching (all data from URL params). Verify no loading states or spinners.</idea>
+      <idea ac="AC9.3.10">Test multi-flare workflow: Verify "Add another" button navigation preserves source param for workflow looping. Verify return button navigates to correct destination based on preserved source.</idea>
+    </ideas>
+  </tests>
+</story-context>
