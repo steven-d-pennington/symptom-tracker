@@ -360,19 +360,25 @@ export default function FlaresPage() {
         )}
       </div>
 
-      {/* Story 9.4: FAB navigates to placement page (dashboard entry flow) */}
+      {/* Story 9.4: FAB button - context-aware navigation */}
       <button
         onClick={() => {
-          console.log('[Analytics] flare_creation_started', {
-            source: 'body-map',
-            layer: currentLayer,
-            timestamp: new Date().toISOString(),
-          });
-          router.push(`/flares/place?source=body-map&layer=${currentLayer}`);
+          // If markers already placed, go to details page (skip placement)
+          if (selectedCoordinates.length > 0) {
+            handleDoneMarking();
+          } else {
+            // No markers yet, go to placement page to start fresh
+            console.log('[Analytics] flare_creation_started', {
+              source: 'body-map',
+              layer: currentLayer,
+              timestamp: new Date().toISOString(),
+            });
+            router.push(`/flares/place?source=body-map&layer=${currentLayer}`);
+          }
         }}
         className="fixed bottom-20 lg:bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary-dark hover:scale-105 transition-all flex items-center justify-center z-50"
         style={{ boxShadow: 'var(--shadow-lg)' }}
-        title="Create New Flare"
+        title={selectedCoordinates.length > 0 ? "Continue to Flare Details" : "Create New Flare"}
       >
         <Plus className="h-6 w-6" />
       </button>
