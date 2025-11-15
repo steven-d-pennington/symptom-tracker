@@ -1,0 +1,591 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>4</storyId>
+    <title>Body-Map Entry Point &amp; Component Cleanup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/9-4-body-map-entry-point-and-component-cleanup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer maintaining the flare creation system</asA>
+    <iWant>to wire the body-map entry point and remove legacy modal code</iWant>
+    <soThat>both entry points (dashboard and body-map) work seamlessly and technical debt is eliminated</soThat>
+    <tasks>
+- Task 1: Wire body-map entry point to details page
+  - Update RegionDetailView "+" button to navigate to /flares/details with params
+  - Add analytics tracking for body-map entry point
+- Task 2: Update dashboard "Flare" button navigation
+  - Replace modal opening with router.push to /flares/place?source=dashboard
+  - Remove CreateFlareModal state management
+- Task 3: Remove CreateFlareModal component
+  - Delete CreateFlareModal.tsx and test files
+  - Update all importing components
+- Task 4: Refactor FlareUpdateModal (remove creation mode)
+  - Simplify to handle updates only
+  - Remove creation mode logic and props
+- Task 5: Implement analytics event tracking
+  - Create trackFlareCreationEvent utility
+  - Add 6 analytics events throughout flow
+- Task 6: Implement browser back button support
+  - Verify URL-based state management
+  - Test back/forward navigation
+- Task 7: End-to-end flow testing
+  - Test complete dashboard flow
+  - Test complete body-map flow
+  - Test multi-flare workflow
+- Task 8: Regression testing
+  - Test existing flare update flow
+  - Test flare resolution flow
+  - Verify Epic 2/3.7 functionality
+- Task 9: Performance validation
+  - Measure page transition times (&lt;200ms)
+  - Verify no body map rendering regression
+- Task 10: Accessibility validation
+  - Verify touch targets (44x44px)
+  - Test keyboard navigation and screen readers
+- Task 11: Write integration tests
+  - Create comprehensive integration test suite
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC9.4.1 — Body-map entry point wired: System enables body-map "+" button to navigate to /flares/details with marker data pre-filled (source=body-map, layer, bodyRegionId, markerCoordinates). Layer selector hidden on details page.
+
+AC9.4.2 — CreateFlareModal removed: CreateFlareModal component completely removed from codebase. All imports and references updated/removed.
+
+AC9.4.3 — FlareUpdateModal refactored: FlareUpdateModal handles only updates to existing flares (not creation). All creation mode logic removed.
+
+AC9.4.4 — Dashboard "Flare" button routes to placement page: Dashboard "Flare" quick action button navigates to /flares/place?source=dashboard (not modal).
+
+AC9.4.5 — Browser back button support: Browser back button works naturally throughout flow (placement → details → success). No data loss during navigation.
+
+AC9.4.6 — Analytics event tracking complete: Six analytics events fire correctly:
+  - flare_creation_started (source: dashboard | body-map)
+  - flare_creation_placement_completed (markerCount)
+  - flare_creation_details_completed (severity, lifecycleStage)
+  - flare_creation_saved (on success page load)
+  - flare_creation_abandoned (when user navigates away mid-flow)
+  - flare_creation_add_another_clicked
+
+AC9.4.7 — End-to-end flows validated: Both entry point flows work completely:
+  - Dashboard flow: Dashboard → placement → details → success → dashboard
+  - Body-map flow: Body-map → details → success → body-map
+  - Multi-flare workflow: success → place → details (loop N times)
+
+AC9.4.8 — Regression testing passed: Existing flare update and resolve workflows remain unaffected. FlareUpdateModal still updates existing flares correctly.
+
+AC9.4.9 — Performance validation: Page transitions complete within 200ms on mobile. Body map rendering performance matches Epic 1/3.7 (no regression).
+
+AC9.4.10 — Accessibility maintained: WCAG 2.1 Level AA standards met (44x44px touch targets, keyboard navigation, ARIA labels, screen reader support).
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/Epic-9-Flare-Creation-UX-Redesign-PRD.md</path>
+        <title>Epic 9: Flare Creation UX Redesign - Product Requirements Document</title>
+        <section>FR9.4: Component Cleanup and Refactoring</section>
+        <snippet>FR9.4.1: Remove CreateFlareModal component from codebase. FR9.4.2: FlareUpdateModal shall only handle updates to existing flares (not creation). FR9.4.3: Dashboard "Flare" button shall route to /flares/place (not open modal). Body-map "+" button shall route to /flares/details with marker data.</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Flare-Creation-UX-Redesign-PRD.md</path>
+        <title>Epic 9: Flare Creation UX Redesign - Product Requirements Document</title>
+        <section>FR9.5: Analytics and Tracking</section>
+        <snippet>System shall fire 6 analytics events: flare_creation_started (source: dashboard|body-map), flare_creation_placement_completed (markerCount), flare_creation_details_completed (severity, lifecycleStage), flare_creation_saved, flare_creation_abandoned (navigates away mid-flow), flare_creation_add_another_clicked.</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Flare-Creation-UX-Redesign-PRD.md</path>
+        <title>Epic 9: Flare Creation UX Redesign - Product Requirements Document</title>
+        <section>Non-Functional Requirements</section>
+        <snippet>NFR9.1: Page transitions shall complete within 200ms on mobile. NFR9.3: All interactive elements shall meet WCAG 2.1 Level AA touch target size (44x44px minimum). NFR9.5: Keyboard navigation shall support full flow. NFR9.9: Browser back button shall not cause data loss (URL state management).</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9: Architecture Addendum</title>
+        <section>Integration Points - Dashboard Entry</section>
+        <snippet>Dashboard "Flare" button update: Replace setShowCreateModal(true) with router.push('/flares/place?source=dashboard'). Remove CreateFlareModal import and state management. File: src/app/(protected)/dashboard/page.tsx</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9: Architecture Addendum</title>
+        <section>Integration Points - Body-Map Entry</section>
+        <snippet>Body-map "+" button: After marker placed in RegionDetailView, construct URL with params (source=body-map, layer, bodyRegionId, markerCoordinates) and navigate to /flares/details. File: src/components/body-mapping/RegionDetailView.tsx</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9: Architecture Addendum</title>
+        <section>URL-Based State Pattern</section>
+        <snippet>Use URL parameters as primary state mechanism. Benefits: Browser back button works naturally, deep linking support, stateless page components. Pattern: Each page reads state from URL params using useSearchParams. source parameter flows through entire workflow for contextual return navigation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/Epic-9-Architecture-Addendum.md</path>
+        <title>Epic 9: Architecture Addendum</title>
+        <section>Analytics Tracking Implementation</section>
+        <snippet>Create trackFlareCreationEvent utility function. Events fire at: entry point buttons (flare_creation_started), placement page Next button (placement_completed), details page before save (details_completed), success page load (saved), page unmount cleanup (abandoned). Use console.log pattern for future analytics service integration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics - Epic 9</title>
+        <section>Story 9.4: Body-Map Entry Point &amp; Component Cleanup</section>
+        <snippet>Wire body-map "+" button to /flares/details route. Update dashboard "Flare" button onClick handler. Remove CreateFlareModal component and tests. Refactor FlareUpdateModal to handle updates only. Add 6 analytics event types. End-to-end testing for both entry points. Performance validation: page transitions &lt;200ms.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/app/(protected)/body-map/page.tsx</path>
+        <title>Body Map Page - Entry Point and Marker Management</title>
+        <type>client component</type>
+        <description>Full-screen body map interface with layer management, marker placement, and flare creation. Currently uses FlareCreationModal opened via "+" button (handleCreateFlareFromCoordinates, handleDoneMarking). Story 9.4 requires: Wire handleDoneMarking to route to /flares/details instead of opening modal.</description>
+        <keyLines>
+          <line>9: import FlareCreationModal from "@/components/flares/FlareCreationModal"</line>
+          <line>206: const handleDoneMarking = () => { setIsFlareCreationModalOpen(true) }</line>
+          <line>251: onClick={() => setIsFlareCreationModalOpen(true)}</line>
+          <line>265-269: FlareCreationModal component props binding</line>
+        </keyLines>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/FlareCreationModal.tsx</path>
+        <title>FlareCreationModal Component - TO BE DELETED</title>
+        <type>modal component (deprecated)</type>
+        <description>Modal dialog for creating flares with body map selection, severity slider, notes, and timestamp. Implements unified marker system for flares/pain/inflammation. Currently used by body-map/page.tsx and dashboard. Story 9.4 requires: DELETE this file and all imports/references. Functionality replaced by /flares/place and /flares/details routes.</description>
+        <keyLines>
+          <line>5: export interface CreateMarkerInput</line>
+          <line>83-90: FlareCreationModalProps interface definition</line>
+          <line>219: const createPayload: CreateMarkerInput = { ... }</line>
+          <line>232: return bodyMarkerRepository.createMarker(userId, createPayload)</line>
+        </keyLines>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/FlareUpdateModal.tsx</path>
+        <title>FlareUpdateModal Component - Updates Only</title>
+        <type>modal component (refactored)</type>
+        <description>Modal for updating existing flares with severity, trend, notes, and lifecycle stage changes. Already refactored to handle ONLY updates (no creation mode). Uses bodyMarkerRepository.updateLifecycleStage, addMarkerEvent, updateMarker. No Story 9.4 changes required.</description>
+        <keyLines>
+          <line>18: isOpen, onClose, flare (existing), userId, onUpdate</line>
+          <line>52-114: handleSave - updates only, no creation logic</line>
+          <line>65-70: updateLifecycleStage call for lifecycle changes</line>
+          <line>89-96: addMarkerEvent for severity/trend updates</line>
+        </keyLines>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/place/page.tsx</path>
+        <title>Flare Placement Page - Story 9.1</title>
+        <type>page component (Story 9.1 - COMPLETED)</type>
+        <description>Full-page body map interface for placing flare markers. Entry point from dashboard or body-map with source param. Handles multi-marker placement, layer selection (conditional), and navigation to details page. Implements URL-based state, analytics tracking, accessibility, and 44x44px touch targets.</description>
+        <keyLines>
+          <line>46: const source = searchParams.get('source') as FlareCreationSource</line>
+          <line>140-145: Multi-marker placement state with handleMarkerPlace</line>
+          <line>150-162: handleNext - constructs URL params and navigates to /flares/details</line>
+          <line>73-93: Analytics events (flare_creation_started, flare_creation_abandoned)</line>
+        </keyLines>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/details/page.tsx</path>
+        <title>Flare Details Page - Story 9.2</title>
+        <type>page component (Story 9.2 - COMPLETED)</type>
+        <description>Full-page form for capturing flare details: severity (required, 1-10 slider), lifecycle stage (pre-selected to "onset"), notes (500-char limit), and optional timestamp. Parses URL params (source, layer, bodyRegionId, markerCoordinates). Creates unified marker with bodyMarkerRepository.createMarker. Navigates to success page on save.</description>
+        <keyLines>
+          <line>51-68: URL param parsing and validation</line>
+          <line>118-145: Form state (severity, lifecycleStage, notes)</line>
+          <line>183-208: handleSave - creates marker with bodyLocations array</line>
+          <line>186: bodyMarkerRepository.createMarker(userId, { type: 'flare', bodyLocations, ... })</line>
+        </keyLines>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/success/page.tsx</path>
+        <title>Flare Success Screen - Story 9.3</title>
+        <type>page component (Story 9.3 - COMPLETED)</type>
+        <description>Full-page success confirmation displaying flare summary (region, severity, lifecycle stage) and multi-flare workflow buttons. "Add another flare" navigates back to /flares/place with source param preserved. "Return" button navigates to contextual destination (dashboard or body-map).</description>
+        <keyLines>
+          <line>29-34: URL param parsing (source, flareId, region, severity, lifecycleStage, locations)</line>
+          <line>71: handleAddAnother - fires flare_creation_add_another_clicked event and navigates to /flares/place?source=...</line>
+          <line>76: handleReturn - navigates to contextual destination based on source param</line>
+        </keyLines>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMarkerRepository.ts</path>
+        <title>Body Marker Repository - Unified Marker System</title>
+        <type>data access layer</type>
+        <description>Offline-first repository for creating, reading, updating markers (flares, pain, inflammation). Implements append-only event history. Key for Story 9.4: CreateMarkerInput interface used by details page to persist multi-location markers. Uses IndexedDB (Dexie) for persistence.</description>
+        <keyLines>
+          <line>31-50: CreateMarkerInput interface - type, bodyLocations (optional), initialEventNotes</line>
+          <line>68-233: createMarker function - creates marker + initial event + body locations in transaction</line>
+          <line>125-149: bodyLocations array handling for multi-location markers</line>
+        </keyLines>
+      </artifact>
+    </code>
+    <dependencies>
+      <dependency>
+        <name>next</name>
+        <version>15.5.4</version>
+        <usage>App Router, useRouter, useSearchParams, file-based routing</usage>
+      </dependency>
+      <dependency>
+        <name>react</name>
+        <version>19.1.0</version>
+        <usage>Client components, hooks (useState, useEffect, useCallback, useRef)</usage>
+      </dependency>
+      <dependency>
+        <name>react-dom</name>
+        <version>19.1.0</version>
+        <usage>DOM rendering for React components</usage>
+      </dependency>
+      <dependency>
+        <name>typescript</name>
+        <version>5.x</version>
+        <usage>Type safety for interfaces, component props, URL params</usage>
+      </dependency>
+      <dependency>
+        <name>tailwindcss</name>
+        <version>4.x</version>
+        <usage>CSS utilities for responsive design, touch target sizing (min-h-[44px], min-h-[48px])</usage>
+      </dependency>
+      <dependency>
+        <name>lucide-react</name>
+        <version>0.544.0</version>
+        <usage>Icons (Plus, X, ArrowLeft, ChevronDown, ChevronUp, TrendingUp, etc.)</usage>
+      </dependency>
+      <dependency>
+        <name>dexie</name>
+        <version>4.2.0</version>
+        <usage>IndexedDB abstraction for offline-first marker persistence</usage>
+      </dependency>
+      <dependency>
+        <name>uuid</name>
+        <version>13.0.0</version>
+        <usage>Generate unique IDs for markers, events, locations</usage>
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <category>State Management</category>
+      <name>URL-Based State Management (NFR9.9)</name>
+      <description>Primary state mechanism must be URL parameters (useSearchParams). Benefits: browser back button works naturally, deep linking support, stateless page components. Never use modal state (setIsOpen) for navigation. Always use router.push with query params.</description>
+      <enforcedBy>
+        <file>src/app/(protected)/flares/place/page.tsx</file>
+        <file>src/app/(protected)/flares/details/page.tsx</file>
+        <file>src/app/(protected)/flares/success/page.tsx</file>
+      </enforcedBy>
+    </constraint>
+    <constraint>
+      <category>Performance</category>
+      <name>Page Transitions &lt;200ms (NFR9.1)</name>
+      <description>Page transitions must complete within 200ms on mobile devices. Measure from router.push to page render completion. No blocking operations during transition.</description>
+      <testMethod>Lighthouse performance audits, mobile device benchmarking</testMethod>
+    </constraint>
+    <constraint>
+      <category>Accessibility</category>
+      <name>WCAG 2.1 Level AA Compliance (NFR9.3)</name>
+      <description>Touch target size: minimum 44x44px (use min-h-[44px], min-h-[48px] for comfort). Keyboard navigation: all interactive elements must be keyboard accessible (Escape to cancel, Enter to submit). ARIA labels for buttons and form fields. Screen reader announcements via announce() utility for page transitions and errors.</description>
+      <examples>
+        <example>Button min-h-[48px] with aria-label describing action</example>
+        <example>Form inputs with associated labels and aria-describedby for hints</example>
+        <example>announce('Flare placement', 'assertive') on page entry</example>
+        <example>Escape key: navigate back to source (dashboard or body-map)</example>
+      </examples>
+    </constraint>
+    <constraint>
+      <category>Component Architecture</category>
+      <name>No Modal State Management</name>
+      <description>Never use component-level modal state (isOpen, setIsOpen) for navigation flows. Replace all modal-driven flows with page-based routes and URL params. Modal pattern reserved for updates only (FlareUpdateModal handles existing flares only).</description>
+      <removed>CreateFlareModal state management from body-map/page.tsx</removed>
+      <removed>Modal state from dashboard/page.tsx for flare creation</removed>
+    </constraint>
+    <constraint>
+      <category>Regression Testing</category>
+      <name>Preserve Epic 2, 3.7, 3.8 Functionality</name>
+      <description>Story 9.4 changes must not break existing functionality:
+        - Epic 2: Dashboard flare tracking display
+        - Story 3.7: Body map multi-location marker support
+        - Story 3.8: Flare update/resolve workflows
+        - FlareUpdateModal still updates existing flares correctly
+        - Layer filtering and marker visualization working
+      </description>
+      <testAreas>
+        <area>Dashboard flare quick action button (after update)</area>
+        <area>Body map marker placement and visualization</area>
+        <area>Flare update modal (existing flares)</area>
+        <area>Flare resolution flow</area>
+        <area>Layer selector and filtering</area>
+      </testAreas>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CreateMarkerInput</name>
+      <location>src/lib/repositories/bodyMarkerRepository.ts</location>
+      <description>Input contract for creating body markers (flares, pain, inflammation) with optional multi-location support.</description>
+      <signature>
+        interface CreateMarkerInput extends Partial&lt;BodyMarkerRecord&gt; {
+  type: MarkerType; // 'flare' | 'pain' | 'inflammation'
+  initialEventNotes?: string;
+  bodyLocations?: {
+    bodyRegionId: string;
+    coordinates: { x: number; y: number };
+  }[];
+}
+      </signature>
+      <usedBy>
+        <file>src/app/(protected)/flares/details/page.tsx</file>
+        <line>183-208</line>
+        <context>handleSave constructs CreateMarkerInput with type='flare' and bodyLocations array from URL params</context>
+      </usedBy>
+    </interface>
+    <interface>
+      <name>URL Parameter Pattern: Flare Creation Flow</name>
+      <description>URL parameters flow through entire flare creation workflow. Each page reads from searchParams and adds data for next page.</description>
+      <sequence>
+        <step>
+          <page>/flares/place</page>
+          <required>source (dashboard|body-map), layer (flares|pain|inflammation)</required>
+          <provides>source, layer, bodyRegionId, markerCoordinates (JSON array)</provides>
+          <navigateTo>/flares/details</navigateTo>
+        </step>
+        <step>
+          <page>/flares/details</page>
+          <required>source, layer, bodyRegionId, markerCoordinates</required>
+          <provides>source, flareId, region, severity, lifecycleStage, locations</provides>
+          <navigateTo>/flares/success</navigateTo>
+        </step>
+        <step>
+          <page>/flares/success</page>
+          <required>source, flareId, region, severity, lifecycleStage, locations</required>
+          <provides>Buttons: "Add another" (→ /flares/place?source=...), "Return" (→ /dashboard or /body-map)</provides>
+        </step>
+      </sequence>
+    </interface>
+    <interface>
+      <name>Analytics Event Signatures (FR9.5)</name>
+      <description>Six analytics events fire throughout the flare creation flow. Current implementation uses console.log pattern for future analytics service integration.</description>
+      <events>
+        <event>
+          <name>flare_creation_started</name>
+          <fires>Entry point buttons (dashboard "Flare", body-map "+")</fires>
+          <payload>source: 'dashboard' | 'body-map', layer: LayerType, timestamp: ISO string</payload>
+          <location>src/app/(protected)/flares/place/page.tsx useEffect</location>
+        </event>
+        <event>
+          <name>flare_creation_placement_completed</name>
+          <fires>Placement page "Next" button click</fires>
+          <payload>source, layer, markerCount, timestamp</payload>
+          <location>src/app/(protected)/flares/place/page.tsx handleNext</location>
+        </event>
+        <event>
+          <name>flare_creation_details_completed</name>
+          <fires>Details page before save (in handleSave)</fires>
+          <payload>severity, lifecycleStage, timestamp</payload>
+          <location>src/app/(protected)/flares/details/page.tsx handleSave (line 191)</location>
+        </event>
+        <event>
+          <name>flare_creation_saved</name>
+          <fires>Success page load (after successful marker creation)</fires>
+          <payload>flareId, timestamp</payload>
+          <location>src/app/(protected)/flares/details/page.tsx handleSave (line 210)</location>
+        </event>
+        <event>
+          <name>flare_creation_abandoned</name>
+          <fires>Page unmount cleanup if user navigates away mid-flow</fires>
+          <payload>source, layer, bodyRegionId, markerCount, timestamp</payload>
+          <location>src/app/(protected)/flares/details/page.tsx useEffect cleanup (line 222-232)</location>
+        </event>
+        <event>
+          <name>flare_creation_add_another_clicked</name>
+          <fires>Success page "Add another flare" button</fires>
+          <payload>source, timestamp</payload>
+          <location>src/app/(protected)/flares/success/page.tsx handleAddAnother</location>
+        </event>
+      </events>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <framework>Jest with React Testing Library</framework>
+      <setup>@testing-library/react, @testing-library/jest-dom, @testing-library/user-event</setup>
+      <patternComponentTests>render component, fireEvent or userEvent for interactions, queryBy/getBy for assertions, waitFor for async</patternComponentTests>
+      <patternIntegrationTests>render page, navigate via router mock, check URL and rendered output</patternIntegrationTests>
+      <patternCoverageTarget>80%+ for critical flows (navigation, form submission, analytics events)</patternCoverageTarget>
+    </standards>
+    <locations>
+      <location>src/**/__tests__/*.test.tsx</location>
+      <location>src/**/__tests__/*.test.ts</location>
+      <pattern>Place component/page test in __tests__ directory at same level as source file</pattern>
+      <examples>
+        <example>src/app/(protected)/flares/place/__tests__/page.test.tsx</example>
+        <example>src/app/(protected)/flares/details/__tests__/page.test.tsx</example>
+        <example>src/app/(protected)/flares/success/__tests__/page.test.tsx</example>
+        <example>src/components/flares/__tests__/FlareUpdateModal.test.tsx (already exists)</example>
+      </examples>
+    </locations>
+    <ideas>
+      <idea>
+        <acceptanceCriteria>AC9.4.1</acceptanceCriteria>
+        <testName>Body-map entry point wired</testName>
+        <description>Test body-map "+" button navigates to /flares/details with correct URL params including marker data. Verify layer selector hidden on details page.</description>
+        <steps>
+          1. Render body-map/page.tsx
+          2. Place marker at specific coordinates on region
+          3. Simulate click on "Done" or submit button
+          4. Assert router.push called with /flares/details?source=body-map&amp;layer=...&amp;bodyRegionId=...&amp;markerCoordinates=[...]
+          5. Render details page with those params
+          6. Assert layer selector NOT visible (only shown when source=dashboard)
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.2</acceptanceCriteria>
+        <testName>CreateFlareModal component removed</testName>
+        <description>Verify CreateFlareModal.tsx deleted and all imports fail in test. Check body-map/page.tsx and dashboard/page.tsx no longer import FlareCreationModal.</description>
+        <steps>
+          1. grep -r "FlareCreationModal" src/ should find ZERO matches (except test files verifying removal)
+          2. Import attempt in test should throw "module not found"
+          3. Verify body-map/page.tsx imports removed (grep for import)
+          4. Verify dashboard/page.tsx has handleLogFlare updated to router.push instead of setIsOpen
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.3</acceptanceCriteria>
+        <testName>FlareUpdateModal handles updates only</testName>
+        <description>FlareUpdateModal should only update existing flares. Test that isOpen prop required + flare prop (existing marker). No creation mode props.</description>
+        <steps>
+          1. Render FlareUpdateModal with isOpen=true, flare (existing BodyMarkerRecord)
+          2. Change severity, submit
+          3. Assert bodyMarkerRepository.updateMarker called (NOT createMarker)
+          4. Assert BodyMarkerEvent added (severity_update)
+          5. Assert onUpdate callback fired
+          6. Verify no lifecycle_creation event type exists
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.4</acceptanceCriteria>
+        <testName>Dashboard "Flare" button routes to placement page</testName>
+        <description>Dashboard "Flare" quick action button navigates to /flares/place?source=dashboard (NOT opening modal).</description>
+        <steps>
+          1. Render dashboard/page.tsx
+          2. Locate and click "Flare" quick action button
+          3. Assert router.push called with '/flares/place?source=dashboard'
+          4. Verify no setShowCreateModal or similar modal state management
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.5</acceptanceCriteria>
+        <testName>Browser back button support</testName>
+        <description>Verify browser back button works naturally through URL-based navigation. No data loss during back navigation.</description>
+        <steps>
+          1. Navigate dashboard → /flares/place?source=dashboard
+          2. Place markers, click Next → /flares/details?source=dashboard&amp;...
+          3. Simulate browser back button (router.back())
+          4. Assert back navigates to /flares/place with same URL params
+          5. Verify form state preserved (placement page shows same markers)
+          6. Verify no data lost or form reset unexpectedly
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.6</acceptanceCriteria>
+        <testName>Analytics event tracking complete</testName>
+        <description>Verify all 6 analytics events fire at correct points with correct payload. Test console.log calls (mock console.log).</description>
+        <steps>
+          1. Mock console.log
+          2. Render placement page with source=dashboard
+          3. Assert console.log called with '[Analytics] flare_creation_started', {source: 'dashboard', layer: 'flares', ...}
+          4. Place markers, click Next
+          5. Assert flare_creation_placement_completed logged with markerCount
+          6. Navigate to details, change severity
+          7. Save flare
+          8. Assert flare_creation_details_completed logged with severity/lifecycleStage
+          9. Assert flare_creation_saved logged with flareId
+          10. Navigate to success, click "Add another"
+          11. Assert flare_creation_add_another_clicked logged
+          12. Unmount page without completing
+          13. Assert flare_creation_abandoned logged
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.7</acceptanceCriteria>
+        <testName>End-to-end flows validated</testName>
+        <description>Test complete dashboard flow: Dashboard → placement → details → success → dashboard. Test complete body-map flow: Body-map → details → success → body-map. Test multi-flare workflow (success → place loop).</description>
+        <steps>
+          Dashboard Flow:
+          1. Click Dashboard "Flare" button
+          2. Place 2 markers, click Next
+          3. Fill details (severity=7, lifecycle=onset, notes)
+          4. Click Save
+          5. Verify success page shows summary with 2 locations
+          6. Click "Add another flare"
+          7. Place 1 marker, Next → details → save → success
+          8. Click "Back to dashboard"
+          9. Verify returned to /dashboard
+
+          Body-Map Flow:
+          1. Render body-map/page.tsx
+          2. Place marker, click "Done"
+          3. Should navigate to /flares/details?source=body-map...
+          4. Fill details, save
+          5. Click "Back to body-map"
+          6. Verify returned to /body-map
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.8</acceptanceCriteria>
+        <testName>Regression testing: existing flows unaffected</testName>
+        <description>Verify existing flare update and resolution workflows still work. FlareUpdateModal correctly updates existing flares. Flare resolution flow unchanged.</description>
+        <steps>
+          1. Fetch existing active flare
+          2. Open FlareUpdateModal with isOpen=true, flare=activeFlare
+          3. Change severity, submit
+          4. Assert bodyMarkerRepository.updateMarker called
+          5. Assert flare updated in database
+          6. Test flare resolution: Mark flare as resolved (transition to resolved stage)
+          7. Assert lifecycle_stage_change event created
+          8. Verify flareTo-resolved state persisted
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.9</acceptanceCriteria>
+        <testName>Performance validation: page transitions &lt;200ms</testName>
+        <description>Measure page transition time from router.push to page render completion on mobile. Body map rendering should not regress.</description>
+        <steps>
+          1. Use performance.mark/measure API
+          2. Time router.push('/flares/details?...') → page content visible
+          3. Assert duration &lt; 200ms on simulated mobile (slow 3G)
+          4. Time body map rendering (place page)
+          5. Verify rendering time matches or improves vs. modal rendering
+        </steps>
+      </idea>
+      <idea>
+        <acceptanceCriteria>AC9.4.10</acceptanceCriteria>
+        <testName>Accessibility validation: WCAG 2.1 Level AA</testName>
+        <description>Test WCAG 2.1 Level AA compliance: 44x44px touch targets, keyboard navigation, ARIA labels, screen reader announcements.</description>
+        <steps>
+          Touch Target Testing:
+          1. Inspect all buttons/inputs with getBoundingClientRect()
+          2. Assert min height 44px and min width 44px
+          3. Test buttons have min-h-[44px] or min-h-[48px] class
+
+          Keyboard Navigation:
+          1. Render page, press Tab multiple times
+          2. Verify focus cycles through all interactive elements
+          3. Press Escape on details/placement page
+          4. Assert navigates back to source
+          5. Press Enter on severity slider or form inputs
+          6. Assert form submitted
+
+          ARIA Labels:
+          1. All buttons have aria-label describing action
+          2. Form inputs have associated labels
+          3. Error messages have role="alert" and aria-live="assertive"
+
+          Screen Reader:
+          1. Mock announce() utility calls
+          2. Assert announce('Flare placement', 'assertive') on page entry
+          3. Assert error messages announced
+        </steps>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>
