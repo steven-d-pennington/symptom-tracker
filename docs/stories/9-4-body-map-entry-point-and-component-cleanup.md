@@ -620,3 +620,369 @@ claude-sonnet-4-5-20250929
 - Modified: body-map/page.tsx, body-map/__tests__/page.test.tsx
 - Deleted: FlareCreationModal.tsx, FlareCreationModal.test.tsx
 - Status: Tasks 1-6 complete, testing pending
+# Code Review Report: Story 9.4 - Body-Map Entry Point & Component Cleanup
+
+**Reviewer:** Senior Developer (AI Agent)
+**Review Date:** 2025-11-15
+**Story File:** `/home/user/symptom-tracker/docs/stories/9-4-body-map-entry-point-and-component-cleanup.md`
+**Branch:** `claude/code-review-epic-9-continue-016mALQSnzcXkSSD1i16nZHe`
+**Review Type:** Systematic Implementation Validation
+
+---
+
+## 1. Summary
+
+Story 9.4 successfully implements **Tasks 1-6** (component wiring, cleanup, and analytics), completing the technical integration of the Epic 9 full-page flare creation flow. The body-map entry point correctly navigates to `/flares/details`, FlareCreationModal has been removed, and all 6 analytics events are properly instrumented. However, **Tasks 7-11** (testing and validation) remain incomplete, representing a **critical testing gap** that blocks production readiness. While the code implementation appears sound, the lack of end-to-end validation, regression testing, and accessibility verification creates significant risk.
+
+---
+
+## 2. Outcome
+
+**CHANGES REQUESTED** ⚠️
+
+**Justification:**
+- ✅ **Implementation Complete:** All 6 code-level tasks (AC 9.4.1-9.4.6) successfully implemented
+- ❌ **Testing Incomplete:** 5 testing tasks (AC 9.4.7-9.4.11) not performed, creating critical validation gap
+- ❌ **Production Risk:** No end-to-end flow validation, no regression testing, no performance/accessibility validation
+- ⚠️ **Minimal Test Coverage:** FlareUpdateModal has only 1 basic test (38 lines), insufficient for refactored update-only component
+
+**Required Before Approval:**
+1. Execute Tasks 7-8 (end-to-end flows and regression testing) - **CRITICAL**
+2. Execute Task 11 (integration tests) - **HIGH PRIORITY**
+3. Enhance FlareUpdateModal test coverage - **MEDIUM PRIORITY**
+4. Execute Tasks 9-10 (performance/accessibility validation) - **RECOMMENDED**
+
+---
+
+## 3. Key Findings
+
+### HIGH Severity
+
+1. **No End-to-End Flow Validation (AC 9.4.7, Task 7)**
+   - Neither dashboard flow nor body-map flow has been tested end-to-end
+   - Cannot confirm flares appear in Active Flares list after creation
+   - Cannot verify body-map marker visibility after save
+   - Multi-flare workflow ("Add another") not tested
+   - **Risk:** Critical user journeys may be broken in production
+
+2. **No Regression Testing (AC 9.4.8, Task 8)**
+   - FlareUpdateModal refactor not regression tested
+   - Existing flare update/resolve workflows not validated
+   - Epic 2/3.7 functionality not verified post-cleanup
+   - **Risk:** Breaking changes to existing features undetected
+
+3. **No Integration Tests (Task 11)**
+   - Integration test file not created: `src/app/(protected)/flares/__tests__/integration.test.tsx`
+   - Complete flow coverage missing from test suite
+   - Analytics event firing not validated programmatically
+   - **Risk:** Future changes may break integration points without CI/CD detection
+
+### MEDIUM Severity
+
+4. **Minimal FlareUpdateModal Test Coverage**
+   - File: `/home/user/symptom-tracker/src/components/flares/__tests__/FlareUpdateModal.test.tsx`
+   - Only 38 lines, single basic render test
+   - No tests for severity updates, lifecycle stage changes, error handling
+   - Insufficient for refactored update-only component
+   - **Risk:** Regressions in flare update functionality may go undetected
+
+5. **No Performance Validation (AC 9.4.9, Task 9)**
+   - Page transition times not measured (target: <200ms)
+   - Body map rendering performance not verified
+   - No mobile device testing performed
+   - **Risk:** Performance regressions undetected, poor mobile UX
+
+6. **No Accessibility Validation (AC 9.4.10, Task 10)**
+   - WCAG 2.1 Level AA compliance not tested
+   - Touch target sizes not verified (44x44px minimum)
+   - Keyboard navigation not tested with actual users
+   - Screen reader testing not performed (NVDA/VoiceOver/TalkBack)
+   - **Risk:** Accessibility regressions, ADA compliance issues
+
+### LOW Severity
+
+7. **Dashboard Button Already Implemented**
+   - AC 9.4.4 already satisfied by Story 9.1
+   - Marked as Task 2 in Story 9.4 but no changes needed
+   - Minor documentation/task tracking discrepancy
+   - **Impact:** None, but story task list could be clearer
+
+---
+
+## 4. Acceptance Criteria Coverage
+
+| AC# | Description | Status | Evidence (file:line) |
+|-----|-------------|--------|---------------------|
+| **AC 9.4.1** | Body-map entry point wired | ✅ IMPLEMENTED | `/home/user/symptom-tracker/src/app/(protected)/body-map/page.tsx:130-158` (handleDoneMarking), `:364-383` (FAB button), `:149-154` (analytics) |
+| **AC 9.4.2** | CreateFlareModal removed | ✅ IMPLEMENTED | No `FlareCreationModal.tsx` found (Glob search), deprecated comments: `dashboard/page.tsx:7`, `body-map/__tests__/page.test.tsx:47` |
+| **AC 9.4.3** | FlareUpdateModal refactored | ✅ IMPLEMENTED | `/home/user/symptom-tracker/src/components/flares/FlareUpdateModal.tsx` - No creation mode logic, update-only handlers `:52-114` |
+| **AC 9.4.4** | Dashboard button routes | ✅ IMPLEMENTED | `/home/user/symptom-tracker/src/app/(protected)/dashboard/page.tsx:213-219` (handleLogFlare), already done in Story 9.1 |
+| **AC 9.4.5** | Browser back button support | ✅ IMPLEMENTED | URL-based state management in `place/page.tsx`, `details/page.tsx`, `success/page.tsx` using `useSearchParams` |
+| **AC 9.4.6** | Analytics tracking complete | ✅ IMPLEMENTED | All 6 events: `flare_creation_started` (`place/page.tsx:69-82`, `body-map/page.tsx:149-154,371-375`), `placement_completed` (`place/page.tsx:138-144`), `details_completed` (`details/page.tsx:137-141`), `saved` (`details/page.tsx:168-172`), `abandoned` (`place/page.tsx:85-96`, `details/page.tsx:197-209`), `add_another_clicked` (`success/page.tsx:104-108`) |
+| **AC 9.4.7** | End-to-end flows validated | ❌ MISSING | Task 7 incomplete - No manual testing performed, flows not validated |
+| **AC 9.4.8** | Regression testing passed | ❌ MISSING | Task 8 incomplete - No regression testing performed, Epic 2 workflows not verified |
+| **AC 9.4.9** | Performance validation | ❌ MISSING | Task 9 incomplete - No measurements, no mobile testing |
+| **AC 9.4.10** | Accessibility maintained | ⚠️ PARTIAL | Code has touch targets (`:min-h-[44px]`), ARIA labels, keyboard handlers - BUT Task 10 incomplete, not tested with tools |
+
+---
+
+## 5. Task Completion Validation
+
+| Task | Marked As | Verified As | Evidence (file:line) |
+|------|-----------|-------------|---------------------|
+| **Task 1** | ✅ Complete | ✅ VERIFIED | Body-map entry wired: `body-map/page.tsx:130-158,364-383` |
+| **Task 2** | ✅ Complete | ✅ VERIFIED | Dashboard button already done Story 9.1: `dashboard/page.tsx:213-219` |
+| **Task 3** | ✅ Complete | ✅ VERIFIED | FlareCreationModal removed: Glob/Grep confirm deletion, only deprecated comments remain |
+| **Task 4** | ✅ Complete | ✅ VERIFIED | FlareUpdateModal refactored: `FlareUpdateModal.tsx` - no creation mode, update-only logic |
+| **Task 5** | ✅ Complete | ✅ VERIFIED | Analytics implemented: All 6 events in place/details/success pages and body-map page |
+| **Task 6** | ✅ Complete | ✅ VERIFIED | Browser back support: URL-based state in all pages via `useSearchParams` |
+| **Task 7** | ⬜ Incomplete | ❌ NOT DONE | End-to-end testing not performed - CRITICAL GAP |
+| **Task 8** | ⬜ Incomplete | ❌ NOT DONE | Regression testing not performed - HIGH RISK |
+| **Task 9** | ⬜ Incomplete | ❌ NOT DONE | Performance validation not done - no measurements |
+| **Task 10** | ⬜ Incomplete | ❌ NOT DONE | Accessibility validation not done - no tool testing |
+| **Task 11** | ⬜ Incomplete | ❌ NOT DONE | Integration tests not created - `integration.test.tsx` missing |
+
+---
+
+## 6. Testing Gap Analysis
+
+### Tasks 7-11 Incomplete - Critical Testing Gap
+
+**Impact on AC Validation:**
+- **AC 9.4.7 (End-to-End Flows):** Cannot validate - requires manual/automated testing
+- **AC 9.4.8 (Regression Testing):** Cannot validate - requires test execution
+- **AC 9.4.9 (Performance):** Cannot validate - requires measurements
+- **AC 9.4.10 (Accessibility):** Partially implemented but not validated
+
+**Existing Test Coverage:**
+- ✅ Unit tests exist for new pages: `place/__tests__/page.test.tsx`, `details/__tests__/page.test.tsx`, `success/__tests__/page.test.tsx`
+- ✅ Total ~1869 lines of test code for flare pages
+- ❌ NO integration tests for complete flows
+- ⚠️ FlareUpdateModal has only 1 basic test (38 lines total)
+
+**Recommended Testing Before Production:**
+
+1. **End-to-End Flow Testing (Task 7 - CRITICAL):**
+   - Dashboard → placement → details → success → dashboard (verify flare in Active Flares)
+   - Body-map → details → success → body-map (verify marker visible on map)
+   - Multi-flare workflow: success → place → details (3x) → verify all saved
+   - Entry point preservation: source param flows correctly
+
+2. **Regression Testing (Task 8 - HIGH):**
+   - FlareUpdateModal: Select flare → update severity → save → verify
+   - Flare resolution: Mark resolved → verify in Resolved Flares
+   - Multi-location flares (Epic 3.7): Create 3-marker flare → verify all saved
+   - Run existing Epic 2 test suite
+
+3. **Integration Tests (Task 11 - HIGH):**
+   - Create `src/app/(protected)/flares/__tests__/integration.test.tsx`
+   - Test complete flows programmatically
+   - Validate analytics events fire correctly
+   - Test browser back button navigation
+   - Test entry point context preservation
+
+4. **Performance Validation (Task 9 - MEDIUM):**
+   - Measure transitions: dashboard→placement, placement→details, details→success (<200ms)
+   - Compare body map rendering with Epic 1/3.7 baseline
+   - Test on mobile device (slower hardware)
+
+5. **Accessibility Validation (Task 10 - MEDIUM):**
+   - Verify touch targets ≥44x44px (all buttons)
+   - Test keyboard navigation (Tab, Enter, Escape)
+   - Test with screen reader (NVDA/VoiceOver/TalkBack)
+   - Verify ARIA labels and live regions
+
+**Risk if Deployed Without Testing:**
+- 🔴 **CRITICAL:** User journeys may be broken (flows not validated)
+- 🔴 **CRITICAL:** Existing flare management may be broken (no regression tests)
+- 🟡 **MEDIUM:** Performance issues on mobile undetected
+- 🟡 **MEDIUM:** Accessibility regressions, ADA compliance issues
+- 🟡 **MEDIUM:** Future regressions undetected (no integration tests in CI/CD)
+
+---
+
+## 7. Architectural Alignment
+
+### Tech-Spec Compliance: ✅ EXCELLENT
+
+**Epic 9 Architecture Addendum Alignment:**
+- ✅ URL-based state management implemented (ADR-9.1)
+- ✅ Full-page flow pattern followed (ADR-9.2)
+- ✅ Component reuse without modification (ADR-9.3)
+- ✅ No draft state persistence in MVP (ADR-9.4)
+- ✅ Browser back button support via URL params
+- ✅ Navigation context pattern (`source` param) preserved throughout
+
+**PRD Compliance: ✅ EXCELLENT**
+
+**Functional Requirements:**
+- ✅ FR9.1: Body map placement page (`/flares/place`)
+- ✅ FR9.2: Flare details page (`/flares/details`)
+- ✅ FR9.3: Success screen (`/flares/success`)
+- ✅ FR9.4: Component cleanup (CreateFlareModal removed)
+- ✅ FR9.5: Analytics tracking (6 events)
+
+**Non-Functional Requirements:**
+- ⚠️ NFR9.1: Page transitions <200ms - NOT VALIDATED (Task 9)
+- ⚠️ NFR9.2: Body map performance - NOT VALIDATED (Task 9)
+- ⚠️ NFR9.3-9.8: WCAG 2.1 Level AA - IMPLEMENTED but NOT VALIDATED (Task 10)
+- ✅ NFR9.9: Browser back button support - IMPLEMENTED
+- ⚠️ NFR9.11: Error handling with state preservation - IMPLEMENTED but NOT TESTED
+
+**Pattern Consistency:**
+- ✅ Matches symptom/trigger/food/medication logging patterns
+- ✅ Mobile-first responsive design
+- ✅ shadcn/ui components (Button, Badge)
+- ✅ Tailwind CSS styling
+
+---
+
+## 8. Security Notes
+
+**No Security Concerns Identified** ✅
+
+- ✅ All routes behind `(protected)` group (existing auth from Epic 0)
+- ✅ IndexedDB data scoped to userId (existing pattern)
+- ✅ URL params don't contain sensitive data (only UUIDs, coordinates, enums)
+- ✅ No new server endpoints or API calls
+- ✅ Offline-first PWA architecture maintained
+- ✅ No changes to encryption (Epic 2/4 patterns preserved)
+
+**Validation:**
+- ✅ No hardcoded credentials or API keys
+- ✅ No XSS vulnerabilities (React auto-escaping)
+- ✅ No SQL injection risk (IndexedDB queries parameterized)
+
+---
+
+## 9. Best-Practices
+
+**Code Quality: ✅ GOOD**
+
+**Strengths:**
+- ✅ Clear separation of concerns (routing, state, UI)
+- ✅ Consistent naming conventions (PascalCase components, camelCase params)
+- ✅ ARIA labels and accessibility attributes present
+- ✅ Error handling with user-friendly messages
+- ✅ Analytics logging for observability
+- ✅ TypeScript type safety throughout
+
+**Recommendations:**
+
+1. **Testing Best Practices:**
+   - Add integration tests before production deployment
+   - Increase FlareUpdateModal test coverage (currently only 1 test)
+   - Add E2E tests with Playwright/Cypress for critical flows
+   - Reference: [Testing Library Best Practices](https://testing-library.com/docs/guiding-principles)
+
+2. **Accessibility Best Practices:**
+   - Test with actual screen readers before production
+   - Validate keyboard navigation manually
+   - Use axe DevTools for automated a11y checks
+   - Reference: [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
+
+3. **Performance Best Practices:**
+   - Measure actual page transition times on mobile devices
+   - Use React DevTools Profiler to identify bottlenecks
+   - Consider code splitting if bundle size grows
+   - Reference: [Web Vitals](https://web.dev/vitals/)
+
+4. **Documentation Best Practices:**
+   - Story completion notes accurately reflect Task 7-11 status ✅
+   - Inline comments explain analytics events ✅
+   - Consider adding JSDoc for complex functions
+   - Reference: [JSDoc Guide](https://jsdoc.app/)
+
+---
+
+## 10. Action Items
+
+### CRITICAL Priority (Block Production)
+
+- [ ] **[HIGH]** Execute Task 7: End-to-end flow testing (AC 9.4.7)
+  - Test dashboard → placement → details → success → dashboard
+  - Test body-map → details → success → body-map
+  - Test multi-flare workflow (3+ flares)
+  - Verify flares appear in Active Flares list
+  - Verify markers visible on body-map after save
+  - **File:** Manual testing checklist
+
+- [ ] **[HIGH]** Execute Task 8: Regression testing (AC 9.4.8)
+  - Test FlareUpdateModal update flow
+  - Test flare resolution workflow
+  - Test Epic 3.7 multi-location flares
+  - Run existing Epic 2 test suite
+  - **File:** Manual testing checklist
+
+- [ ] **[HIGH]** Execute Task 11: Create integration tests
+  - Create `/home/user/symptom-tracker/src/app/(protected)/flares/__tests__/integration.test.tsx`
+  - Test complete flows programmatically
+  - Validate analytics events
+  - Test browser navigation
+  - **File:** `/src/app/(protected)/flares/__tests__/integration.test.tsx`
+
+### MEDIUM Priority (Recommended Before Production)
+
+- [ ] **[MEDIUM]** Enhance FlareUpdateModal test coverage
+  - Add tests for severity updates, lifecycle stage changes
+  - Add error handling tests
+  - Add validation tests
+  - **File:** `/home/user/symptom-tracker/src/components/flares/__tests__/FlareUpdateModal.test.tsx`
+
+- [ ] **[MEDIUM]** Execute Task 9: Performance validation (AC 9.4.9)
+  - Measure page transitions on mobile (<200ms target)
+  - Compare body map rendering with baseline
+  - Profile with React DevTools
+  - **File:** Performance test report
+
+- [ ] **[MEDIUM]** Execute Task 10: Accessibility validation (AC 9.4.10)
+  - Verify 44x44px touch targets
+  - Test keyboard navigation
+  - Test with screen reader (NVDA/VoiceOver)
+  - Run axe DevTools audit
+  - **File:** Accessibility test report
+
+### LOW Priority (Post-Production)
+
+- [ ] **[LOW]** Clarify Story 9.4 task list
+  - Task 2 already done in Story 9.1 (minor documentation issue)
+  - Update task descriptions for clarity
+  - **File:** `/docs/stories/9-4-body-map-entry-point-and-component-cleanup.md`
+
+---
+
+## Conclusion
+
+Story 9.4 demonstrates **excellent implementation quality** for Tasks 1-6, successfully wiring the body-map entry point, removing legacy modal code, and instrumenting analytics. The code aligns perfectly with the Epic 9 architecture and PRD requirements. However, the **complete absence of Tasks 7-11 (testing and validation)** creates a **critical gap** that prevents production approval.
+
+**Key Strengths:**
+- ✅ Clean, maintainable code following established patterns
+- ✅ Proper URL-based state management
+- ✅ Complete analytics instrumentation
+- ✅ Successful component cleanup (FlareCreationModal removed)
+
+**Key Weaknesses:**
+- ❌ No end-to-end flow validation
+- ❌ No regression testing
+- ❌ No integration tests in test suite
+- ❌ Minimal FlareUpdateModal test coverage
+
+**Recommendation:** Execute **Tasks 7, 8, and 11** (end-to-end, regression, integration tests) before production deployment. Tasks 9-10 (performance/accessibility validation) are strongly recommended but could be deferred to post-production monitoring if timeline is critical.
+
+**Estimated Effort to Approval:**
+- Task 7 (E2E testing): 2-3 hours
+- Task 8 (Regression testing): 1-2 hours
+- Task 11 (Integration tests): 3-4 hours
+- **Total: 6-9 hours** to reach production-ready state
+
+---
+
+**Review Status:** CHANGES REQUESTED ⚠️
+**Blocking Issues:** 3 CRITICAL (Tasks 7, 8, 11)
+**Next Step:** Execute testing tasks 7-11 before requesting re-review
+
+---
+
+_Generated by Senior Developer Code Review Agent_
+_Review Date: 2025-11-15_
+_Branch: claude/code-review-epic-9-continue-016mALQSnzcXkSSD1i16nZHe_
