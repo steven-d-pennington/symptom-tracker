@@ -232,3 +232,52 @@ epic-9-test-crisis:
     - "/tmp/epic9-test-summary.md (baseline test results)"
     - "docs/stories/9-1-body-map-placement-page.md (code review with test findings)"
     - "docs/stories/9-2-flare-details-page.md (code review with test findings)"
+
+# Next Steps for Epic 9 Code Review Continuation
+next_session_instructions:
+  branch: "claude/code-review-epic-9-01NM1Gr5gwKFwUrmcC5QAMEa"
+  
+  completed_work:
+    - "Story 9.1 code review - BLOCKED (tests not executed)"
+    - "Story 9.2 code review - BLOCKED (test results inverted)"
+    - "Discovered Epic 9 test crisis - all tests broken"
+    - "Created comprehensive fix plan in docs/Epic-9-Test-Fix-Plan.md"
+    - "Documented test baseline in docs/Epic-9-Test-Results-Baseline.md"
+  
+  remaining_work:
+    - task: "Complete Story 9.3 code review"
+      priority: HIGH
+      status: PENDING
+      notes: "Started reading story but never completed review"
+    
+    - task: "Complete Story 9.4 code review"
+      priority: HIGH
+      status: PENDING
+      notes: "Never started"
+    
+    - task: "Update code reviews with actual test results"
+      priority: HIGH
+      status: PENDING
+      notes: "Reviews written based on story claims, need to update with actual test execution findings"
+    
+    - task: "Decision: Fix tests or document only?"
+      priority: HIGH
+      status: PENDING
+      notes: "User needs to decide whether to invest time fixing tests or just documenting issues"
+  
+  recommended_next_session_prompt: |
+    "Continue Epic 9 code reviews on branch claude/code-review-epic-9-01NM1Gr5gwKFwUrmcC5QAMEa.
+    
+    You've completed:
+    - Story 9.1 review (BLOCKED - tests not executed)
+    - Story 9.2 review (BLOCKED - test results inverted)
+    - Discovered test crisis (all Epic 9 tests broken)
+    - Created fix plan in docs/Epic-9-Test-Fix-Plan.md
+    
+    Continue by:
+    1. Complete Story 9.3 code review (started but not finished)
+    2. Complete Story 9.4 code review (not started)
+    3. Update reviews with actual test execution results
+    4. Commit all reviews and push
+    
+    Reference docs/Epic-9-Test-Fix-Plan.md and docs/Epic-9-Test-Results-Baseline.md for context."
