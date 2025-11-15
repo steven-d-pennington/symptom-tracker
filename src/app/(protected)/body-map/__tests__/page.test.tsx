@@ -44,9 +44,7 @@ jest.mock("@/components/body-mapping/BodyViewSwitcher", () => ({
 jest.mock("@/components/body-mapping/BodyMapLegend", () => ({
   BodyMapLegend: () => <div data-testid="body-map-legend">Body Map Legend</div>,
 }));
-jest.mock("@/components/flares/FlareCreationModal", () => ({
-  FlareCreationModal: () => <div data-testid="flare-creation-modal">Flare Creation Modal</div>,
-}));
+// Story 9.4: FlareCreationModal removed - flare creation now uses full-page flow
 jest.mock("@/components/flares/ActiveFlareCards", () => ({
   ActiveFlareCards: () => <div data-testid="active-flare-cards">Active Flare Cards</div>,
 }));
