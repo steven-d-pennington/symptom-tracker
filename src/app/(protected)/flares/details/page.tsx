@@ -257,10 +257,10 @@ export default function FlareDetailsPage() {
             {regionName}
           </h1>
 
-          {/* AC 9.2.2: Display marker count if multiple markers */}
-          {markerCoordinates.length > 1 && (
+          {/* AC 9.2.2: Display marker count (Story 9.4: always show for body-map confirmation) */}
+          {markerCoordinates.length > 0 && (
             <p className="text-muted-foreground mb-4">
-              {markerCoordinates.length} markers placed in {regionName}
+              {markerCoordinates.length} {markerCoordinates.length === 1 ? 'marker' : 'markers'} placed in {regionName}
             </p>
           )}
 
