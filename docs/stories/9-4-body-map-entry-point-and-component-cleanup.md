@@ -1,6 +1,6 @@
 # Story 9.4: Body-Map Entry Point & Component Cleanup
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
