@@ -541,7 +541,7 @@ src/app/(protected)/flares/
 
 ### Context Reference
 
-- `.bmad-ephemeral/stories/9-4-body-map-entry-point-and-component-cleanup.context.xml` (generated 2025-11-15)
+- `docs/stories/9-4-body-map-entry-point-and-component-cleanup.context.xml` (generated 2025-11-15)
 
 ### Agent Model Used
 
