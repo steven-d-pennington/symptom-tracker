@@ -18,10 +18,13 @@ import FlareBodyMapPlacementPage from '../page';
 // Mock functions for navigation hooks
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
+
+// FIXED: Properly return valid source param to prevent immediate redirect
 const mockGet = jest.fn((key: string) => {
-  // Default: source=dashboard
+  // Return valid source to prevent redirect
   if (key === 'source') return 'dashboard';
-  if (key === 'layer') return null;
+  // Return default layer to prevent undefined state
+  if (key === 'layer') return 'flares';
   return null;
 });
 

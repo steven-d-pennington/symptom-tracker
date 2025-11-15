@@ -191,3 +191,44 @@ development_status:
   9-4-body-map-entry-point-and-component-cleanup: review
   9-5-multi-flare-onboarding-guidance: backlog  # Optional enhancement
   epic-9-retrospective: optional
+
+# Epic 9 Test Crisis - 2025-11-15
+epic-9-test-crisis:
+  status: CRITICAL
+  discovery_date: 2025-11-15
+  discovered_by: Code Review Agent (investigating Story 9.4 regression suspicion)
+  
+  test_results:
+    story_9_1: "1/21 passing (5% pass rate) - CRITICAL"
+    story_9_2: "7/55 passing (13% pass rate) - CRITICAL (claimed 48 passing - INVERTED!)"
+    story_9_3: "26/46 passing (57% pass rate) - NEEDS WORK"
+    total: "34/122 passing (28% pass rate) - DISASTER"
+  
+  root_cause: "Tests were broken from creation, never properly executed/validated. NOT a Story 9.4 regression."
+  
+  immediate_actions:
+    - action: "Review Epic-9-Test-Fix-Plan.md for detailed analysis"
+      file: "docs/Epic-9-Test-Fix-Plan.md"
+      status: COMPLETE
+    
+    - action: "Fix Story 9.3 tests (low risk, high ROI)"
+      estimated_time: "2-4 hours"
+      priority: HIGH
+      status: PENDING
+    
+    - action: "Update code review findings with actual test results"
+      status: PENDING
+  
+  short_term_plan:
+    - "Phase 1: Fix Story 9.3 tests (26/46 → 46/46)"
+    - "Phase 2: Create test utility infrastructure"
+    - "Phase 3: Fix Stories 9.1 and 9.2 tests"
+    - "Phase 4: Add integration and performance tests"
+  
+  success_criteria: "122/122 tests passing (100% pass rate) with documented execution results"
+  
+  documentation:
+    - "docs/Epic-9-Test-Fix-Plan.md (comprehensive fix plan)"
+    - "/tmp/epic9-test-summary.md (baseline test results)"
+    - "docs/stories/9-1-body-map-placement-page.md (code review with test findings)"
+    - "docs/stories/9-2-flare-details-page.md (code review with test findings)"
