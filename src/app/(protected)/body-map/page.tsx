@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { LayerSpecificCards } from "@/components/body-map/LayerSpecificCards";
 import { BodyMapViewer, BodyMapViewerRef } from "@/components/body-mapping/BodyMapViewer";
 import { BodyViewSwitcher } from "@/components/body-mapping/BodyViewSwitcher";
 import { BodyMapLegend } from "@/components/body-mapping/BodyMapLegend";
 import { LayerSelector } from "@/components/body-map/LayerSelector";
-import { FlareCreationModal } from "@/components/flares/FlareCreationModal";
 import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository";
 import { ActiveFlare } from "@/lib/types/flare";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
@@ -17,6 +17,7 @@ import { Plus, X, Maximize2, TrendingUp, TrendingDown, Activity, BarChart3, Hist
 import Link from "next/link";
 
 export default function FlaresPage() {
+  const router = useRouter();
   const { userId } = useCurrentUser();
   const { data: flares = [], isLoading: flaresLoading, refetch: refetchFlares } = useMarkers({ userId: userId || '', type: 'flare', includeResolved: false });
 
@@ -45,7 +46,6 @@ export default function FlaresPage() {
     bodyRegionName: string;
     coordinates: { x: number; y: number };
   }>>([]);
-  const [isFlareCreationModalOpen, setIsFlareCreationModalOpen] = useState(false);
   const [bodyMapViewMode, setBodyMapViewMode] = useState<'full-body' | 'region-detail'>('full-body');
   const [isMapCollapsed, setIsMapCollapsed] = useState(false);
   const bodyMapRef = useRef<BodyMapViewerRef>(null);
@@ -127,29 +127,48 @@ export default function FlaresPage() {
     setSelectedFlareId(null);
   };
 
-  const handleCreateFlareFromCoordinates = () => {
-    if (selectedCoordinates.length > 0) {
-      setIsFlareCreationModalOpen(true);
-    }
-  };
+  // Story 9.4: Navigate to flare details page with body-map markers
+  const handleDoneMarking = useCallback(() => {
+    if (selectedCoordinates.length === 0) return;
 
-  const handleDoneMarking = () => {
-    if (selectedCoordinates.length > 0) {
-      setIsFlareCreationModalOpen(true);
-    }
-  };
+    // Get the first coordinate's region (they should all be from the same region in region detail view)
+    const bodyRegionId = selectedCoordinates[0].bodyRegionId;
 
-  const handleFlareCreated = async (_flare: unknown, stayInRegion?: boolean) => {
-    setSelectedCoordinates([]);
-    refetchFlares();
-    // Refresh markers from bodyMapLocations table
-    await refreshMarkers();
+    // Convert coordinates to the format expected by details page
+    const markerCoordinates = selectedCoordinates.map(coord => coord.coordinates);
 
-    if (!stayInRegion) {
-      setBodyMapViewMode('full-body');
-      setSelectedRegion(null);
-    }
-  };
+    // Construct URL params for flare details page
+    const params = new URLSearchParams({
+      source: 'body-map',
+      layer: currentLayer,
+      bodyRegionId,
+      markerCoordinates: JSON.stringify(markerCoordinates),
+    });
+
+    // Analytics event: flare_creation_started from body-map
+    console.log('[Analytics] flare_creation_started', {
+      source: 'body-map',
+      layer: currentLayer,
+      markerCount: selectedCoordinates.length,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Navigate to flare details page (skipping placement page)
+    router.push(`/flares/details?${params.toString()}`);
+  }, [selectedCoordinates, currentLayer, router]);
+
+  // Story 9.4: Handle return from flare creation flow
+  // Refresh data when returning to body-map
+  useEffect(() => {
+    const handleFocus = () => {
+      // Refresh data when page regains focus (user returns from details page)
+      refetchFlares();
+      refreshMarkers();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [refetchFlares, refreshMarkers]);
 
   const handleFlareCardClick = (flareId: string) => {
     if (selectedFlareId === flareId) {
@@ -341,26 +360,28 @@ export default function FlaresPage() {
         )}
       </div>
 
-      {/* Floating Action Button - Above bottom nav on mobile */}
+      {/* Story 9.4: FAB button - context-aware navigation */}
       <button
-        onClick={() => setIsFlareCreationModalOpen(true)}
+        onClick={() => {
+          // If markers already placed, go to details page (skip placement)
+          if (selectedCoordinates.length > 0) {
+            handleDoneMarking();
+          } else {
+            // No markers yet, go to placement page to start fresh
+            console.log('[Analytics] flare_creation_started', {
+              source: 'body-map',
+              layer: currentLayer,
+              timestamp: new Date().toISOString(),
+            });
+            router.push(`/flares/place?source=body-map&layer=${currentLayer}`);
+          }
+        }}
         className="fixed bottom-20 lg:bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary-dark hover:scale-105 transition-all flex items-center justify-center z-50"
         style={{ boxShadow: 'var(--shadow-lg)' }}
-        title="Create New Flare"
+        title={selectedCoordinates.length > 0 ? "Continue to Flare Details" : "Create New Flare"}
       >
         <Plus className="h-6 w-6" />
       </button>
-
-      {/* Flare Creation Modal */}
-      {userId && (
-        <FlareCreationModal
-          isOpen={isFlareCreationModalOpen}
-          onClose={() => setIsFlareCreationModalOpen(false)}
-          userId={userId}
-          selection={selectedCoordinates}
-          onCreated={handleFlareCreated}
-        />
-      )}
     </div>
   );
 }
