@@ -1,6 +1,6 @@
 # Story 9.4: Body-Map Entry Point & Component Cleanup
 
-Status: drafted
+Status: ready-for-dev
 
 ## Story
 
@@ -541,7 +541,7 @@ src/app/(protected)/flares/
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `.bmad-ephemeral/stories/9-4-body-map-entry-point-and-component-cleanup.context.xml` (generated 2025-11-15)
 
 ### Agent Model Used
 
