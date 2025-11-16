@@ -18,28 +18,15 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useRouter, useSearchParams } from 'next/navigation';
 import FlareDetailsPage from '../page';
 import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
 import * as announceModule from '@/lib/utils/announce';
 
 // Mock functions for navigation hooks
 const mockPush = jest.fn();
-const mockSearchParams = new Map<string, string>([
-  ['source', 'dashboard'],
-  ['layer', 'flares'],
-  ['bodyRegionId', 'left-armpit'],
-  ['markerCoordinates', JSON.stringify([{ x: 0.5, y: 0.3 }])],
-]);
-
-// Mock Next.js navigation hooks
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-  useSearchParams: () => ({
-    get: (key: string) => mockSearchParams.get(key) || null,
-  }),
-}));
+const mockReplace = jest.fn();
+const mockGet = jest.fn();
 
 // Mock child components
 jest.mock('@/components/LifecycleStageSelector', () => ({
@@ -140,15 +127,33 @@ jest.mock('@/lib/utils/cn', () => ({
 
 describe('FlareDetailsPage', () => {
   beforeEach(() => {
-    // Reset navigation mock
+    // Reset all mocks
     mockPush.mockClear();
+    mockReplace.mockClear();
+    mockGet.mockClear();
 
-    // Reset search params to defaults
-    mockSearchParams.clear();
-    mockSearchParams.set('source', 'dashboard');
-    mockSearchParams.set('layer', 'flares');
-    mockSearchParams.set('bodyRegionId', 'left-armpit');
-    mockSearchParams.set('markerCoordinates', JSON.stringify([{ x: 0.5, y: 0.3 }]));
+    // Override the jest.setup.js mocks (they return jest.fn() so we can mock them)
+    (useRouter as jest.Mock).mockReturnValue({
+      push: mockPush,
+      replace: mockReplace,
+      back: jest.fn(),
+      forward: jest.fn(),
+      refresh: jest.fn(),
+      prefetch: jest.fn(),
+    });
+
+    // Set up default mock return values for useSearchParams
+    mockGet.mockImplementation((key: string) => {
+      if (key === 'source') return 'dashboard';
+      if (key === 'layer') return 'flares';
+      if (key === 'bodyRegionId') return 'left-armpit';
+      if (key === 'markerCoordinates') return JSON.stringify([{ x: 0.5, y: 0.3 }]);
+      return null;
+    });
+
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: mockGet,
+    });
 
     // Clear repository mock
     jest.clearAllMocks();

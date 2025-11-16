@@ -422,6 +422,8 @@ export const BodyMapViewer = forwardRef<BodyMapViewerRef, BodyMapViewerProps>(fu
         transform: 'translateZ(0)'
       } : { backgroundColor: 'var(--muted)' }}
       data-fullscreen={isFullscreen ? 'true' : 'false'}
+      data-testid="body-map-viewer"
+      data-marker-count={markerCount}
     >
       {/* Story 3.7.4: Fullscreen control bar (shown when in fullscreen mode) */}
       {isFullscreen && (

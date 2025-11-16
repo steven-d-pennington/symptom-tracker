@@ -28,18 +28,23 @@ if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
 }
 
 // Mock next/navigation globally for all tests
+// Create mockable functions that tests can override
+const mockRouter = {
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+  forward: jest.fn(),
+  refresh: jest.fn(),
+  prefetch: jest.fn(),
+};
+
+const mockSearchParams = new URLSearchParams();
+
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
-    forward: jest.fn(),
-    refresh: jest.fn(),
-    prefetch: jest.fn(),
-  }),
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
-  useParams: () => ({}),
+  useRouter: jest.fn(() => mockRouter),
+  usePathname: jest.fn(() => '/'),
+  useSearchParams: jest.fn(() => mockSearchParams),
+  useParams: jest.fn(() => ({})),
 }));
 
 // Mock ResizeObserver for Radix UI components

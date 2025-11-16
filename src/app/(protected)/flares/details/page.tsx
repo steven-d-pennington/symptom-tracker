@@ -238,6 +238,7 @@ export default function FlareDetailsPage() {
       role="main"
       aria-label="Flare details"
       className="flex flex-col min-h-screen w-full bg-background"
+      data-testid="flare-details-page"
     >
       {/* AC 9.2.9: ARIA live region for error announcements */}
       <div

@@ -102,6 +102,7 @@ export function LayerSelector({
       aria-label="Layer selector"
       className="flex gap-2 flex-wrap"
       onKeyDown={handleKeyDown}
+      data-testid="layer-selector"
     >
       {layers.map((layer, index) => {
         const isActive = currentLayer === layer.id;
@@ -114,6 +115,7 @@ export function LayerSelector({
             role="radio"
             aria-checked={isActive}
             aria-label={`${layer.label} layer`}
+            data-testid={`layer-${layer.id}`}
             onClick={() => handleLayerClick(layer.id)}
             onFocus={() => setFocusedIndex(index)}
             disabled={disabled}
