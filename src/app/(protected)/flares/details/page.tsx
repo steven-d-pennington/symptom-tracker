@@ -372,6 +372,7 @@ export default function FlareDetailsPage() {
                 ? 'Saving flare...'
                 : 'Save flare'
             }
+            data-testid="save-button"
           >
             {isSaving ? 'Saving...' : 'Save'}
           </Button>
