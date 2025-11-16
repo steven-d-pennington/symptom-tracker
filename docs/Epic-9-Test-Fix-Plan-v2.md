@@ -331,11 +331,11 @@ npm test -- "flares/place" --watch
 - ✅ Catches real bugs
 - ✅ Better long-term maintainability
 
-### Story 9.2: SIGNIFICANT PROGRESS ✅
-- **Result:** 37/55 tests passing (67%)
-- **Improvement:** From 9/55 (16%) → 37/55 (67%) - 311% increase!
-- **Status:** Major refactor complete, 18 failures remaining
-- **Time:** ~4 hours (Session: 2025-11-16 PM)
+### Story 9.2: BLOCKED AT 75% ⚠️
+- **Result:** 41/55 tests passing (75%)
+- **Improvement:** From 9/55 (16%) → 41/55 (75%) - 456% increase!
+- **Status:** **BLOCKED** on fireEvent/state update technical issue
+- **Time:** ~6 hours (Sessions: 2025-11-16 PM)
 
 **Key Changes:**
 1. **Removed all component mocks** - Applied Story 9.1 pattern
@@ -346,19 +346,31 @@ npm test -- "flares/place" --watch
 4. **Fixed repository mock** - Created `mockCreateMarker` variable for test overrides
 5. **Updated lifecycle selector tests** - Work with real SimpleSelect component
 6. **Fixed duplicate label issues** - Use placeholder text for flare notes textarea
+7. **Fixed character counter duplicates** - Use `getAllByText()` and `getElementById()`
 
-**Remaining Issues (18 failures):**
-1. Lifecycle stage interaction tests need async/await refinement
-2. Error message display tests (error might not be rendering)
-3. Some repository assertions need `waitFor()` wrappers
-4. Character counter queries hitting duplicates from LifecycleStageSelector
+**BLOCKER (14 failures):**
+All 14 remaining failures have the **same root cause**: `fireEvent.change()` on the severity slider does not trigger the `onChange` handler that calls `setSeverity()`. The severity state remains `null`, keeping save button disabled.
 
-**Next Steps:**
-- Fix async lifecycle stage change interactions
-- Debug why createMarker isn't being called in some tests
-- Fix error message rendering/querying
-- Add waitFor() to async assertions
-- Estimate: 1-2 hours to 100%
+**Approaches Attempted:**
+- `fireEvent.change(slider, { target: { value: '5' } })`
+- `act(async () => { fireEvent.change(...) })`
+- `userEvent.keyboard('{ArrowRight}')`
+- `slider.value = '7'; fireEvent.input(slider); fireEvent.change(slider)`
+- None trigger the state update
+
+**Possible Root Causes:**
+1. React synthetic events not being dispatched by fireEvent properly
+2. Controlled input value interferes with event handling
+3. Test environment doesn't match real browser behavior
+4. SeverityScale component needs different testing approach
+
+**Recommended Solutions:**
+1. **E2E tests:** Mark these 14 tests as E2E candidates for Playwright/Cypress
+2. **Mock approach:** Temporarily mock SeverityScale onChange to directly call setSeverity
+3. **Component refactor:** Consider uncontrolled input pattern for testing
+4. **Skip for now:** Move to Stories 9.3/9.4, revisit after investigation
+
+**Decision:** Moving to Story 9.3 (43% baseline, likely easier wins)
 
 ### Story 9.3: NOT STARTED
 - **Baseline:** 20/46 passing (43%)
@@ -408,6 +420,16 @@ npm test -- "flares/place" --watch
   - Story 9.2: 37/55 passing (67% - 311% improvement!)
   - 18 failures remaining (mostly async/timing issues)
   - Commit: ba1c2ea
+
+- **2025-11-16 PM Session 3:** Story 9.2 Investigation - fireEvent blocker (75% passing)
+  - Fixed character counter duplicates, lifecycle descriptions, async handling
+  - Improved test from 37/55 → 41/55 (75% - 456% total improvement!)
+  - **BLOCKED:** Discovered fireEvent.change() doesn't trigger setState on slider
+  - Attempted multiple approaches: act(), userEvent, direct value setting
+  - All 14 remaining failures have same root cause (severity state stays null)
+  - Documented technical blocker and recommended solutions
+  - **Decision:** Moving to Story 9.3 for better progress
+  - Commits: 95d3f50, 9c89bc4
 
 ---
 
