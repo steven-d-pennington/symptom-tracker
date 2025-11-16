@@ -2,8 +2,7 @@
 
 **Author:** Steven
 **Date:** 2025-10-18
-**Project Level:** 2
-**Target Scale:** Medium - Multiple Epics
+**Track:** method
 
 ---
 

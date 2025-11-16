@@ -3,7 +3,8 @@
 **Project:** symptom-tracker
 **Author:** Steven
 **Date:** 2025-10-18
-**Architecture Level:** 2 (Medium - Brownfield Enhancement)
+**Track:** method
+**Field Type:** brownfield
 
 ---
 
