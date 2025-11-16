@@ -331,15 +331,34 @@ npm test -- "flares/place" --watch
 - ✅ Catches real bugs
 - ✅ Better long-term maintainability
 
-### Story 9.2: PARTIAL PROGRESS
-- **Result:** 9/55 tests passing (16%)
-- **Improvement:** From 8/55 (15%) → 9/55 (16%)
-- **Status:** Navigation mock pattern updated, needs mockSearchParams refactoring
+### Story 9.2: SIGNIFICANT PROGRESS ✅
+- **Result:** 37/55 tests passing (67%)
+- **Improvement:** From 9/55 (16%) → 37/55 (67%) - 311% increase!
+- **Status:** Major refactor complete, 18 failures remaining
+- **Time:** ~4 hours (Session: 2025-11-16 PM)
 
-**Remaining Work:**
-- Replace all `mockSearchParams.delete()`/`.set()` calls with `mockGet.mockImplementation()` pattern
-- Apply same test ID approach as Story 9.1
-- Estimate: 2-3 hours
+**Key Changes:**
+1. **Removed all component mocks** - Applied Story 9.1 pattern
+2. **Added test IDs:**
+   - `SeverityScale.tsx`: Added `data-testid="severity-slider"`
+   - `page.tsx`: Added `data-testid="save-button"`
+3. **Fixed navigation mocks** - All `mockSearchParams.set/delete` → `mockGet.mockImplementation`
+4. **Fixed repository mock** - Created `mockCreateMarker` variable for test overrides
+5. **Updated lifecycle selector tests** - Work with real SimpleSelect component
+6. **Fixed duplicate label issues** - Use placeholder text for flare notes textarea
+
+**Remaining Issues (18 failures):**
+1. Lifecycle stage interaction tests need async/await refinement
+2. Error message display tests (error might not be rendering)
+3. Some repository assertions need `waitFor()` wrappers
+4. Character counter queries hitting duplicates from LifecycleStageSelector
+
+**Next Steps:**
+- Fix async lifecycle stage change interactions
+- Debug why createMarker isn't being called in some tests
+- Fix error message rendering/querying
+- Add waitFor() to async assertions
+- Estimate: 1-2 hours to 100%
 
 ### Story 9.3: NOT STARTED
 - **Baseline:** 20/46 passing (43%)
@@ -373,14 +392,25 @@ npm test -- "flares/place" --watch
   - Story 9.1 improved from 5% → 33%
   - All stories re-tested with actual results
   - Comprehensive fix plan created
-- **2025-11-16 PM:** Story 9.1 COMPLETE (100%), Story 9.2 partially fixed
+- **2025-11-16 PM Session 1:** Story 9.1 COMPLETE (100%), Story 9.2 partially fixed
   - Discovered Jest mocks not working - pivoted to real component testing
   - Added test IDs to LayerSelector and BodyMapViewer
   - Story 9.1: 21/21 passing (100%)
   - Story 9.2: 9/55 passing (16% - navigation mocks updated)
+  - Commit: 8ea179a
+
+- **2025-11-16 PM Session 2:** Story 9.2 MAJOR PROGRESS (67% passing)
+  - Applied Story 9.1 patterns to Story 9.2 systematically
+  - Removed all component mocks (LifecycleStageSelector, SeverityScale, Button, Badge)
+  - Fixed all navigation mock patterns (mockGet.mockImplementation)
+  - Fixed repository mock for test overrides (mockCreateMarker)
+  - Added test IDs to SeverityScale and save button
+  - Story 9.2: 37/55 passing (67% - 311% improvement!)
+  - 18 failures remaining (mostly async/timing issues)
+  - Commit: ba1c2ea
 
 ---
 
-**Status:** STORY 9.1 COMPLETE - Ready for commit
+**Status:** STORY 9.1 COMPLETE (100%), STORY 9.2 SIGNIFICANT PROGRESS (67%)
 **Owner:** Dev Team (Amelia)
-**Next Steps:** Complete Stories 9.2, 9.3, 9.4 using same pattern
+**Next Steps:** Fix remaining 18 Story 9.2 failures, then apply pattern to Stories 9.3 and 9.4
