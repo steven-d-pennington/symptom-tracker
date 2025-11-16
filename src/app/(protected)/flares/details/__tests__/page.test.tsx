@@ -53,6 +53,17 @@ jest.mock('@/lib/utils/cn', () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(' '),
 }));
 
+/**
+ * Helper function to set slider value and trigger input event.
+ * This approach properly triggers React's onChange handler for range inputs.
+ */
+const setSliderValue = async (slider: HTMLInputElement, value: string) => {
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(slider, value);
+    fireEvent.input(slider, { target: { value } });
+  });
+};
+
 describe('FlareDetailsPage', () => {
   beforeEach(() => {
     // Reset all mocks
@@ -285,11 +296,11 @@ describe('FlareDetailsPage', () => {
       expect(slider).toHaveAttribute('step', '1');
     });
 
-    it('should update severity state when slider value changes', () => {
+    it('should update severity state when slider value changes', async () => {
       render(<FlareDetailsPage />);
 
       const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
-      fireEvent.change(slider, { target: { value: '7' } });
+      await setSliderValue(slider, '7');
 
       expect(slider.value).toBe('7');
     });
@@ -409,10 +420,8 @@ describe('FlareDetailsPage', () => {
 
       const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
 
-      // Directly set the value and dispatch input/change events
-      slider.value = '7';
-      fireEvent.input(slider);
-      fireEvent.change(slider);
+      // Set slider value using helper (properly triggers onChange)
+      await setSliderValue(slider, '7');
 
       // Wait for state update and button to become enabled
       await waitFor(() => {
@@ -428,8 +437,8 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-      fireEvent.change(slider, { target: { value: '7' } });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '7');
 
       const saveButton = screen.getByTestId('save-button');
       fireEvent.click(saveButton);
@@ -466,15 +475,14 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '8' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '8');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
-      expect(saveButton).not.toBeDisabled();
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => {
+        expect(saveButton).not.toBeDisabled();
+      });
 
       fireEvent.click(saveButton);
 
@@ -503,18 +511,16 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '6' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '6');
 
       // Use placeholder to find flare notes textarea (not lifecycle notes)
       const textarea = screen.getByPlaceholderText('Add notes about this flare (optional)');
       await user.type(textarea, 'Painful and swollen');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -534,14 +540,12 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '5' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '5');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -575,11 +579,8 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '7' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '7');
 
       // Change lifecycle stage to growth using real component
       const selectButton = screen.getByRole('button', { name: /Select lifecycle stage/i });
@@ -587,7 +588,8 @@ describe('FlareDetailsPage', () => {
       const growthOption = screen.getByRole('option', { name: /Growth/i });
       await userEvent.setup().click(growthOption);
 
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -620,14 +622,12 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '5' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '5');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -645,14 +645,12 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '6' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '6');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -670,11 +668,12 @@ describe('FlareDetailsPage', () => {
       const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
 
       await act(async () => {
-        fireEvent.change(slider, { target: { value: '8' } });
+        await setSliderValue(slider, '8');
       });
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -693,18 +692,16 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '5' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '5');
 
       // Use placeholder to find flare notes textarea
       const textarea = screen.getByPlaceholderText('Add notes about this flare (optional)') as HTMLTextAreaElement;
       await user.type(textarea, 'Test notes');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -722,14 +719,12 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '5' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '5');
 
       // Wait for button to become enabled
-      let saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      let saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -748,14 +743,12 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '5' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '5');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -823,11 +816,8 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '7' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '7');
 
       fireEvent.keyDown(window, { key: 'Enter' });
 
@@ -854,14 +844,12 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '7' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '7');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -883,14 +871,12 @@ describe('FlareDetailsPage', () => {
 
       render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '5' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '5');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -929,14 +915,12 @@ describe('FlareDetailsPage', () => {
 
       const { unmount } = render(<FlareDetailsPage />);
 
-      const slider = screen.getByTestId('severity-slider');
-
-      await act(async () => {
-        fireEvent.change(slider, { target: { value: '5' } });
-      });
+      const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
+      await setSliderValue(slider, '5');
 
       // Wait for button to become enabled
-      const saveButton = await screen.findByRole('button', { name: /Save flare/i });
+      const saveButton = screen.getByTestId('save-button');
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -969,13 +953,13 @@ describe('FlareDetailsPage', () => {
       expect(renderTime).toBeLessThan(200);
     });
 
-    it('should update severity slider instantly', () => {
+    it('should update severity slider instantly', async () => {
       render(<FlareDetailsPage />);
 
       const slider = screen.getByTestId('severity-slider') as HTMLInputElement;
 
       const startTime = performance.now();
-      fireEvent.change(slider, { target: { value: '7' } });
+      await setSliderValue(slider, '7');
       const endTime = performance.now();
 
       const updateTime = endTime - startTime;
