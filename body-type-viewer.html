@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Body Type Viewer - PNG with Clickable Regions</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f3f4f6;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: #1f2937;
+      color: white;
+      padding: 20px 30px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
+    .controls {
+      background: #f9fafb;
+      padding: 20px 30px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .control-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 5px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #f3f4f6;
+    }
+
+    button.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      padding: 30px;
+    }
+
+    .view-container {
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: white;
+    }
+
+    .view-header {
+      background: #f9fafb;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .svg-wrapper {
+      position: relative;
+      aspect-ratio: 1 / 2;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .svg-wrapper img.body-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .svg-wrapper svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .body-region {
+      fill: transparent;
+      stroke: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .body-region:hover {
+      fill: #3b82f6;
+      fill-opacity: 0.25;
+      stroke: #3b82f6;
+      stroke-width: 2;
+      stroke-opacity: 0.8;
+    }
+
+    .body-region.show-boundaries {
+      stroke: #93c5fd;
+      stroke-width: 1;
+      stroke-opacity: 0.4;
+      stroke-dasharray: 4 2;
+    }
+
+    .body-region.show-boundaries:hover {
+      fill: #3b82f6;
+      fill-opacity: 0.3;
+      stroke: #3b82f6;
+      stroke-width: 2;
+      stroke-opacity: 1;
+      stroke-dasharray: none;
+    }
+
+    .info-panel {
+      background: #f9fafb;
+      padding: 20px 30px;
+      border-top: 1px solid #e5e7eb;
+      min-height: 100px;
+    }
+
+    .info-panel h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 10px;
+    }
+
+    .info-content {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    @media (max-width: 1200px) {
+      .viewer-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎨 Body Type Viewer</h1>
+      <p>PNG-based body maps with interactive clickable regions - scalable for multiple body types</p>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>Body Type</label>
+        <div class="button-group">
+          <button class="active" data-type="male">Male</button>
+          <button data-type="female">Female</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Show Region Boundaries</label>
+        <input type="checkbox" id="showBoundaries">
+      </div>
+    </div>
+
+    <div class="viewer-grid">
+      <div class="view-container">
+        <div class="view-header">Front View</div>
+        <div class="svg-wrapper" id="frontView">
+          <img class="body-image" id="frontImg" src="" alt="Front body">
+          <svg id="frontSvg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+      </div>
+
+      <div class="view-container">
+        <div class="view-header">Back View</div>
+        <div class="svg-wrapper" id="backView">
+          <img class="body-image" id="backImg" src="" alt="Back body">
+          <svg id="backSvg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <h3>Region Inspector</h3>
+      <div class="info-content" id="regionInfo">
+        Hover over a region to see details...
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Body Type</div>
+          <div class="stat-value" id="currentBodyType">Male</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Regions</div>
+          <div class="stat-value" id="regionCount">-</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Hovered Region</div>
+          <div class="stat-value" id="hoveredRegion">None</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentBodyType = 'male';
+    let showBoundaries = false;
+
+    // Region definitions for male front view
+    // Coordinates are approximate - adjust based on your PNG image positions
+    const maleRegionsFront = [
+      // Head
+      { id: 'head-front', type: 'ellipse', cx: 200, cy: 60, rx: 50, ry: 60 },
+      { id: 'neck-front', type: 'rect', x: 175, y: 110, width: 50, height: 40 },
+      
+      // Upper body
+      { id: 'shoulder-left', type: 'ellipse', cx: 115, cy: 170, rx: 50, ry: 35 },
+      { id: 'shoulder-right', type: 'ellipse', cx: 285, cy: 170, rx: 50, ry: 35 },
+      { id: 'chest-left', type: 'ellipse', cx: 165, cy: 210, rx: 35, ry: 45 },
+      { id: 'chest-right', type: 'ellipse', cx: 235, cy: 210, rx: 35, ry: 45 },
+      
+      // Torso
+      { id: 'abdomen-upper', type: 'rect', x: 165, y: 265, width: 70, height: 60, rx: 10 },
+      { id: 'abdomen-lower', type: 'rect', x: 165, y: 325, width: 70, height: 60, rx: 10 },
+      { id: 'hip-left', type: 'ellipse', cx: 150, cy: 385, rx: 28, ry: 25 },
+      { id: 'hip-right', type: 'ellipse', cx: 250, cy: 385, rx: 28, ry: 25 },
+      
+      // Legs
+      { id: 'thigh-left', type: 'rect', x: 145, y: 425, width: 45, height: 130, rx: 22 },
+      { id: 'thigh-right', type: 'rect', x: 210, y: 425, width: 45, height: 130, rx: 22 },
+      { id: 'knee-left', type: 'ellipse', cx: 167, cy: 565, rx: 28, ry: 25 },
+      { id: 'knee-right', type: 'ellipse', cx: 233, cy: 565, rx: 28, ry: 25 },
+      { id: 'calf-left', type: 'rect', x: 150, y: 590, width: 38, height: 120, rx: 19 },
+      { id: 'calf-right', type: 'rect', x: 212, y: 590, width: 38, height: 120, rx: 19 },
+      { id: 'ankle-left', type: 'ellipse', cx: 169, cy: 720, rx: 20, ry: 15 },
+      { id: 'ankle-right', type: 'ellipse', cx: 231, cy: 720, rx: 20, ry: 15 },
+      { id: 'foot-left', type: 'ellipse', cx: 169, cy: 755, rx: 22, ry: 30 },
+      { id: 'foot-right', type: 'ellipse', cx: 231, cy: 755, rx: 22, ry: 30 },
+      
+      // Arms
+      { id: 'upper-arm-left', type: 'rect', x: 70, y: 195, width: 42, height: 120, rx: 21 },
+      { id: 'upper-arm-right', type: 'rect', x: 288, y: 195, width: 42, height: 120, rx: 21 },
+      { id: 'elbow-left', type: 'ellipse', cx: 91, cy: 325, rx: 26, ry: 20 },
+      { id: 'elbow-right', type: 'ellipse', cx: 309, cy: 325, rx: 26, ry: 20 },
+      { id: 'forearm-left', type: 'rect', x: 73, y: 345, width: 36, height: 110, rx: 18 },
+      { id: 'forearm-right', type: 'rect', x: 291, y: 345, width: 36, height: 110, rx: 18 },
+      { id: 'hand-left', type: 'ellipse', cx: 91, cy: 495, rx: 21, ry: 26 },
+      { id: 'hand-right', type: 'ellipse', cx: 309, cy: 495, rx: 21, ry: 26 }
+    ];
+
+    const maleRegionsBack = [
+      // Head & neck
+      { id: 'head-back', type: 'ellipse', cx: 200, cy: 60, rx: 50, ry: 60 },
+      { id: 'neck-back', type: 'rect', x: 175, y: 110, width: 50, height: 40 },
+      
+      // Upper body
+      { id: 'shoulder-back-left', type: 'ellipse', cx: 115, cy: 170, rx: 50, ry: 35 },
+      { id: 'shoulder-back-right', type: 'ellipse', cx: 285, cy: 170, rx: 50, ry: 35 },
+      { id: 'upper-back-left', type: 'rect', x: 145, y: 160, width: 55, height: 90, rx: 10 },
+      { id: 'upper-back-right', type: 'rect', x: 200, y: 160, width: 55, height: 90, rx: 10 },
+      { id: 'mid-back-left', type: 'rect', x: 145, y: 250, width: 55, height: 80, rx: 10 },
+      { id: 'mid-back-right', type: 'rect', x: 200, y: 250, width: 55, height: 80, rx: 10 },
+      { id: 'lower-back', type: 'rect', x: 155, y: 330, width: 90, height: 60, rx: 10 },
+      { id: 'buttocks-left', type: 'ellipse', cx: 170, cy: 415, rx: 35, ry: 40 },
+      { id: 'buttocks-right', type: 'ellipse', cx: 230, cy: 415, rx: 35, ry: 40 },
+      
+      // Legs
+      { id: 'thigh-back-left', type: 'rect', x: 145, y: 455, width: 45, height: 130, rx: 22 },
+      { id: 'thigh-back-right', type: 'rect', x: 210, y: 455, width: 45, height: 130, rx: 22 },
+      { id: 'knee-back-left', type: 'ellipse', cx: 167, cy: 595, rx: 28, ry: 25 },
+      { id: 'knee-back-right', type: 'ellipse', cx: 233, cy: 595, rx: 28, ry: 25 },
+      { id: 'calf-back-left', type: 'rect', x: 150, y: 620, width: 38, height: 120, rx: 19 },
+      { id: 'calf-back-right', type: 'rect', x: 212, y: 620, width: 38, height: 120, rx: 19 },
+      
+      // Arms
+      { id: 'upper-arm-back-left', type: 'rect', x: 70, y: 195, width: 42, height: 120, rx: 21 },
+      { id: 'upper-arm-back-right', type: 'rect', x: 288, y: 195, width: 42, height: 120, rx: 21 },
+      { id: 'elbow-back-left', type: 'ellipse', cx: 91, cy: 325, rx: 26, ry: 20 },
+      { id: 'elbow-back-right', type: 'ellipse', cx: 309, cy: 325, rx: 26, ry: 20 },
+      { id: 'forearm-back-left', type: 'rect', x: 73, y: 345, width: 36, height: 110, rx: 18 },
+      { id: 'forearm-back-right', type: 'rect', x: 291, y: 345, width: 36, height: 110, rx: 18 }
+    ];
+
+    // Female regions (narrower shoulders, wider hips)
+    const femaleRegionsFront = [
+      { id: 'head-front', type: 'ellipse', cx: 200, cy: 60, rx: 48, ry: 58 },
+      { id: 'neck-front', type: 'rect', x: 180, y: 110, width: 40, height: 40 },
+      { id: 'shoulder-left', type: 'ellipse', cx: 125, cy: 170, rx: 42, ry: 33 },
+      { id: 'shoulder-right', type: 'ellipse', cx: 275, cy: 170, rx: 42, ry: 33 },
+      { id: 'chest-left', type: 'ellipse', cx: 168, cy: 210, rx: 35, ry: 40 },
+      { id: 'chest-right', type: 'ellipse', cx: 232, cy: 210, rx: 35, ry: 40 },
+      { id: 'under-breast-left', type: 'ellipse', cx: 168, cy: 250, rx: 32, ry: 16 },
+      { id: 'under-breast-right', type: 'ellipse', cx: 232, cy: 250, rx: 32, ry: 16 },
+      { id: 'abdomen-upper', type: 'rect', x: 170, y: 265, width: 60, height: 60, rx: 10 },
+      { id: 'abdomen-lower', type: 'rect', x: 168, y: 325, width: 64, height: 60, rx: 10 },
+      { id: 'hip-left', type: 'ellipse', cx: 142, cy: 385, rx: 35, ry: 28 },
+      { id: 'hip-right', type: 'ellipse', cx: 258, cy: 385, rx: 35, ry: 28 },
+      { id: 'thigh-left', type: 'rect', x: 142, y: 425, width: 46, height: 128, rx: 23 },
+      { id: 'thigh-right', type: 'rect', x: 212, y: 425, width: 46, height: 128, rx: 23 },
+      { id: 'knee-left', type: 'ellipse', cx: 165, cy: 565, rx: 27, ry: 24 },
+      { id: 'knee-right', type: 'ellipse', cx: 235, cy: 565, rx: 27, ry: 24 },
+      { id: 'calf-left', type: 'rect', x: 148, y: 590, width: 36, height: 118, rx: 18 },
+      { id: 'calf-right', type: 'rect', x: 216, y: 590, width: 36, height: 118, rx: 18 },
+      { id: 'ankle-left', type: 'ellipse', cx: 166, cy: 720, rx: 19, ry: 14 },
+      { id: 'ankle-right', type: 'ellipse', cx: 234, cy: 720, rx: 19, ry: 14 },
+      { id: 'foot-left', type: 'ellipse', cx: 166, cy: 755, rx: 20, ry: 28 },
+      { id: 'foot-right', type: 'ellipse', cx: 234, cy: 755, rx: 20, ry: 28 },
+      { id: 'upper-arm-left', type: 'rect', x: 78, y: 195, width: 38, height: 115, rx: 19 },
+      { id: 'upper-arm-right', type: 'rect', x: 284, y: 195, width: 38, height: 115, rx: 19 },
+      { id: 'elbow-left', type: 'ellipse', cx: 97, cy: 325, rx: 24, ry: 19 },
+      { id: 'elbow-right', type: 'ellipse', cx: 303, cy: 325, rx: 24, ry: 19 },
+      { id: 'forearm-left', type: 'rect', x: 80, y: 345, width: 34, height: 108, rx: 17 },
+      { id: 'forearm-right', type: 'rect', x: 286, y: 345, width: 34, height: 108, rx: 17 },
+      { id: 'hand-left', type: 'ellipse', cx: 97, cy: 495, rx: 19, ry: 24 },
+      { id: 'hand-right', type: 'ellipse', cx: 303, cy: 495, rx: 19, ry: 24 }
+    ];
+
+    const femaleRegionsBack = [
+      { id: 'head-back', type: 'ellipse', cx: 200, cy: 60, rx: 48, ry: 58 },
+      { id: 'neck-back', type: 'rect', x: 180, y: 110, width: 40, height: 40 },
+      { id: 'shoulder-back-left', type: 'ellipse', cx: 125, cy: 170, rx: 42, ry: 33 },
+      { id: 'shoulder-back-right', type: 'ellipse', cx: 275, cy: 170, rx: 42, ry: 33 },
+      { id: 'upper-back-left', type: 'rect', x: 148, y: 160, width: 52, height: 88, rx: 10 },
+      { id: 'upper-back-right', type: 'rect', x: 200, y: 160, width: 52, height: 88, rx: 10 },
+      { id: 'mid-back-left', type: 'rect', x: 150, y: 248, width: 50, height: 78, rx: 10 },
+      { id: 'mid-back-right', type: 'rect', x: 200, y: 248, width: 50, height: 78, rx: 10 },
+      { id: 'lower-back', type: 'rect', x: 160, y: 326, width: 80, height: 58, rx: 10 },
+      { id: 'buttocks-left', type: 'ellipse', cx: 168, cy: 415, rx: 38, ry: 42 },
+      { id: 'buttocks-right', type: 'ellipse', cx: 232, cy: 415, rx: 38, ry: 42 },
+      { id: 'thigh-back-left', type: 'rect', x: 142, y: 455, width: 46, height: 128, rx: 23 },
+      { id: 'thigh-back-right', type: 'rect', x: 212, y: 455, width: 46, height: 128, rx: 23 },
+      { id: 'knee-back-left', type: 'ellipse', cx: 165, cy: 595, rx: 27, ry: 24 },
+      { id: 'knee-back-right', type: 'ellipse', cx: 235, cy: 595, rx: 27, ry: 24 },
+      { id: 'calf-back-left', type: 'rect', x: 148, y: 620, width: 36, height: 118, rx: 18 },
+      { id: 'calf-back-right', type: 'rect', x: 216, y: 620, width: 36, height: 118, rx: 18 },
+      { id: 'upper-arm-back-left', type: 'rect', x: 78, y: 195, width: 38, height: 115, rx: 19 },
+      { id: 'upper-arm-back-right', type: 'rect', x: 284, y: 195, width: 38, height: 115, rx: 19 },
+      { id: 'elbow-back-left', type: 'ellipse', cx: 97, cy: 325, rx: 24, ry: 19 },
+      { id: 'elbow-back-right', type: 'ellipse', cx: 303, cy: 325, rx: 24, ry: 19 },
+      { id: 'forearm-back-left', type: 'rect', x: 80, y: 345, width: 34, height: 108, rx: 17 },
+      { id: 'forearm-back-right', type: 'rect', x: 286, y: 345, width: 34, height: 108, rx: 17 }
+    ];
+
+    // Helper function to create SVG region element
+    function createRegion(region) {
+      let element;
+      
+      if (region.type === 'ellipse') {
+        element = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        element.setAttribute('cx', region.cx);
+        element.setAttribute('cy', region.cy);
+        element.setAttribute('rx', region.rx);
+        element.setAttribute('ry', region.ry);
+      } else if (region.type === 'rect') {
+        element = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        element.setAttribute('x', region.x);
+        element.setAttribute('y', region.y);
+        element.setAttribute('width', region.width);
+        element.setAttribute('height', region.height);
+        if (region.rx) element.setAttribute('rx', region.rx);
+      }
+      
+      element.setAttribute('id', region.id);
+      element.setAttribute('class', 'body-region');
+      
+      return element;
+    }
+
+    // Render regions onto SVG
+    function renderRegions(svgElement, regions) {
+      svgElement.innerHTML = '';
+      regions.forEach(region => {
+        const element = createRegion(region);
+        svgElement.appendChild(element);
+      });
+    }
+
+    // Initialize
+    function init() {
+      updateBodyType('male');
+      setupEventListeners();
+    }
+
+    function setupEventListeners() {
+      // Body type buttons
+      document.querySelectorAll('[data-type]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          updateBodyType(e.target.dataset.type);
+        });
+      });
+
+      // Show boundaries toggle
+      document.getElementById('showBoundaries').addEventListener('change', (e) => {
+        showBoundaries = e.target.checked;
+        document.querySelectorAll('.body-region').forEach(region => {
+          if (showBoundaries) {
+            region.classList.add('show-boundaries');
+          } else {
+            region.classList.remove('show-boundaries');
+          }
+        });
+      });
+    }
+
+    function updateBodyType(type) {
+      currentBodyType = type;
+      document.getElementById('currentBodyType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+
+      // Update PNG sources
+      document.getElementById('frontImg').src = `public/body_maps/${type}_front.png`;
+      document.getElementById('backImg').src = `public/body_maps/${type}_back.png`;
+
+      // Update SVG regions
+      const frontSvg = document.getElementById('frontSvg');
+      const backSvg = document.getElementById('backSvg');
+
+      if (type === 'male') {
+        renderRegions(frontSvg, maleRegionsFront);
+        renderRegions(backSvg, maleRegionsBack);
+      } else {
+        renderRegions(frontSvg, femaleRegionsFront);
+        renderRegions(backSvg, femaleRegionsBack);
+      }
+
+      // Add hover listeners
+      setupRegionListeners();
+      updateRegionCount();
+      
+      // Apply boundary visibility
+      if (showBoundaries) {
+        document.querySelectorAll('.body-region').forEach(region => {
+          region.classList.add('show-boundaries');
+        });
+      }
+    }
+
+    function setupRegionListeners() {
+      document.querySelectorAll('.body-region').forEach(region => {
+        region.addEventListener('mouseenter', (e) => {
+          const regionId = e.target.id;
+          document.getElementById('hoveredRegion').textContent = regionId;
+          
+          const bbox = e.target.getBBox();
+          document.getElementById('regionInfo').innerHTML = `
+            <strong>${regionId}</strong><br>
+            Position: (${Math.round(bbox.x)}, ${Math.round(bbox.y)})<br>
+            Size: ${Math.round(bbox.width)} × ${Math.round(bbox.height)}
+          `;
+        });
+
+        region.addEventListener('mouseleave', () => {
+          document.getElementById('hoveredRegion').textContent = 'None';
+          document.getElementById('regionInfo').textContent = 'Hover over a region to see details...';
+        });
+
+        region.addEventListener('click', (e) => {
+          console.log('Clicked region:', e.target.id);
+          alert(`Clicked: ${e.target.id}`);
+        });
+      });
+    }
+
+    function updateRegionCount() {
+      const count = document.querySelectorAll('.body-region').length;
+      document.getElementById('regionCount').textContent = count;
+    }
+
+    // Run on load
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

@@ -113,9 +113,15 @@ export function FrontBody({
     >
       <defs>
         <style>{`
+          .body-silhouette {
+            fill: #d1d5db;
+            stroke: #9ca3af;
+            stroke-width: 1;
+            opacity: 0.3;
+          }
           .body-region {
-            stroke: #374151;
-            stroke-width: 2;
+            stroke: #6b7280;
+            stroke-width: 1.5;
             cursor: pointer;
             transition: all 0.2s ease;
           }
@@ -123,8 +129,9 @@ export function FrontBody({
             cursor: crosshair !important;
           }
           .body-region:hover {
-            opacity: 0.8 !important;
-            stroke-width: 3;
+            opacity: 0.9 !important;
+            stroke-width: 2.5;
+            stroke: #374151;
           }
           @keyframes flare-pulse {
             0%, 100% {
@@ -158,6 +165,20 @@ export function FrontBody({
           }
         `}</style>
       </defs>
+
+      {/* Subtle body silhouette background */}
+      <g className="body-silhouette">
+        {/* Head and neck */}
+        <ellipse cx="200" cy="60" rx="52" ry="62" />
+        <rect x="173" y="108" width="54" height="45" rx="5" />
+        
+        {/* Torso */}
+        <path d="M 165 150 L 120 165 L 95 180 L 80 220 L 85 280 L 95 340 L 120 380 L 145 410 L 145 425 L 140 555 L 145 590 L 148 710 L 150 785 L 165 785 L 169 755 L 188 590 L 200 555 L 212 590 L 231 755 L 235 785 L 250 785 L 252 710 L 255 590 L 260 555 L 255 425 L 255 410 L 280 380 L 305 340 L 315 280 L 320 220 L 305 180 L 280 165 L 235 150 Z" />
+        
+        {/* Arms */}
+        <path d="M 95 180 L 75 195 L 70 325 L 75 455 L 85 495 L 95 520 L 95 195" opacity="0.3" />
+        <path d="M 305 180 L 325 195 L 330 325 L 325 455 L 315 495 L 305 520 L 305 195" opacity="0.3" />
+      </g>
 
       {/* Head */}
       <ellipse

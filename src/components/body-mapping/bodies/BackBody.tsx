@@ -113,9 +113,15 @@ export function BackBody({
     >
       <defs>
         <style>{`
+          .body-silhouette {
+            fill: #d1d5db;
+            stroke: #9ca3af;
+            stroke-width: 1;
+            opacity: 0.3;
+          }
           .body-region {
-            stroke: #374151;
-            stroke-width: 2;
+            stroke: #6b7280;
+            stroke-width: 1.5;
             cursor: pointer;
             transition: all 0.2s ease;
           }
@@ -123,8 +129,9 @@ export function BackBody({
             cursor: crosshair !important;
           }
           .body-region:hover {
-            opacity: 0.8 !important;
-            stroke-width: 3;
+            opacity: 0.9 !important;
+            stroke-width: 2.5;
+            stroke: #374151;
           }
           @keyframes flare-pulse {
             0%, 100% {
@@ -158,6 +165,20 @@ export function BackBody({
           }
         `}</style>
       </defs>
+
+      {/* Subtle body silhouette background - back view */}
+      <g className="body-silhouette">
+        {/* Head and neck */}
+        <ellipse cx="200" cy="60" rx="52" ry="62" />
+        <rect x="173" y="108" width="54" height="45" rx="5" />
+        
+        {/* Back torso */}
+        <path d="M 165 150 L 120 165 L 95 180 L 80 220 L 85 280 L 95 330 L 120 380 L 145 410 L 155 455 L 145 590 L 148 740 L 165 740 L 169 720 L 188 620 L 200 590 L 212 620 L 231 720 L 235 740 L 252 740 L 255 590 L 245 455 L 255 410 L 280 380 L 305 330 L 315 280 L 320 220 L 305 180 L 280 165 L 235 150 Z" />
+        
+        {/* Arms */}
+        <path d="M 95 180 L 75 195 L 70 325 L 75 455 L 75 195" opacity="0.3" />
+        <path d="M 305 180 L 325 195 L 330 325 L 325 455 L 325 195" opacity="0.3" />
+      </g>
 
       {/* Back of Head */}
       <ellipse
