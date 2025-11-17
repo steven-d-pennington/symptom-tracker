@@ -9,6 +9,7 @@ import { LayerType } from "@/lib/db/schema";
 import { NormalizedCoordinates } from "@/lib/utils/coordinates";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { announce } from "@/lib/utils/announce";
+import { cn } from "@/lib/utils/cn";
 
 // URL param types
 type FlareCreationSource = 'dashboard' | 'body-map';
@@ -56,6 +57,9 @@ export default function FlareBodyMapPlacementPage() {
   const [selectedLayer, setSelectedLayer] = useState<LayerType>(
     layerParam || 'flares'
   );
+
+  // Body map view state (front/back)
+  const [currentView, setCurrentView] = useState<"front" | "back">("front");
 
   // AC 9.1.3: Region selection state for body map
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
@@ -182,7 +186,7 @@ export default function FlareBodyMapPlacementPage() {
     <main
       role="main"
       aria-label="Flare placement"
-      className="flex flex-col h-screen w-screen bg-background"
+      className="flex flex-col h-screen w-screen bg-background overflow-hidden"
     >
       {/* AC 9.1.9: ARIA live region for announcements */}
       <div
@@ -206,37 +210,79 @@ export default function FlareBodyMapPlacementPage() {
       )}
 
       {/* AC 9.1.3: Body map with region selection */}
-      <div className="flex-1 relative overflow-hidden">
-        <BodyMapViewer
-          view="front"
-          userId={userId || ''}
-          selectedRegion={selectedRegion || undefined}
-          onRegionSelect={handleRegionSelect}
-          onCoordinateMark={handleMarkerPlace}
-          readOnly={false}
-          showFlareMarkers={false}
-          hideFullscreenButton={true}
-          markerCount={markers.length}
-        />
+      {/* Left-aligned and positioned higher up - not centered */}
+      <div className="flex-1 relative overflow-hidden flex items-start justify-start min-h-0 pt-2 md:pt-4">
+        {/* Constrain width and height - left-aligned container */}
+        <div className="w-full max-w-2xl md:max-w-3xl h-full max-h-[45vh] sm:max-h-[50vh] md:max-h-[55vh] lg:max-h-[60vh] flex flex-col ml-0 md:ml-4 lg:ml-8">
+          {/* Front/Back view switcher and Next button - minimal padding, left-aligned */}
+          <div className="flex-shrink-0 px-2 py-1 md:px-3 md:py-1.5 border-b border-border bg-card flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentView("front")}
+                className={cn(
+                  "px-3 py-1 md:px-4 md:py-1.5 rounded-lg font-medium transition-colors min-h-[36px] md:min-h-[40px] text-sm",
+                  currentView === "front"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+                aria-label="Front view"
+                aria-pressed={currentView === "front"}
+              >
+                Front
+              </button>
+              <button
+                onClick={() => setCurrentView("back")}
+                className={cn(
+                  "px-3 py-1 md:px-4 md:py-1.5 rounded-lg font-medium transition-colors min-h-[36px] md:min-h-[40px] text-sm",
+                  currentView === "back"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+                aria-label="Back view"
+                aria-pressed={currentView === "back"}
+              >
+                Back
+              </button>
+            </div>
+            
+            {/* Next button - smaller, positioned to the right */}
+            <button
+              onClick={handleNext}
+              disabled={markers.length === 0}
+              className={cn(
+                "px-3 py-1 md:px-4 md:py-1.5 rounded-lg font-medium transition-colors min-h-[36px] md:min-h-[40px] text-sm",
+                "bg-primary text-primary-foreground hover:bg-primary/90",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+              aria-label={
+                markers.length > 0
+                  ? `Next with ${markers.length} marker${markers.length !== 1 ? 's' : ''}`
+                  : 'Next - disabled, no markers placed'
+              }
+            >
+              {markers.length > 0
+                ? `Next (${markers.length})`
+                : 'Next'}
+            </button>
+          </div>
+
+          {/* Body map viewer - strictly constrained, positioned at top */}
+          <div className="flex-1 relative overflow-hidden min-h-0 max-h-full">
+            <BodyMapViewer
+              view={currentView}
+              userId={userId || ''}
+              selectedRegion={selectedRegion || undefined}
+              onRegionSelect={handleRegionSelect}
+              onCoordinateMark={handleMarkerPlace}
+              readOnly={false}
+              showFlareMarkers={false}
+              hideFullscreenButton={true}
+              markerCount={markers.length}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* AC 9.1.5: "Next" button with marker count */}
-      <div className="flex-shrink-0 p-4 border-t border-border bg-card">
-        <button
-          onClick={handleNext}
-          disabled={markers.length === 0}
-          className="w-full min-h-[48px] px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
-          aria-label={
-            markers.length > 0
-              ? `Next with ${markers.length} marker${markers.length !== 1 ? 's' : ''}`
-              : 'Next - disabled, no markers placed'
-          }
-        >
-          {markers.length > 0
-            ? `Next (${markers.length} marker${markers.length !== 1 ? 's' : ''})`
-            : 'Next'}
-        </button>
-      </div>
     </main>
   );
 }

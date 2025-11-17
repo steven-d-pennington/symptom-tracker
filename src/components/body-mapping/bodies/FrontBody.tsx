@@ -112,7 +112,7 @@ export function FrontBody({
 
   return (
     <svg
-      viewBox="0 0 400 800"
+      viewBox="0 -20 400 820"
       className={coordinateCursorActive ? "coordinate-mode" : ""}
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"

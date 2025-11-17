@@ -36,26 +36,45 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
   const handleInit = useCallback(
     (ref: ReactZoomPanPinchRef) => {
       apiRef.current = ref;
-      // Manually calculate center position
-      setTimeout(() => {
+      // Manually calculate center position - use multiple attempts to ensure proper centering
+      const attemptCenter = (attempt = 0) => {
         if (ref.setTransform && ref.instance?.wrapperComponent) {
           const wrapperElement = ref.instance.wrapperComponent;
           const wrapperWidth = wrapperElement.offsetWidth;
           const wrapperHeight = wrapperElement.offsetHeight;
+
+          // Only proceed if we have valid dimensions
+          if (wrapperWidth === 0 || wrapperHeight === 0) {
+            if (attempt < 5) {
+              setTimeout(() => attemptCenter(attempt + 1), 50);
+            }
+            return;
+          }
 
           // SVG is 400x800, at scale 0.45 = 180x360
           const scale = 0.45;
           const scaledWidth = 400 * scale;
           const scaledHeight = 800 * scale;
 
-          // Calculate centered position
+          // Calculate centered horizontal position
           const x = (wrapperWidth - scaledWidth) / 2;
-          const y = (wrapperHeight - scaledHeight) / 2;
+          
+          // Calculate vertical position - adjust to position body higher up
+          // The body figure is positioned in the upper portion of the SVG viewBox,
+          // so we offset upward to better center the visible body portion
+          const verticalOffset = scaledHeight * 0.40; // Move up by 40% of scaled height
+          const y = (wrapperHeight - scaledHeight) / 2 - verticalOffset;
 
           ref.setTransform(x, y, scale, 0, CENTER_EASE);
           onZoomChange?.(scale);
+        } else if (attempt < 5) {
+          // Retry if wrapper not ready yet
+          setTimeout(() => attemptCenter(attempt + 1), 50);
         }
-      }, 100);
+      };
+      
+      // Start centering immediately and retry if needed
+      setTimeout(() => attemptCenter(), 0);
     },
     [onZoomChange]
   );
@@ -81,8 +100,8 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
         initialPositionY={0}
         minScale={0.3}
         maxScale={3}
-        centerOnInit={false}
-        centerZoomedOut={false}
+        centerOnInit={true}
+        centerZoomedOut={true}
         limitToBounds={false}
         wheel={{ smoothStep: 0.005, disabled: false }}
         pinch={{ step: 5, disabled: false }}
@@ -109,7 +128,7 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
           };
 
           const handleReset = () => {
-            // Reset to initial centered position
+            // Reset to initial centered position with proper vertical alignment
             if (apiRef.current?.setTransform && apiRef.current?.instance?.wrapperComponent) {
               const wrapperElement = apiRef.current.instance.wrapperComponent;
               const wrapperWidth = wrapperElement.offsetWidth;
@@ -118,7 +137,9 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
               const scaledWidth = 400 * scale;
               const scaledHeight = 800 * scale;
               const x = (wrapperWidth - scaledWidth) / 2;
-              const y = (wrapperHeight - scaledHeight) / 2;
+              // Apply same vertical offset as initial positioning
+              const verticalOffset = scaledHeight * 0.40;
+              const y = (wrapperHeight - scaledHeight) / 2 - verticalOffset;
               apiRef.current.setTransform(x, y, scale, 200, CENTER_EASE);
             } else {
               resetTransform();
@@ -202,7 +223,7 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
                   break;
                 case "Escape":
                   event.preventDefault();
-                  // Reset to initial centered position
+                  // Reset to initial centered position with proper vertical alignment
                   if (apiRef.current?.setTransform && apiRef.current?.instance?.wrapperComponent) {
                     const wrapperElement = apiRef.current.instance.wrapperComponent;
                     const wrapperWidth = wrapperElement.offsetWidth;
@@ -211,7 +232,9 @@ export function BodyMapZoom({ children, viewType, userId, onZoomChange }: BodyMa
                     const scaledWidth = 400 * scale;
                     const scaledHeight = 800 * scale;
                     const x = (wrapperWidth - scaledWidth) / 2;
-                    const y = (wrapperHeight - scaledHeight) / 2;
+                    // Apply same vertical offset as initial positioning
+                    const verticalOffset = scaledHeight * 0.15;
+                    const y = (wrapperHeight - scaledHeight) / 2 - verticalOffset;
                     apiRef.current.setTransform(x, y, scale, 200, CENTER_EASE);
                   }
                   setShowHelp(false);

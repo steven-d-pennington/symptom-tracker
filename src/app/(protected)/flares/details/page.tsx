@@ -78,8 +78,8 @@ export default function FlareDetailsPage() {
     }
   }, [isParamValid, router]);
 
-  // AC 9.2.3: Form state - severity (required)
-  const [severity, setSeverity] = useState<number | null>(null);
+  // AC 9.2.3: Form state - severity (defaults to 5, can be changed)
+  const [severity, setSeverity] = useState<number>(5);
 
   // AC 9.2.4: Lifecycle stage state (pre-selected to "onset")
   const [lifecycleStage, setLifecycleStage] = useState<FlareLifecycleStage>('onset');
@@ -128,7 +128,7 @@ export default function FlareDetailsPage() {
 
   // AC 9.2.7, 9.2.8, 9.2.9: Handle save with multi-location creation
   const handleSave = useCallback(async () => {
-    if (!severity || !userId || !bodyRegionId || !layer) {
+    if (!userId || !bodyRegionId || !layer) {
       console.warn('Cannot save: missing required fields');
       return;
     }
@@ -218,7 +218,7 @@ export default function FlareDetailsPage() {
           layer: layer || 'flares',
         });
         router.push(`/flares/place?${params.toString()}`);
-      } else if (e.key === 'Enter' && severity !== null && !isSaving) {
+      } else if (e.key === 'Enter' && !isSaving) {
         // AC 9.2.10: Enter submits form
         handleSave();
       }
@@ -226,7 +226,7 @@ export default function FlareDetailsPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [severity, isSaving, source, layer, router, handleSave]);
+  }, [isSaving, source, layer, router, handleSave]);
 
   // Show nothing if params invalid (will redirect)
   if (!isParamValid || !source || !layer || !bodyRegionId) {
@@ -250,42 +250,64 @@ export default function FlareDetailsPage() {
         {error}
       </div>
 
-      {/* Page content container */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
-          {/* AC 9.2.2: Display region name prominently */}
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+      {/* Header bar with Save button */}
+      <div className="flex-shrink-0 px-4 py-3 border-b border-border bg-card flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          {/* AC 9.2.2: Display region name */}
+          <h1 className="text-lg sm:text-xl font-bold text-foreground">
             {regionName}
           </h1>
+          {/* AC 9.2.2: Display layer badge */}
+          {layer && (
+            <Badge variant="outline" className="text-xs">
+              {formatLayerName(layer)}
+            </Badge>
+          )}
+        </div>
+        
+        {/* Save button - smaller, positioned to the right */}
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          className={cn(
+            'px-3 py-1 md:px-4 md:py-1.5 rounded-lg font-medium transition-colors min-h-[36px] md:min-h-[40px] text-sm',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
+          aria-label={
+            isSaving
+              ? 'Saving flare...'
+              : 'Save flare'
+          }
+          data-testid="save-button"
+        >
+          {isSaving ? 'Saving...' : 'Save'}
+        </Button>
+      </div>
 
+      {/* Page content container */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6 sm:py-6">
           {/* AC 9.2.2: Display marker count (Story 9.4: always show for body-map confirmation) */}
           {markerCoordinates.length > 0 && (
-            <p className="text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {markerCoordinates.length} {markerCoordinates.length === 1 ? 'marker' : 'markers'} placed in {regionName}
             </p>
           )}
 
-          {/* AC 9.2.2: Display layer badge */}
-          <div className="mb-6">
-            <Badge variant="outline" className="text-sm">
-              {layer && formatLayerName(layer)}
-            </Badge>
-          </div>
-
           {/* AC 9.2.9: Error message display */}
           {error && (
             <div
-              className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive"
+              className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive"
               role="alert"
             >
               {error}
             </div>
           )}
 
-          {/* Form content */}
-          <div className="space-y-8">
+          {/* Form content - tightened spacing */}
+          <div className="space-y-5">
             {/* AC 9.2.3: Severity slider with visual feedback */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label
                 htmlFor="severity-slider"
                 className="block text-sm font-medium text-foreground"
@@ -294,7 +316,7 @@ export default function FlareDetailsPage() {
               </label>
               <div id="severity-slider">
                 <SeverityScale
-                  value={severity ?? 5}
+                  value={severity}
                   onChange={(value) => setSeverity(value)}
                   scale={{ type: 'numeric', min: 1, max: 10, step: 1 }}
                   ariaLabel="Flare severity from 1 to 10"
@@ -306,7 +328,7 @@ export default function FlareDetailsPage() {
             </div>
 
             {/* AC 9.2.4: Lifecycle stage selector */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <LifecycleStageSelector
                 currentStage={lifecycleStage}
                 onStageChange={handleLifecycleStageChange}
@@ -317,7 +339,7 @@ export default function FlareDetailsPage() {
             </div>
 
             {/* AC 9.2.5: Notes textarea with character limit */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label
                 htmlFor="flare-notes"
                 className="block text-sm font-medium text-foreground"
@@ -331,13 +353,13 @@ export default function FlareDetailsPage() {
                 disabled={isSaving}
                 placeholder="Add notes about this flare (optional)"
                 maxLength={500}
-                rows={4}
+                rows={3}
                 className={cn(
                   'w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
                   'ring-offset-background placeholder:text-muted-foreground',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   'disabled:cursor-not-allowed disabled:opacity-50',
-                  'min-h-[88px]', // Larger touch target for textarea
+                  'min-h-[72px]', // Reduced from 88px for tighter spacing
                   'resize-none'
                 )}
                 aria-label="Flare notes"
@@ -352,30 +374,6 @@ export default function FlareDetailsPage() {
               </p>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* AC 9.2.6: Save button with validation and loading state */}
-      <div className="flex-shrink-0 p-4 border-t border-border bg-card">
-        <div className="max-w-2xl mx-auto">
-          <Button
-            onClick={handleSave}
-            disabled={severity === null || isSaving}
-            className={cn(
-              'w-full min-h-[48px] px-6 py-3 font-medium',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
-            aria-label={
-              severity === null
-                ? 'Save - disabled, severity required'
-                : isSaving
-                ? 'Saving flare...'
-                : 'Save flare'
-            }
-            data-testid="save-button"
-          >
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
         </div>
       </div>
     </main>

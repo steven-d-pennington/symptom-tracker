@@ -586,11 +586,13 @@ function createLifecycleStageEvents({
 /**
  * Step 2b: Generate pain and inflammation layer markers
  *
- * Generates bodyMapLocation entries for pain and inflammation layers:
+ * Generates realistic pain and inflammation markers similar to flares:
  * - Some linked to existing flares (during flare periods)
  * - Some independent (chronic pain, standalone inflammation)
- * - Realistic distributions across body regions
- * - Varying severities (2-10)
+ * - Realistic lifecycle progression with severity changes
+ * - Some markers resolve over time, others remain active
+ * - Event history with severity updates
+ * - Varying severities and durations
  */
 async function generateBodyMapLayers(
   userId: string,
@@ -598,9 +600,12 @@ async function generateBodyMapLayers(
   endDate: Date,
   flares: any
 ) {
-  const painMarkers = [];
-  const inflammationMarkers = [];
-
+  const totalDays = differenceInDays(endDate, startDate);
+  const years = totalDays / 365;
+  
+  // Calculate how many markers should be recent (last 30% of time period)
+  const recentThreshold = subDays(endDate, Math.floor(totalDays * 0.3));
+  
   // Common pain regions (joints, back, neck)
   const painRegions = [
     "knee-left",
@@ -634,212 +639,497 @@ async function generateBodyMapLayers(
     "shoulder-right",
   ];
 
+  // UNIFIED MARKER SYSTEM: Create bodyMarker records with realistic patterns
+  const bodyMarkerRecords = [];
+  const bodyMarkerEventRecords = [];
+  const bodyMarkerLocationRecords = [];
+  const bodyMapLocationRecords = [];
+
   // 1. Generate pain markers during flares (70% of flares have associated pain)
+  // These should follow flare lifecycle and resolve with flares
   flares.flares.forEach((flare: any) => {
     if (Math.random() < 0.7) {
       const flareStartDate = new Date(flare.startDate);
       const flareEndDate = flare.endDate ? new Date(flare.endDate) : endDate;
       const flareDays = differenceInDays(flareEndDate, flareStartDate);
+      const isFlareActive = !flare.endDate || flareEndDate > endDate;
 
-      // 30% of days during flare have pain markers
-      const daysWithPain = Math.ceil(flareDays * 0.3);
-
-      for (let d = 0; d < daysWithPain; d++) {
-        const painDay = addDays(flareStartDate, Math.floor(Math.random() * flareDays));
+      // Create 1-2 pain markers per flare (not per day)
+      const painMarkerCount = 1 + Math.floor(Math.random() * 2);
+      
+      for (let p = 0; p < painMarkerCount; p++) {
+        const markerId = generateId();
         const painRegion = painRegions[Math.floor(Math.random() * painRegions.length)];
         const coordinates = generateRegionCoordinates(painRegion);
+        
+        // Pain starts early in flare (within first 30% of flare duration)
+        const painStartOffset = Math.floor(flareDays * 0.3 * Math.random());
+        const painStartDate = addDays(flareStartDate, painStartOffset);
+        const painStartTimestamp = painStartDate.getTime();
+        
+        // Pain duration: 60-100% of flare duration (can persist slightly longer)
+        const painDuration = Math.floor(flareDays * (0.6 + Math.random() * 0.4));
+        const painEndDate = addDays(painStartDate, painDuration);
+        // Determine if pain marker is resolved (flare is resolved and end date is within range)
+        const isResolved = !isFlareActive && painEndDate <= endDate;
+        const painEndTimestamp = isResolved ? Math.min(painEndDate.getTime(), endDate.getTime()) : undefined;
+        const finalSeverity = isResolved ? 2 : (5 + Math.floor(Math.random() * 3)); // 5-7 active, 2 resolved
+        const initialSeverity = 5 + Math.floor(Math.random() * 4); // 5-8
 
-        painMarkers.push({
+        // Create marker record
+        bodyMarkerRecords.push({
+          id: markerId,
+          userId,
+          type: 'pain' as const,
+          bodyRegionId: painRegion,
+          coordinates,
+          startDate: painStartTimestamp,
+          endDate: isResolved ? painEndTimestamp : undefined,
+          status: isResolved ? 'resolved' as const : 'active' as const,
+          initialSeverity,
+          currentSeverity: finalSeverity,
+          createdAt: painStartTimestamp,
+          updatedAt: isResolved ? painEndTimestamp : Date.now(),
+        });
+
+        // Create created event
+        bodyMarkerEventRecords.push({
           id: generateId(),
+          markerId,
+          userId,
+          eventType: 'created' as const,
+          timestamp: painStartTimestamp,
+          severity: initialSeverity,
+          notes: 'Pain during flare',
+        });
+
+        // Add severity updates during pain episode (if duration > 3 days)
+        if (painDuration > 3) {
+          const midpoint = addDays(painStartDate, Math.floor(painDuration / 2));
+          const peakSeverity = Math.min(10, initialSeverity + Math.floor(Math.random() * 3));
+          
+          bodyMarkerEventRecords.push({
+            id: generateId(),
+            markerId,
+            userId,
+            eventType: 'severity_update' as const,
+            timestamp: midpoint.getTime(),
+            severity: peakSeverity,
+            trend: 'worsening' as const,
+            notes: 'Pain intensity increased',
+          });
+        }
+
+        // Resolved event (if resolved)
+        if (isResolved) {
+          bodyMarkerEventRecords.push({
+            id: generateId(),
+            markerId,
+            userId,
+            eventType: 'resolved' as const,
+            timestamp: painEndTimestamp,
+            severity: finalSeverity,
+            notes: 'Pain resolved',
+          });
+        }
+
+        // Create bodyMarkerLocation
+        bodyMarkerLocationRecords.push({
+          id: generateId(),
+          markerId,
           userId,
           bodyRegionId: painRegion,
-          symptomId: flare.id, // Link to flare
           coordinates,
-          severity: 5 + Math.floor(Math.random() * 4), // 5-8 during flares
+          createdAt: painStartTimestamp,
+          updatedAt: painStartTimestamp,
+        });
+
+        // Create bodyMapLocation
+        bodyMapLocationRecords.push({
+          id: generateId(),
+          userId,
+          markerId,
+          markerType: 'pain' as const,
+          symptomId: flare.id, // Link to flare
+          bodyRegionId: painRegion,
+          coordinates,
+          severity: finalSeverity, // Use current severity
           layer: 'pain' as const,
           notes: 'Pain during flare',
-          createdAt: painDay,
-          updatedAt: painDay,
+          createdAt: painStartDate,
+          updatedAt: isResolved ? painEndDate : new Date(),
         });
       }
     }
   });
 
   // 2. Generate inflammation markers during flares (60% of flares have inflammation)
+  // Similar pattern to pain markers
   flares.flares.forEach((flare: any) => {
     if (Math.random() < 0.6) {
       const flareStartDate = new Date(flare.startDate);
       const flareEndDate = flare.endDate ? new Date(flare.endDate) : endDate;
       const flareDays = differenceInDays(flareEndDate, flareStartDate);
+      const isFlareActive = !flare.endDate || flareEndDate > endDate;
 
-      // 25% of days during flare have inflammation markers
-      const daysWithInflammation = Math.ceil(flareDays * 0.25);
-
-      for (let d = 0; d < daysWithInflammation; d++) {
-        const inflammationDay = addDays(flareStartDate, Math.floor(Math.random() * flareDays));
+      // Create 1-2 inflammation markers per flare
+      const inflammationMarkerCount = 1 + Math.floor(Math.random() * 2);
+      
+      for (let i = 0; i < inflammationMarkerCount; i++) {
+        const markerId = generateId();
         const inflammationRegion = inflammationRegions[Math.floor(Math.random() * inflammationRegions.length)];
         const coordinates = generateRegionCoordinates(inflammationRegion);
+        
+        // Inflammation starts early-mid flare (within first 50% of flare duration)
+        const inflammationStartOffset = Math.floor(flareDays * 0.5 * Math.random());
+        const inflammationStartDate = addDays(flareStartDate, inflammationStartOffset);
+        const inflammationStartTimestamp = inflammationStartDate.getTime();
+        
+        // Inflammation duration: 50-90% of flare duration
+        const inflammationDuration = Math.floor(flareDays * (0.5 + Math.random() * 0.4));
+        const inflammationEndDate = addDays(inflammationStartDate, inflammationDuration);
+        // Determine if inflammation marker is resolved (flare is resolved and end date is within range)
+        const isResolved = !isFlareActive && inflammationEndDate <= endDate;
+        const inflammationEndTimestamp = isResolved ? Math.min(inflammationEndDate.getTime(), endDate.getTime()) : undefined;
+        const finalSeverity = isResolved ? 2 : (4 + Math.floor(Math.random() * 4)); // 4-7 active, 2 resolved
+        const initialSeverity = 4 + Math.floor(Math.random() * 5); // 4-8
 
-        inflammationMarkers.push({
+        // Create marker record
+        bodyMarkerRecords.push({
+          id: markerId,
+          userId,
+          type: 'inflammation' as const,
+          bodyRegionId: inflammationRegion,
+          coordinates,
+          startDate: inflammationStartTimestamp,
+          endDate: isResolved ? inflammationEndTimestamp : undefined,
+          status: isResolved ? 'resolved' as const : 'active' as const,
+          initialSeverity,
+          currentSeverity: finalSeverity,
+          createdAt: inflammationStartTimestamp,
+          updatedAt: isResolved ? inflammationEndTimestamp : Date.now(),
+        });
+
+        // Create created event
+        bodyMarkerEventRecords.push({
           id: generateId(),
+          markerId,
+          userId,
+          eventType: 'created' as const,
+          timestamp: inflammationStartTimestamp,
+          severity: initialSeverity,
+          notes: 'Inflammation during flare',
+        });
+
+        // Add severity updates during inflammation episode (if duration > 2 days)
+        if (inflammationDuration > 2) {
+          const midpoint = addDays(inflammationStartDate, Math.floor(inflammationDuration / 2));
+          const peakSeverity = Math.min(10, initialSeverity + Math.floor(Math.random() * 3));
+          
+          bodyMarkerEventRecords.push({
+            id: generateId(),
+            markerId,
+            userId,
+            eventType: 'severity_update' as const,
+            timestamp: midpoint.getTime(),
+            severity: peakSeverity,
+            trend: 'worsening' as const,
+            notes: 'Inflammation increased',
+          });
+        }
+
+        // Resolved event (if resolved)
+        if (isResolved) {
+          bodyMarkerEventRecords.push({
+            id: generateId(),
+            markerId,
+            userId,
+            eventType: 'resolved' as const,
+            timestamp: inflammationEndTimestamp,
+            severity: finalSeverity,
+            notes: 'Inflammation resolved',
+          });
+        }
+
+        // Create bodyMarkerLocation
+        bodyMarkerLocationRecords.push({
+          id: generateId(),
+          markerId,
           userId,
           bodyRegionId: inflammationRegion,
-          symptomId: flare.id, // Link to flare
           coordinates,
-          severity: 4 + Math.floor(Math.random() * 5), // 4-8 during flares
+          createdAt: inflammationStartTimestamp,
+          updatedAt: inflammationStartTimestamp,
+        });
+
+        // Create bodyMapLocation
+        bodyMapLocationRecords.push({
+          id: generateId(),
+          userId,
+          markerId,
+          markerType: 'inflammation' as const,
+          symptomId: flare.id, // Link to flare
+          bodyRegionId: inflammationRegion,
+          coordinates,
+          severity: finalSeverity, // Use current severity
           layer: 'inflammation' as const,
           notes: 'Inflammation during flare',
-          createdAt: inflammationDay,
-          updatedAt: inflammationDay,
+          createdAt: inflammationStartDate,
+          updatedAt: isResolved ? inflammationEndDate : new Date(),
         });
       }
     }
   });
 
   // 3. Generate independent chronic pain markers (not during flares)
-  // About 30-50 markers spread over the time period
-  const totalDays = differenceInDays(endDate, startDate);
-  const independentPainCount = 30 + Math.floor(Math.random() * 21); // 30-50
+  // These should have realistic durations and some should resolve
+  const independentPainCount = Math.floor(15 * years) + Math.floor(Math.random() * (10 * years)); // ~15-25 per year
 
   for (let i = 0; i < independentPainCount; i++) {
-    const randomDay = addDays(startDate, Math.floor(Math.random() * totalDays));
+    const markerId = generateId();
     const painRegion = painRegions[Math.floor(Math.random() * painRegions.length)];
     const coordinates = generateRegionCoordinates(painRegion);
+    
+    // Random start date
+    const randomStartDay = Math.floor(Math.random() * totalDays);
+    const painStartDate = addDays(startDate, randomStartDay);
+    const painStartTimestamp = painStartDate.getTime();
+    
+    // Duration: 1-14 days for acute, 15-60 days for chronic, or ongoing
+    const isRecent = painStartDate >= recentThreshold;
+    const isLongTerm = Math.random() < 0.3; // 30% are long-term chronic
+    const isResolved = !isRecent && Math.random() < 0.7; // 70% of old markers are resolved
+    
+    let painDuration: number;
+    let painEndDate: Date;
+    let painEndTimestamp: number | undefined;
+    
+    if (isLongTerm && !isResolved) {
+      // Chronic ongoing pain
+      painDuration = 30 + Math.floor(Math.random() * 30); // 30-60 days, but still active
+      painEndDate = addDays(painStartDate, painDuration);
+      painEndTimestamp = undefined; // Still active (no end date)
+    } else if (isResolved) {
+      // Resolved pain episode
+      painDuration = 3 + Math.floor(Math.random() * 12); // 3-14 days
+      painEndDate = addDays(painStartDate, painDuration);
+      // If resolved, always set an end date (cap at endDate if needed)
+      painEndTimestamp = Math.min(painEndDate.getTime(), endDate.getTime());
+    } else {
+      // Active recent pain
+      painDuration = 1 + Math.floor(Math.random() * 7); // 1-7 days, still active
+      painEndDate = addDays(painStartDate, painDuration);
+      painEndTimestamp = undefined; // Still active
+    }
+    
+    const initialSeverity = 3 + Math.floor(Math.random() * 5); // 3-7
+    const finalSeverity = isResolved ? 2 : (isLongTerm ? initialSeverity : initialSeverity + Math.floor(Math.random() * 2));
 
-    painMarkers.push({
+    // Create marker record
+    bodyMarkerRecords.push({
+      id: markerId,
+      userId,
+      type: 'pain' as const,
+      bodyRegionId: painRegion,
+      coordinates,
+      startDate: painStartTimestamp,
+      endDate: painEndTimestamp,
+      status: isResolved ? 'resolved' as const : 'active' as const,
+      initialSeverity,
+      currentSeverity: finalSeverity,
+      createdAt: painStartTimestamp,
+      updatedAt: painEndTimestamp || Date.now(),
+    });
+
+    // Create created event
+    bodyMarkerEventRecords.push({
       id: generateId(),
+      markerId,
+      userId,
+      eventType: 'created' as const,
+      timestamp: painStartTimestamp,
+      severity: initialSeverity,
+      notes: isLongTerm ? 'Chronic pain' : 'Acute pain episode',
+    });
+
+    // Add severity updates for longer episodes
+    if (painDuration > 5) {
+      const midpoint = addDays(painStartDate, Math.floor(painDuration / 2));
+      const peakSeverity = Math.min(10, initialSeverity + Math.floor(Math.random() * 3));
+      
+      bodyMarkerEventRecords.push({
+        id: generateId(),
+        markerId,
+        userId,
+        eventType: 'severity_update' as const,
+        timestamp: midpoint.getTime(),
+        severity: peakSeverity,
+        trend: Math.random() > 0.5 ? 'worsening' as const : 'improving' as const,
+        notes: 'Pain severity changed',
+      });
+    }
+
+    // Resolved event (if resolved)
+    if (isResolved) {
+      bodyMarkerEventRecords.push({
+        id: generateId(),
+        markerId,
+        userId,
+        eventType: 'resolved' as const,
+        timestamp: painEndTimestamp!,
+        severity: finalSeverity,
+        notes: 'Pain resolved',
+      });
+    }
+
+    // Create bodyMarkerLocation
+    bodyMarkerLocationRecords.push({
+      id: generateId(),
+      markerId,
       userId,
       bodyRegionId: painRegion,
-      symptomId: generateId(), // Standalone, not linked to flare
       coordinates,
-      severity: 2 + Math.floor(Math.random() * 6), // 2-7 for chronic pain
+      createdAt: painStartTimestamp,
+      updatedAt: painStartTimestamp,
+    });
+
+    // Create bodyMapLocation
+    bodyMapLocationRecords.push({
+      id: generateId(),
+      userId,
+      markerId,
+      markerType: 'pain' as const,
+      symptomId: markerId, // Standalone
+      bodyRegionId: painRegion,
+      coordinates,
+      severity: finalSeverity,
       layer: 'pain' as const,
-      notes: 'Chronic pain',
-      createdAt: randomDay,
-      updatedAt: randomDay,
+      notes: isLongTerm ? 'Chronic pain' : 'Acute pain',
+      createdAt: painStartDate,
+      updatedAt: painEndTimestamp ? new Date(painEndTimestamp) : new Date(),
     });
   }
 
   // 4. Generate independent inflammation markers (not during flares)
-  // About 20-35 markers spread over the time period
-  const independentInflammationCount = 20 + Math.floor(Math.random() * 16); // 20-35
+  // Similar pattern to independent pain markers
+  const independentInflammationCount = Math.floor(10 * years) + Math.floor(Math.random() * (8 * years)); // ~10-18 per year
 
   for (let i = 0; i < independentInflammationCount; i++) {
-    const randomDay = addDays(startDate, Math.floor(Math.random() * totalDays));
+    const markerId = generateId();
     const inflammationRegion = inflammationRegions[Math.floor(Math.random() * inflammationRegions.length)];
     const coordinates = generateRegionCoordinates(inflammationRegion);
+    
+    // Random start date
+    const randomStartDay = Math.floor(Math.random() * totalDays);
+    const inflammationStartDate = addDays(startDate, randomStartDay);
+    const inflammationStartTimestamp = inflammationStartDate.getTime();
+    
+    // Duration: 2-10 days for acute, or ongoing
+    const isRecent = inflammationStartDate >= recentThreshold;
+    const isResolved = !isRecent && Math.random() < 0.75; // 75% of old markers are resolved
+    
+    let inflammationDuration: number;
+    let inflammationEndDate: Date;
+    let inflammationEndTimestamp: number | undefined;
+    
+    if (isResolved) {
+      // Resolved inflammation episode
+      inflammationDuration = 2 + Math.floor(Math.random() * 8); // 2-10 days
+      inflammationEndDate = addDays(inflammationStartDate, inflammationDuration);
+      // If resolved, always set an end date (cap at endDate if needed)
+      inflammationEndTimestamp = Math.min(inflammationEndDate.getTime(), endDate.getTime());
+    } else {
+      // Active recent inflammation
+      inflammationDuration = 2 + Math.floor(Math.random() * 6); // 2-7 days, still active
+      inflammationEndDate = addDays(inflammationStartDate, inflammationDuration);
+      inflammationEndTimestamp = undefined; // Still active
+    }
+    
+    const initialSeverity = 3 + Math.floor(Math.random() * 4); // 3-6
+    const finalSeverity = isResolved ? 2 : initialSeverity;
 
-    inflammationMarkers.push({
+    // Create marker record
+    bodyMarkerRecords.push({
+      id: markerId,
+      userId,
+      type: 'inflammation' as const,
+      bodyRegionId: inflammationRegion,
+      coordinates,
+      startDate: inflammationStartTimestamp,
+      endDate: inflammationEndTimestamp,
+      status: isResolved ? 'resolved' as const : 'active' as const,
+      initialSeverity,
+      currentSeverity: finalSeverity,
+      createdAt: inflammationStartTimestamp,
+      updatedAt: inflammationEndTimestamp || Date.now(),
+    });
+
+    // Create created event
+    bodyMarkerEventRecords.push({
       id: generateId(),
+      markerId,
+      userId,
+      eventType: 'created' as const,
+      timestamp: inflammationStartTimestamp,
+      severity: initialSeverity,
+      notes: 'General inflammation',
+    });
+
+    // Add severity updates for longer episodes
+    if (inflammationDuration > 4) {
+      const midpoint = addDays(inflammationStartDate, Math.floor(inflammationDuration / 2));
+      const peakSeverity = Math.min(10, initialSeverity + Math.floor(Math.random() * 3));
+      
+      bodyMarkerEventRecords.push({
+        id: generateId(),
+        markerId,
+        userId,
+        eventType: 'severity_update' as const,
+        timestamp: midpoint.getTime(),
+        severity: peakSeverity,
+        trend: Math.random() > 0.5 ? 'worsening' as const : 'improving' as const,
+        notes: 'Inflammation severity changed',
+      });
+    }
+
+    // Resolved event (if resolved)
+    if (isResolved) {
+      bodyMarkerEventRecords.push({
+        id: generateId(),
+        markerId,
+        userId,
+        eventType: 'resolved' as const,
+        timestamp: inflammationEndTimestamp!,
+        severity: finalSeverity,
+        notes: 'Inflammation resolved',
+      });
+    }
+
+    // Create bodyMarkerLocation
+    bodyMarkerLocationRecords.push({
+      id: generateId(),
+      markerId,
       userId,
       bodyRegionId: inflammationRegion,
-      symptomId: generateId(), // Standalone
       coordinates,
-      severity: 2 + Math.floor(Math.random() * 5), // 2-6 for general inflammation
-      layer: 'inflammation' as const,
-      notes: 'General inflammation',
-      createdAt: randomDay,
-      updatedAt: randomDay,
-    });
-  }
-
-  // UNIFIED MARKER SYSTEM: Create bodyMarker records for pain and inflammation
-  const bodyMarkerRecords = [];
-  const bodyMarkerEventRecords = [];
-  const bodyMarkerLocationRecords = [];
-  const bodyMapLocationRecords = [];
-
-  // Process pain markers
-  for (const marker of painMarkers) {
-    const markerId = marker.id;
-    const timestamp = marker.createdAt instanceof Date ? marker.createdAt.getTime() : marker.createdAt;
-
-    bodyMarkerRecords.push({
-      id: markerId,
-      userId: marker.userId,
-      type: 'pain' as const,
-      bodyRegionId: marker.bodyRegionId,
-      coordinates: marker.coordinates,
-      startDate: timestamp,
-      endDate: undefined, // Pain markers are now active by default (can be updated/resolved)
-      status: 'active' as const,
-      initialSeverity: marker.severity,
-      currentSeverity: marker.severity,
-      createdAt: timestamp,
-      updatedAt: timestamp,
+      createdAt: inflammationStartTimestamp,
+      updatedAt: inflammationStartTimestamp,
     });
 
-    bodyMarkerEventRecords.push({
-      id: generateId(),
-      markerId,
-      userId: marker.userId,
-      eventType: 'created' as const,
-      timestamp,
-      severity: marker.severity,
-      notes: marker.notes,
-    });
-
-    bodyMarkerLocationRecords.push({
-      id: generateId(),
-      markerId,
-      userId: marker.userId,
-      bodyRegionId: marker.bodyRegionId,
-      coordinates: marker.coordinates,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    });
-
+    // Create bodyMapLocation
     bodyMapLocationRecords.push({
-      ...marker,
-      markerId,
-      markerType: 'pain' as const,
-    });
-  }
-
-  // Process inflammation markers
-  for (const marker of inflammationMarkers) {
-    const markerId = marker.id;
-    const timestamp = marker.createdAt instanceof Date ? marker.createdAt.getTime() : marker.createdAt;
-
-    bodyMarkerRecords.push({
-      id: markerId,
-      userId: marker.userId,
-      type: 'inflammation' as const,
-      bodyRegionId: marker.bodyRegionId,
-      coordinates: marker.coordinates,
-      startDate: timestamp,
-      endDate: undefined, // Inflammation markers are now active by default (can be updated/resolved)
-      status: 'active' as const,
-      initialSeverity: marker.severity,
-      currentSeverity: marker.severity,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    });
-
-    bodyMarkerEventRecords.push({
       id: generateId(),
-      markerId,
-      userId: marker.userId,
-      eventType: 'created' as const,
-      timestamp,
-      severity: marker.severity,
-      notes: marker.notes,
-    });
-
-    bodyMarkerLocationRecords.push({
-      id: generateId(),
-      markerId,
-      userId: marker.userId,
-      bodyRegionId: marker.bodyRegionId,
-      coordinates: marker.coordinates,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    });
-
-    bodyMapLocationRecords.push({
-      ...marker,
+      userId,
       markerId,
       markerType: 'inflammation' as const,
+      symptomId: markerId, // Standalone
+      bodyRegionId: inflammationRegion,
+      coordinates,
+      severity: finalSeverity,
+      layer: 'inflammation' as const,
+      notes: 'General inflammation',
+      createdAt: inflammationStartDate,
+      updatedAt: inflammationEndTimestamp ? new Date(inflammationEndTimestamp) : new Date(),
     });
   }
 
@@ -849,11 +1139,11 @@ async function generateBodyMapLayers(
   await db.bodyMarkerLocations!.bulkAdd(bodyMarkerLocationRecords as any);
   await db.bodyMapLocations!.bulkAdd(bodyMapLocationRecords as any);
 
-  console.log(`[BodyMapLayers] Created ${painMarkers.length} pain markers and ${inflammationMarkers.length} inflammation markers`);
+  console.log(`[BodyMapLayers] Created ${bodyMarkerRecords.filter((m: any) => m.type === 'pain').length} pain markers and ${bodyMarkerRecords.filter((m: any) => m.type === 'inflammation').length} inflammation markers`);
 
   return {
-    painMarkersCreated: painMarkers.length,
-    inflammationMarkersCreated: inflammationMarkers.length,
+    painMarkersCreated: bodyMarkerRecords.filter((m: any) => m.type === 'pain').length,
+    inflammationMarkersCreated: bodyMarkerRecords.filter((m: any) => m.type === 'inflammation').length,
   };
 }
 

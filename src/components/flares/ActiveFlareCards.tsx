@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository";
 import { ActiveFlare } from "@/lib/types/flare";
 import { BodyMarkerRecord, BodyMarkerEventRecord } from "@/lib/db/schema";
@@ -56,6 +57,7 @@ export function ActiveFlareCards({
   filterByRegion,
   repository = bodyMarkerRepository,
 }: ActiveFlareCardsProps) {
+  const router = useRouter();
   const [flares, setFlares] = useState<FlareWithTrend[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("severity");
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,21 @@ export function ActiveFlareCards({
   const [selectedFlare, setSelectedFlare] = useState<BodyMarkerRecord | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
+
+  // Get layer display name based on markerType
+  const getLayerName = (type: 'flare' | 'pain' | 'inflammation'): string => {
+    switch (type) {
+      case 'pain':
+        return 'Active Pain';
+      case 'inflammation':
+        return 'Active Inflammation';
+      case 'flare':
+      default:
+        return 'Active Flares';
+    }
+  };
+
+  const layerName = getLayerName(markerType);
 
   const loadFlares = async () => {
     try {
@@ -206,9 +223,9 @@ export function ActiveFlareCards({
 
   if (loading) {
     return (
-      <section className="space-y-3" aria-label="Active flares">
+      <section className="space-y-3" aria-label={layerName.toLowerCase()}>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Active Flares</h2>
+          <h2 className="text-lg font-semibold text-foreground">{layerName}</h2>
         </div>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map((i) => (
@@ -224,8 +241,8 @@ export function ActiveFlareCards({
 
   if (error) {
     return (
-      <section className="space-y-3" aria-label="Active flares">
-        <h2 className="text-lg font-semibold text-foreground">Active Flares</h2>
+      <section className="space-y-3" aria-label={layerName.toLowerCase()}>
+        <h2 className="text-lg font-semibold text-foreground">{layerName}</h2>
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <p>{error}</p>
@@ -235,12 +252,18 @@ export function ActiveFlareCards({
   }
 
   if (filteredFlares.length === 0 && flares.length > 0) {
+    const regionMessage = markerType === 'flare' 
+      ? 'No flares in selected region'
+      : markerType === 'pain'
+      ? 'No pain markers in selected region'
+      : 'No inflammation markers in selected region';
+    
     return (
-      <section className="space-y-3" aria-label="Active flares">
-        <h2 className="text-lg font-semibold text-foreground">Active Flares</h2>
+      <section className="space-y-3" aria-label={layerName.toLowerCase()}>
+        <h2 className="text-lg font-semibold text-foreground">{layerName}</h2>
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-lg font-medium text-foreground mb-2">
-            No flares in selected region
+            {regionMessage}
           </p>
           <p className="text-sm text-muted-foreground">
             Try selecting a different body region or clear the filter.
@@ -251,15 +274,27 @@ export function ActiveFlareCards({
   }
 
   if (flares.length === 0) {
+    const emptyMessage = markerType === 'flare'
+      ? 'No active flares right now'
+      : markerType === 'pain'
+      ? 'No active pain markers right now'
+      : 'No active inflammation markers right now';
+    
+    const emptyDescription = markerType === 'flare'
+      ? "Great news! You're currently flare-free. Keep tracking your health to stay on top of any changes."
+      : markerType === 'pain'
+      ? "Great news! You have no active pain markers. Keep tracking your health to stay on top of any changes."
+      : "Great news! You have no active inflammation markers. Keep tracking your health to stay on top of any changes.";
+    
     return (
-      <section className="space-y-3" aria-label="Active flares">
-        <h2 className="text-lg font-semibold text-foreground">Active Flares</h2>
+      <section className="space-y-3" aria-label={layerName.toLowerCase()}>
+        <h2 className="text-lg font-semibold text-foreground">{layerName}</h2>
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-lg font-medium text-foreground mb-2">
-            No active flares right now
+            {emptyMessage}
           </p>
           <p className="text-sm text-muted-foreground">
-            Great news! You're currently flare-free. Keep tracking your health to stay on top of any changes.
+            {emptyDescription}
           </p>
         </div>
       </section>
@@ -267,17 +302,17 @@ export function ActiveFlareCards({
   }
 
   return (
-    <section className="space-y-3" aria-label="Active flares">
+    <section className="space-y-3" aria-label={layerName.toLowerCase()}>
       {/* Header with collapse toggle and sort buttons */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           aria-expanded={!isCollapsed}
-          aria-label={isCollapsed ? "Expand active flares" : "Collapse active flares"}
+          aria-label={isCollapsed ? `Expand ${layerName.toLowerCase()}` : `Collapse ${layerName.toLowerCase()}`}
         >
           <h2 className="text-lg font-semibold text-foreground">
-            Active Flares <span className="text-muted-foreground">({filteredFlares.length}{filterByRegion ? ` of ${flares.length}` : ''})</span>
+            {layerName} <span className="text-muted-foreground">({filteredFlares.length}{filterByRegion ? ` of ${flares.length}` : ''})</span>
           </h2>
           {isCollapsed ? (
             <ChevronDown className="w-5 h-5 text-muted-foreground" />
@@ -325,10 +360,33 @@ export function ActiveFlareCards({
             ? flare.bodyRegions.join(", ")
             : "No location specified";
 
+          // Handle card click - navigate to details page
+          const handleCardClick = (e: React.MouseEvent) => {
+            // Don't navigate if clicking on buttons
+            const target = e.target as HTMLElement;
+            if (target.closest('button')) {
+              return;
+            }
+            router.push(`/body-map/${flare.id}`);
+          };
+
+          // Handle keyboard navigation
+          const handleCardKeyDown = (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              router.push(`/body-map/${flare.id}`);
+            }
+          };
+
           return (
             <div
               key={flare.id}
-              className="rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-md"
+              role="button"
+              tabIndex={0}
+              onClick={handleCardClick}
+              onKeyDown={handleCardKeyDown}
+              className="rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              aria-label={`View details for ${flare.symptomName}`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
