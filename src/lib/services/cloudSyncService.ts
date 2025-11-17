@@ -1388,6 +1388,28 @@ export async function restoreData(backupData: BackupData): Promise<void> {
               revived.lastViewedAt = new Date(revived.lastViewedAt);
             }
 
+            // CRITICAL FIX: Ensure bodyMapLocations records have layer field set
+            // The compound index [userId+layer+createdAt] requires layer to be set
+            // Default to 'flares' if missing (backward compatibility)
+            if (tableName === 'bodyMapLocations') {
+              if (!revived.layer) {
+                // Infer layer from markerType if available, otherwise default to 'flares'
+                if (revived.markerType === 'pain') {
+                  revived.layer = 'pain';
+                } else if (revived.markerType === 'inflammation') {
+                  revived.layer = 'inflammation';
+                } else {
+                  // Default to 'flares' for backward compatibility
+                  revived.layer = 'flares';
+                }
+                console.log(`[CloudSync] Set default layer='${revived.layer}' for bodyMapLocation ${revived.id}`);
+              }
+              // Ensure createdAt is a Date object (required for compound index)
+              if (!(revived.createdAt instanceof Date)) {
+                revived.createdAt = new Date(revived.createdAt || Date.now());
+              }
+            }
+
             return revived;
           });
 

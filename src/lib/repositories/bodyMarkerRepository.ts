@@ -327,12 +327,55 @@ export async function updateMarker(
     updatedAt: Date.now(),
   });
 
-  // Update bodyMapLocations if severity changed
-  if (updates.currentSeverity !== undefined) {
-    await db.bodyMapLocations
+  // CRITICAL: Sync severity changes to bodyMapLocations
+  // This ensures markers on the body map display the current severity
+  // Only update if severity actually changed
+  if (updates.currentSeverity !== undefined && updates.currentSeverity !== marker.currentSeverity) {
+    // Update all bodyMapLocations records linked to this marker
+    // Handle both markerId (new unified system) and symptomId (legacy compatibility)
+    let updatedCount = 0;
+    
+    // Update markers using markerId (primary method)
+    const markerLocations = await db.bodyMapLocations
       .where("[markerId]")
       .equals(markerId)
-      .modify({ severity: updates.currentSeverity, updatedAt: new Date() });
+      .toArray();
+    
+    if (markerLocations.length > 0) {
+      await db.bodyMapLocations
+        .where("[markerId]")
+        .equals(markerId)
+        .modify({ 
+          severity: updates.currentSeverity, 
+          updatedAt: new Date() 
+        });
+      updatedCount += markerLocations.length;
+    }
+    
+    // Also check symptomId for backward compatibility (in case marker was created via old system)
+    const symptomLocations = await db.bodyMapLocations
+      .where("symptomId")
+      .equals(markerId)
+      .filter(loc => !loc.markerId || loc.markerId !== markerId) // Avoid double-counting
+      .toArray();
+    
+    if (symptomLocations.length > 0) {
+      await db.bodyMapLocations
+        .where("symptomId")
+        .equals(markerId)
+        .filter(loc => !loc.markerId || loc.markerId !== markerId)
+        .modify({ 
+          severity: updates.currentSeverity, 
+          updatedAt: new Date() 
+        });
+      updatedCount += symptomLocations.length;
+    }
+    
+    if (updatedCount > 0) {
+      console.log(`[BodyMarkerRepository] Synced severity ${updates.currentSeverity} to ${updatedCount} bodyMapLocation(s) for marker ${markerId}`);
+    } else {
+      console.warn(`[BodyMarkerRepository] No bodyMapLocations found to update for marker ${markerId}`);
+    }
   }
 }
 

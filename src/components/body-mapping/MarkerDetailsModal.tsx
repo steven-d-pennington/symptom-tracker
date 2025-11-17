@@ -23,6 +23,7 @@ export interface MarkerDetails {
     y: number;
   };
   userId?: string; // Required for fetching lifecycle stage data
+  markerId?: string; // Reference to bodyMarkers.id for fetching current lifecycle stage
 }
 
 export interface MarkerDetailsModalProps {
@@ -62,10 +63,20 @@ export function MarkerDetailsModal({
         return;
       }
 
+      // CRITICAL: Use markerId from bodyMapLocations to fetch from bodyMarkers table
+      // marker.id is the bodyMapLocation.id, but we need marker.markerId to get bodyMarkers record
+      const markerId = marker.markerId || marker.id; // Fallback to marker.id for legacy compatibility
+      
+      if (!markerId) {
+        setLifecycleStage(null);
+        setDaysInStage(null);
+        return;
+      }
+
       setIsLoadingLifecycle(true);
       try {
-        // Fetch the full marker record to get currentLifecycleStage
-        const markerRecord = await bodyMarkerRepository.getMarkerById(marker.userId, marker.id);
+        // Fetch the full marker record from bodyMarkers table to get currentLifecycleStage
+        const markerRecord = await bodyMarkerRepository.getMarkerById(marker.userId, markerId);
         
         if (markerRecord && markerRecord.currentLifecycleStage) {
           setLifecycleStage(markerRecord.currentLifecycleStage);
@@ -73,7 +84,7 @@ export function MarkerDetailsModal({
           // Fetch lifecycle stage history to calculate days in current stage
           const history = await bodyMarkerRepository.getLifecycleStageHistory(
             marker.userId,
-            marker.id
+            markerId
           );
           
           // Calculate days in current stage

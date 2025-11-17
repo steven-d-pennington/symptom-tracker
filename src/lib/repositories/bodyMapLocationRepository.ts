@@ -256,34 +256,53 @@ export class BodyMapLocationRepository {
 
     const locations = await query.reverse().toArray();
 
-    // Filter out resolved markers if includeResolved is false
-    if (!includeResolved) {
-      // Get marker IDs that need status checking
-      const markerIds = locations
-        .map(loc => loc.markerId)
-        .filter((id): id is string => id !== undefined);
+    // CRITICAL: Enrich locations with current severity from bodyMarkers
+    // Get all marker IDs that need severity lookup
+    const markerIds = locations
+      .map(loc => loc.markerId)
+      .filter((id): id is string => id !== undefined);
 
-      if (markerIds.length === 0) {
-        return locations; // No markerIds to check, return all
-      }
+    let severityMap = new Map<string, number>();
+    let resolvedMarkerIds = new Set<string>();
 
-      // Fetch marker statuses in bulk
+    if (markerIds.length > 0) {
+      // Fetch marker data in bulk to get current severity
       const markers = await db.bodyMarkers
         .where('id')
         .anyOf(markerIds)
         .toArray();
 
-      const resolvedMarkerIds = new Set(
-        markers.filter(m => m.status === 'resolved').map(m => m.id)
-      );
+      // Build map of markerId -> currentSeverity
+      markers.forEach(marker => {
+        severityMap.set(marker.id, marker.currentSeverity);
+        if (marker.status === 'resolved') {
+          resolvedMarkerIds.add(marker.id);
+        }
+      });
+    }
 
-      // Filter out locations with resolved markers
-      return locations.filter(loc =>
+    // Enrich locations with current severity from bodyMarkers
+    // This ensures markers always display the latest severity, not the stored severity
+    const enrichedLocations = locations.map(loc => {
+      // If this location has a markerId, use currentSeverity from bodyMarkers
+      if (loc.markerId && severityMap.has(loc.markerId)) {
+        return {
+          ...loc,
+          severity: severityMap.get(loc.markerId)!, // Use current severity from bodyMarkers
+        };
+      }
+      // Fallback to stored severity (for legacy markers without markerId)
+      return loc;
+    });
+
+    // Filter out resolved markers if includeResolved is false
+    if (!includeResolved) {
+      return enrichedLocations.filter(loc =>
         !loc.markerId || !resolvedMarkerIds.has(loc.markerId)
       );
     }
 
-    return locations;
+    return enrichedLocations;
   }
 
   /**

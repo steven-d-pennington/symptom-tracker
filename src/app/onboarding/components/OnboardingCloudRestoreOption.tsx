@@ -5,6 +5,7 @@ import { Cloud, Eye, EyeOff, X, AlertTriangle, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation";
 import { restoreBackup, type ProgressUpdate } from "@/lib/services/cloudSyncService";
 import { persistOnboardingState } from "../utils/storage";
+import { ONBOARDING_STEPS } from "../utils/onboardingConfig";
 import type { OnboardingStepId, OnboardingState } from "../types/onboarding";
 
 type RestoreStep = "initial" | "passphrase-input" | "restoring" | "success" | "error";
@@ -41,26 +42,16 @@ export function OnboardingCloudRestoreOption() {
       setStep("success");
 
       // Mark onboarding as complete with ALL steps completed
-      // IMPORTANT: Must match ONBOARDING_STEPS from onboardingConfig.ts
-      const allSteps: OnboardingStepId[] = [
-        "welcome",
-        "profile",
-        "condition",
-        "preferences",
-        "privacy",
-        "symptomSelection",
-        "triggerSelection",
-        "medicationSelection",
-        "foodSelection",
-        "completion",
-      ];
+      // Use ONBOARDING_STEPS from config to ensure consistency
+      const allSteps: OnboardingStepId[] = ONBOARDING_STEPS.map((step) => step.id);
+      const lastStepIndex = allSteps.length - 1;
 
       // Create completed state with all steps marked as done
       // Since we restored from backup, user data already exists in database
       const completedState: OnboardingState = {
-        currentStep: 9, // Last step (completion) - 0-indexed, so step 10 = index 9
+        currentStep: lastStepIndex, // Last step (completion) - 0-indexed
         orderedSteps: allSteps,
-        completedSteps: allSteps, // Mark ALL 10 steps as completed
+        completedSteps: allSteps, // Mark ALL steps as completed
         data: {
           condition: "", // Restored from backup
           experience: "returning" as const,
@@ -82,13 +73,44 @@ export function OnboardingCloudRestoreOption() {
         hydrated: true,
       };
 
-      // Persist the completed state
+      // CRITICAL: Persist the completed state BEFORE redirect
+      // This ensures localStorage is updated before the redirect gate checks it
       persistOnboardingState(completedState);
+
+      // Force synchronous write to localStorage to ensure it's persisted
+      // Some browsers may delay localStorage writes, so we verify it's set
+      const verifyState = () => {
+        const stored = window.localStorage.getItem("pocket:onboarding-state");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed.isComplete && parsed.completedSteps?.length === allSteps.length) {
+              console.log("[Onboarding] Onboarding state verified as complete");
+              return true;
+            }
+          } catch (e) {
+            console.error("[Onboarding] Failed to verify state:", e);
+          }
+        }
+        return false;
+      };
+
+      // Verify state is persisted before redirecting
+      if (!verifyState()) {
+        console.warn("[Onboarding] State not persisted, retrying...");
+        persistOnboardingState(completedState);
+      }
 
       // Hard redirect to dashboard after a brief delay
       // This forces a full page reload which reinitializes all hooks with correct userId
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        // Double-check state is persisted before redirect
+        if (verifyState()) {
+          window.location.href = "/dashboard";
+        } else {
+          console.error("[Onboarding] Failed to persist onboarding state, redirecting anyway");
+          window.location.href = "/dashboard";
+        }
       }, 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Restore failed";

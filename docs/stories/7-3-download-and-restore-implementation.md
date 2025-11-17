@@ -709,12 +709,62 @@ Successfully resolved all code review findings and exceeded test coverage expect
 **Completed:** 2025-11-13
 **Definition of Done:** All acceptance criteria met, code reviewed, tests passing, production build successful
 
+**2025-11-16: Bug Fixes - Restore Issues**
+
+**Bug Fix 1: bodyMapLocations Markers Not Displaying After Restore**
+
+Fixed critical bug where body map markers were not displaying after database restore, even though data was present in the database.
+
+**Root Cause:**
+- `bodyMapLocations` queries use compound index `[userId+layer+createdAt]` which requires `layer` field to be set
+- Restored records from old backups may not have `layer` field set (field was added in schema v22)
+- Without `layer` field, compound index queries fail to find markers, causing them to not display on body map
+
+**Fix Applied:**
+- Added migration logic in `restoreData()` function to ensure `bodyMapLocations` records have `layer` field set during restore
+- If `layer` is missing, infer from `markerType` field (pain → 'pain', inflammation → 'inflammation')
+- Default to 'flares' if neither `layer` nor `markerType` is available (backward compatibility)
+- Ensure `createdAt` is properly converted to Date object (required for compound index)
+- Added console logging to track layer assignment during restore
+
+**Files Modified:**
+- `src/lib/services/cloudSyncService.ts` - Added bodyMapLocations-specific restoration logic (lines 1391-1411)
+
+**Testing:**
+- Restore should now properly set `layer` field for all bodyMapLocations records
+- Markers should display correctly on body map after restore
+- Backward compatibility maintained for old backups without `layer` field
+
+**Bug Fix 2: Onboarding Not Marked Complete After Cloud Restore**
+
+Fixed bug where restoring from cloud backup during onboarding was redirecting to step 7 instead of dashboard.
+
+**Root Cause:**
+- `OnboardingCloudRestoreOption` was hardcoding step IDs instead of using `ONBOARDING_STEPS` config
+- State persistence timing issue - redirect happened before localStorage was fully updated
+- `OnboardingRedirectGate` checks `isComplete` and all steps completed, but state wasn't matching expected structure
+
+**Fix Applied:**
+- Updated `OnboardingCloudRestoreOption.tsx` to use `ONBOARDING_STEPS` from config instead of hardcoded array
+- Added verification logic to ensure state is persisted before redirecting
+- Added retry logic if state persistence fails
+- Ensures `isComplete: true` and all steps in `completedSteps` match `orderedSteps` exactly
+
+**Files Modified:**
+- `src/app/onboarding/components/OnboardingCloudRestoreOption.tsx` - Use config for step IDs, add state verification
+
+**Testing:**
+- Cloud restore during onboarding should now properly mark onboarding as complete
+- Redirect should go to dashboard, not back to onboarding step 7
+- State verification ensures localStorage is updated before redirect
+
 ### File List
 
 Modified Files:
-- src/lib/services/cloudSyncService.ts (+780 lines restore functions, +3 lines type casts for BufferSource)
+- src/lib/services/cloudSyncService.ts (+780 lines restore functions, +3 lines type casts for BufferSource, +20 lines bodyMapLocations layer fix)
 - src/lib/db/schema.ts (+7 lines for restore metadata fields)
 - src/lib/services/__tests__/cloudSyncService.restore.test.ts (~60 lines refactored for mocking)
+- src/app/onboarding/components/OnboardingCloudRestoreOption.tsx (+30 lines onboarding completion fix)
 
 New Files:
 - src/lib/services/__tests__/cloudSyncService.restore.test.ts (+750 lines initially, ~60 lines modified for review fixes)

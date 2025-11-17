@@ -159,6 +159,11 @@ export function RegionDetailView({
 
   // Story 3.7.5: Handle historical marker click to show details
   const handleHistoricalMarkerClick = useCallback((marker: BodyMapLocation) => {
+    // Extract markerId if available (markers from bodyMapLocations table have markerId)
+    // Type assertion needed because BodyMapLocation type doesn't include markerId,
+    // but actual BodyMapLocationRecord instances do have it
+    const markerId = (marker as any).markerId;
+    
     setSelectedMarker({
       id: marker.id,
       severity: marker.severity,
@@ -168,6 +173,7 @@ export function RegionDetailView({
       layer: 'flares', // Default layer - could be extended to support multiple layers
       coordinates: marker.coordinates,
       userId: userId, // Required for fetching lifecycle stage data (Story 8.2)
+      markerId: markerId, // Reference to bodyMarkers.id for fetching current lifecycle stage
     });
     setIsModalOpen(true);
   }, [userId]);
