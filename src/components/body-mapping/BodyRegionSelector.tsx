@@ -1,8 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { FrontBody } from "./bodies/FrontBody";
-import { BackBody } from "./bodies/BackBody";
+// Old geometric bodies (commented out for now - easy to revert)
+// import { FrontBody } from "./bodies/FrontBody";
+// import { BackBody } from "./bodies/BackBody";
+
+// New professional illustration bodies
+import { FrontBodyFemale as FrontBody } from "./bodies/FrontBodyFemale";
+import { BackBodyFemale as BackBody } from "./bodies/BackBodyFemale";
+
 import { getRegionsForView } from "@/lib/data/bodyRegions";
 
 interface BodyRegionSelectorProps {

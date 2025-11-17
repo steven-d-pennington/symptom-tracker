@@ -94,6 +94,106 @@ export const BACK_BODY_REGIONS: BodyRegion[] = [
 ];
 
 /**
+ * Predefined body regions for left side view (left profile)
+ * Focus on HS-critical areas visible from side angle
+ */
+export const LEFT_SIDE_REGIONS: BodyRegion[] = [
+  // Head & Neck
+  { id: "head-left-side", name: "Head (Left Side)", category: "head", side: "left", svgPath: "", selectable: true, zIndex: 10, center: { x: 230, y: 50 } },
+  { id: "face-left-side", name: "Face (Left Side)", category: "head", side: "left", svgPath: "", selectable: true, zIndex: 10, center: { x: 260, y: 70 } },
+  { id: "neck-left-side", name: "Neck (Left Side)", category: "head", side: "left", svgPath: "", selectable: true, zIndex: 9, center: { x: 215, y: 120 } },
+
+  // Upper Body - HS Critical Areas
+  { id: "shoulder-left-side", name: "Left Shoulder (Side)", category: "limbs", side: "left", svgPath: "", selectable: true, zIndex: 8, center: { x: 175, y: 160 } },
+  { id: "armpit-left-side", name: "Left Armpit (Side)", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["abscess", "lesion", "pain"], center: { x: 190, y: 185 } },
+  { id: "chest-left-side", name: "Chest (Left Side)", category: "torso", side: "left", svgPath: "", selectable: true, zIndex: 8, center: { x: 240, y: 210 } },
+  { id: "breast-left-side", name: "Breast (Left Side)", category: "torso", side: "left", svgPath: "", selectable: true, zIndex: 8, center: { x: 250, y: 230 } },
+  { id: "under-breast-left-side", name: "Under Breast (Left Side)", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["lesion", "pain", "abscess"], center: { x: 240, y: 260 } },
+
+  // Torso
+  { id: "upper-back-left-side", name: "Upper Back (Left Side)", category: "torso", side: "left", svgPath: "", selectable: true, zIndex: 7, center: { x: 150, y: 200 } },
+  { id: "mid-back-left-side", name: "Mid Back (Left Side)", category: "torso", side: "left", svgPath: "", selectable: true, zIndex: 7, center: { x: 145, y: 280 } },
+  { id: "abdomen-upper-left-side", name: "Upper Abdomen (Left Side)", category: "torso", side: "left", svgPath: "", selectable: true, zIndex: 8, center: { x: 220, y: 300 } },
+  { id: "abdomen-lower-left-side", name: "Lower Abdomen (Left Side)", category: "torso", side: "left", svgPath: "", selectable: true, zIndex: 8, center: { x: 210, y: 360 } },
+  { id: "abdomen-fold-left-side", name: "Abdominal Fold (Left Side)", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "pain"], center: { x: 205, y: 345 } },
+
+  // Lower Back & Hip - HS Critical
+  { id: "lower-back-left-side", name: "Lower Back (Left Side)", category: "torso", side: "left", svgPath: "", selectable: true, zIndex: 7, center: { x: 150, y: 350 } },
+  { id: "hip-left-side", name: "Hip (Left Side)", category: "joints", side: "left", svgPath: "", selectable: true, zIndex: 8, center: { x: 180, y: 390 } },
+  { id: "buttocks-left-side", name: "Buttocks (Left Side)", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "abscess", "pain"], center: { x: 155, y: 420 } },
+  { id: "buttocks-crease-left-side", name: "Buttocks Crease (Left Side)", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["lesion", "abscess"], center: { x: 165, y: 455 } },
+
+  // Groin & Upper Thigh - HS Critical
+  { id: "groin-left-side", name: "Groin (Left Side)", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["lesion", "abscess", "pain"], center: { x: 200, y: 410 } },
+  { id: "groin-crease-left-side", name: "Groin Crease (Left Side)", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["lesion", "abscess"], center: { x: 195, y: 425 } },
+  { id: "inner-thigh-upper-left-side", name: "Upper Inner Thigh (Left Side)", category: "other", side: "left", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "abscess", "pain"], center: { x: 195, y: 470 } },
+
+  // Arms
+  { id: "upper-arm-left-side", name: "Upper Arm (Left Side)", category: "limbs", side: "left", svgPath: "", selectable: true, zIndex: 7, center: { x: 155, y: 240 } },
+  { id: "elbow-left-side", name: "Elbow (Left Side)", category: "joints", side: "left", svgPath: "", selectable: true, zIndex: 7, center: { x: 145, y: 310 } },
+  { id: "forearm-left-side", name: "Forearm (Left Side)", category: "limbs", side: "left", svgPath: "", selectable: true, zIndex: 7, center: { x: 150, y: 380 } },
+  { id: "wrist-left-side", name: "Wrist (Left Side)", category: "joints", side: "left", svgPath: "", selectable: true, zIndex: 7, center: { x: 155, y: 445 } },
+  { id: "hand-left-side", name: "Hand (Left Side)", category: "limbs", side: "left", svgPath: "", selectable: true, zIndex: 7, center: { x: 160, y: 475 } },
+
+  // Legs
+  { id: "thigh-left-side", name: "Thigh (Left Side)", category: "limbs", side: "left", svgPath: "", selectable: true, zIndex: 6, center: { x: 185, y: 510 } },
+  { id: "knee-left-side", name: "Knee (Left Side)", category: "joints", side: "left", svgPath: "", selectable: true, zIndex: 6, center: { x: 185, y: 570 } },
+  { id: "calf-left-side", name: "Calf (Left Side)", category: "limbs", side: "left", svgPath: "", selectable: true, zIndex: 6, center: { x: 190, y: 650 } },
+  { id: "ankle-left-side", name: "Ankle (Left Side)", category: "joints", side: "left", svgPath: "", selectable: true, zIndex: 6, center: { x: 195, y: 720 } },
+  { id: "foot-left-side", name: "Foot (Left Side)", category: "limbs", side: "left", svgPath: "", selectable: true, zIndex: 6, center: { x: 220, y: 760 } },
+];
+
+/**
+ * Predefined body regions for right side view (right profile)
+ * Mirror of left side view with adjusted coordinates
+ */
+export const RIGHT_SIDE_REGIONS: BodyRegion[] = [
+  // Head & Neck
+  { id: "head-right-side", name: "Head (Right Side)", category: "head", side: "right", svgPath: "", selectable: true, zIndex: 10, center: { x: 170, y: 50 } },
+  { id: "face-right-side", name: "Face (Right Side)", category: "head", side: "right", svgPath: "", selectable: true, zIndex: 10, center: { x: 140, y: 70 } },
+  { id: "neck-right-side", name: "Neck (Right Side)", category: "head", side: "right", svgPath: "", selectable: true, zIndex: 9, center: { x: 185, y: 120 } },
+
+  // Upper Body - HS Critical Areas
+  { id: "shoulder-right-side", name: "Right Shoulder (Side)", category: "limbs", side: "right", svgPath: "", selectable: true, zIndex: 8, center: { x: 225, y: 160 } },
+  { id: "armpit-right-side", name: "Right Armpit (Side)", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["abscess", "lesion", "pain"], center: { x: 210, y: 185 } },
+  { id: "chest-right-side", name: "Chest (Right Side)", category: "torso", side: "right", svgPath: "", selectable: true, zIndex: 8, center: { x: 160, y: 210 } },
+  { id: "breast-right-side", name: "Breast (Right Side)", category: "torso", side: "right", svgPath: "", selectable: true, zIndex: 8, center: { x: 150, y: 230 } },
+  { id: "under-breast-right-side", name: "Under Breast (Right Side)", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["lesion", "pain", "abscess"], center: { x: 160, y: 260 } },
+
+  // Torso
+  { id: "upper-back-right-side", name: "Upper Back (Right Side)", category: "torso", side: "right", svgPath: "", selectable: true, zIndex: 7, center: { x: 250, y: 200 } },
+  { id: "mid-back-right-side", name: "Mid Back (Right Side)", category: "torso", side: "right", svgPath: "", selectable: true, zIndex: 7, center: { x: 255, y: 280 } },
+  { id: "abdomen-upper-right-side", name: "Upper Abdomen (Right Side)", category: "torso", side: "right", svgPath: "", selectable: true, zIndex: 8, center: { x: 180, y: 300 } },
+  { id: "abdomen-lower-right-side", name: "Lower Abdomen (Right Side)", category: "torso", side: "right", svgPath: "", selectable: true, zIndex: 8, center: { x: 190, y: 360 } },
+  { id: "abdomen-fold-right-side", name: "Abdominal Fold (Right Side)", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "pain"], center: { x: 195, y: 345 } },
+
+  // Lower Back & Hip - HS Critical
+  { id: "lower-back-right-side", name: "Lower Back (Right Side)", category: "torso", side: "right", svgPath: "", selectable: true, zIndex: 7, center: { x: 250, y: 350 } },
+  { id: "hip-right-side", name: "Hip (Right Side)", category: "joints", side: "right", svgPath: "", selectable: true, zIndex: 8, center: { x: 220, y: 390 } },
+  { id: "buttocks-right-side", name: "Buttocks (Right Side)", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "abscess", "pain"], center: { x: 245, y: 420 } },
+  { id: "buttocks-crease-right-side", name: "Buttocks Crease (Right Side)", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["lesion", "abscess"], center: { x: 235, y: 455 } },
+
+  // Groin & Upper Thigh - HS Critical
+  { id: "groin-right-side", name: "Groin (Right Side)", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["lesion", "abscess", "pain"], center: { x: 200, y: 410 } },
+  { id: "groin-crease-right-side", name: "Groin Crease (Right Side)", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 9, commonSymptoms: ["lesion", "abscess"], center: { x: 205, y: 425 } },
+  { id: "inner-thigh-upper-right-side", name: "Upper Inner Thigh (Right Side)", category: "other", side: "right", svgPath: "", selectable: true, zIndex: 8, commonSymptoms: ["lesion", "abscess", "pain"], center: { x: 205, y: 470 } },
+
+  // Arms
+  { id: "upper-arm-right-side", name: "Upper Arm (Right Side)", category: "limbs", side: "right", svgPath: "", selectable: true, zIndex: 7, center: { x: 245, y: 240 } },
+  { id: "elbow-right-side", name: "Elbow (Right Side)", category: "joints", side: "right", svgPath: "", selectable: true, zIndex: 7, center: { x: 255, y: 310 } },
+  { id: "forearm-right-side", name: "Forearm (Right Side)", category: "limbs", side: "right", svgPath: "", selectable: true, zIndex: 7, center: { x: 250, y: 380 } },
+  { id: "wrist-right-side", name: "Wrist (Right Side)", category: "joints", side: "right", svgPath: "", selectable: true, zIndex: 7, center: { x: 245, y: 445 } },
+  { id: "hand-right-side", name: "Hand (Right Side)", category: "limbs", side: "right", svgPath: "", selectable: true, zIndex: 7, center: { x: 240, y: 475 } },
+
+  // Legs
+  { id: "thigh-right-side", name: "Thigh (Right Side)", category: "limbs", side: "right", svgPath: "", selectable: true, zIndex: 6, center: { x: 215, y: 510 } },
+  { id: "knee-right-side", name: "Knee (Right Side)", category: "joints", side: "right", svgPath: "", selectable: true, zIndex: 6, center: { x: 215, y: 570 } },
+  { id: "calf-right-side", name: "Calf (Right Side)", category: "limbs", side: "right", svgPath: "", selectable: true, zIndex: 6, center: { x: 210, y: 650 } },
+  { id: "ankle-right-side", name: "Ankle (Right Side)", category: "joints", side: "right", svgPath: "", selectable: true, zIndex: 6, center: { x: 205, y: 720 } },
+  { id: "foot-right-side", name: "Foot (Right Side)", category: "limbs", side: "right", svgPath: "", selectable: true, zIndex: 6, center: { x: 180, y: 760 } },
+];
+
+/**
  * Get regions for a specific view
  */
 export function getRegionsForView(view: "front" | "back" | "left" | "right"): BodyRegion[] {
@@ -103,10 +203,9 @@ export function getRegionsForView(view: "front" | "back" | "left" | "right"): Bo
     case "back":
       return BACK_BODY_REGIONS;
     case "left":
+      return LEFT_SIDE_REGIONS;
     case "right":
-      // For now, use front regions for side views
-      // In production, we'd have dedicated side view regions
-      return FRONT_BODY_REGIONS;
+      return RIGHT_SIDE_REGIONS;
     default:
       return FRONT_BODY_REGIONS;
   }
@@ -116,6 +215,11 @@ export function getRegionsForView(view: "front" | "back" | "left" | "right"): Bo
  * Get a body region by its ID from all available regions
  */
 export function getBodyRegionById(id: string): BodyRegion | undefined {
-  const allRegions = [...FRONT_BODY_REGIONS, ...BACK_BODY_REGIONS];
+  const allRegions = [
+    ...FRONT_BODY_REGIONS,
+    ...BACK_BODY_REGIONS,
+    ...LEFT_SIDE_REGIONS,
+    ...RIGHT_SIDE_REGIONS
+  ];
   return allRegions.find(region => region.id === id);
 }
