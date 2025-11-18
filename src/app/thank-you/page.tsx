@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Heart, Check, Mail, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
+import { Heart, Check, Mail, ArrowRight, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function ThankYouPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const router = useRouter();
 
@@ -29,7 +31,7 @@ export default function ThankYouPage() {
     const storedCode = localStorage.getItem("beta_verification_code");
 
     if (!storedCode) {
-      setError("No verification code found. Please sign up again.");
+      setError("We couldn't find your verification code. Please request a new one below.");
       setIsVerifying(false);
       return;
     }
@@ -43,8 +45,48 @@ export default function ThankYouPage() {
       // Redirect to onboarding
       router.push("/onboarding");
     } else {
-      setError("Invalid verification code. Please check your email and try again.");
+      setError("That code doesn't match. Please check your email and try again, or request a new code below.");
       setIsVerifying(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setIsResending(true);
+    setError("");
+    setResendSuccess(false);
+
+    try {
+      const response = await fetch("/api/beta-signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to resend code");
+      }
+
+      // Update verification code in localStorage
+      if (data.verificationCode) {
+        localStorage.setItem("beta_verification_code", data.verificationCode);
+      }
+
+      setResendSuccess(true);
+      setVerificationCode("");
+
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setResendSuccess(false);
+      }, 5000);
+    } catch (err) {
+      console.error("Resend error:", err);
+      setError(err instanceof Error ? err.message : "Failed to resend code. Please try again.");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -118,9 +160,16 @@ export default function ThankYouPage() {
               </div>
 
               {error && (
-                <div className="px-4 py-3 bg-red-50 dark:bg-red-950/50 border-2 border-red-400 dark:border-red-600 text-red-800 dark:text-red-200 rounded-xl text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  <span>{error}</span>
+                <div className="px-4 py-3 bg-red-50 dark:bg-red-950/50 border-2 border-red-400 dark:border-red-600 text-red-800 dark:text-red-200 rounded-xl text-sm flex items-start gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <span className="text-left">{error}</span>
+                </div>
+              )}
+
+              {resendSuccess && (
+                <div className="px-4 py-3 bg-green-50 dark:bg-green-950/50 border-2 border-green-400 dark:border-green-600 text-green-800 dark:text-green-200 rounded-xl text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Check className="w-5 h-5 flex-shrink-0" />
+                  <span>New verification code sent! Check your email.</span>
                 </div>
               )}
 
@@ -134,11 +183,22 @@ export default function ThankYouPage() {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-border">
+            <div className="mt-6 pt-6 border-t border-border space-y-3">
               <p className="text-sm text-muted-foreground">
-                Didn't receive the code?{" "}
+                Didn't receive the code?
+              </p>
+              <button
+                onClick={handleResendCode}
+                disabled={isResending || !userEmail}
+                className="inline-flex items-center gap-2 text-primary hover:underline font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                <RefreshCw className={`w-4 h-4 ${isResending ? 'animate-spin' : ''}`} />
+                {isResending ? "Sending..." : "Send me a new code"}
+              </button>
+              <p className="text-sm text-muted-foreground">
+                or{" "}
                 <Link href="/" className="text-primary hover:underline font-semibold">
-                  Try signing up again
+                  return to home page
                 </Link>
               </p>
             </div>
