@@ -367,6 +367,10 @@ export function ActiveFlareCards({
             if (target.closest('button')) {
               return;
             }
+            // Prevent default behavior and stop propagation
+            e.preventDefault();
+            e.stopPropagation();
+            // Navigate to flare detail page
             router.push(`/body-map/${flare.id}`);
           };
 
