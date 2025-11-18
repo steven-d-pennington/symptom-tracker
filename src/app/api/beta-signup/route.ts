@@ -25,6 +25,7 @@ interface SignupRequest {
 interface SignupResponse {
   success: true;
   message: string;
+  verificationCode: string;
 }
 
 // Initialize Resend
@@ -263,6 +264,7 @@ export async function POST(request: NextRequest) {
       const response: SignupResponse = {
         success: true,
         message: "Successfully signed up for beta access!",
+        verificationCode,
       };
 
       return NextResponse.json(response, { status: 200 });

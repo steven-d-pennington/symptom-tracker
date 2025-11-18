@@ -32,6 +32,12 @@ export default function LandingPage() {
         throw new Error(data.message || "Failed to sign up");
       }
 
+      // Store verification code in localStorage for validation
+      if (data.verificationCode) {
+        localStorage.setItem("beta_verification_code", data.verificationCode);
+        localStorage.setItem("beta_signup_email", email);
+      }
+
       // Redirect to thank you page
       router.push("/thank-you");
     } catch (err) {

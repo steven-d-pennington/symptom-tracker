@@ -1,9 +1,53 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Heart, Check, Mail, ArrowRight, Sparkles } from "lucide-react";
+import { Heart, Check, Mail, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 
 export default function ThankYouPage() {
+  const [verificationCode, setVerificationCode] = useState("");
+  const [error, setError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    // Get the email from localStorage to display
+    const email = localStorage.getItem("beta_signup_email");
+    if (email) {
+      setUserEmail(email);
+    }
+  }, []);
+
+  const handleVerifyCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsVerifying(true);
+    setError("");
+
+    // Get the stored verification code from localStorage
+    const storedCode = localStorage.getItem("beta_verification_code");
+
+    if (!storedCode) {
+      setError("No verification code found. Please sign up again.");
+      setIsVerifying(false);
+      return;
+    }
+
+    // Validate the entered code against the stored code
+    if (verificationCode.toUpperCase() === storedCode.toUpperCase()) {
+      // Clear the verification code from localStorage
+      localStorage.removeItem("beta_verification_code");
+      localStorage.removeItem("beta_signup_email");
+
+      // Redirect to onboarding
+      router.push("/onboarding");
+    } else {
+      setError("Invalid verification code. Please check your email and try again.");
+      setIsVerifying(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 flex flex-col">
       {/* Header/Nav */}
@@ -18,12 +62,6 @@ export default function ThankYouPage() {
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
               Home
-            </Link>
-            <Link
-              href="/onboarding"
-              className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all shadow-md hover:shadow-lg"
-            >
-              Try Now →
             </Link>
           </nav>
         </div>
@@ -43,37 +81,72 @@ export default function ThankYouPage() {
 
           {/* Main Heading */}
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 animate-in slide-in-from-bottom duration-500">
-            You're on the List! 🎉
+            Check Your Email! 📧
           </h1>
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed animate-in slide-in-from-bottom duration-500 delay-100">
-            Thank you for signing up for the Pocket Symptom Tracker beta!
+            We've sent a verification code to {userEmail ? <strong>{userEmail}</strong> : "your email"}
           </p>
 
-          {/* Info Card */}
+          {/* Verification Form */}
           <div className="bg-card border-2 border-border rounded-2xl p-8 mb-10 shadow-xl animate-in slide-in-from-bottom duration-500 delay-200">
-            <div className="flex items-start gap-4 text-left">
+            <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-pink-500/20 flex items-center justify-center flex-shrink-0">
                 <Mail className="w-6 h-6 text-primary" />
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-foreground mb-3">Check Your Inbox</h2>
-                <p className="text-muted-foreground leading-relaxed mb-4">
-                  We've sent a welcome email to your inbox with your verification code and next steps.
-                  Keep an eye out for updates as we prepare for launch!
+              <div className="text-left">
+                <h2 className="text-xl font-bold text-foreground mb-2">Enter Your Verification Code</h2>
+                <p className="text-muted-foreground leading-relaxed text-sm">
+                  Check your inbox for an email with your verification code. It should arrive within a few minutes.
                 </p>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-semibold text-primary">Early access coming soon</span>
-                </div>
               </div>
+            </div>
+
+            <form onSubmit={handleVerifyCode} className="space-y-4">
+              <div>
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.toUpperCase())}
+                  placeholder="Enter code (e.g., ABC12345)"
+                  required
+                  disabled={isVerifying}
+                  maxLength={8}
+                  className="w-full px-5 py-4 rounded-xl border-2 border-border bg-background text-foreground text-center text-lg font-mono uppercase placeholder:text-muted-foreground placeholder:normal-case focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {error && (
+                <div className="px-4 py-3 bg-red-50 dark:bg-red-950/50 border-2 border-red-400 dark:border-red-600 text-red-800 dark:text-red-200 rounded-xl text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isVerifying || !verificationCode}
+                className="w-full px-8 py-4 bg-gradient-to-r from-primary to-pink-500 text-white text-lg font-bold rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {isVerifying ? "Verifying..." : "Verify & Continue"}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-border">
+              <p className="text-sm text-muted-foreground">
+                Didn't receive the code?{" "}
+                <Link href="/" className="text-primary hover:underline font-semibold">
+                  Try signing up again
+                </Link>
+              </p>
             </div>
           </div>
 
           {/* What's Next Section */}
           <div className="bg-gradient-to-br from-card to-primary/5 border-2 border-border rounded-2xl p-8 mb-10 shadow-lg animate-in slide-in-from-bottom duration-500 delay-300">
-            <h3 className="text-2xl font-bold text-foreground mb-6">What's Next?</h3>
+            <h3 className="text-2xl font-bold text-foreground mb-6">What Happens Next?</h3>
             <div className="grid md:grid-cols-3 gap-6 text-left">
               <div>
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-pink-500 text-white font-bold flex items-center justify-center mb-3 text-lg">
@@ -81,48 +154,31 @@ export default function ThankYouPage() {
                 </div>
                 <h4 className="font-semibold text-foreground mb-2">Check Your Email</h4>
                 <p className="text-sm text-muted-foreground">
-                  Look for your welcome email with your verification code
+                  Look for your verification code in the welcome email we just sent
                 </p>
               </div>
               <div>
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-pink-500 text-white font-bold flex items-center justify-center mb-3 text-lg">
                   2
                 </div>
-                <h4 className="font-semibold text-foreground mb-2">Stay Tuned</h4>
+                <h4 className="font-semibold text-foreground mb-2">Enter the Code</h4>
                 <p className="text-sm text-muted-foreground">
-                  We'll send updates as we add new features and prepare for launch
+                  Copy and paste the code from your email into the field above
                 </p>
               </div>
               <div>
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-pink-500 text-white font-bold flex items-center justify-center mb-3 text-lg">
                   3
                 </div>
-                <h4 className="font-semibold text-foreground mb-2">Get Early Access</h4>
+                <h4 className="font-semibold text-foreground mb-2">Start Tracking</h4>
                 <p className="text-sm text-muted-foreground">
-                  Be among the first to try new features when they launch
+                  Get personalized onboarding and begin your health journey
                 </p>
               </div>
             </div>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in slide-in-from-bottom duration-500 delay-400">
-            <Link
-              href="/onboarding"
-              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-primary to-pink-500 text-white text-lg font-bold rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-3 group"
-            >
-              Try It Now
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/"
-              className="w-full sm:w-auto px-8 py-4 border-2 border-border bg-card/80 backdrop-blur-sm text-foreground text-lg font-bold rounded-xl hover:bg-muted transition-all duration-300 hover:shadow-xl"
-            >
-              Back to Home
-            </Link>
-          </div>
-
-          <p className="mt-8 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Questions? Contact us at{" "}
             <a
               href="mailto:steve.d.pennington@gmail.com"
