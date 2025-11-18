@@ -1,22 +1,50 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Heart, Shield, Zap, Calendar, BarChart3, Map, Moon, Smile, ArrowRight, Check } from "lucide-react";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Wire up backend later
-    console.log("Beta signup:", email);
-    setSubmitted(true);
-    setTimeout(() => {
-      setEmail("");
-      setSubmitted(false);
-    }, 5000);
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/beta-signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to sign up");
+      }
+
+      // Store verification code in localStorage for validation
+      if (data.verificationCode) {
+        localStorage.setItem("beta_verification_code", data.verificationCode);
+        localStorage.setItem("beta_signup_email", email);
+      }
+
+      // Redirect to thank you page
+      router.push("/thank-you");
+    } catch (err) {
+      console.error("Beta signup error:", err);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   const features = [
@@ -103,30 +131,32 @@ export default function LandingPage() {
 
           {/* Beta Signup Form */}
           <div className="max-w-md mx-auto mb-8">
-            {!submitted ? (
-              <form onSubmit={handleSubmit} className="flex gap-3">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <div className="flex gap-3">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
-                  className="flex-1 px-5 py-4 rounded-xl border-2 border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm"
+                  disabled={isLoading}
+                  className="flex-1 px-5 py-4 rounded-xl border-2 border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   type="submit"
-                  className="px-8 py-4 bg-gradient-to-r from-primary to-pink-500 text-white font-bold rounded-xl hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+                  disabled={isLoading}
+                  className="px-8 py-4 bg-gradient-to-r from-primary to-pink-500 text-white font-bold rounded-xl hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  Join Beta
+                  {isLoading ? "Joining..." : "Join Beta"}
                   <ArrowRight className="w-5 h-5" />
                 </button>
-              </form>
-            ) : (
-              <div className="px-6 py-4 bg-green-50 dark:bg-green-950/50 border-2 border-green-400 dark:border-green-600 text-green-800 dark:text-green-200 rounded-xl flex items-center justify-center gap-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
-                <Check className="w-6 h-6" />
-                <span className="font-semibold text-lg">Thanks! We'll be in touch soon.</span>
               </div>
-            )}
+              {error && (
+                <div className="px-4 py-3 bg-red-50 dark:bg-red-950/50 border-2 border-red-400 dark:border-red-600 text-red-800 dark:text-red-200 rounded-xl text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                  {error}
+                </div>
+              )}
+            </form>
             <p className="mt-4 text-sm text-muted-foreground">
               Or{" "}
               <Link href="/onboarding" className="text-primary hover:underline font-semibold">
