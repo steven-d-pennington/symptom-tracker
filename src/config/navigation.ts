@@ -228,7 +228,7 @@ export function getDestinationByHref(
  * Routes that should NOT show navigation (landing page, onboarding, etc.)
  * Centralized configuration for navigation visibility logic.
  */
-export const NO_NAV_ROUTES = ["/", "/onboarding"];
+export const NO_NAV_ROUTES = ["/", "/onboarding", "/thank-you"];
 
 /**
  * Check if a route should display navigation
