@@ -68,6 +68,10 @@ git clone https://github.com/your-org/symptom-tracker.git
 # Install dependencies
 npm install
 
+# Set up environment variables (optional - for beta signup emails)
+cp .env.example .env.local
+# Edit .env.local and add your RESEND_API_KEY
+
 # Start development server
 npm run dev
 
@@ -75,6 +79,21 @@ npm run dev
 ```
 
 **First-time setup**: The app will guide you through a privacy-focused onboarding process to customize your tracking experience.
+
+### Environment Variables
+
+The app works completely offline by default, but some optional features require configuration:
+
+- **`RESEND_API_KEY`** (optional) - For beta signup emails via [Resend](https://resend.com)
+  - Get your API key at https://resend.com/api-keys
+  - Configure your sending domain in Resend dashboard
+  - Required only for the landing page beta signup workflow
+
+- **`BLOB_READ_WRITE_TOKEN`** (optional) - For encrypted cloud backups via Vercel Blob Storage
+- **`UPSTASH_REDIS_REST_URL`** and **`UPSTASH_REDIS_REST_TOKEN`** (optional) - For API rate limiting
+- **`CRON_SECRET`** (optional) - For scheduled tasks authentication
+
+See `.env.example` for complete configuration template.
 
 ---
 
