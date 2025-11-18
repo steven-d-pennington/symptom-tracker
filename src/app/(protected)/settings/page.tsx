@@ -148,17 +148,17 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+    <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
         <p className="mt-2 text-muted-foreground">
           Customize your app experience
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Settings Sections */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {settingsSections.map((section) => {
             const Icon = section.icon;
             const isExpanded = expandedSection === section.title;
@@ -176,7 +176,7 @@ export default function SettingsPage() {
                       : undefined
                   }
                   disabled={!hasContent}
-                  className={`w-full p-6 text-left ${
+                  className={`w-full p-4 text-left ${
                     hasContent ? "cursor-pointer hover:bg-muted/50" : ""
                   }`}
                 >
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                   href={section.href}
                   className="block rounded-lg border border-border bg-card overflow-hidden hover:bg-muted/50 transition-colors"
                 >
-                  <div className="p-6">
+                  <div className="p-4">
                     <div className="flex items-start gap-4">
                       <div className="p-3 rounded-lg bg-primary/10 text-primary">
                         <Icon className="w-6 h-6" />
@@ -267,7 +267,7 @@ export default function SettingsPage() {
                           : undefined
                       }
                       disabled={!hasContent}
-                      className={`w-full p-6 text-left ${
+                      className={`w-full p-4 text-left ${
                         hasContent ? "cursor-pointer hover:bg-muted/50" : ""
                       }`}
                     >

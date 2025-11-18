@@ -40,7 +40,7 @@ export function InsightsGrid({ correlations, isLoading, onViewDetails }: Insight
   if (isLoading) {
     return (
       <div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
         role="status"
         aria-label="Loading insights"
       >
@@ -54,7 +54,7 @@ export function InsightsGrid({ correlations, isLoading, onViewDetails }: Insight
   // Show insights grid once loaded
   return (
     <div
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 fade-in"
       role="feed"
       aria-label="Health insights"
     >

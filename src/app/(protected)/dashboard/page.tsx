@@ -264,7 +264,7 @@ function DashboardContent() {
 
   if (!userId) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         <div className="text-center">Loading...</div>
       </div>
     );
@@ -284,7 +284,7 @@ function DashboardContent() {
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
         {/* Quick Actions Module */}
         <TodayQuickActionsCard>
           <QuickLogButtons

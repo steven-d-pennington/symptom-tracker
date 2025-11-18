@@ -76,7 +76,7 @@ export function SeverityMetricsView({
       <h3 className="text-xl font-semibold mb-4">Severity Metrics</h3>
 
       {/* Task 6.6, 6.13: Grid layout with responsive columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* Task 6.7: Card 1 - Average Peak Severity with color coding */}
         <MetricCard
           label="Avg Peak Severity"

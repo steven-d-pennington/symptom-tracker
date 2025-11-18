@@ -44,17 +44,17 @@ export default function AnalyticsPage() {
   });
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
+    <div className="container mx-auto p-4 max-w-7xl">
       {/* Page header (AC3.1.1) */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Flare Analytics</h1>
-        <p className="text-gray-600">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Flare Analytics</h1>
+        <p className="text-gray-600 text-sm">
           Analyze your flare patterns, identify problem areas, and track trends over time.
         </p>
       </div>
 
-      {/* Task 12.9: Main content area with space-y-8 between sections */}
-      <div className="space-y-8">
+      {/* Task 12.9: Main content area with space-y-6 between sections */}
+      <div className="space-y-6">
         {/* Problem Areas section (Story 3.1 - AC3.1.1) */}
         <section>
           <ProblemAreasView />
