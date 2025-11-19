@@ -35,6 +35,7 @@ interface DailyEntryFormProps {
   onSyncQueue: () => Promise<void> | void;
   recentSymptomIds: string[];
   medicationSchedule: MedicationOption[];
+  history: DailyEntry[];
 }
 
 const formatLastSaved = (date: Date | null) => {
@@ -112,32 +113,64 @@ export const DailyEntryForm = ({
     <section className="space-y-8" aria-label="Daily entry form">
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
-          <h2 className="text-2xl font-semibold text-foreground">Daily check-in</h2>
-          <p className="text-sm text-muted-foreground">
-            Capture a quick snapshot of how you’re feeling today. Smart suggestions help you focus where it matters.
+          <h2 className="text-2xl font-semibold text-foreground">
+            {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening"}, Steven.
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            How are you feeling today?
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-muted-foreground">Mode:</span>
+          <button
+            type="button"
+            onClick={async () => {
+              // Find the most recent entry from history
+              const lastEntry = history.length > 0 ? history[0] : null;
+
+              if (lastEntry) {
+                // Copy symptoms, medications, and triggers
+                updateEntry({
+                  overallHealth: lastEntry.overallHealth,
+                  energyLevel: lastEntry.energyLevel,
+                  sleepQuality: lastEntry.sleepQuality,
+                  stressLevel: lastEntry.stressLevel,
+                  symptoms: lastEntry.symptoms.map(s => ({ ...s, notes: '' })), // Clear notes
+                  medications: lastEntry.medications.map(m => ({ ...m, taken: false })), // Reset taken status
+                  triggers: lastEntry.triggers.map(t => ({ ...t, notes: '' })), // Clear notes
+                });
+
+                // Haptic feedback
+                if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                  navigator.vibrate([10, 50, 10]);
+                }
+              }
+            }}
+            className="flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+            title="Copy data from last entry"
+          >
+            <span>↺ Same as yesterday</span>
+          </button>
+
+          <div className="h-4 w-px bg-border mx-1" />
+
+          <span className="text-muted-foreground hidden sm:inline">Mode:</span>
           <button
             type="button"
             onClick={() => setMode("full")}
-            className={`rounded-lg px-3 py-1 font-semibold transition-colors ${
-              mode === "full"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border text-foreground hover:border-primary"
-            }`}
+            className={`rounded-lg px-3 py-1 font-semibold transition-colors ${mode === "full"
+              ? "bg-primary text-primary-foreground"
+              : "border border-border text-foreground hover:border-primary"
+              }`}
           >
             Guided
           </button>
           <button
             type="button"
             onClick={() => setMode("quick")}
-            className={`rounded-lg px-3 py-1 font-semibold transition-colors ${
-              mode === "quick"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border text-foreground hover:border-primary"
-            }`}
+            className={`rounded-lg px-3 py-1 font-semibold transition-colors ${mode === "quick"
+              ? "bg-primary text-primary-foreground"
+              : "border border-border text-foreground hover:border-primary"
+              }`}
           >
             Quick
           </button>

@@ -51,6 +51,9 @@ export interface DailyLog {
   /** Sleep quality rating (1-5 stars) */
   sleepQuality: 1 | 2 | 3 | 4 | 5;
 
+  /** Stress level (1-10 scale) */
+  stressLevel: number;
+
   /** Optional free-text notes about the day (max 2000 characters) */
   notes?: string;
 
@@ -105,6 +108,10 @@ export const dailyLogSchema = z.object({
     z.literal(4),
     z.literal(5),
   ]),
+  stressLevel: z
+    .number()
+    .min(1, "Stress level must be at least 1")
+    .max(10, "Stress level must be at most 10"),
   notes: z.string().max(2000, "Notes must be at most 2000 characters").optional(),
   flareUpdates: z.array(flareQuickUpdateSchema).optional(),
   createdAt: z.number().positive("Created at must be a positive timestamp"),

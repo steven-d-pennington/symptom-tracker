@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { db } from '../db/client';
 import type { UserRecord } from '../db/schema';

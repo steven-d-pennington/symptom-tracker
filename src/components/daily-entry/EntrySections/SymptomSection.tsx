@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { DailySymptom } from "@/lib/types/daily-entry";
 import { SymptomOption } from "@/lib/data/daily-entry-presets";
+import { SeveritySlider } from "@/components/ui/SeveritySlider";
 
 interface SymptomSectionProps {
   symptoms: DailySymptom[];
@@ -76,11 +77,10 @@ export const SymptomSection = ({
                 key={option.id}
                 type="button"
                 onClick={() => handleAddSymptom(option.id)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                  isActive
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-muted text-muted-foreground hover:border-primary/60"
-                }`}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${isActive
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-muted text-muted-foreground hover:border-primary/60"
+                  }`}
               >
                 {option.label}
               </button>
@@ -165,24 +165,15 @@ export const SymptomSection = ({
                 </button>
               </div>
 
-              <label className="flex flex-col gap-2 text-sm">
-                <span className="font-medium text-foreground">Severity</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={10}
-                  value={symptom.severity}
-                  onChange={(event) =>
-                    onUpdateSymptom(symptom.symptomId, {
-                      severity: Number(event.target.value),
-                    })
-                  }
-                  className="h-2 w-full cursor-pointer rounded-full bg-muted"
-                />
-                <span className="text-xs text-muted-foreground">
-                  {symptom.severity} / 10 ({severityLabel(symptom.severity)})
-                </span>
-              </label>
+              <SeveritySlider
+                value={symptom.severity}
+                onChange={(value) =>
+                  onUpdateSymptom(symptom.symptomId, {
+                    severity: value,
+                  })
+                }
+                labels={{ 1: "Mild", 5: "Moderate", 10: "Severe" }}
+              />
 
               <label className="flex flex-col gap-2 text-sm">
                 <span className="font-medium text-foreground">Notes</span>

@@ -37,6 +37,7 @@ export interface TimelineEvent {
   eventRef: any;
   hasDetails?: boolean;
   allergens?: string[]; // for food events: aggregated allergen tags
+  foodNames?: string[]; // for food events: list of food names in the meal
 }
 
 interface TimelineViewProps {
@@ -136,13 +137,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
       // Medications
       for (const event of medicationEvents) {
-        const med = await medicationRepository.get(event.medicationId);
+        const med = await medicationRepository.getById(event.medicationId);
         timelineEvents.push({
           id: event.id,
           type: 'medication',
           timestamp: event.timestamp,
           summary: `Took ${med?.name || 'Medication'}`,
-          details: `${event.dosage} ${event.unit}`,
+          details: event.dosage || undefined,
           eventRef: event,
           hasDetails: !!event.dosage
         });
@@ -168,38 +169,52 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           id: instance.id,
           type: 'symptom',
           timestamp: instance.timestamp instanceof Date ? instance.timestamp.getTime() : new Date(instance.timestamp).getTime(),
-          summary: `Symptom: ${instance.symptomName}`,
+          summary: `Symptom: ${instance.name}`,
           details: `Severity: ${instance.severity}/10${instance.notes ? ` - ${instance.notes}` : ''}`,
           eventRef: instance,
           hasDetails: true
         });
       }
 
-      // Flares (Markers)
+      // Flares (Markers) - Filter by creation date to only show markers created on this specific day
       for (const marker of markerRecords) {
-        timelineEvents.push({
-          id: marker.id,
-          type: 'flare-created',
-          timestamp: typeof marker.createdAt === 'number' ? marker.createdAt : new Date(marker.createdAt).getTime(),
-          summary: `Flare Logged`,
-          details: marker.notes,
-          eventRef: marker,
-          hasDetails: !!marker.notes
-        });
+        // Only include markers created within this day's date range
+        const markerCreatedAt = typeof marker.createdAt === 'number' ? marker.createdAt : new Date(marker.createdAt).getTime();
+        if (markerCreatedAt >= startOfDay.getTime() && markerCreatedAt <= endOfDay.getTime()) {
+          timelineEvents.push({
+            id: marker.id,
+            type: 'flare-created',
+            timestamp: markerCreatedAt,
+            summary: `Flare Logged`,
+            details: undefined,
+            eventRef: marker,
+            hasDetails: false
+          });
+        }
       }
 
       // Food
       for (const event of foodEvents) {
-        const food = await foodRepository.get(event.foodId);
+        // FoodEventRecord has foodIds (array), get all food names
+        const foodIds = JSON.parse(event.foodIds) as string[];
+        const foods = await Promise.all(
+          foodIds.map(id => foodRepository.getById(id))
+        );
+        const foodNames = foods.map(f => f?.name || 'Unknown food');
+        const allergenTags = foods
+          .filter(f => f?.allergenTags)
+          .flatMap(f => JSON.parse(f!.allergenTags) as string[]);
+
         timelineEvents.push({
           id: event.id,
           type: 'food',
           timestamp: event.timestamp,
-          summary: `Ate ${food?.name || 'Food'}`,
+          summary: foodIds.length === 1 ? `Ate ${foodNames[0]}` : `Ate ${foodIds.length} foods`,
           details: event.notes,
           eventRef: event,
-          hasDetails: !!event.notes,
-          allergens: food?.allergens
+          hasDetails: !!event.notes || foodIds.length > 1,
+          allergens: allergenTags.length > 0 ? allergenTags : undefined,
+          foodNames: foodNames
         });
       }
 
@@ -492,7 +507,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
               </div>
 
               <div className="space-y-4 pl-6">
-                {group.events.map((event) => {
+                {group.events.map((event, eventIndex) => {
                   const eventPatterns = getPatternsForEvent(event.id);
                   const patternHighlights = getPatternHighlightsForEvent(event.id);
 
@@ -509,7 +524,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                   }
 
                   return (
-                    <React.Fragment key={event.id}>
+                    <React.Fragment key={`${group.dateLabel}-${event.id}-${eventIndex}`}>
                       {/* Pattern Highlights */}
                       {showPatternHighlights && patternHighlights.map(({ pattern, occurrence }) => (
                         <PatternHighlight
@@ -575,7 +590,26 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                                 </button>
                                 {expandedFood.has(event.id) && (
                                   <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground animate-in fade-in slide-in-from-top-1">
-                                    {event.details && <p className="mb-2">{event.details}</p>}
+                                    {/* Display food items */}
+                                    {event.foodNames && event.foodNames.length > 0 && (
+                                      <div className="mb-2">
+                                        <p className="font-semibold text-foreground mb-1">Foods:</p>
+                                        <ul className="list-disc list-inside">
+                                          {event.foodNames.map((name, idx) => (
+                                            <li key={idx}>{name}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+
+                                    {/* Display notes if available */}
+                                    {event.details && (
+                                      <div className="mt-2">
+                                        <p className="font-semibold text-foreground mb-1">Notes:</p>
+                                        <p>{event.details}</p>
+                                      </div>
+                                    )}
+
                                     <div className="flex gap-2 mt-2">
                                       <button
                                         onClick={(e) => { e.stopPropagation(); handleAddDetails(event); }}

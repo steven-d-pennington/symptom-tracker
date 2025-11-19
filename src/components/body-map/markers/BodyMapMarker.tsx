@@ -89,9 +89,15 @@ const BodyMapMarkerComponent = ({
     <g
       transform={`translate(${position.x}, ${position.y})`}
       opacity={opacity}
-      onClick={onClick}
+      onClick={(e) => {
+        // Haptic feedback (Story 5.4 Modernization)
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate(5); // Subtle tick
+        }
+        onClick?.();
+      }}
       className={cn(
-        'cursor-pointer transition-all',
+        'cursor-pointer transition-all duration-300 ease-out',
         'hover:scale-110 hover:opacity-90',
         'focus:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500',
         className
@@ -103,6 +109,9 @@ const BodyMapMarkerComponent = ({
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && onClick) {
           e.preventDefault();
+          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate(5);
+          }
           onClick();
         }
       }}
