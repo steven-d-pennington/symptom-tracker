@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Heart, Shield, Zap, Calendar, BarChart3, Map, Moon, Smile, ArrowRight, Check, FileText, Camera, Activity, TrendingUp, Pill, UtensilsCrossed, Lightbulb, Database } from "lucide-react";
+import { Heart, Shield, Zap, Calendar, BarChart3, Map, Moon, Smile, ArrowRight, Check, FileText, Camera, Activity, TrendingUp, Pill, UtensilsCrossed, Lightbulb, Database, Menu, X } from "lucide-react";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,53 +135,95 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header/Nav */}
-      <header className="sticky top-0 z-50 shadow-sm" style={{ backgroundColor: '#374151' }}>
-        <div className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-pink-500 flex items-center justify-center shadow-sm">
-              <Heart className="w-5 h-5 text-white" fill="white" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-pink-500 shadow-sm">
+              <Heart className="h-5 w-5 text-white" fill="white" />
             </div>
-            <span className="text-lg font-bold" style={{ color: '#FFFFFF' }}>Pocket Symptom Tracker</span>
+            <span className="text-lg font-bold tracking-tight">Pocket Symptom Tracker</span>
           </div>
-          <nav className="hidden md:flex items-center gap-4">
-            <Link href="#features" className="text-sm transition-colors font-medium" style={{ color: '#FFFFFF' }}>
+          
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link href="#features" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               Features
             </Link>
-            <Link href="#about" className="text-sm transition-colors font-medium" style={{ color: '#FFFFFF' }}>
+            <Link href="#about" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               About
             </Link>
+            <Link href="/onboarding" className="text-sm font-medium text-primary hover:text-primary/80">
+              Get Started
+            </Link>
           </nav>
+
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden p-2 text-muted-foreground hover:text-foreground"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
+
+        {/* Mobile Nav Dropdown */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-border bg-background px-4 py-4 shadow-lg animate-in slide-in-from-top-5">
+            <nav className="flex flex-col gap-4">
+              <Link 
+                href="#features" 
+                className="text-base font-medium text-foreground py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Features
+              </Link>
+              <Link 
+                href="#about" 
+                className="text-base font-medium text-foreground py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                About
+              </Link>
+              <Link 
+                href="/onboarding" 
+                className="text-base font-medium text-primary py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Get Started
+              </Link>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
-      <section className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-16 md:py-24 relative overflow-hidden" style={{ backgroundColor: '#FFFFFF' }}>
-        <div style={{ maxWidth: '56rem', margin: '0 auto', width: '100%' }}>
-          <div className="flex justify-center mb-6">
-            <div className="px-4 py-2 text-sm font-semibold rounded-full shadow-sm flex items-center gap-2" style={{ backgroundColor: '#D1FAE5', color: '#1F2937' }}>
-              <span>✨</span>
+      <section className="w-full px-4 py-12 md:py-24 lg:py-32 overflow-hidden">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center space-y-8 text-center">
+            <div className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium backdrop-blur-sm">
+              <span className="mr-2">✨</span>
               <span>Beta Now Open</span>
             </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-center" style={{ color: '#1F2937' }}>
-            Take Control of Your
-            <span className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent block mt-2">
-              Health Journey
-            </span>
-          </h1>
-          <div style={{ maxWidth: '48rem', margin: '0 auto 2.5rem', textAlign: 'center' }}>
-            <p className="text-lg md:text-xl leading-relaxed" style={{ color: '#6B7280' }}>
-              A privacy-first tool that empowers people with chronic conditions to track patterns,
-              understand triggers, and advocate for themselves with confidence.
-            </p>
-          </div>
+            
+            <div className="space-y-4 max-w-3xl">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                Take Control of Your <br className="hidden sm:inline" />
+                <span className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+                  Health Journey
+                </span>
+              </h1>
+              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                A privacy-first tool that empowers people with chronic conditions to track patterns,
+                understand triggers, and advocate for themselves with confidence.
+              </p>
+            </div>
 
-          {/* Beta Signup Form */}
-          <div className="mb-6 w-full flex flex-col items-center">
-            <form onSubmit={handleSubmit} className="w-full max-w-2xl">
-              <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+            {/* Beta Signup Form */}
+            <div className="w-full max-w-md space-y-4">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
                 <input
                   type="email"
                   value={email}
@@ -188,83 +231,79 @@ export default function LandingPage() {
                   placeholder="Enter your email"
                   required
                   disabled={isLoading}
-                  className="flex-1 px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
                 />
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-6 py-3 bg-gradient-to-r from-primary to-pink-500 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 w-full sm:w-auto"
-                  style={{ minWidth: '140px' }}
+                  className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-pink-500 px-6 py-3 text-sm font-medium text-white shadow transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 min-w-[120px]"
                 >
                   {isLoading ? "Joining..." : "Join Beta"}
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
-              </div>
+              </form>
               {error && (
-                <div className="mt-3 px-3 py-2 bg-red-50 dark:bg-red-950/50 border border-red-400 dark:border-red-600 text-red-800 dark:text-red-200 rounded-xl text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200 animate-in fade-in slide-in-from-top-2">
                   {error}
                 </div>
               )}
-            </form>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Or{" "}
-              <Link href="/onboarding" className="text-primary hover:underline font-semibold">
-                try it now
-              </Link>{" "}
-              — no signup required
-            </p>
-          </div>
+              <p className="text-xs text-muted-foreground">
+                Or{" "}
+                <Link href="/onboarding" className="font-medium text-primary underline-offset-4 hover:underline">
+                  try it now
+                </Link>{" "}
+                — no signup required
+              </p>
+            </div>
 
-          {/* Trust Signals */}
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm mt-8">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ backgroundColor: '#F3F4F6' }}>
-              <Shield className="w-4 h-4 text-primary" />
-              <span className="font-medium" style={{ color: '#1F2937' }}>Privacy-First</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ backgroundColor: '#F3F4F6' }}>
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="font-medium" style={{ color: '#1F2937' }}>Works Offline</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ backgroundColor: '#F3F4F6' }}>
-              <Moon className="w-4 h-4 text-primary" />
-              <span className="font-medium" style={{ color: '#1F2937' }}>Dark Mode</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ backgroundColor: '#F3F4F6' }}>
-              <Check className="w-4 h-4 text-primary" />
-              <span className="font-medium" style={{ color: '#1F2937' }}>WCAG AA</span>
+            {/* Trust Signals */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+              {[
+                { icon: Shield, label: "Privacy-First" },
+                { icon: Zap, label: "Works Offline" },
+                { icon: Moon, label: "Dark Mode" },
+                { icon: Check, label: "WCAG AA" }
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-1.5 rounded-full border border-border bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                  <item.icon className="h-3.5 w-3.5 text-primary" />
+                  <span>{item.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-16 relative" style={{ backgroundColor: '#FFFFFF' }}>
-        <div className="w-full">
-          <div className="mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-center">
-              Everything You Need to Track Your Health
-            </h2>
-            <p className="text-base md:text-lg text-muted-foreground text-center">
-              Built for people with autoimmune conditions who want to understand patterns
-              and be proactive in their treatment.
-            </p>
+      <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                Everything You Need to Track Your Health
+              </h2>
+              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Built for people with autoimmune conditions who want to understand patterns
+                and be proactive in their treatment.
+              </p>
+            </div>
           </div>
 
           {/* Core Features */}
-          <div className="mb-12">
-            <h3 className="text-xl font-semibold text-foreground mb-6">Core Features</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mb-16">
+            <h3 className="text-xl font-semibold mb-6 px-2">Core Features</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {coreFeatures.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
                   <div
                     key={index}
-                    className="group p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:shadow-md transition-all duration-300"
+                    className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-pink-500/20 text-primary flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
-                      <Icon className="w-6 h-6" />
+                    <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                      <Icon className="h-6 w-6" />
                     </div>
-                    <h3 className="text-base font-bold text-foreground mb-2">
+                    <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">
                       {feature.title}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -278,19 +317,19 @@ export default function LandingPage() {
 
           {/* Platform Features */}
           <div>
-            <h3 className="text-xl font-semibold text-foreground mb-6">Platform & Privacy</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <h3 className="text-xl font-semibold mb-6 px-2">Platform & Privacy</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {platformFeatures.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
                   <div
                     key={index}
-                    className="group p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:shadow-md transition-all duration-300"
+                    className="group rounded-2xl border border-border bg-card p-6 hover:shadow-md transition-all duration-300"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-pink-500/20 text-primary flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
-                      <Icon className="w-6 h-6" />
+                    <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <h3 className="text-base font-bold text-foreground mb-2">
+                    <h3 className="text-base font-bold mb-2">
                       {feature.title}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -305,156 +344,126 @@ export default function LandingPage() {
       </section>
 
       {/* About/Mission Section */}
-      <section id="about" className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-16" style={{ backgroundColor: '#FFFFFF' }}>
-        <div className="w-full">
-          <div className="bg-gradient-to-br from-card via-card to-primary/5 rounded-xl p-6 md:p-8 border border-border shadow-md mb-8">
-            <div className="flex items-start gap-6">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-pink-500 to-primary flex items-center justify-center flex-shrink-0 shadow-md">
-                <Heart className="w-8 h-8 text-white" fill="white" />
+      <section id="about" className="w-full py-12 md:py-24 lg:py-32">
+        <div className="container px-4 md:px-6">
+          <div className="grid gap-10 lg:grid-cols-2 items-center">
+            <div className="space-y-8">
+              <div className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium">
+                <Heart className="mr-2 h-3.5 w-3.5 text-primary" fill="currentColor" />
+                <span>Our Mission</span>
               </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Built from Personal Experience</h2>
-                <div className="space-y-4 text-base text-muted-foreground leading-relaxed">
-                  <p>
-                    When my wife was diagnosed with a chronic autoimmune condition, I felt helpless.
-                    I couldn't make her pain go away or predict when the next flare would strike.
-                  </p>
-                  <p>
-                    But I could give her tools to take control. I built this app to empower her—and
-                    others like her—to track patterns, understand triggers, and advocate for themselves
-                    with confidence.
-                  </p>
-                  <p className="text-foreground font-bold text-lg">
-                    Not a cure, but a companion on the health journey.
-                  </p>
-                </div>
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                Built from Personal Experience
+              </h2>
+              <div className="space-y-4 text-muted-foreground md:text-lg leading-relaxed">
+                <p>
+                  When my wife was diagnosed with a chronic autoimmune condition, I felt helpless.
+                  I couldn't make her pain go away or predict when the next flare would strike.
+                </p>
+                <p>
+                  But I could give her tools to take control. I built this app to empower her—and
+                  others like her—to track patterns, understand triggers, and advocate for themselves
+                  with confidence.
+                </p>
+                <p className="font-semibold text-foreground">
+                  Not a cure, but a companion on the health journey.
+                </p>
               </div>
             </div>
-          </div>
-
-          {/* Value Props */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="p-6 rounded-xl bg-gradient-to-br from-card to-primary/5 border border-border shadow-sm">
-              <h3 className="font-bold text-base text-foreground mb-2">For First-Time Users</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Pre-populated defaults and guided onboarding mean you can start tracking immediately
-              </p>
-            </div>
-            <div className="p-6 rounded-xl bg-gradient-to-br from-card to-primary/5 border border-border shadow-sm">
-              <h3 className="font-bold text-base text-foreground mb-2">For Daily Tracking</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Fast logging workflows and favorites make daily entries effortless
-              </p>
-            </div>
-            <div className="p-6 rounded-xl bg-gradient-to-br from-card to-primary/5 border border-border shadow-sm">
-              <h3 className="font-bold text-base text-foreground mb-2">For Pattern Analysis</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Comprehensive analytics reveal insights you can discuss with your doctor
-              </p>
+            
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h3 className="font-bold text-lg mb-2">For First-Time Users</h3>
+                <p className="text-sm text-muted-foreground">
+                  Pre-populated defaults and guided onboarding mean you can start tracking immediately
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h3 className="font-bold text-lg mb-2">For Daily Tracking</h3>
+                <p className="text-sm text-muted-foreground">
+                  Fast logging workflows and favorites make daily entries effortless
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:col-span-2 lg:col-span-1 xl:col-span-2">
+                <h3 className="font-bold text-lg mb-2">For Pattern Analysis</h3>
+                <p className="text-sm text-muted-foreground">
+                  Comprehensive analytics reveal insights you can discuss with your doctor
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-16 relative overflow-hidden" style={{ backgroundColor: '#FFFFFF' }}>
-
-        <div className="w-full">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-center">
-            Ready to Take Control?
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 text-center">
-            Join our beta and start tracking your health journey today. No credit card required.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/onboarding"
-              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-primary to-pink-500 text-white text-base font-bold rounded-xl hover:shadow-xl transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2 group"
-            >
-              Start Tracking Now
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/about"
-              className="w-full sm:w-auto px-8 py-4 border border-border bg-card/80 backdrop-blur-sm text-foreground text-base font-bold rounded-xl hover:bg-muted transition-all duration-300 hover:shadow-md"
-            >
-              Learn More
-            </Link>
+      <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-muted/50 to-background border-t border-border">
+        <div className="container px-4 md:px-6 text-center">
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+              Ready to Take Control?
+            </h2>
+            <p className="text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+              Join our beta and start tracking your health journey today. No credit card required.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+              <Link
+                href="/onboarding"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-pink-500 px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+              >
+                Start Tracking Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+              <Link
+                href="/about"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-input bg-background px-8 py-4 text-base font-bold shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                Learn More
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t" style={{ borderColor: '#D1D5DB', backgroundColor: '#374151' }}>
-        <div className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-8">
-          <div className="grid md:grid-cols-4 gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-pink-500 flex items-center justify-center shadow-sm">
-                  <Heart className="w-5 h-5 text-white" fill="white" />
+      <footer className="w-full border-t border-border bg-muted/30 py-12">
+        <div className="container px-4 md:px-6">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-pink-500">
+                  <Heart className="h-4 w-4 text-white" fill="white" />
                 </div>
-                <span className="font-bold" style={{ color: '#FFFFFF' }}>Pocket Symptom Tracker</span>
+                <span className="font-bold">Pocket Symptom Tracker</span>
               </div>
-              <p className="text-sm leading-relaxed" style={{ color: '#D1D5DB' }}>
+              <p className="text-sm text-muted-foreground">
                 Privacy-first health tracking for autoimmune conditions
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2 text-sm" style={{ color: '#FFFFFF' }}>Product</h4>
-              <ul className="space-y-1.5 text-sm" style={{ color: '#D1D5DB' }}>
-                <li>
-                  <Link href="#features" className="transition-colors hover:opacity-80" style={{ color: '#D1D5DB' }}>Features</Link>
-                </li>
-                <li>
-                  <Link href="/help/keyboard-shortcuts" className="transition-colors hover:opacity-80" style={{ color: '#D1D5DB' }}>Accessibility</Link>
-                </li>
-                <li>
-                  <Link href="/onboarding" className="transition-colors hover:opacity-80" style={{ color: '#D1D5DB' }}>Get Started</Link>
-                </li>
+              <h4 className="font-semibold mb-4">Product</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="#features" className="hover:text-foreground transition-colors">Features</Link></li>
+                <li><Link href="/help/keyboard-shortcuts" className="hover:text-foreground transition-colors">Accessibility</Link></li>
+                <li><Link href="/onboarding" className="hover:text-foreground transition-colors">Get Started</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2 text-sm" style={{ color: '#FFFFFF' }}>Company</h4>
-              <ul className="space-y-1.5 text-sm" style={{ color: '#D1D5DB' }}>
-                <li>
-                  <Link href="/about" className="transition-colors hover:opacity-80" style={{ color: '#D1D5DB' }}>About</Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className="transition-colors hover:opacity-80" style={{ color: '#D1D5DB' }}>Privacy</Link>
-                </li>
-                <li>
-                  <a
-                    href="https://github.com/steven-d-pennington/symptom-tracker"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="transition-colors hover:opacity-80"
-                    style={{ color: '#D1D5DB' }}
-                  >
-                    GitHub
-                  </a>
-                </li>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/about" className="hover:text-foreground transition-colors">About</Link></li>
+                <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link></li>
+                <li><a href="https://github.com/steven-d-pennington/symptom-tracker" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2 text-sm" style={{ color: '#FFFFFF' }}>Support</h4>
-              <ul className="space-y-1.5 text-sm" style={{ color: '#D1D5DB' }}>
-                <li>
-                  <Link href="/help" className="transition-colors hover:opacity-80" style={{ color: '#D1D5DB' }}>Help Center</Link>
-                </li>
-                <li>
-                  <a
-                    href="mailto:steve.d.pennington@gmail.com"
-                    className="transition-colors hover:opacity-80"
-                    style={{ color: '#D1D5DB' }}
-                  >
-                    Contact
-                  </a>
-                </li>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/help" className="hover:text-foreground transition-colors">Help Center</Link></li>
+                <li><a href="mailto:steve.d.pennington@gmail.com" className="hover:text-foreground transition-colors">Contact</a></li>
               </ul>
             </div>
           </div>
-          <div className="mt-6 pt-6 border-t text-center text-xs" style={{ borderColor: '#4B5563', color: '#D1D5DB' }}>
+          <div className="mt-12 border-t border-border pt-8 text-center text-xs text-muted-foreground">
             <p>© 2025 Pocket Symptom Tracker. Built with ❤️ for people managing chronic conditions.</p>
           </div>
         </div>
