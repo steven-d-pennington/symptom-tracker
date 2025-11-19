@@ -78,7 +78,10 @@ export async function extractSymptomTimeSeries(
 
   // Filter by date range and symptom name manually
   const filtered = instances.filter((instance) => {
-    const instanceTimestamp = instance.timestamp.getTime();
+    const instanceTimestamp = instance.timestamp instanceof Date
+      ? instance.timestamp.getTime()
+      : new Date(instance.timestamp).getTime();
+
     return (
       instanceTimestamp >= startDate &&
       instanceTimestamp <= endDate &&
@@ -90,7 +93,11 @@ export async function extractSymptomTimeSeries(
   const dailyData = new Map<string, { sum: number; count: number }>();
 
   for (const instance of filtered) {
-    const dateKey = getDateKey(instance.timestamp.getTime());
+    const timestamp = instance.timestamp instanceof Date
+      ? instance.timestamp.getTime()
+      : new Date(instance.timestamp).getTime();
+
+    const dateKey = getDateKey(timestamp);
     const current = dailyData.get(dateKey) || { sum: 0, count: 0 };
     dailyData.set(dateKey, {
       sum: current.sum + instance.severity,

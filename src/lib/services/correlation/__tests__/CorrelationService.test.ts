@@ -1,10 +1,10 @@
-import { 
-  computePairWithData, 
-  bestWindow, 
+import {
+  computePairWithData,
+  bestWindow,
   computeConsistency,
   WINDOW_SET,
   type WindowRange,
-  type FoodEventLike,
+  type CorrelationEventLike,
   type SymptomInstanceLike,
 } from '../CorrelationService';
 
@@ -50,7 +50,7 @@ describe('CorrelationService', () => {
     it('should return 0.70 when 7 out of 10 food events are followed by symptom within window', () => {
       const now = Date.now();
       // Space food events 10 hours apart to avoid symptom overlap
-      const foodEvents: FoodEventLike[] = Array.from({ length: 10 }, (_, i) => ({
+      const foodEvents: CorrelationEventLike[] = Array.from({ length: 10 }, (_, i) => ({
         timestamp: now - (100 - i * 10) * 60 * 60 * 1000 // 100h ago, 90h ago, 80h ago, etc.
       }));
 
@@ -75,7 +75,7 @@ describe('CorrelationService', () => {
 
     it('should return 0 when no food events are followed by symptom (0% consistency)', () => {
       const now = Date.now();
-      const foodEvents: FoodEventLike[] = [
+      const foodEvents: CorrelationEventLike[] = [
         { timestamp: now - 10 * 60 * 60 * 1000 },
         { timestamp: now - 20 * 60 * 60 * 1000 },
         { timestamp: now - 30 * 60 * 60 * 1000 },
@@ -95,7 +95,7 @@ describe('CorrelationService', () => {
 
     it('should return 1.0 when all food events are followed by symptom (100% consistency)', () => {
       const now = Date.now();
-      const foodEvents: FoodEventLike[] = [
+      const foodEvents: CorrelationEventLike[] = [
         { timestamp: now - 10 * 60 * 60 * 1000 },
         { timestamp: now - 20 * 60 * 60 * 1000 },
         { timestamp: now - 30 * 60 * 60 * 1000 },
@@ -115,7 +115,7 @@ describe('CorrelationService', () => {
     it('should return 0.625 for partial occurrences (5 out of 8)', () => {
       const now = Date.now();
       // Space food events 10 hours apart to avoid symptom overlap
-      const foodEvents: FoodEventLike[] = Array.from({ length: 8 }, (_, i) => ({
+      const foodEvents: CorrelationEventLike[] = Array.from({ length: 8 }, (_, i) => ({
         timestamp: now - (80 - i * 10) * 60 * 60 * 1000 // 80h ago, 70h ago, 60h ago, etc.
       }));
 
@@ -146,7 +146,7 @@ describe('CorrelationService', () => {
     });
 
     it('should return 0 when symptom events array is empty', () => {
-      const foodEvents: FoodEventLike[] = [
+      const foodEvents: CorrelationEventLike[] = [
         { timestamp: Date.now() },
         { timestamp: Date.now() - 60 * 60 * 1000 },
       ];
@@ -163,7 +163,7 @@ describe('CorrelationService', () => {
         endMs: 60 * 60 * 1000 // 1 hour
       };
 
-      const foodEvents: FoodEventLike[] = [
+      const foodEvents: CorrelationEventLike[] = [
         { timestamp: now - 5 * 60 * 60 * 1000 },
         { timestamp: now - 10 * 60 * 60 * 1000 },
         { timestamp: now - 15 * 60 * 60 * 1000 },
@@ -188,7 +188,7 @@ describe('CorrelationService', () => {
         endMs: 24 * 60 * 60 * 1000 // 24 hours
       };
 
-      const foodEvents: FoodEventLike[] = [
+      const foodEvents: CorrelationEventLike[] = [
         { timestamp: now - 50 * 60 * 60 * 1000 },
         { timestamp: now - 60 * 60 * 60 * 1000 },
         { timestamp: now - 70 * 60 * 60 * 1000 },
@@ -209,7 +209,7 @@ describe('CorrelationService', () => {
 
     it('should handle delayed symptoms at window boundary (3.9h vs 4.1h with 4h window)', () => {
       const now = Date.now();
-      const foodEvents: FoodEventLike[] = [
+      const foodEvents: CorrelationEventLike[] = [
         { timestamp: now - 10 * 60 * 60 * 1000 },
         { timestamp: now - 20 * 60 * 60 * 1000 },
       ];
@@ -226,7 +226,7 @@ describe('CorrelationService', () => {
 
     it('should handle multiple symptoms within window for single food event (count as 1 match)', () => {
       const now = Date.now();
-      const foodEvents: FoodEventLike[] = [
+      const foodEvents: CorrelationEventLike[] = [
         { timestamp: now - 10 * 60 * 60 * 1000 },
       ];
 

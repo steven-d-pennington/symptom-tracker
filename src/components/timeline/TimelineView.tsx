@@ -517,8 +517,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
                   switch (event.type) {
                     case 'medication': icon = '💊'; colorClass = 'bg-emerald-500'; break;
-                    case 'symptom': icon = '⚡'; colorClass = 'bg-blue-500'; break;
-                    case 'trigger': icon = '⚠️'; colorClass = 'bg-yellow-500'; break;
+                    case 'symptom': icon = '🤒'; colorClass = 'bg-blue-500'; break;
+                    case 'trigger': icon = '⚡'; colorClass = 'bg-yellow-500'; break;
                     case 'food': icon = '🍽️'; colorClass = 'bg-purple-500'; break;
                     case 'flare-created': icon = '🔥'; colorClass = 'bg-orange-500'; break;
                   }

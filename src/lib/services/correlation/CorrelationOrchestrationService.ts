@@ -15,7 +15,7 @@ import {
   WINDOW_SET,
   type WindowScore,
   type TimeRange,
-  type FoodEventLike,
+  type CorrelationEventLike,
   type SymptomInstanceLike,
   type WindowRange,
 } from "./CorrelationService";
@@ -66,11 +66,10 @@ export interface EnhancedCorrelationResult {
   };
 }
 
+import { triggerCorrelationService, type TriggerCorrelationResult } from "./TriggerCorrelationService";
+import { dailyLogCorrelationService, type DailyLogCorrelationResult, type DailyLogMetric, type CorrelationDirection } from "./DailyLogCorrelationService";
+
 export class CorrelationOrchestrationService {
-  /**
-   * Compute correlation for a single food-symptom pair
-   * Hydrates data from repositories and delegates to pure CorrelationService
-   */
   async computeCorrelation(request: CorrelationRequest): Promise<CorrelationResult> {
     const { userId, foodId, symptomId, range } = request;
 
@@ -102,7 +101,7 @@ export class CorrelationOrchestrationService {
     );
 
     // Convert to lightweight interfaces for pure computation
-    const foodEvents: FoodEventLike[] = relevantFoodEvents.map((e: FoodEventRecord) => ({
+    const foodEvents: CorrelationEventLike[] = relevantFoodEvents.map((e: FoodEventRecord) => ({
       timestamp: e.timestamp,
     }));
 
@@ -132,6 +131,41 @@ export class CorrelationOrchestrationService {
       sampleSize: foodEvents.length,
       doseResponse,
     };
+  }
+
+  /**
+   * Compute correlation for a single trigger-symptom pair
+   */
+  async computeTriggerCorrelation(
+    userId: string,
+    triggerId: string,
+    symptomId: string,
+    range: TimeRange
+  ): Promise<TriggerCorrelationResult> {
+    return triggerCorrelationService.computeCorrelation(userId, triggerId, symptomId, range);
+  }
+
+  /**
+   * Compute correlation for a daily log metric (Mood/Sleep) and symptom
+   */
+  async computeDailyLogCorrelation(
+    userId: string,
+    metric: DailyLogMetric,
+    symptomId: string,
+    direction: CorrelationDirection,
+    range: TimeRange,
+    threshold: number,
+    operator: "<" | ">" | "<=" | ">="
+  ): Promise<DailyLogCorrelationResult> {
+    return dailyLogCorrelationService.computeCorrelation(
+      userId,
+      metric,
+      symptomId,
+      direction,
+      range,
+      threshold,
+      operator
+    );
   }
 
   /**
@@ -168,7 +202,7 @@ export class CorrelationOrchestrationService {
           const symptomTime = symptom.timestamp instanceof Date
             ? symptom.timestamp.getTime()
             : new Date(symptom.timestamp).getTime();
-          
+
           return (
             symptomTime >= eventTime &&
             symptomTime <= eventTime + SYMPTOM_WINDOW_MS
@@ -280,7 +314,7 @@ export class CorrelationOrchestrationService {
         });
 
         // Convert to lightweight interfaces
-        const foodEvents: FoodEventLike[] = foodEventsForThisFood.map((e) => ({
+        const foodEvents: CorrelationEventLike[] = foodEventsForThisFood.map((e) => ({
           timestamp: e.timestamp,
         }));
 
@@ -318,13 +352,13 @@ export class CorrelationOrchestrationService {
     // Use only significant correlations
     const individualCorrelationArray: IndividualCorrelation[] = [];
     const foodNameMap: Record<string, string> = {}; // Store food names for combination detection
-    
+
     for (const result of significantCorrelations) {
       if (result.bestWindow && result.bestWindow.score > 0) {
         // Get food name from food events
         const foodName = await this.getFoodName(result.foodId);
         foodNameMap[result.foodId] = foodName;
-        
+
         individualCorrelationArray.push({
           foodId: result.foodId,
           foodName,
@@ -339,7 +373,7 @@ export class CorrelationOrchestrationService {
     const mealEvents: MealEvent[] = allFoodEvents.map((event) => {
       const foodIds = JSON.parse(event.foodIds) as string[];
       const foodNames = foodIds.map((id) => foodNameMap[id] || id); // Use mapped names or fallback to ID
-      
+
       return {
         mealId: event.mealId || `meal-${event.id}`, // Use mealId if available, fallback to event ID
         foodIds,

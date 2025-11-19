@@ -54,7 +54,8 @@ export function SimpleDailyLogForm({ userId, onSave }: SimpleDailyLogFormProps) 
 
                 if (existing) {
                     setMood(existing.mood);
-                    setSleepHours(existing.sleepHours);
+                    // Round to nearest 0.5
+                    setSleepHours(Math.round(existing.sleepHours * 2) / 2);
                     setSleepQuality(existing.sleepQuality);
                     setStressLevel(existing.stressLevel);
                     setNotes(existing.notes || "");
@@ -202,7 +203,7 @@ export function SimpleDailyLogForm({ userId, onSave }: SimpleDailyLogFormProps) 
                             >
                                 -
                             </Button>
-                            <span className="text-2xl font-bold w-16 text-center">{sleepHours}</span>
+                            <span className="text-2xl font-bold w-16 text-center">{Number(sleepHours).toFixed(1).replace(/\.0$/, '')}</span>
                             <Button
                                 variant="outline"
                                 size="icon"
