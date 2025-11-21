@@ -35,7 +35,7 @@ interface DailyEntryFormProps {
   onSyncQueue: () => Promise<void> | void;
   recentSymptomIds: string[];
   medicationSchedule: MedicationOption[];
-  history: DailyEntry[];
+  entryHistory: DailyEntry[];
 }
 
 const formatLastSaved = (date: Date | null) => {
@@ -62,6 +62,7 @@ export const DailyEntryForm = ({
   onSyncQueue,
   recentSymptomIds,
   medicationSchedule,
+  entryHistory,
 }: DailyEntryFormProps) => {
   const { userId } = useCurrentUser();
   const [mode, setMode] = useState<"full" | "quick">("full");
@@ -125,7 +126,7 @@ export const DailyEntryForm = ({
             type="button"
             onClick={async () => {
               // Find the most recent entry from history
-              const lastEntry = history.length > 0 ? history[0] : null;
+              const lastEntry = entryHistory.length > 0 ? entryHistory[0] : null;
 
               if (lastEntry) {
                 // Copy symptoms, medications, and triggers

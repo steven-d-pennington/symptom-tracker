@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 interface ImmersiveBodyMapWrapperProps {
     children: React.ReactNode;

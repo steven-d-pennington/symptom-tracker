@@ -124,14 +124,12 @@ export interface DisplayOptions {
   showSymptoms: boolean;
   showMedications: boolean;
   showTriggers: boolean;
-  colorScheme: "severity" | "category" | "frequency";
 }
 
 export interface CalendarMetrics {
   healthTrend: { date: string; score: number }[];
   symptomFrequency: { name: string; count: number }[];
   medicationAdherence: { name: string; taken: number; missed: number }[];
-  correlationInsights: { symptom: string; trigger: string; correlation: number; occurrences: number }[];
 }
 
 export interface FilterPreset {

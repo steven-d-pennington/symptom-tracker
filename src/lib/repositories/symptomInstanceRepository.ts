@@ -109,7 +109,7 @@ export class SymptomInstanceRepository {
       .where("[userId+timestamp]")
       .between([userId, new Date(startMs)], [userId, new Date(endMs)], true, true)
       .toArray();
-    
+
     return records.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }
 
@@ -137,6 +137,12 @@ export class SymptomInstanceRepository {
     };
 
     await db.symptomInstances.add(record);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("symptom-instance-updated"));
+    }
+
     return id;
   }
 
@@ -159,6 +165,11 @@ export class SymptomInstanceRepository {
     };
 
     await db.symptomInstances.update(id, updateRecord);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("symptom-instance-updated"));
+    }
   }
 
   /**
@@ -166,6 +177,11 @@ export class SymptomInstanceRepository {
    */
   async delete(id: string): Promise<void> {
     await db.symptomInstances.delete(id);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("symptom-instance-updated"));
+    }
   }
 
   /**

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Activity, AlertTriangle, Flame } from "lucide-react";
 import {
   CalendarDayDetail,
   CalendarEntry,
@@ -147,22 +148,45 @@ const createWeekCells = (
 
 const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const getSeverityClass = (score?: number) => {
-  if (typeof score !== "number") {
-    return "border-border";
-  }
+const getBackgroundGlow = (entry?: CalendarDayDetail) => {
+  if (!entry) return "bg-card";
 
-  if (score >= 7) {
-    return "border-emerald-300 bg-emerald-100/70 text-emerald-900";
-  }
+  const hasSymptoms = (entry.symptomsDetails?.length ?? 0) > 0;
+  const hasTriggers = (entry.triggerDetails?.length ?? 0) > 0;
+  const hasFlares = (entry.flareDetails?.length ?? 0) > 0;
 
-  if (score >= 4) {
-    return "border-amber-300 bg-amber-100/70 text-amber-900";
-  }
+  // Combine multiple glows for blended effect
+  const glows = [];
+  if (hasSymptoms) glows.push("bg-blue-50/60");
+  if (hasTriggers) glows.push("bg-yellow-50/60");
+  if (hasFlares) glows.push("bg-red-50/60");
 
-  return "border-rose-300 bg-rose-100/70 text-rose-900";
+  if (glows.length === 0) return "bg-card";
+  if (glows.length === 1) return glows[0];
+
+  // For multiple types, use a gradient-like effect by layering
+  // This creates a subtle blended glow
+  return glows.join(" ");
 };
 
+const getSeverityClass = (score?: number) => {
+  if (score === undefined || score === null) {
+    return "border-border hover:bg-muted/50";
+  }
+  if (score >= 8) {
+    return "border-emerald-300 hover:bg-emerald-100/50";
+  }
+  if (score >= 6) {
+    return "border-sky-300 hover:bg-sky-100/50";
+  }
+  if (score >= 4) {
+    return "border-amber-300 hover:bg-amber-100/50";
+  }
+  if (score >= 2) {
+    return "border-orange-300 hover:bg-orange-100/50";
+  }
+  return "border-rose-300 hover:bg-rose-100/50";
+};
 const formatDateLabel = (iso: string) => {
   const date = new Date(iso);
   return date.getDate();
@@ -218,16 +242,19 @@ export const CalendarGrid = ({
                   const isSelected = cell.date === selectedDate;
                   const isToday = cell.date === new Date().toISOString().slice(0, 10);
 
+                  const hasSymptoms = (cell.entry?.symptomsDetails?.length ?? 0) > 0;
+                  const hasTriggers = (cell.entry?.triggerDetails?.length ?? 0) > 0;
+                  const hasFlares = (cell.entry?.flareDetails?.length ?? 0) > 0;
+
                   return (
                     <button
                       key={cell.date}
                       type="button"
                       onClick={() => onSelectDate?.(cell.date)}
-                      className={`flex h-10 flex-col justify-between rounded-lg border px-2 py-1 text-left transition-colors ${
-                        getSeverityClass(entry?.overallHealth)
-                      } ${
-                        !cell.isCurrentMonth ? "opacity-30" : ""
-                      } ${isSelected ? "ring-2 ring-primary" : ""}`}
+                      className={`flex h-10 flex-col justify-between rounded-lg border px-2 py-1 text-left transition-colors ${getBackgroundGlow(cell.entry)
+                        } ${getSeverityClass(entry?.overallHealth)
+                        } ${!cell.isCurrentMonth ? "opacity-30" : ""
+                        } ${isSelected ? "ring-2 ring-primary" : ""}`}
                       aria-pressed={isSelected}
                       aria-label={`View details for ${cell.date}`}
                       data-filter-match={matchesFilters}
@@ -240,15 +267,17 @@ export const CalendarGrid = ({
                           </span>
                         ) : null}
                       </div>
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ${
-                          matchesFilters ? "bg-emerald-500/20 text-emerald-700" : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {typeof entry?.overallHealth === "number"
-                          ? `${entry.overallHealth.toFixed(1)}`
-                          : "–"}
-                      </span>
+                      <div className="flex items-center gap-0.5">
+                        {hasSymptoms ? (
+                          <Activity className="h-3 w-3 text-blue-600" aria-label="Has symptoms" />
+                        ) : null}
+                        {hasTriggers ? (
+                          <AlertTriangle className="h-3 w-3 text-yellow-600" aria-label="Has triggers" />
+                        ) : null}
+                        {hasFlares ? (
+                          <Flame className="h-3 w-3 text-red-600" aria-label="Has flares" />
+                        ) : null}
+                      </div>
                     </button>
                   );
                 })}
@@ -332,16 +361,19 @@ export const CalendarGrid = ({
             const isSelected = cell.date === selectedDate;
             const isToday = cell.date === new Date().toISOString().slice(0, 10);
 
+            const hasSymptoms = (cell.entry?.symptomsDetails?.length ?? 0) > 0;
+            const hasTriggers = (cell.entry?.triggerDetails?.length ?? 0) > 0;
+            const hasFlares = (cell.entry?.flareDetails?.length ?? 0) > 0;
+
             return (
               <button
                 key={cell.date}
                 type="button"
                 onClick={() => onSelectDate?.(cell.date)}
-                className={`flex h-24 flex-col justify-between rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
-                  getSeverityClass(entry?.overallHealth)
-                } ${
-                  !cell.isCurrentMonth ? "opacity-50" : ""
-                } ${isSelected ? "ring-2 ring-primary" : ""}`}
+                className={`flex h-24 flex-col justify-between rounded-xl border px-3 py-2 text-left text-sm transition-colors ${getBackgroundGlow(cell.entry)
+                  } ${getSeverityClass(entry?.overallHealth)
+                  } ${!cell.isCurrentMonth ? "opacity-50" : ""
+                  } ${isSelected ? "ring-2 ring-primary" : ""}`}
                 aria-pressed={isSelected}
                 aria-label={`View details for ${cell.date}`}
                 data-filter-match={matchesFilters}
@@ -350,59 +382,22 @@ export const CalendarGrid = ({
                   <span>{formatDateLabel(cell.date)}</span>
                   {isToday ? <span className="rounded bg-primary px-1 py-0.5 text-[10px] text-primary-foreground">Today</span> : null}
                 </div>
-                <div className="space-y-1 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {/* Story 3.5.7: symptom badges (red) */}
-                    {(entry?.symptomCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 text-red-700 px-1.5 py-0.5 text-[10px]">
-                        {entry?.symptomCount}
-                      </span>
-                    )}
-                    {/* Story 3.5.7: food badges (green) */}
-                    {(entry?.foodCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 text-green-700 px-1.5 py-0.5 text-[10px]">
-                        🍽️
-                      </span>
-                    )}
-                    {/* Story 3.5.7: trigger badges (orange) */}
-                    {(entry?.triggerCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/20 text-orange-700 px-1.5 py-0.5 text-[10px]">
-                        {entry?.triggerCount}
-                      </span>
-                    )}
-                    {/* Story 3.5.7: medication badges (blue) */}
-                    {(entry?.medicationCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 text-blue-700 px-1.5 py-0.5 text-[10px]">
-                        💊
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {/* Story 3.5.7: mood badges (purple) */}
-                    {(entry?.moodCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 text-purple-700 px-1.5 py-0.5 text-[10px]">
-                        😊
-                      </span>
-                    )}
-                    {/* Story 3.5.7: sleep badges (indigo) */}
-                    {(entry?.sleepCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/20 text-indigo-700 px-1.5 py-0.5 text-[10px]">
-                        😴
-                      </span>
-                    )}
-                    {/* Story 3.5.7: flare badges (pink) */}
-                    {(entry?.flareCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-pink-500/20 text-pink-700 px-1.5 py-0.5 text-[10px]">
-                        🔥
-                      </span>
-                    )}
-                  </div>
+                <div className="flex items-center gap-1">
+                  {hasSymptoms ? (
+                    <Activity className="h-4 w-4 text-blue-600" aria-label="Has symptoms" />
+                  ) : null}
+                  {hasTriggers ? (
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" aria-label="Has triggers" />
+                  ) : null}
+                  {hasFlares ? (
+                    <Flame className="h-4 w-4 text-red-600" aria-label="Has flares" />
+                  ) : null}
                 </div>
               </button>
             );
           })
         )}
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };

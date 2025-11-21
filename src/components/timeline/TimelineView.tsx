@@ -389,8 +389,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const filteredPatterns = useMemo(() => {
     return detectedPatterns.filter(p => {
       if (!visiblePatternTypes.has(p.type)) return false;
-      if (patternStrengthFilter === 'strong' && p.confidence !== 'strong') return false;
-      if (patternStrengthFilter === 'moderate+strong' && p.confidence === 'weak') return false;
+      if (patternStrengthFilter === 'strong' && p.strength !== 'strong') return false;
+      if (patternStrengthFilter === 'moderate+strong' && p.strength === 'weak') return false;
       return true;
     });
   }, [detectedPatterns, visiblePatternTypes, patternStrengthFilter]);

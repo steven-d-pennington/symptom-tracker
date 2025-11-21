@@ -8,7 +8,7 @@
 
 import type { TimelineEvent } from '@/components/timeline/TimelineView';
 import type { CorrelationRecord } from '../db/schema';
-import type { CorrelationType, CorrelationConfidence } from '@/types/correlation';
+import type { CorrelationType, CorrelationConfidence, CorrelationStrength } from '@/types/correlation';
 
 /**
  * Detected pattern interface
@@ -19,6 +19,7 @@ export interface DetectedPattern {
   description: string;
   frequency: number; // Number of times this pattern occurred
   confidence: CorrelationConfidence;
+  strength: CorrelationStrength;
   occurrences: PatternOccurrence[];
   correlationId: string;
   coefficient: number;
@@ -80,6 +81,7 @@ export function detectRecurringSequences(
         description: generatePatternDescription(correlation),
         frequency: occurrences.length,
         confidence: correlation.confidence,
+        strength: correlation.strength,
         occurrences,
         correlationId: correlation.id,
         coefficient: correlation.coefficient,
