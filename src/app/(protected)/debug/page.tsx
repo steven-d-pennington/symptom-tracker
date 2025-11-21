@@ -6,7 +6,7 @@ import { db } from "@/lib/db/client";
 import { foodRepository } from "@/lib/repositories/foodRepository";
 import { foodEventRepository } from "@/lib/repositories/foodEventRepository";
 
-export default function DebugFoodPage() {
+export default function DebugPage() {
   const { userId } = useCurrentUser();
   const [info, setInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +35,13 @@ export default function DebugFoodPage() {
         const repoFoods = await foodRepository.getAll(userId);
         const categoryMap = await foodRepository.getAllByCategory(userId);
 
+        // Check treatments
+        const allTreatments = await db.treatments.where({ userId }).toArray();
+        const activeTreatments = allTreatments.filter(t => t.isActive);
+
+        // Check treatment events
+        const allTreatmentEvents = await db.treatmentEvents.where({ userId }).toArray();
+
         setInfo({
           userId,
           foods: {
@@ -54,6 +61,21 @@ export default function DebugFoodPage() {
             })),
             sample: allFoodEvents[0] || null,
           },
+          treatments: {
+            total: allTreatments.length,
+            active: activeTreatments.length,
+            categories: [...new Set(allTreatments.map(t => t.category).filter(Boolean))],
+            sample: activeTreatments[0] || null,
+          },
+          treatmentEvents: {
+            total: allTreatmentEvents.length,
+            timestamps: allTreatmentEvents.map(e => ({
+              time: new Date(e.timestamp).toLocaleString(),
+              duration: e.duration,
+              effectiveness: e.effectiveness,
+            })),
+            sample: allTreatmentEvents[0] || null,
+          },
         });
       } catch (error) {
         console.error("Debug error:", error);
@@ -70,28 +92,38 @@ export default function DebugFoodPage() {
   if (!userId) return <div className="p-8">No user ID found</div>;
 
   return (
-    <div className="p-8 space-y-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <h1 className="text-2xl font-bold">Food Debug Info</h1>
+    <div className="p-8 space-y-4 bg-background min-h-screen">
+      <h1 className="text-2xl font-bold text-foreground">Debug Info</h1>
 
-      <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
-        <h2 className="text-lg font-semibold mb-2">User ID</h2>
-        <pre className="text-xs overflow-auto">{userId}</pre>
+      <div className="bg-card p-4 rounded shadow border border-border">
+        <h2 className="text-lg font-semibold mb-2 text-foreground">User ID</h2>
+        <pre className="text-xs overflow-auto text-foreground">{userId}</pre>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
-        <h2 className="text-lg font-semibold mb-2">Food Records</h2>
-        <pre className="text-xs overflow-auto">{JSON.stringify(info?.foods, null, 2)}</pre>
+      <div className="bg-card p-4 rounded shadow border border-border">
+        <h2 className="text-lg font-semibold mb-2 text-foreground">Food Records</h2>
+        <pre className="text-xs overflow-auto text-foreground">{JSON.stringify(info?.foods, null, 2)}</pre>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
-        <h2 className="text-lg font-semibold mb-2">Food Events</h2>
-        <pre className="text-xs overflow-auto">{JSON.stringify(info?.events, null, 2)}</pre>
+      <div className="bg-card p-4 rounded shadow border border-border">
+        <h2 className="text-lg font-semibold mb-2 text-foreground">Food Events</h2>
+        <pre className="text-xs overflow-auto text-foreground">{JSON.stringify(info?.events, null, 2)}</pre>
+      </div>
+
+      <div className="bg-card p-4 rounded shadow border border-border">
+        <h2 className="text-lg font-semibold mb-2 text-foreground">Treatments</h2>
+        <pre className="text-xs overflow-auto text-foreground">{JSON.stringify(info?.treatments, null, 2)}</pre>
+      </div>
+
+      <div className="bg-card p-4 rounded shadow border border-border">
+        <h2 className="text-lg font-semibold mb-2 text-foreground">Treatment Events</h2>
+        <pre className="text-xs overflow-auto text-foreground">{JSON.stringify(info?.treatmentEvents, null, 2)}</pre>
       </div>
 
       {info?.error && (
-        <div className="bg-red-100 dark:bg-red-900 p-4 rounded">
-          <h2 className="text-lg font-semibold mb-2 text-red-800 dark:text-red-200">Error</h2>
-          <pre className="text-xs overflow-auto">{info.error}</pre>
+        <div className="bg-destructive/10 border border-destructive p-4 rounded">
+          <h2 className="text-lg font-semibold mb-2 text-destructive">Error</h2>
+          <pre className="text-xs overflow-auto text-destructive">{info.error}</pre>
         </div>
       )}
     </div>

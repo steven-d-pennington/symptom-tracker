@@ -464,7 +464,7 @@ export class CorrelationEngine {
   async calculateTreatmentEffectiveness(
     userId: string,
     treatmentId: string,
-    treatmentType: 'medication' | 'intervention',
+    treatmentType: 'medication' | 'treatment',
     timeRange: TimeRange
   ): Promise<TreatmentEffectiveness | null> {
     return calculateTreatmentEffectivenessImpl(

@@ -28,6 +28,8 @@ import {
   SyncMetadataRecord, // Story 7.2
   TreatmentAlertRecord, // Story 6.7
   TreatmentEffectivenessRecord, // Story 6.7
+  TreatmentRecord, // NEW - Treatments category
+  TreatmentEventRecord, // NEW - Treatments category
   UxEventRecord,
   TriggerEventRecord, // New
   TriggerRecord,
@@ -42,6 +44,8 @@ export class SymptomTrackerDatabase extends Dexie {
   medicationEvents!: Table<MedicationEventRecord, string>; // New
   triggers!: Table<TriggerRecord, string>;
   triggerEvents!: Table<TriggerEventRecord, string>; // New
+  treatments!: Table<TreatmentRecord, string>; // NEW - Treatments category
+  treatmentEvents!: Table<TreatmentEventRecord, string>; // NEW - Treatments category
   uxEvents!: Table<UxEventRecord, string>;
   dailyEntries!: Table<DailyEntryRecord, string>;
   dailyLogs!: Table<DailyLogRecord, string>; // Story 6.2
@@ -850,6 +854,44 @@ export class SymptomTrackerDatabase extends Dexie {
         console.error('[Migration v30] Error during migration:', error);
         throw error;
       }
+    });
+
+    // Version 31: Add treatments and treatmentEvents tables (Treatments Category)
+    this.version(31).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      treatments: "id, userId, [userId+isActive], [userId+isDefault]", // NEW - Treatments category
+      treatmentEvents: "id, userId, treatmentId, timestamp, [userId+timestamp], [userId+treatmentId]", // NEW - Treatments category
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      dailyLogs: "id, [userId+date], userId, date, createdAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, [markerId], [markerType], dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], [userId+layer+createdAt], createdAt",
+      bodyMapPreferences: "userId",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      bodyMarkers: "id, [userId+type+status], [userId+status], [userId+bodyRegionId], [userId+startDate], userId, type, status",
+      bodyMarkerEvents: "id, [markerId+timestamp], [userId+timestamp], [userId+eventType], markerId, userId, eventType",
+      bodyMarkerLocations: "id, [markerId], [userId+markerId], [userId+bodyRegionId], markerId, userId, bodyRegionId",
+      flares: null,
+      flareEvents: null,
+      flareBodyLocations: null,
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+      moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      correlations: "id, [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt], userId, type, item1, item2, calculatedAt",
+      patternDetections: "id, [userId+type], [userId+correlationId], [userId+detectedAt], userId, type, correlationId, detectedAt",
+      treatmentEffectiveness: "id, userId, [userId+treatmentId], [userId+effectivenessScore], [userId+lastCalculated], treatmentId, effectivenessScore, lastCalculated",
+      treatmentAlerts: "id, userId, [userId+treatmentId], [userId+alertType], [userId+dismissed], treatmentId, alertType, dismissed, createdAt",
+      syncMetadata: "id",
     });
   }
 }
