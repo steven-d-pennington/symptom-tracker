@@ -225,7 +225,7 @@ export class TreatmentEffectivenessRepository {
    */
   async getStatistics(userId: string): Promise<{
     total: number;
-    byType: { medication: number; intervention: number };
+    byType: { medication: number; intervention: number; treatment: number };
     byTrend: { improving: number; stable: number; declining: number };
     byConfidence: { high: number; medium: number; low: number };
     averageEffectiveness: number;
@@ -235,6 +235,7 @@ export class TreatmentEffectivenessRepository {
     const byType = {
       medication: 0,
       intervention: 0,
+      treatment: 0,
     };
 
     const byTrend = {

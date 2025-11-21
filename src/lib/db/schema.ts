@@ -894,8 +894,8 @@ export interface TreatmentEffectivenessRecord {
   userId: string; // User ID
 
   // Treatment identification
-  treatmentId: string; // Reference to medication or trigger (intervention) ID
-  treatmentType: 'medication' | 'intervention'; // Type of treatment
+  treatmentId: string; // Reference to medication, intervention, or treatment ID
+  treatmentType: 'medication' | 'intervention' | 'treatment'; // Type of treatment
   treatmentName: string; // Human-readable treatment name
 
   // Effectiveness metrics

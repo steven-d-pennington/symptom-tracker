@@ -16,6 +16,7 @@ import type { TreatmentAlert } from '../../types/treatmentEffectiveness';
 import { treatmentEffectivenessRepository } from '../repositories/treatmentEffectivenessRepository';
 import { medicationEventRepository } from '../repositories/medicationEventRepository';
 import { triggerEventRepository } from '../repositories/triggerEventRepository';
+import { treatmentEventRepository } from '../repositories/treatmentEventRepository';
 import { db } from '../db/client';
 
 /**
@@ -84,7 +85,7 @@ export async function checkLowEffectiveness(
 export async function checkUnusedEffectiveTreatment(
   userId: string,
   treatmentId: string,
-  treatmentType: 'medication' | 'intervention',
+  treatmentType: 'medication' | 'intervention' | 'treatment',
   effectivenessScore: number
 ): Promise<TreatmentAlert | null> {
   const HIGH_THRESHOLD = 70;
@@ -112,13 +113,23 @@ export async function checkUnusedEffectiveTreatment(
     if (treatmentEvents.length > 0) {
       lastUsed = Math.max(...treatmentEvents.map((e) => e.timestamp));
     }
-  } else {
+  } else if (treatmentType === 'intervention') {
     const events = await triggerEventRepository.findByDateRange(
       userId,
       cutoffDate,
       now
     );
     const treatmentEvents = events.filter((e) => e.triggerId === treatmentId);
+    if (treatmentEvents.length > 0) {
+      lastUsed = Math.max(...treatmentEvents.map((e) => e.timestamp));
+    }
+  } else {
+    const events = await treatmentEventRepository.findByDateRange(
+      userId,
+      cutoffDate,
+      now
+    );
+    const treatmentEvents = events.filter((e) => e.treatmentId === treatmentId);
     if (treatmentEvents.length > 0) {
       lastUsed = Math.max(...treatmentEvents.map((e) => e.timestamp));
     }
