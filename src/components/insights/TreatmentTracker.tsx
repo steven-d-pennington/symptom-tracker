@@ -54,21 +54,21 @@ function getEffectivenessColor(score: number): {
 } {
   if (score >= 67) {
     return {
-      bg: 'bg-green-100',
-      text: 'text-green-800',
-      border: 'border-green-300',
+      bg: 'bg-green-500/10 dark:bg-green-500/20',
+      text: 'text-green-700 dark:text-green-400',
+      border: 'border-green-500/50',
     };
   } else if (score >= 34) {
     return {
-      bg: 'bg-yellow-100',
-      text: 'text-yellow-800',
-      border: 'border-yellow-300',
+      bg: 'bg-yellow-500/10 dark:bg-yellow-500/20',
+      text: 'text-yellow-700 dark:text-yellow-400',
+      border: 'border-yellow-500/50',
     };
   } else {
     return {
-      bg: 'bg-red-100',
-      text: 'text-red-800',
-      border: 'border-red-300',
+      bg: 'bg-red-500/10 dark:bg-red-500/20',
+      text: 'text-red-700 dark:text-red-400',
+      border: 'border-red-500/50',
     };
   }
 }
@@ -79,11 +79,11 @@ function getEffectivenessColor(score: number): {
 function getTrendIcon(trend: 'improving' | 'stable' | 'declining') {
   switch (trend) {
     case 'improving':
-      return <TrendingUp className="w-4 h-4 text-green-600" />;
+      return <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />;
     case 'declining':
-      return <TrendingDown className="w-4 h-4 text-red-600" />;
+      return <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />;
     case 'stable':
-      return <Minus className="w-4 h-4 text-gray-600" />;
+      return <Minus className="w-4 h-4 text-muted-foreground" />;
   }
 }
 
@@ -96,11 +96,11 @@ function getConfidenceColor(confidence: 'high' | 'medium' | 'low'): {
 } {
   switch (confidence) {
     case 'high':
-      return { bg: 'bg-blue-100', text: 'text-blue-800' };
+      return { bg: 'bg-blue-500/10 dark:bg-blue-500/20', text: 'text-blue-700 dark:text-blue-400' };
     case 'medium':
-      return { bg: 'bg-gray-100', text: 'text-gray-800' };
+      return { bg: 'bg-muted/50', text: 'text-muted-foreground' };
     case 'low':
-      return { bg: 'bg-orange-100', text: 'text-orange-800' };
+      return { bg: 'bg-orange-500/10 dark:bg-orange-500/20', text: 'text-orange-700 dark:text-orange-400' };
   }
 }
 
@@ -191,22 +191,22 @@ export function TreatmentTracker({
 
       {/* Loading state */}
       {isLoading && (
-        <div className="text-center py-8 text-gray-500">Loading treatments...</div>
+        <div className="text-center py-8 text-muted-foreground">Loading treatments...</div>
       )}
 
       {/* Error state */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+        <div className="bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive">
           {error}
         </div>
       )}
 
       {/* Empty state */}
       {!isLoading && !error && treatments.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <Activity className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-700 font-medium mb-1">No treatments tracked yet</p>
-          <p className="text-sm text-gray-500">
+        <div className="bg-muted/50 border border-border rounded-lg p-8 text-center">
+          <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-foreground font-medium mb-1">No treatments tracked yet</p>
+          <p className="text-sm text-muted-foreground">
             Log medications and interventions to see effectiveness analysis
           </p>
         </div>
@@ -222,7 +222,7 @@ export function TreatmentTracker({
             return (
               <div
                 key={treatment.treatmentId}
-                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => handleTreatmentClick(treatment)}
                 role="button"
                 tabIndex={0}
@@ -240,26 +240,25 @@ export function TreatmentTracker({
                     {/* Treatment name and type */}
                     <div className="flex items-center gap-2 mb-2">
                       {treatment.treatmentType === 'medication' ? (
-                        <Pill className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                        <Pill className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                       ) : (
-                        <Activity className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                        <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
                       )}
-                      <h3 className="font-medium text-gray-900 truncate">
+                      <h3 className="font-medium text-foreground truncate">
                         {treatment.treatmentName}
                       </h3>
                       <span
-                        className={`text-xs px-2 py-0.5 rounded ${
-                          treatment.treatmentType === 'medication'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}
+                        className={`text-xs px-2 py-0.5 rounded ${treatment.treatmentType === 'medication'
+                            ? 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
+                            : 'bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400'
+                          }`}
                       >
                         {treatment.treatmentType}
                       </span>
                     </div>
 
                     {/* Stats row */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       {/* Sample size */}
                       <span>
                         {treatment.sampleSize} cycle{treatment.sampleSize !== 1 ? 's' : ''}

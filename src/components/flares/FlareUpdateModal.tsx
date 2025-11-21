@@ -6,6 +6,7 @@ import { FlareTrend } from '@/types/flare';
 import { bodyMarkerRepository } from '@/lib/repositories/bodyMarkerRepository';
 import { LifecycleStageSelector } from '@/components/LifecycleStageSelector';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { cn } from '@/lib/utils/cn';
 
 interface FlareUpdateModalProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
   const [timestamp, setTimestamp] = useState(Date.now());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Lifecycle stage state
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
   const [newLifecycleStage, setNewLifecycleStage] = useState<FlareLifecycleStage | null>(null);
@@ -56,7 +57,7 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
     try {
       // Detect what changed
       const severityChanged = severity !== flare.currentSeverity;
-      const lifecycleStageChanged = newLifecycleStage !== null && 
+      const lifecycleStageChanged = newLifecycleStage !== null &&
         newLifecycleStage !== flare.currentLifecycleStage;
 
       // Update lifecycle stage first if changed (this creates the lifecycle_stage_change event)
@@ -70,8 +71,8 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
           );
         } catch (lifecycleErr) {
           // Handle lifecycle stage validation errors
-          const errorMessage = lifecycleErr instanceof Error 
-            ? lifecycleErr.message 
+          const errorMessage = lifecycleErr instanceof Error
+            ? lifecycleErr.message
             : 'Invalid lifecycle stage transition';
           setError(errorMessage);
           setIsLoading(false);
@@ -124,27 +125,27 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50"
       role="dialog"
       aria-modal="true"
       aria-labelledby="update-modal-title"
     >
-      <div className="bg-white rounded-lg p-6 max-w-md w-full">
-        <h2 id="update-modal-title" className="text-xl font-bold mb-4">
-          Update Flare Status
+      <div className="bg-card border border-border rounded-lg p-6 max-w-md w-full shadow-lg">
+        <h2 id="update-modal-title" className="text-xl font-bold mb-4 text-foreground capitalize">
+          Update {flare.type} Status
         </h2>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+          <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-2 rounded mb-4">
             {error}
           </div>
         )}
 
         {/* Severity Slider */}
         <div className="mb-4">
-          <label htmlFor="severity" className="block text-sm font-medium mb-2">
+          <label htmlFor="severity" className="block text-sm font-medium mb-2 text-foreground">
             Severity: {severity}/10
-            <span className="text-gray-500 text-xs ml-2">
+            <span className="text-muted-foreground text-xs ml-2">
               (Previous: {flare.currentSeverity})
             </span>
           </label>
@@ -154,76 +155,61 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
             min="1"
             max="10"
             value={severity}
-            onChange={(e) => setSeverity(parseInt(e.target.value))}
-            className="w-full"
+            onChange={(e) => {
+              const newSeverity = parseInt(e.target.value);
+              setSeverity(newSeverity);
+
+              // Auto-calculate trend
+              if (newSeverity < flare.currentSeverity) {
+                setTrend(FlareTrend.Improving);
+              } else if (newSeverity > flare.currentSeverity) {
+                setTrend(FlareTrend.Worsening);
+              } else {
+                setTrend(FlareTrend.Stable);
+              }
+            }}
+            className="w-full accent-primary"
             aria-label={`Severity slider, current value ${severity} out of 10`}
           />
         </div>
 
-        {/* Trend Radio Buttons */}
+        {/* Trend Indicator (Auto-calculated) */}
         <div className="mb-4">
-          <fieldset>
-            <legend className="block text-sm font-medium mb-2">Trend</legend>
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="trend"
-                  value={FlareTrend.Improving}
-                  checked={trend === FlareTrend.Improving}
-                  onChange={(e) => setTrend(e.target.value as FlareTrend)}
-                  className="mr-2"
-                />
-                 Improving
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="trend"
-                  value={FlareTrend.Stable}
-                  checked={trend === FlareTrend.Stable}
-                  onChange={(e) => setTrend(e.target.value as FlareTrend)}
-                  className="mr-2"
-                />
-                 Stable
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="trend"
-                  value={FlareTrend.Worsening}
-                  checked={trend === FlareTrend.Worsening}
-                  onChange={(e) => setTrend(e.target.value as FlareTrend)}
-                  className="mr-2"
-                />
-                 Worsening
-              </label>
-            </div>
-          </fieldset>
+          <span className="block text-sm font-medium mb-2 text-foreground">Trend</span>
+          <div className={cn(
+            "p-3 rounded-md border flex items-center justify-center font-medium transition-colors duration-300",
+            trend === FlareTrend.Improving && "bg-green-500/10 border-green-500/50 text-green-700 dark:text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.2)]",
+            trend === FlareTrend.Worsening && "bg-red-500/10 border-red-500/50 text-red-700 dark:text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.2)]",
+            trend === FlareTrend.Stable && "bg-muted/50 border-border text-muted-foreground"
+          )}>
+            {trend === FlareTrend.Improving && "Improving"}
+            {trend === FlareTrend.Worsening && "Worsening"}
+            {trend === FlareTrend.Stable && "Stable"}
+          </div>
         </div>
 
         {/* Notes Textarea */}
         <div className="mb-4">
-          <label htmlFor="notes" className="block text-sm font-medium mb-2">
+          <label htmlFor="notes" className="block text-sm font-medium mb-2 text-foreground">
             Notes (optional)
           </label>
           <textarea
             id="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value.slice(0, charLimit))}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-input bg-background text-foreground rounded px-3 py-2 focus:ring-2 focus:ring-ring focus:border-input"
             rows={3}
             placeholder="Any observations or details..."
             aria-label="Status update notes"
           />
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-muted-foreground mt-1">
             {charCount}/{charLimit} characters
           </div>
         </div>
 
         {/* Timestamp */}
         <div className="mb-4">
-          <label htmlFor="timestamp" className="block text-sm font-medium mb-2">
+          <label htmlFor="timestamp" className="block text-sm font-medium mb-2 text-foreground">
             Timestamp
           </label>
           <input
@@ -231,31 +217,31 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
             type="datetime-local"
             value={new Date(timestamp).toISOString().slice(0, 16)}
             onChange={(e) => setTimestamp(new Date(e.target.value).getTime())}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-input bg-background text-foreground rounded px-3 py-2 focus:ring-2 focus:ring-ring focus:border-input"
           />
         </div>
 
-        {/* Additional Details Section */}
-        <div className="mb-6 border-t pt-4">
-          <button
-            type="button"
-            onClick={() => setShowAdditionalDetails(!showAdditionalDetails)}
-            className="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 hover:text-gray-900 mb-2"
-            aria-expanded={showAdditionalDetails}
-            aria-controls="additional-details-content"
-          >
-            <span>Additional Details</span>
-            {showAdditionalDetails ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </button>
+        {/* Additional Details Section - Only show if there are details to show (currently only for flares) */}
+        {flare.type === 'flare' && (
+          <div className="mb-6 border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={() => setShowAdditionalDetails(!showAdditionalDetails)}
+              className="flex items-center justify-between w-full text-left text-sm font-medium text-muted-foreground hover:text-foreground mb-2"
+              aria-expanded={showAdditionalDetails}
+              aria-controls="additional-details-content"
+            >
+              <span>Additional Details</span>
+              {showAdditionalDetails ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
 
-          {showAdditionalDetails && (
-            <div id="additional-details-content" className="mt-4 space-y-4">
-              {/* Lifecycle Stage Selector */}
-              {flare.type === 'flare' && (
+            {showAdditionalDetails && (
+              <div id="additional-details-content" className="mt-4 space-y-4">
+                {/* Lifecycle Stage Selector */}
                 <div>
                   <LifecycleStageSelector
                     currentStage={flare.currentLifecycleStage}
@@ -265,24 +251,24 @@ export function FlareUpdateModal({ isOpen, onClose, flare, userId, onUpdate }: F
                     disabled={isLoading}
                   />
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex gap-3 justify-end">
           <button
             onClick={handleCancel}
             disabled={isLoading}
-            className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 border border-input bg-background text-foreground rounded hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50"
           >
             {isLoading ? 'Saving...' : 'Save'}
           </button>
