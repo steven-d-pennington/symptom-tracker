@@ -506,7 +506,7 @@ ARCHIVE/
 - PWA support (service worker headers)
 - ESLint warnings allowed during build
 - Manifest.json MIME type
-- Version: 0.2.0
+- Version: 0.5.0
 
 ### Deployment Configuration
 
@@ -518,7 +518,7 @@ ARCHIVE/
 ### Testing Configuration
 
 **`jest.config.js`**:
-- Jest 30.2.0 with jsdom environment
+- Jest 30.5.0 with jsdom environment
 - React Testing Library integration
 - fake-indexeddb for database mocking
 - Coverage thresholds: 80%+

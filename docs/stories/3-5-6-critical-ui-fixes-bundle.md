@@ -60,7 +60,7 @@ So that I can use the app reliably in production.
 
 - [x] Task 4: Update About page (AC: #3.5.6.4)
   - [x] 4.1: Locate About page (src/app/(protected)/about/page.tsx)
-  - [x] 4.2: Update app version number from package.json (0.2.0)
+  - [x] 4.2: Update app version number from package.json (0.5.0)
   - [x] 4.3: Update feature list to match currently implemented features
   - [x] 4.4: Remove references to unimplemented features
   - [x] 4.5: Add Epic 3 analytics completion to feature list

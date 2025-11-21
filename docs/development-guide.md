@@ -2,7 +2,7 @@
 
 **Project**: Pocket Symptom Tracker
 **Last Updated**: 2025-11-04
-**Version**: 0.2.0
+**Version**: 0.5.0
 
 ## Prerequisites
 
@@ -196,7 +196,7 @@ symptom-tracker/
 
 ### Testing
 
-- **Jest**: 30.2.0 (test runner)
+- **Jest**: 30.5.0 (test runner)
 - **React Testing Library**: 16.3.0 (component testing)
 - **fake-indexeddb**: 6.2.4 (database mocking)
 - **@testing-library/user-event**: 14.6.1 (user interaction simulation)

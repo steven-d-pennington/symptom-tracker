@@ -43,7 +43,7 @@
       </task>
       <task id="4" acs="3.5.6.4">Update About page
         <subtask id="4.1">Locate About page (src/app/(protected)/about/page.tsx)</subtask>
-        <subtask id="4.2">Update app version number from package.json (currently 0.2.0)</subtask>
+        <subtask id="4.2">Update app version number from package.json (currently 0.5.0)</subtask>
         <subtask id="4.3">Update feature list to match currently implemented features</subtask>
         <subtask id="4.4">Remove references to unimplemented features</subtask>
         <subtask id="4.5">Add Epic 3 analytics completion to feature list</subtask>
@@ -127,7 +127,7 @@
       <title>Update About page</title>
       <description>Replace outdated information with current project details, update app version number to match package.json, update feature list to reflect currently implemented features, add links to documentation or support resources if available, ensure About page content accurate for production launch</description>
       <testScenarios>
-        <scenario>Visit About page - version number matches package.json (0.2.0)</scenario>
+        <scenario>Visit About page - version number matches package.json (0.5.0)</scenario>
         <scenario>All listed features are actually implemented in the app</scenario>
         <scenario>No references to unimplemented features appear</scenario>
       </testScenarios>
@@ -192,7 +192,7 @@
       <artifact path="src/app/onboarding/utils/onboardingConfig.ts" kind="config" symbol="ONBOARDING_STEPS" lines="3-47" reason="Onboarding step definitions including education step (Step 5) that needs removal" />
       <artifact path="src/app/onboarding/components/OnboardingFlow.tsx" kind="component" symbol="OnboardingFlow" lines="1-146" reason="Main onboarding flow component that renders steps and manages progression" />
       <artifact path="src/app/(protected)/flares/page.tsx" kind="page" symbol="FlaresPage" lines="230-255" reason="Flares page with CTA buttons for map/split view that need removal (lines 230-255)" />
-      <artifact path="src/app/(protected)/about/page.tsx" kind="page" symbol="AboutPage" lines="1-186" reason="About page with version 0.2.0 and feature lists that need updating" />
+      <artifact path="src/app/(protected)/about/page.tsx" kind="page" symbol="AboutPage" lines="1-186" reason="About page with version 0.5.0 and feature lists that need updating" />
       <artifact path="src/app/(protected)/dashboard/page.tsx" kind="page" symbol="DashboardContent" lines="1-277" reason="Dashboard with QuickLogButtons that need style consistency fixes" />
       <artifact path="src/components/analytics/InsufficientDataCard.tsx" kind="component" symbol="InsufficientDataCard, Info icon example" lines="1-79" reason="Example of Info icon usage with lucide-react Info component and tooltip-like behavior" />
     </code>
@@ -207,7 +207,7 @@
         <dependency name="typescript" version="^5" />
         <dependency name="@testing-library/react" version="^16.3.0" />
         <dependency name="@testing-library/jest-dom" version="^6.9.1" />
-        <dependency name="jest" version="^30.2.0" />
+        <dependency name="jest" version="^30.5.0" />
       </node>
     </dependencies>
   </artifacts>

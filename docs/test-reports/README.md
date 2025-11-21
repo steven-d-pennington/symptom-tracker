@@ -223,7 +223,7 @@ node scripts/smoke-tests.mjs
 ## Test Environment
 
 **Application**: Symptom Tracker for Hidradenitis Suppurativa
-**Version**: 0.2.0
+**Version**: 0.5.0
 **URL**: http://localhost:3001
 **Server Status**: ✅ Running (verified 278ms response)
 **Tech Stack**: Next.js 15, React 19, TypeScript, Dexie/IndexedDB
