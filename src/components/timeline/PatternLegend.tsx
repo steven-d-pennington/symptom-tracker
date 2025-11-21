@@ -87,19 +87,19 @@ function PatternLegend({
   }
 
   return (
-    <div className="pattern-legend bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
+    <div className="pattern-legend bg-card border border-border rounded-lg p-4 mb-4 shadow-sm">
       {/* Header with collapse toggle */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-700">Pattern Legend</h3>
+        <h3 className="text-sm font-semibold text-foreground">Pattern Legend</h3>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1 hover:bg-gray-100 rounded md:hidden"
+          className="p-1 hover:bg-muted rounded md:hidden"
           aria-label={isCollapsed ? 'Expand legend' : 'Collapse legend'}
         >
           {isCollapsed ? (
-            <ChevronDown className="w-4 h-4 text-gray-600" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <ChevronUp className="w-4 h-4 text-gray-600" />
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
           )}
         </button>
       </div>
@@ -115,21 +115,20 @@ function PatternLegend({
               <button
                 key={item.type}
                 onClick={() => onToggleType(item.type)}
-                className={`flex items-start gap-2 p-2 rounded border transition-all ${
-                  isVisible
-                    ? 'border-gray-300 bg-white'
-                    : 'border-gray-200 bg-gray-50 opacity-50'
-                }`}
+                className={`flex items-start gap-2 p-2 rounded border transition-all ${isVisible
+                  ? 'border-border bg-card'
+                  : 'border-border bg-muted/50 opacity-50'
+                  }`}
                 aria-pressed={isVisible}
                 aria-label={`Toggle ${item.label} patterns`}
               >
                 {/* Color swatch */}
                 <div
-                  className="flex-shrink-0 w-8 h-8 rounded flex items-center justify-center mt-0.5"
+                  className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center mt-0.5 ${!isVisible ? "bg-muted border-2 border-muted-foreground/20 text-muted-foreground" : "border-2"}`}
                   style={{
-                    backgroundColor: isVisible ? `${item.color}33` : '#f3f4f6',
-                    border: `2px solid ${isVisible ? item.color : '#d1d5db'}`,
-                    color: isVisible ? item.color : '#9ca3af',
+                    backgroundColor: isVisible ? `${item.color}33` : undefined,
+                    borderColor: isVisible ? item.color : undefined,
+                    color: isVisible ? item.color : undefined,
                   }}
                 >
                   <Icon className="w-4 h-4" />
@@ -137,10 +136,10 @@ function PatternLegend({
 
                 {/* Label and description */}
                 <div className="flex-1 text-left min-w-0">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-foreground">
                     {item.label}
                   </div>
-                  <div className="text-xs text-gray-600 mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     {item.description}
                   </div>
                 </div>
@@ -148,11 +147,10 @@ function PatternLegend({
                 {/* Visibility indicator */}
                 <div className="flex-shrink-0 mt-1">
                   <div
-                    className={`w-3 h-3 rounded-full border-2 ${
-                      isVisible
-                        ? 'bg-green-500 border-green-600'
-                        : 'bg-gray-200 border-gray-300'
-                    }`}
+                    className={`w-3 h-3 rounded-full border-2 ${isVisible
+                      ? 'bg-green-500 border-green-600 dark:bg-green-600 dark:border-green-400'
+                      : 'bg-muted border-muted-foreground'
+                      }`}
                   />
                 </div>
               </button>
@@ -163,7 +161,7 @@ function PatternLegend({
 
       {/* Helper text */}
       {!isCollapsed && (
-        <p className="text-xs text-gray-500 mt-3">
+        <p className="text-xs text-muted-foreground mt-3">
           Click items to show/hide pattern types on the timeline. Patterns are based on correlation analysis.
         </p>
       )}

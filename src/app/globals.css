@@ -103,22 +103,32 @@
 
 :root {
   /* Warm Neutrals - Notion-inspired */
+  /* Warm Neutrals - Notion-inspired */
   --background: #FAFAF9;
   --foreground: #1C1917;
   --card: #FFFFFF;
   --card-foreground: #1C1917;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1917;
+  --primary: #0D9488;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F5F4;
+  --secondary-foreground: #1C1917;
   --muted: #F5F5F4;
   --muted-foreground: #78716C;
+  --accent: #F5F5F4;
+  --accent-foreground: #1C1917;
+  --destructive: #EF4444;
+  --destructive-foreground: #FAFAF9;
   --border: #E7E5E4;
+  --input: #E7E5E4;
+  --ring: #0D9488;
 
   /* Deeper Teal Primary */
-  --primary: #0D9488;
-  /* Teal 600 */
   --primary-light: #CCFBF1;
   /* Teal 100 */
   --primary-dark: #0F766E;
   /* Teal 700 */
-  --primary-foreground: #FFFFFF;
 
   /* Semantic Colors */
   --success: #10B981;
@@ -171,8 +181,10 @@
 }
 
 .dark .glass-panel {
-  background: rgba(30, 30, 30, 0.6);
-  /* Slightly lighter/transparent for depth */
+  background: rgba(24, 24, 27, 0.6);
+  /* Zinc 900 with opacity */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
 }
@@ -184,15 +196,25 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-  /* Primary */
-  --color-primary: var(--primary);
+  /* Primary Variants */
   --color-primary-light: var(--primary-light);
   --color-primary-dark: var(--primary-dark);
-  --color-primary-foreground: var(--primary-foreground);
 
   /* Semantic */
   --color-success: var(--success);
@@ -242,28 +264,40 @@
 
 .dark {
   /* Dark mode warm neutrals - Refined for better contrast */
-  --background: #0F0F0F;
-  /* Darker, more pure black for OLED feel but still soft */
-  --foreground: #EDEDE9;
-  /* Soft white */
+  --background: #09090B;
+  /* Zinc 950 - Deep black */
+  --foreground: #FAFAF9;
+  /* Stone 50 - High contrast white */
   --card: #18181B;
   /* Zinc 900 */
   --card-foreground: #FAFAF9;
+  --popover: #18181B;
+  --popover-foreground: #FAFAF9;
+  --primary: #2DD4BF;
+  /* Teal 400 - Brighter for dark mode */
+  --primary-foreground: #000000;
+  --secondary: #27272A;
+  /* Zinc 800 */
+  --secondary-foreground: #FAFAF9;
   --muted: #27272A;
   /* Zinc 800 */
   --muted-foreground: #A1A1AA;
   /* Zinc 400 */
+  --accent: #27272A;
+  --accent-foreground: #FAFAF9;
+  --destructive: #F87171;
+  /* Red 400 */
+  --destructive-foreground: #000000;
   --border: #27272A;
   /* Zinc 800 */
+  --input: #27272A;
+  --ring: #2DD4BF;
 
-  /* Teal adjusts for dark mode - slightly brighter */
-  --primary: #2DD4BF;
-  /* Teal 400 - Brighter for dark mode */
+  /* Teal adjusts for dark mode */
   --primary-light: #134E4A;
   /* Teal 900 - Backgrounds */
   --primary-dark: #14B8A6;
   /* Teal 500 */
-  --primary-foreground: #000000;
 
   /* Semantic colors adjusted for dark */
   --success: #34D399;
@@ -274,7 +308,7 @@
   /* Text hierarchy for dark */
   --text-primary: #FAFAF9;
   --text-secondary: #D4D4D8;
-  --text-muted: #71717A;
+  --text-muted: #A1A1AA;
 }
 
 body {

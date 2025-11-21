@@ -12,24 +12,24 @@ export const Legend = ({ displayOptions }: LegendProps) => {
       </div>
       <div className="flex flex-wrap gap-2">
         {displayOptions.showSymptoms ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-blue-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
             <span className="h-2 w-2 rounded-full bg-blue-500" aria-hidden />
             Symptoms
           </span>
         ) : null}
         {displayOptions.showTriggers ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-yellow-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
             <span className="h-2 w-2 rounded-full bg-yellow-500" aria-hidden />
             Triggers
           </span>
         ) : null}
         {displayOptions.showMedications ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-1 text-sky-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-1 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
             <span className="h-2 w-2 rounded-full bg-sky-500" aria-hidden />
             Medications
           </span>
         ) : null}
-        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-red-700">
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-red-700 dark:bg-red-900/30 dark:text-red-300">
           <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden />
           Flares
         </span>

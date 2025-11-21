@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Apple, AlertCircle, Pill, Activity } from 'lucide-react';
+import { cn } from '@/lib/utils/cn';
 import type { DetectedPattern } from '@/lib/services/patternDetectionService';
 
 /**
@@ -73,10 +74,17 @@ function PatternBadge({ pattern, onClick }: PatternBadgeProps) {
         e.stopPropagation();
         onClick?.();
       }}
-      className="pattern-badge absolute top-2 right-2 p-1 rounded-full hover:scale-110 transition-transform"
+      className={cn(
+        "pattern-badge absolute top-2 right-2 p-1 rounded-full hover:scale-110 transition-transform",
+        isFilled
+          ? "text-white dark:text-foreground"
+          : "bg-background/80 backdrop-blur-sm"
+      )}
       style={{
-        backgroundColor: `${color}${isFilled ? 'FF' : '33'}`,
-        border: isFilled ? 'none' : `2px solid ${color}`,
+        backgroundColor: isFilled ? color : `${color}33`,
+        borderColor: color,
+        borderWidth: isFilled ? 0 : 2,
+        borderStyle: 'solid'
       }}
       title={getTooltipText()}
       aria-label={`Pattern detected: ${pattern.description}`}
