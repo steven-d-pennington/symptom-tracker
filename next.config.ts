@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-// Version 0.2.0 - Build timestamp: 2025-10-17
+// Version 0.5.0 - Build timestamp: 2026-02-15
 const nextConfig: NextConfig = {
   /* ESLint Configuration */
   // Allow builds to succeed with ESLint warnings

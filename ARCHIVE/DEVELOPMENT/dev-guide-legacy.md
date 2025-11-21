@@ -632,7 +632,7 @@ function problematicFunction() {
 **Launch Configuration** (`.vscode/launch.json`):
 ```json
 {
-  "version": "0.2.0",
+  "version": "0.5.0",
   "configurations": [
     {
       "name": "Next.js: debug server-side",

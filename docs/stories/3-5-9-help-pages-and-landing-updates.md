@@ -19,7 +19,7 @@ So that I can quickly learn how to use all features and understand the mission b
 
 3. **AC3.5.9.3 — About Page Personal Story Added:** Add personal story section at top of About page: authentic narrative about wanting to empower wife to be proactive in treatment, frustration with feeling helpless and unable to make her feel better, realization that providing tools for self-management was something actionable, mission to help others in similar situations, tone should be personal yet professional, concise (3-4 paragraphs max), emotionally resonant without being overly sentimental.
 
-4. **AC3.5.9.4 — Changelog Section Added to About Page:** Add changelog section at bottom of About page: organized by release/epic (Epic 3.5, Epic 3, etc.), each entry shows date and major features/changes, format: "## Version 0.2.0 - Epic 3.5 (October 2025)", bulleted list of key features added, grouped by category (New Features, Improvements, Bug Fixes), link to detailed epic documentation if available, reverse chronological order (newest first).
+4. **AC3.5.9.4 — Changelog Section Added to About Page:** Add changelog section at bottom of About page: organized by release/epic (Epic 3.5, Epic 3, etc.), each entry shows date and major features/changes, format: "## Version 0.5.0 - Epic 2 (February 2026)", bulleted list of key features added, grouped by category (New Features, Improvements, Bug Fixes), link to detailed epic documentation if available, reverse chronological order (newest first).
 
 5. **AC3.5.9.5 — Help Navigation and Discoverability:** Help pages easily discoverable: accessible from main navigation menu, search functionality within help section (or clear table of contents), breadcrumb navigation showing current location, "Back to Help" links on all help pages, help icon/link in page headers where contextually relevant (e.g., "Help" link on food logging page points to food logging help), keyboard shortcut (?) already links to keyboard shortcuts help.
 
@@ -131,7 +131,7 @@ So that I can quickly learn how to use all features and understand the mission b
 
 - [ ] Task 11: Add Changelog to About Page (AC: #3.5.9.4)
   - [ ] 11.1: Create changelog section at bottom of About page
-  - [ ] 11.2: Add Version 0.2.0 - Epic 3.5 (October 2025) entry
+  - [ ] 11.2: Add Version 0.5.0 - Epic 2 (February 2026) entry
   - [ ] 11.3: List all Epic 3.5 features/improvements
   - [ ] 11.4: Add Version 0.1.0 - Epic 3 entry (if applicable)
   - [ ] 11.5: Format with proper headings and lists
@@ -295,7 +295,7 @@ If you or someone you love is on a similar journey, I hope this tool helps you f
 ```markdown
 ## Changelog
 
-### Version 0.2.0 - Epic 3.5 (October 2025)
+### Version 0.5.0 - Epic 2 (February 2026)
 
 **New Features:**
 - 🎯 Pre-populated default symptoms, foods, triggers, and medications for new users

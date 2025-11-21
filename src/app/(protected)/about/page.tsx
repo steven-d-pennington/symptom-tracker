@@ -5,7 +5,7 @@ import { Info, Heart, Github, Mail, ExternalLink, Keyboard, ChevronDown, Chevron
 import Link from "next/link";
 
 export default function AboutPage() {
-  const [expandedChangelog, setExpandedChangelog] = useState<string>("epic-3.5");
+  const [expandedChangelog, setExpandedChangelog] = useState<string>("epic-0.5");
 
   const toggleChangelog = (id: string) => {
     setExpandedChangelog(expandedChangelog === id ? "" : id);
@@ -87,10 +87,10 @@ export default function AboutPage() {
           </h2>
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>
-              <strong className="text-foreground">Version:</strong> 0.3.0
+              <strong className="text-foreground">Version:</strong> 0.5.0
             </p>
             <p>
-              <strong className="text-foreground">Status:</strong> Beta - Production Ready ✅
+              <strong className="text-foreground">Status:</strong> Beta — Flare lifecycle expansion
             </p>
             <p>
               <strong className="text-foreground">Build:</strong> Development
@@ -150,7 +150,7 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Intervention logging</span>
+                  <span>Intervention logging (in progress)</span>
                 </li>
               </ul>
             </div>
@@ -159,19 +159,19 @@ export default function AboutPage() {
               <ul className="space-y-1.5 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Problem area analytics</span>
+                  <span>Problem area analytics (planned)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Flare duration and severity metrics</span>
+                  <span>Flare duration and severity metrics (planned)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Trend analysis visualization</span>
+                  <span>Trend analysis visualization (planned)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Intervention effectiveness analysis</span>
+                  <span>Intervention effectiveness analysis (planned)</span>
                 </li>
               </ul>
             </div>
@@ -211,6 +211,86 @@ export default function AboutPage() {
             Changelog
           </h2>
           <div className="space-y-3">
+            {/* Version 0.5.0 - February 2026 */}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <button
+                onClick={() => toggleChangelog("epic-0.5")}
+                className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  {expandedChangelog === "epic-0.5" ? (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  )}
+                  <div className="text-left">
+                    <h3 className="font-semibold text-foreground">
+                      Version 0.5.0 - Epic 2: Flare Lifecycle Expansion
+                    </h3>
+                    <p className="text-sm text-muted-foreground">February 2026</p>
+                  </div>
+                </div>
+              </button>
+
+              {expandedChangelog === "epic-0.5" && (
+                <div className="px-4 pb-4 pt-2 border-t border-border">
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <h4 className="font-medium text-foreground mb-2">✨ Highlights</h4>
+                      <ul className="space-y-1 text-muted-foreground pl-4">
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Refined landing page to showcase local-first architecture, body mapping, and analytics pillars.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Updated navigation and About metadata to reflect v0.5.0 beta status.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Improved release messaging around flare lifecycle depth and privacy commitments.</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-foreground mb-2">🩺 Flare lifecycle</h4>
+                      <ul className="space-y-1 text-muted-foreground pl-4">
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Persistent flare records with severity and trend updates anchored to 93 body-map regions.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Active flare dashboard optimized for sub-100ms interactions and offline use.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Append-only history model ready for intervention logging roll-out.</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-foreground mb-2">📈 Insights & privacy</h4>
+                      <ul className="space-y-1 text-muted-foreground pl-4">
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Food and trigger intelligence with allergen tagging and delayed-effect correlations.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>End-to-end local ownership: encrypted photos, IndexedDB persistence, and optional on-device UX instrumentation.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>WCAG AA accessibility focus with keyboard support across new experiences.</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Epic 3.5 - October 2025 */}
             <div className="border border-border rounded-lg overflow-hidden">
               <button

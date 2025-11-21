@@ -1,7 +1,7 @@
 # Project Overview
 
 **Project Name**: Pocket Symptom Tracker
-**Version**: 0.2.0
+**Version**: 0.5.0
 **Status**: Active Development (Phase 2 - Flare Tracking & Body Map Enhancements)
 **Last Updated**: 2025-11-04
 
@@ -72,7 +72,7 @@ Pocket Symptom Tracker is a **privacy-first Progressive Web Application** design
 | **Styling** | Tailwind CSS | v4 | Utility-first CSS |
 | **Database** | Dexie | v4.2.0 | IndexedDB wrapper (18 tables) |
 | **State** | React Context | Built-in | Global state management |
-| **Testing** | Jest + RTL | 30.2.0 / 16.3.0 | Unit & component testing |
+| **Testing** | Jest + RTL | 30.5.0 / 16.3.0 | Unit & component testing |
 | **Deployment** | Vercel | Latest | Zero-config deployment |
 
 ### Data Architecture

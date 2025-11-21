@@ -213,7 +213,7 @@ Monitor during testing:
 ## Test Environment
 
 **Application**: Symptom Tracker (HS Management)
-**Version**: 0.2.0
+**Version**: 0.5.0
 **Tech Stack**: Next.js 15, React 19, TypeScript, Dexie/IndexedDB
 **Architecture**: Offline-first PWA
 **Server**: http://localhost:3001 (✅ Running, 278ms response)
