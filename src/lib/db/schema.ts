@@ -353,12 +353,12 @@ export interface PhotoComparisonRecord {
 import { RegressionResult } from '../utils/statistics/linearRegression';
 
 export interface AnalysisResultRecord {
-    id?: string;
-    userId: string;
-    metric: string;
-    timeRange: string;
-    result: RegressionResult;
-    createdAt: Date;
+  id?: string;
+  userId: string;
+  metric: string;
+  timeRange: string;
+  result: RegressionResult;
+  createdAt: Date;
 }
 
 // Event Stream Model - New tables for event-based logging
@@ -783,6 +783,7 @@ export interface DailyLogRecord {
   mood: 1 | 2 | 3 | 4 | 5; // 1=Bad, 2=Poor, 3=Okay, 4=Good, 5=Great
   sleepHours: number; // 0-24 with 0.5 increments
   sleepQuality: 1 | 2 | 3 | 4 | 5; // Star rating
+  stressLevel: number; // 1-10 scale
   notes?: string; // General notes about the day (max 2000 chars)
 
   // Optional flare quick updates (JSON-stringified per IndexedDB conventions)

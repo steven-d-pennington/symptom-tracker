@@ -122,12 +122,12 @@ export default function InsightsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Page container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Page header */}
-        <header className="mb-6">
+        <header className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Health Insights Hub</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Health Insights Hub</h1>
               <p className="text-gray-600 mt-1">
                 Discover patterns in your health data through correlation analysis
               </p>
@@ -175,8 +175,8 @@ export default function InsightsPage() {
 
         {/* Treatment Effectiveness Section (Story 6.7) */}
         {!showEmptyState && userId && (
-          <section className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <section className="mt-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
               Treatment Effectiveness
             </h2>
             <TreatmentTracker

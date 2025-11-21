@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowRight, Loader2, Download } from 'lucide-react';
+import { ArrowRight, Loader2, Download, Filter, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { medicationEventRepository } from '@/lib/repositories/medicationEventRepository';
 import { triggerEventRepository } from '@/lib/repositories/triggerEventRepository';
@@ -37,6 +37,7 @@ export interface TimelineEvent {
   eventRef: any;
   hasDetails?: boolean;
   allergens?: string[]; // for food events: aggregated allergen tags
+  foodNames?: string[]; // for food events: list of food names in the meal
 }
 
 interface TimelineViewProps {
@@ -58,12 +59,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedFood, setExpandedFood] = useState<Set<string>>(new Set());
-  const [mountTimestamp] = useState(() => Date.now()); // Unique value per mount
 
   // Story 6.5: Pattern detection correlation state
   const [correlations, setCorrelations] = useState<CorrelationRecord[]>([]);
@@ -100,7 +100,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
   // Story 6.5: Calendar navigation state
   const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
+  // Set initial date on mount to avoid hydration mismatch
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+    setCurrentDate(new Date());
+    setSelectedDate(new Date());
+  }, []);
 
   // Load events for the current date range
   const loadEvents = async (date: Date, append = false) => {
@@ -124,685 +132,278 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         foodEventRepository.findByDateRange(userId, startOfDay.getTime(), endOfDay.getTime())
       ]);
 
-      console.log("📊 Timeline query for date:", date.toLocaleDateString(), {
-        dateRange: {
-          start: startOfDay.toLocaleString(),
-          startMs: startOfDay.getTime(),
-          end: endOfDay.toLocaleString(),
-          endMs: endOfDay.getTime(),
-        },
-        counts: {
-          medicationEvents: medicationEvents.length,
-          triggerEvents: triggerEvents.length,
-          symptomInstances: symptomInstances.length,
-          markerRecords: markerRecords.length,
-          foodEvents: foodEvents.length,
-        },
-        foodEventDetails: foodEvents.map(e => ({
-          id: e.id,
-          timestamp: e.timestamp,
-          timestampDate: new Date(e.timestamp).toLocaleString(),
-          mealType: e.mealType,
-          foodIds: e.foodIds,
-        })),
-      });
-
-      // Convert markerRecords to ActiveFlare format with trends
-      const activeFlares = await Promise.all(
-        markerRecords.map(async (marker) => {
-          const events = await bodyMarkerRepository.getMarkerHistory(userId, marker.id);
-
-          // Calculate trend from event history
-          const severityEvents = events.filter(
-            e => e.severity !== undefined && (e.eventType === 'created' || e.eventType === 'severity_update')
-          ).sort((a, b) => a.timestamp - b.timestamp);
-
-          let trend: 'worsening' | 'stable' | 'improving' = 'stable';
-          if (severityEvents.length >= 2) {
-            const recent = severityEvents.slice(-2);
-            const change = recent[1].severity! - recent[0].severity!;
-            if (change > 0) trend = 'worsening';
-            else if (change < 0) trend = 'improving';
-          }
-
-          // Convert to ActiveFlare format
-          return {
-            id: marker.id,
-            userId: marker.userId,
-            symptomName: marker.bodyRegionId,
-            bodyRegions: [marker.bodyRegionId],
-            severity: marker.currentSeverity,
-            status: marker.status,
-            startDate: new Date(marker.startDate),
-            endDate: marker.endDate ? new Date(marker.endDate) : undefined,
-            notes: undefined, // Notes are in event history now
-            trend,
-          };
-        })
-      );
-
-      const medicationIds = Array.from(new Set(medicationEvents.map(event => event.medicationId)));
-      const triggerIds = Array.from(new Set(triggerEvents.map(event => event.triggerId)));
-
-      const medicationRecords = medicationIds.length > 0
-        ? await Promise.all(medicationIds.map(id => medicationRepository.getById(id)))
-        : [];
-
-      const triggerRecords = triggerIds.length > 0
-        ? await Promise.all(triggerIds.map(id => triggerRepository.getById(id)))
-        : [];
-
-      const medicationNameById = new Map<string, string>();
-      medicationRecords.forEach((record, index) => {
-        if (record) {
-          medicationNameById.set(medicationIds[index], record.name);
-        }
-      });
-
-      const triggerNameById = new Map<string, string>();
-      triggerRecords.forEach((record, index) => {
-        if (record) {
-          triggerNameById.set(triggerIds[index], record.name);
-        }
-      });
-
-      // Prepare food name lookup
-      const allFoodIds: string[] = [];
-      foodEvents.forEach(evt => {
-        try {
-          const ids = JSON.parse(evt.foodIds) as string[];
-          allFoodIds.push(...ids);
-        } catch {
-          // ignore parse errors
-        }
-      });
-      const uniqueFoodIds = Array.from(new Set(allFoodIds));
-      const foodRecords = uniqueFoodIds.length > 0
-        ? await Promise.all(uniqueFoodIds.map(id => foodRepository.getById(id)))
-        : [];
-      const foodNameById = new Map<string, string>();
-      const allergenById = new Map<string, string[]>();
-      foodRecords.forEach((record, index) => {
-        const id = uniqueFoodIds[index];
-        if (record) {
-          foodNameById.set(id, record.name);
-          try {
-            allergenById.set(id, JSON.parse(record.allergenTags) as string[]);
-          } catch {
-            allergenById.set(id, []);
-          }
-        }
-      });
-
-      // Convert to timeline events
+      // Process events
       const timelineEvents: TimelineEvent[] = [];
 
-      // Medication events
-      medicationEvents.forEach(event => {
-        const medication = medicationNameById.get(event.medicationId) || 'Unknown medication';
-        const taken = event.taken;
-        const summary = `💊 ${medication} (${taken ? 'taken' : 'skipped'})`;
+      // Medications
+      for (const event of medicationEvents) {
+        const med = await medicationRepository.getById(event.medicationId);
         timelineEvents.push({
           id: event.id,
           type: 'medication',
           timestamp: event.timestamp,
-          summary,
-          details: event.notes,
+          summary: `Took ${med?.name || 'Medication'}`,
+          details: event.dosage || undefined,
           eventRef: event,
-          hasDetails: !!event.notes
+          hasDetails: !!event.dosage
         });
-      });
+      }
 
-      // Trigger events
-      triggerEvents.forEach(event => {
-        const trigger = triggerNameById.get(event.triggerId) || 'Unknown trigger';
-        const intensity = event.intensity;
-        const summary = `⚠️ ${trigger} (${intensity} intensity)`;
-        console.log("➕ Adding trigger event to timeline:", {
-          id: event.id,
-          trigger,
-          intensity,
-          timestamp: event.timestamp,
-          timestampDate: new Date(event.timestamp).toLocaleString(),
-          summary,
-        });
+      // Triggers
+      for (const event of triggerEvents) {
+        const trigger = await triggerRepository.getById(event.triggerId);
         timelineEvents.push({
           id: event.id,
           type: 'trigger',
           timestamp: event.timestamp,
-          summary,
+          summary: `Trigger: ${trigger?.name || 'Unknown'}`,
           details: event.notes,
           eventRef: event,
           hasDetails: !!event.notes
         });
-      });
+      }
 
-      // Symptom events (Story 3.5.11: Add symptom logging display)
-      symptomInstances.forEach(symptom => {
-        const severity = symptom.severity;
-        const location = symptom.location ? ` (${symptom.location})` : '';
-        const summary = `🩺 ${symptom.name} - severity ${severity}/10${location}`;
-        console.log("➕ Adding symptom event to timeline:", {
-          id: symptom.id,
-          name: symptom.name,
-          severity,
-          location,
-          timestamp: symptom.timestamp.getTime(),
-          timestampDate: symptom.timestamp.toLocaleString(),
-          summary,
-        });
+      // Symptoms
+      for (const instance of symptomInstances) {
         timelineEvents.push({
-          id: symptom.id,
+          id: instance.id,
           type: 'symptom',
-          timestamp: symptom.timestamp.getTime(),
-          summary,
-          details: symptom.notes,
-          eventRef: symptom,
-          hasDetails: !!symptom.notes
+          timestamp: instance.timestamp instanceof Date ? instance.timestamp.getTime() : new Date(instance.timestamp).getTime(),
+          summary: `Symptom: ${instance.name}`,
+          details: `Severity: ${instance.severity}/10${instance.notes ? ` - ${instance.notes}` : ''}`,
+          eventRef: instance,
+          hasDetails: true
         });
-      });
+      }
 
-      // Flare events (creation, updates, resolution)
-      // Filter flares to only those with events in the current date range
-      activeFlares.forEach(flare => {
-        const location = flare.bodyRegions.length > 0 ? flare.bodyRegions[0] : 'Unknown location';
-
-        // Track if this flare has any events in the current date range
-        let hasEventsInRange = false;
-
-        // Flare created event (only if within date range)
-        const flareStartTime = flare.startDate.getTime();
-        if (flareStartTime >= startOfDay.getTime() && flareStartTime <= endOfDay.getTime()) {
-          hasEventsInRange = true;
+      // Flares (Markers) - Filter by creation date to only show markers created on this specific day
+      for (const marker of markerRecords) {
+        // Only include markers created within this day's date range
+        const markerCreatedAt = typeof marker.createdAt === 'number' ? marker.createdAt : new Date(marker.createdAt).getTime();
+        if (markerCreatedAt >= startOfDay.getTime() && markerCreatedAt <= endOfDay.getTime()) {
           timelineEvents.push({
-            id: `${flare.id}-created`,
+            id: marker.id,
             type: 'flare-created',
-            timestamp: flareStartTime,
-            summary: `🔥 ${location} flare started, severity ${flare.severity}/10`,
-            details: flare.notes,
-            eventRef: flare,
-            hasDetails: !!flare.notes
+            timestamp: markerCreatedAt,
+            summary: `Flare Logged`,
+            details: undefined,
+            eventRef: marker,
+            hasDetails: false
           });
         }
+      }
 
-        // If flare has severity history, add update events (only those within date range)
-        const severityHistory = (flare as any).severityHistory || [];
-        if (severityHistory.length > 1) {
-          severityHistory.slice(1).forEach((update: any, index: number) => {
-            if (update.timestamp >= startOfDay.getTime() && update.timestamp <= endOfDay.getTime()) {
-              hasEventsInRange = true;
-              const prevSeverity = severityHistory[index].severity;
-              const change = update.severity - prevSeverity;
-              const changeText = change > 0 ? `(+${change})` : change < 0 ? `(${change})` : '';
-              timelineEvents.push({
-                id: `${flare.id}-update-${index}`,
-                type: 'flare-updated',
-                timestamp: update.timestamp,
-                summary: `🔥 ${location} updated: ${update.severity}/10 ${changeText}`,
-                details: update.notes,
-                eventRef: { flare, update },
-                hasDetails: !!update.notes
-              });
-            }
-          });
-        }
-
-        // If flare is resolved, add resolution event (only if within date range)
-        if (flare.endDate) {
-          const flareEndTime = flare.endDate.getTime();
-          if (flareEndTime >= startOfDay.getTime() && flareEndTime <= endOfDay.getTime()) {
-            hasEventsInRange = true;
-            const resolutionNotes = (flare as any).resolutionNotes;
-            timelineEvents.push({
-              id: `${flare.id}-resolved`,
-              type: 'flare-resolved',
-              timestamp: flareEndTime,
-              summary: `🔥 ${location} flare resolved`,
-              details: resolutionNotes,
-              eventRef: flare,
-              hasDetails: !!resolutionNotes
-            });
-          }
-        }
-      });
-
-      // Food events (meals grouped by mealId)
-      foodEvents.forEach(event => {
-        let foods: string[] = [];
-        let portions: Record<string, string> = {};
-        try {
-          const ids = JSON.parse(event.foodIds) as string[];
-          foods = ids.map(id => foodNameById.get(id) || id);
-        } catch {}
-        try {
-          portions = JSON.parse(event.portionMap) as Record<string, string>;
-        } catch {}
-
-        const portionAbbrev = (p?: string) => {
-          switch (p) {
-            case 'small': return 'S';
-            case 'medium': return 'M';
-            case 'large': return 'L';
-            default: return '';
-          }
-        };
-
-        // Build collapsed summary: "MealType: Food1 (M), Food2 (S)"
-        let collapsedList = '';
-        let allergenList: string[] = [];
-        try {
-          const foodIdsParsed = JSON.parse(event.foodIds) as string[];
-          collapsedList = foodIdsParsed.map(fid => {
-            const name = foodNameById.get(fid) || fid;
-            const abbrev = portionAbbrev(portions[fid]);
-            return abbrev ? `${name} (${abbrev})` : name;
-          }).join(', ');
-
-          // Build allergen list
-          allergenList = foodIdsParsed
-            .flatMap(fid => allergenById.get(fid) || [])
-            .filter((v, i, a) => a.indexOf(v) === i);
-        } catch (error) {
-          console.error('[TimelineView] Failed to parse foodIds for event:', event.id, error);
-          collapsedList = 'Invalid food data';
-        }
-
-        const mealType = event.mealType;
-        const summary = `🍽️ Meal (${mealType}): ${collapsedList}`;
-        const detailsParts: string[] = [];
-        if (event.notes) detailsParts.push(`Notes: ${event.notes}`);
-        if (allergenList.length > 0) detailsParts.push(`Allergens: ${allergenList.join(', ')}`);
-        const details = detailsParts.join(' \u2014 ');
+      // Food
+      for (const event of foodEvents) {
+        // FoodEventRecord has foodIds (array), get all food names
+        const foodIds = JSON.parse(event.foodIds) as string[];
+        const foods = await Promise.all(
+          foodIds.map(id => foodRepository.getById(id))
+        );
+        const foodNames = foods.map(f => f?.name || 'Unknown food');
+        const allergenTags = foods
+          .filter(f => f?.allergenTags)
+          .flatMap(f => JSON.parse(f!.allergenTags) as string[]);
 
         timelineEvents.push({
           id: event.id,
           type: 'food',
           timestamp: event.timestamp,
-          summary,
-          details: details || undefined,
+          summary: foodIds.length === 1 ? `Ate ${foodNames[0]}` : `Ate ${foodIds.length} foods`,
+          details: event.notes,
           eventRef: event,
-          hasDetails: !!details,
-          allergens: allergenList
+          hasDetails: !!event.notes || foodIds.length > 1,
+          allergens: allergenTags.length > 0 ? allergenTags : undefined,
+          foodNames: foodNames
         });
-      });
+      }
 
-      // Sort by timestamp descending (most recent first)
+      // Sort by timestamp descending
       timelineEvents.sort((a, b) => b.timestamp - a.timestamp);
-
-      console.log("✅ Timeline events ready to display:", {
-        totalEvents: timelineEvents.length,
-        byType: {
-          medication: timelineEvents.filter(e => e.type === 'medication').length,
-          trigger: timelineEvents.filter(e => e.type === 'trigger').length,
-          symptom: timelineEvents.filter(e => e.type === 'symptom').length,
-          flare: timelineEvents.filter(e => e.type.startsWith('flare')).length,
-          food: timelineEvents.filter(e => e.type === 'food').length,
-        }
-      });
 
       if (append) {
         setEvents(prev => [...prev, ...timelineEvents]);
       } else {
         setEvents(timelineEvents);
       }
+
+      setLoading(false);
     } catch (err) {
-      console.error('Error loading timeline events:', err);
-      setError('Failed to load timeline events');
+      console.error('Failed to load timeline events:', err);
+      setError('Failed to load timeline events. Please try again.');
+      setLoading(false);
     }
   };
 
-  // Story 6.5: Load correlations for pattern detection
-  const loadCorrelations = async (startTime: number, endTime: number) => {
+  const loadCorrelations = async (startMs: number, endMs: number) => {
+    if (!userId) return;
+    setCorrelationsLoading(true);
     try {
-      if (!userId) {
-        return;
-      }
-
-      setCorrelationsLoading(true);
-      setCorrelationsError(null);
-
-      console.log("🔗 TimelineView: Loading correlations for pattern detection", {
-        userId,
-        timeRange: {
-          start: new Date(startTime).toLocaleString(),
-          end: new Date(endTime).toLocaleString(),
-        }
-      });
-
-      // Query all correlations for this user
-      const allCorrelations = await correlationRepository.findAll(userId);
-
-      // Filter correlations by timeline date range
-      // We want correlations that were calculated during or before this time range
-      // and could apply to events in this range
-      const filteredCorrelations = allCorrelations.filter(correlation => {
-        // Include all correlations for now - we'll refine filtering as we build pattern detection
-        // Pattern detection algorithm (Task 4) will determine which correlations are relevant
-        return true;
-      });
-
-      console.log("✅ Correlations loaded:", {
-        total: allCorrelations.length,
-        filtered: filteredCorrelations.length,
-        byType: {
-          'food-symptom': filteredCorrelations.filter(c => c.type === 'food-symptom').length,
-          'trigger-symptom': filteredCorrelations.filter(c => c.type === 'trigger-symptom').length,
-          'medication-symptom': filteredCorrelations.filter(c => c.type === 'medication-symptom').length,
-        }
-      });
-
-      setCorrelations(filteredCorrelations);
-    } catch (err) {
-      console.error('Error loading correlations:', err);
-      setCorrelationsError('Failed to load pattern correlations');
+      const records = await correlationRepository.findByDateRange(userId, startMs, endMs);
+      setCorrelations(records);
+    } catch (e) {
+      console.error("Failed to load correlations", e);
+      setCorrelationsError("Failed to load correlations");
     } finally {
       setCorrelationsLoading(false);
     }
   };
 
-  // Story 6.5: Load layer preferences from localStorage on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('timeline-layer-preferences');
-      if (stored) {
-        const preferences = JSON.parse(stored);
-        if (preferences.visibleEventTypes) {
-          setVisibleEventTypes(new Set(preferences.visibleEventTypes));
-        }
-        if (preferences.showPatternHighlights !== undefined) {
-          setShowPatternHighlights(preferences.showPatternHighlights);
-        }
-        if (preferences.patternStrengthFilter) {
-          setPatternStrengthFilter(preferences.patternStrengthFilter);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load timeline layer preferences:', error);
-    }
-  }, []);
-
-  // Initial load - load only today
-  // mountTimestamp ensures this runs on EVERY mount (Story 3.5.13 fix)
-  useEffect(() => {
-    const loadInitialEvents = async () => {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-
-      console.log("🔄 TimelineView: Loading initial events (mount:", mountTimestamp, ") for userId:", userId);
-
-      // Load only today's events
-      const today = new Date();
-      await loadEvents(today);
-
-      // Story 6.5: Load correlations for pattern detection
-      // Calculate date range for correlation filtering
-      const startOfDay = new Date(today);
+    if (isMounted && userId && currentDate) {
+      loadEvents(currentDate);
+      const startOfDay = new Date(currentDate);
       startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(today);
+      const endOfDay = new Date(currentDate);
       endOfDay.setHours(23, 59, 59, 999);
-
-      await loadCorrelations(startOfDay.getTime(), endOfDay.getTime());
-
-      setLoading(false);
-    };
-
-    loadInitialEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, mountTimestamp]); // Re-run when userId changes OR component remounts
-
-  // Story 6.5: Run pattern detection when events and correlations are loaded
-  useEffect(() => {
-    if (events.length === 0 || correlations.length === 0) {
-      // No patterns to detect without both events and correlations
-      setDetectedPatterns([]);
-      return;
+      loadCorrelations(startOfDay.getTime(), endOfDay.getTime());
     }
+  }, [isMounted, userId, currentDate]);
 
-    setPatternsLoading(true);
-
-    // Debounce pattern detection by 500ms
-    const timeoutId = setTimeout(() => {
-      console.log('🔍 Running pattern detection...', {
-        events: events.length,
-        correlations: correlations.length,
-      });
-
-      const patterns = detectRecurringSequences(events, correlations);
-      setDetectedPatterns(patterns);
-      setPatternsLoading(false);
-
-      console.log('✅ Pattern detection complete:', {
-        patternsFound: patterns.length,
-      });
-    }, 500);
-
-    return () => {
-      clearTimeout(timeoutId);
-      setPatternsLoading(false);
-    };
+  // Pattern detection
+  useEffect(() => {
+    if (events.length > 0 && correlations.length > 0) {
+      setPatternsLoading(true);
+      try {
+        const patterns = detectRecurringSequences(events, correlations);
+        setDetectedPatterns(patterns);
+      } catch (e) {
+        console.error("Pattern detection failed", e);
+      } finally {
+        setPatternsLoading(false);
+      }
+    }
   }, [events, correlations]);
 
-  // Story 6.5: Filter events based on visible event types
-  const filteredEvents = useMemo(() => {
-    return events.filter(event => {
-      // Handle flare events - check if any flare type is visible
-      if (event.type.startsWith('flare-')) {
-        return visibleEventTypes.has('flare-created') || 
-               visibleEventTypes.has('flare-updated') || 
-               visibleEventTypes.has('flare-resolved');
-      }
-      return visibleEventTypes.has(event.type);
-    });
-  }, [events, visibleEventTypes]);
-
-  // Story 6.5: Filter patterns based on strength filter
-  const filteredPatterns = useMemo(() => {
-    if (patternStrengthFilter === 'all') {
-      return detectedPatterns;
-    }
-    return detectedPatterns.filter(pattern => {
-      const absCoeff = Math.abs(pattern.coefficient);
-      if (patternStrengthFilter === 'strong') {
-        return absCoeff >= 0.7;
-      }
-      if (patternStrengthFilter === 'moderate+strong') {
-        return absCoeff >= 0.5;
-      }
-      return true;
-    });
-  }, [detectedPatterns, patternStrengthFilter]);
-
-  // Group events by day
-  const groupedEvents = useMemo((): DayGroup[] => {
-    const groups: { [key: string]: DayGroup } = {};
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    filteredEvents.forEach(event => {
-      const eventDate = new Date(event.timestamp);
-      eventDate.setHours(0, 0, 0, 0);
-      const dateKey = eventDate.toISOString().split('T')[0];
-
-      if (!groups[dateKey]) {
-        let dateLabel: string;
-        const diffDays = Math.floor((today.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) {
-          dateLabel = 'Today';
-        } else if (diffDays === 1) {
-          dateLabel = 'Yesterday';
-        } else if (diffDays <= 7) {
-          dateLabel = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
-        } else {
-          dateLabel = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-
-        groups[dateKey] = {
-          date: eventDate,
-          dateLabel,
-          events: []
-        };
-      }
-
-      groups[dateKey].events.push(event);
-    });
-
-    // Sort groups by date descending
-    return Object.values(groups).sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [filteredEvents]);
-
-  // Note: Allergen filtering removed from dashboard timeline
-  // Users can filter by allergen on dedicated food/analytics pages
-
-  // Load previous day
-  const loadPreviousDay = async () => {
-    setLoadingMore(true);
-    const prevDate = new Date(currentDate);
-    prevDate.setDate(prevDate.getDate() - 1);
-    await loadEvents(prevDate, true);
-    setCurrentDate(prevDate);
-    setLoadingMore(false);
-  };
-
-  // Format time
-  const formatTime = (timestamp: number): string => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  // Handle event tap
   const handleEventTap = (event: TimelineEvent) => {
-    if (onEventTap) {
-      onEventTap(event);
-    } else {
+    if (onEventTap) onEventTap(event);
+    else {
       setSelectedEvent(event);
       setIsModalOpen(true);
     }
   };
 
-  // Handle add details
   const handleAddDetails = (event: TimelineEvent) => {
-    if (onAddDetails) {
-      onAddDetails(event);
-    } else {
+    if (onAddDetails) onAddDetails(event);
+    else {
       setSelectedEvent(event);
       setIsModalOpen(true);
     }
   };
 
-  // Toggle inline details for food events
-  const toggleFoodDetails = (eventId: string) => {
-    setExpandedFood((prev) => {
-      const next = new Set(prev);
-      if (next.has(eventId)) next.delete(eventId); else next.add(eventId);
-      return next;
-    });
+  const toggleFoodDetails = (id: string) => {
+    const newSet = new Set(expandedFood);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setExpandedFood(newSet);
   };
 
-  const handleDeleteFood = async (eventId: string) => {
+  const handleDeleteFood = async (id: string) => {
     try {
-      await foodEventRepository.delete(eventId);
-      await loadEvents(currentDate);
+      await foodEventRepository.delete(id);
+      if (currentDate) loadEvents(currentDate);
     } catch (e) {
-      console.error('Failed to delete food event', e);
+      console.error("Failed to delete food", e);
     }
   };
 
-  // Handle modal close
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setSelectedEvent(null);
-  };
-
-  // Handle modal save
-  const handleModalSave = () => {
-    // Reload events to reflect changes
-    loadEvents(currentDate);
-  };
-
-  // Handle modal delete
-  const handleModalDelete = () => {
-    // Reload events to reflect deletion
-    loadEvents(currentDate);
-  };
-
-  // Story 6.5: Pattern interaction handlers
-  const handleTogglePatternType = (type: CorrelationType) => {
-    setVisiblePatternTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) {
-        next.delete(type);
-      } else {
-        next.add(type);
-      }
-      return next;
-    });
-  };
-
+  const handleModalClose = () => setIsModalOpen(false);
+  const handleModalSave = () => { if (currentDate) loadEvents(currentDate); };
+  const handleModalDelete = () => { if (currentDate) loadEvents(currentDate); };
+  const handlePatternPanelClose = () => setIsPatternPanelOpen(false);
   const handlePatternBadgeClick = (pattern: DetectedPattern) => {
     setSelectedPattern(pattern);
     setIsPatternPanelOpen(true);
   };
-
-  const handlePatternPanelClose = () => {
-    setIsPatternPanelOpen(false);
-    setSelectedPattern(null);
+  const handleTogglePatternType = (type: CorrelationType) => {
+    setVisiblePatternTypes(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
   };
 
-  // Story 6.5: Calendar date selection handler
-  const handleDateSelect = async (date: Date | undefined) => {
-    if (!date) return;
-    setSelectedDate(date);
-    setLoading(true);
-    setError(null);
-    await loadEvents(date, false); // Load selected date (replace current events)
-    setCurrentDate(date);
-    setShowCalendar(false); // Hide calendar after selection
-    setLoading(false);
+  const loadPreviousDay = async () => {
+    if (!currentDate) return;
+    setLoadingMore(true);
+    const prev = new Date(currentDate);
+    prev.setDate(prev.getDate() - 1);
+    await loadEvents(prev, true);
+    setCurrentDate(prev);
+    setLoadingMore(false);
   };
 
-  // Story 6.5: Get patterns for a specific event (using filtered patterns)
-  const getPatternsForEvent = (eventId: string): DetectedPattern[] => {
-    return filteredPatterns.filter(pattern =>
-      pattern.occurrences.some(occ =>
-        occ.event1.id === eventId || occ.event2.id === eventId
-      ) && visiblePatternTypes.has(pattern.type)
+  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const getPatternsForEvent = (eventId: string) => {
+    return detectedPatterns.filter(p =>
+      p.occurrences.some(o => o.event1.id === eventId || o.event2.id === eventId)
     );
   };
 
-  // Story 6.5: Get pattern highlights for a specific event (where this event is event2)
-  const getPatternHighlightsForEvent = (eventId: string): Array<{ pattern: DetectedPattern; occurrence: PatternOccurrence }> => {
-    const highlights: Array<{ pattern: DetectedPattern; occurrence: PatternOccurrence }> = [];
-    filteredPatterns.forEach(pattern => {
-      if (!visiblePatternTypes.has(pattern.type)) return;
-      pattern.occurrences.forEach(occurrence => {
-        // Render highlight when this event is event2 (the result event)
-        if (occurrence.event2.id === eventId) {
-          highlights.push({ pattern, occurrence });
+  const getPatternHighlightsForEvent = (eventId: string) => {
+    const highlights: { pattern: DetectedPattern, occurrence: PatternOccurrence }[] = [];
+    detectedPatterns.forEach(pattern => {
+      pattern.occurrences.forEach(occ => {
+        if (occ.event1.id === eventId) {
+          highlights.push({ pattern, occurrence: occ });
         }
       });
     });
     return highlights;
   };
 
-  // Story 6.5: Extract available pattern types from detected patterns
-  const availablePatternTypes = useMemo((): CorrelationType[] => {
-    const types = new Set<CorrelationType>();
-    filteredPatterns.forEach(pattern => types.add(pattern.type));
-    return Array.from(types);
-  }, [filteredPatterns]);
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      setCurrentDate(date);
+      setShowCalendar(false);
+    }
+  };
 
-  if (loading) {
+  // Group events by day
+  const groupedEvents = useMemo(() => {
+    const groups: Record<string, DayGroup> = {};
+
+    // Filter by visible types
+    const filteredEvents = events.filter(e => visibleEventTypes.has(e.type));
+
+    filteredEvents.forEach(event => {
+      const date = new Date(event.timestamp);
+      const dateKey = date.toDateString();
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = {
+          date,
+          dateLabel: date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+          events: []
+        };
+      }
+      groups[dateKey].events.push(event);
+    });
+
+    return Object.values(groups).sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [events, visibleEventTypes]);
+
+  const filteredPatterns = useMemo(() => {
+    return detectedPatterns.filter(p => {
+      if (!visiblePatternTypes.has(p.type)) return false;
+      if (patternStrengthFilter === 'strong' && p.strength !== 'strong') return false;
+      if (patternStrengthFilter === 'moderate+strong' && p.strength === 'weak') return false;
+      return true;
+    });
+  }, [detectedPatterns, visiblePatternTypes, patternStrengthFilter]);
+
+  const availablePatternTypes = useMemo(() => {
+    const types = new Set<CorrelationType>();
+    detectedPatterns.forEach(p => types.add(p.type));
+    return Array.from(types);
+  }, [detectedPatterns]);
+
+  if (!isMounted) {
     return (
       <div className="w-full md:w-2/3 space-y-4">
-        {/* Skeleton loading */}
         {[...Array(5)].map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
@@ -816,27 +417,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="w-full md:w-2/3 p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-700">{error}</p>
-      </div>
-    );
-  }
-
   return (
     <div id="timeline-container" className="w-full md:w-2/3 space-y-6">
-      {/* Story 6.5: Timeline Layer Toggle */}
       <TimelineLayerToggle
         visibleEventTypes={visibleEventTypes}
         onToggleEventType={(type) => {
           setVisibleEventTypes(prev => {
             const next = new Set(prev);
-            if (next.has(type)) {
-              next.delete(type);
-            } else {
-              next.add(type);
-            }
+            if (next.has(type)) next.delete(type);
+            else next.add(type);
             return next;
           });
         }}
@@ -846,67 +435,45 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         onPatternStrengthFilterChange={setPatternStrengthFilter}
       />
 
-      {/* Story 6.5: Calendar Navigation */}
-      <div className="space-y-3">
+      {/* Calendar Navigation */}
+      <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setShowCalendar(prev => !prev)}
-          className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          aria-label={showCalendar ? "Hide calendar" : "Show calendar"}
+          className={cn(
+            "flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border backdrop-blur-md",
+            showCalendar
+              ? "bg-primary/10 border-primary/20 text-primary-dark shadow-sm"
+              : "bg-background/50 border-border/50 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          )}
         >
-          {showCalendar ? '📅 Hide Calendar' : '📅 Jump to Date'}
+          <CalendarIcon className="w-4 h-4 mr-2" />
+          {showCalendar ? 'Hide Calendar' : 'Jump to Date'}
         </button>
-        {showCalendar && (
-          <div className="border rounded-lg p-4 bg-white shadow-sm">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
-              className="rounded-md border"
-            />
-          </div>
+
+        {/* Export PDF (kept if patterns exist) */}
+        {filteredPatterns.length > 0 && (
+          <button
+            onClick={() => exportPatternSummaryPDF(filteredPatterns)}
+            className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+          >
+            <Download className="w-4 h-4" />
+            Export PDF
+          </button>
         )}
       </div>
 
-      {/* Story 6.5: Export Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex-1" />
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              try {
-                await downloadTimelineImage('timeline-container');
-              } catch (error) {
-                console.error('Failed to export timeline image:', error);
-                alert('Failed to export timeline image. Please ensure html2canvas is installed.');
-              }
-            }}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-            aria-label="Export timeline as image"
-          >
-            <Download className="w-4 h-4" />
-            Export Image
-          </button>
-          {filteredPatterns.length > 0 && (
-            <button
-              onClick={async () => {
-                try {
-                  await exportPatternSummaryPDF(filteredPatterns);
-                } catch (error) {
-                  console.error('Failed to export pattern summary PDF:', error);
-                  alert('Failed to export pattern summary PDF. Please ensure jsPDF is installed.');
-                }
-              }}
-              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-              aria-label="Export pattern summary as PDF"
-            >
-              <Download className="w-4 h-4" />
-              Export PDF
-            </button>
-          )}
+      {showCalendar && (
+        <div className="border rounded-xl p-4 bg-card/95 backdrop-blur-sm shadow-lg mb-6 animate-in fade-in slide-in-from-top-2 z-20 relative">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDateSelect}
+            className="rounded-md border bg-background"
+          />
         </div>
-      </div>
+      )}
 
-      {/* Story 6.5: Pattern Legend */}
+      {/* Pattern Legend */}
       {filteredPatterns.length > 0 && (
         <PatternLegend
           availableTypes={availablePatternTypes}
@@ -917,129 +484,180 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
       {groupedEvents.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">
-            No events logged yet today
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+            <Filter className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium text-foreground">No events found</h3>
+          <p className="text-muted-foreground mt-1">
+            Try adjusting your filters or log a new event.
           </p>
         </div>
       ) : (
-        groupedEvents.map((group) => (
-          <div key={group.dateLabel} className="space-y-3">
-            <h3 className="text-h3 border-b border-border pb-2">
-              {group.dateLabel}
-            </h3>
-            <div className="space-y-2">
-              {group.events.map((event) => {
-                const eventPatterns = getPatternsForEvent(event.id);
-                const patternHighlights = getPatternHighlightsForEvent(event.id);
-                return (
-                  <React.Fragment key={event.id}>
-                    {/* Story 6.5: Pattern Highlights - render before event2 to show connection */}
-                    {showPatternHighlights && patternHighlights.map(({ pattern, occurrence }) => (
-                      <PatternHighlight
-                        key={`highlight-${pattern.id}-${occurrence.event1.id}-${occurrence.event2.id}`}
-                        event1={occurrence.event1}
-                        event2={occurrence.event2}
-                        correlationType={pattern.type}
-                        lagHours={pattern.lagHours}
-                        isVisible={visiblePatternTypes.has(pattern.type)}
-                      />
-                    ))}
-                    <article
-                      id={`timeline-event-${event.id}`}
-                      className="card-hover relative"
-                      onClick={() => handleEventTap(event)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleEventTap(event);
-                        }
-                      }}
-                      aria-label={`Event: ${event.summary} at ${formatTime(event.timestamp)}`}
-                    >
-                      {/* Story 6.5: Pattern Badge */}
-                      {eventPatterns.length > 0 && eventPatterns.map(pattern => (
-                        <PatternBadge
-                          key={pattern.id}
-                          pattern={pattern}
-                          onClick={() => handlePatternBadgeClick(pattern)}
+        <div className="relative border-l-2 border-border/50 ml-4 md:ml-6 space-y-8">
+          {groupedEvents.map((group) => (
+            <div key={group.dateLabel} className="relative">
+              {/* Date Header */}
+              <div className="flex items-center -ml-[21px] mb-6">
+                <div className="w-10 h-10 rounded-full bg-background border-2 border-primary/20 flex items-center justify-center shadow-sm z-10">
+                  <div className="w-3 h-3 rounded-full bg-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground ml-4">
+                  {group.dateLabel}
+                </h3>
+              </div>
+
+              <div className="space-y-4 pl-6">
+                {group.events.map((event, eventIndex) => {
+                  const eventPatterns = getPatternsForEvent(event.id);
+                  const patternHighlights = getPatternHighlightsForEvent(event.id);
+
+                  // Determine icon and color based on type
+                  let icon = '•';
+                  let colorClass = 'bg-gray-500';
+
+                  switch (event.type) {
+                    case 'medication': icon = '💊'; colorClass = 'bg-emerald-500'; break;
+                    case 'symptom': icon = '🤒'; colorClass = 'bg-blue-500'; break;
+                    case 'trigger': icon = '⚡'; colorClass = 'bg-yellow-500'; break;
+                    case 'food': icon = '🍽️'; colorClass = 'bg-purple-500'; break;
+                    case 'flare-created': icon = '🔥'; colorClass = 'bg-orange-500'; break;
+                  }
+
+                  return (
+                    <React.Fragment key={`${group.dateLabel}-${event.id}-${eventIndex}`}>
+                      {/* Pattern Highlights */}
+                      {showPatternHighlights && patternHighlights.map(({ pattern, occurrence }) => (
+                        <PatternHighlight
+                          key={`highlight-${pattern.id}-${occurrence.event1.id}-${occurrence.event2.id}`}
+                          event1={occurrence.event1}
+                          event2={occurrence.event2}
+                          correlationType={pattern.type}
+                          lagHours={pattern.lagHours}
+                          isVisible={visiblePatternTypes.has(pattern.type)}
                         />
                       ))}
 
-                    <time
-                      className="flex-shrink-0 text-sm text-gray-500 font-mono"
-                      dateTime={new Date(event.timestamp).toISOString()}
-                    >
-                      {formatTime(event.timestamp)}
-                    </time>
-                    <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="text-gray-900 truncate">{event.summary}</p>
-                      {!event.hasDetails && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddDetails(event);
-                          }}
-                          className="ml-2 flex items-center text-blue-600 hover:text-blue-800 text-sm min-h-[44px] min-w-[44px]"
-                          aria-label="Add details to this event"
-                        >
-                          Add details
-                          <ArrowRight className="w-3 h-3 ml-1" />
-                        </button>
-                      )}
-                    </div>
-                    {event.type === 'food' ? (
-                      <div className="mt-2">
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); toggleFoodDetails(event.id); }}
-                          className="text-sm text-blue-600 hover:text-blue-800 underline"
-                          aria-expanded={expandedFood.has(event.id)}
-                          aria-controls={`food-details-${event.id}`}
-                        >
-                          {expandedFood.has(event.id) ? 'Hide details' : 'Show details'}
-                        </button>
-                        {expandedFood.has(event.id) && (
-                          <div id={`food-details-${event.id}`} role="region" className="mt-2 text-sm text-gray-700">
-                            {event.details && <p className="mb-2">{event.details}</p>}
-                            <div className="flex gap-3">
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); handleAddDetails(event); }}
-                                className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
-                                aria-label="Edit this meal"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); handleDeleteFood(event.id); }}
-                                className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700"
-                                aria-label="Delete this meal"
-                              >
-                                Delete
-                              </button>
-                            </div>
+                      <article
+                        id={`timeline-event-${event.id}`}
+                        className="group relative glass-panel rounded-xl p-4 hover:shadow-md transition-all duration-200 border-l-4 border-l-transparent hover:border-l-primary"
+                        onClick={() => handleEventTap(event)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleEventTap(event);
+                          }
+                        }}
+                      >
+                        {/* Pattern Badge */}
+                        {eventPatterns.length > 0 && (
+                          <div className="absolute -top-2 -right-2 flex gap-1">
+                            {eventPatterns.map(pattern => (
+                              <PatternBadge
+                                key={pattern.id}
+                                pattern={pattern}
+                                onClick={() => handlePatternBadgeClick(pattern)}
+                              />
+                            ))}
                           </div>
                         )}
-                      </div>
-                    ) : (
-                      event.details && (
-                        <p className="text-sm text-gray-600 mt-1 truncate">
-                          {event.details}
-                        </p>
-                      )
-                    )}
-                  </div>
-                </article>
-                  </React.Fragment>
-                );
-              })}
+
+                        <div className="flex items-start gap-3">
+                          <div className={cn("flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm", colorClass)}>
+                            <span className="text-sm">{icon}</span>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-muted-foreground font-mono">
+                                {formatTime(event.timestamp)}
+                              </span>
+                            </div>
+
+                            <h4 className="text-base font-semibold text-foreground leading-tight mb-1">
+                              {event.summary.replace(/^[^\s]+\s/, '')}
+                            </h4>
+
+                            {event.type === 'food' ? (
+                              <div className="mt-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); toggleFoodDetails(event.id); }}
+                                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors"
+                                >
+                                  {expandedFood.has(event.id) ? 'Hide details' : 'Show details'}
+                                </button>
+                                {expandedFood.has(event.id) && (
+                                  <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground animate-in fade-in slide-in-from-top-1">
+                                    {/* Display food items */}
+                                    {event.foodNames && event.foodNames.length > 0 && (
+                                      <div className="mb-2">
+                                        <p className="font-semibold text-foreground mb-1">Foods:</p>
+                                        <ul className="list-disc list-inside">
+                                          {event.foodNames.map((name, idx) => (
+                                            <li key={idx}>{name}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+
+                                    {/* Display notes if available */}
+                                    {event.details && (
+                                      <div className="mt-2">
+                                        <p className="font-semibold text-foreground mb-1">Notes:</p>
+                                        <p>{event.details}</p>
+                                      </div>
+                                    )}
+
+                                    <div className="flex gap-2 mt-2">
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleAddDetails(event); }}
+                                        className="text-xs text-primary hover:underline"
+                                      >
+                                        Edit
+                                      </button>
+                                      <span className="text-border">|</span>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteFood(event.id); }}
+                                        className="text-xs text-red-500 hover:underline"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              event.details && (
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2 group-hover:line-clamp-none transition-all">
+                                  {event.details}
+                                </p>
+                              )
+                            )}
+                          </div>
+
+                          {!event.hasDetails && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddDetails(event);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-primary"
+                              title="Add details"
+                            >
+                              <ArrowRight className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </article>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
 
       {/* Load previous day button */}
@@ -1051,7 +669,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto",
             loadingMore && "cursor-not-allowed"
           )}
-          aria-label="Load events from previous day"
         >
           {loadingMore ? (
             <>
@@ -1073,7 +690,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         onDelete={handleModalDelete}
       />
 
-      {/* Story 6.5: Pattern Detail Panel */}
+      {/* Pattern Detail Panel */}
       <PatternDetailPanel
         pattern={selectedPattern}
         isOpen={isPatternPanelOpen}

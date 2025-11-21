@@ -46,14 +46,18 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="bg-background text-foreground antialiased font-sans">
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} bg-background text-foreground antialiased font-sans`}>
         <ThemeProvider>
           <MigrationProvider>
             <CorrelationAutoCalculationProvider>

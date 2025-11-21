@@ -102,11 +102,11 @@ export function InterventionEffectivenessSection({
 
       {/* Task 7.9: "Ranked by Effectiveness" subsection */}
       {sufficientInterventions.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <h3 className="text-lg font-semibold text-gray-800">Ranked by Effectiveness</h3>
 
           {/* Task 7.10-7.11: Map interventions to cards with rank, use responsive grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {sufficientInterventions.map((intervention, index) => (
               <InterventionEffectivenessCard
                 key={intervention.interventionType}
@@ -121,11 +121,11 @@ export function InterventionEffectivenessSection({
 
       {/* Task 7.13-7.14: "Insufficient Data" subsection (only if insufficient interventions exist) */}
       {insufficientInterventions.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <h3 className="text-lg font-semibold text-gray-800">Insufficient Data</h3>
 
           {/* Task 7.16: Add spacing between subsections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {insufficientInterventions.map((intervention) => (
               <InsufficientDataCard
                 key={intervention.interventionType}

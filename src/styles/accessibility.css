@@ -285,8 +285,10 @@ button:disabled,
    ============================================ */
 
 /* Ensure minimum 44x44px touch targets on all interactive elements */
+/* Exclude inline links to prevent layout issues */
 button,
-a,
+a.btn,
+a[role="button"],
 [role="button"],
 input[type="button"],
 input[type="submit"],
@@ -294,6 +296,14 @@ input[type="reset"] {
   min-width: 44px;
   min-height: 44px;
   /* Use padding to expand hit area if content is smaller */
+  padding: max(12px, calc((44px - 1em) / 2));
+}
+
+/* For standalone navigation links (not inline text links) */
+nav a,
+a.nav-link {
+  min-width: 44px;
+  min-height: 44px;
   padding: max(12px, calc((44px - 1em) / 2));
 }
 

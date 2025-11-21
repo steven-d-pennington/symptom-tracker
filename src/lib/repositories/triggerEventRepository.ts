@@ -120,6 +120,12 @@ export class TriggerEventRepository {
     };
 
     await db.triggerEvents.add(record);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("trigger-event-updated"));
+    }
+
     return id;
   }
 
@@ -146,6 +152,11 @@ export class TriggerEventRepository {
     };
 
     await db.triggerEvents.update(id, updateRecord);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("trigger-event-updated"));
+    }
   }
 
   /**
@@ -153,6 +164,11 @@ export class TriggerEventRepository {
    */
   async delete(id: string): Promise<void> {
     await db.triggerEvents.delete(id);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("trigger-event-updated"));
+    }
   }
 
   /**

@@ -20,7 +20,7 @@ const OnboardingPage = () => {
         <h1 className="text-4xl font-bold text-foreground">
           Tailor the tracker to your needs
         </h1>
-        <p className="mx-auto max-w-2xl text-base text-muted-foreground">
+        <p className="mx-auto max-w-3xl text-base text-muted-foreground">
           The onboarding flow collects just enough information to personalize your dashboard, reminders, and health insights while keeping everything private on your device.
         </p>
       </div>

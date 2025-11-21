@@ -2,20 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { RefreshCw, Download } from "lucide-react";
-import { QuickLogButtons } from "@/components/quick-log/QuickLogButtons";
-// Story 9.1: FlareCreationModal deprecated, flare creation now uses dedicated page at /flares/place
-// Story 3.5.5: MedicationLogModal deprecated, medication logging now uses dedicated page at /log/medication
-// Story 3.5.3: SymptomLogModal deprecated, symptom logging now uses dedicated page at /log/symptom
-// Story 3.5.4: FoodLogModal deprecated, food logging now uses dedicated page at /log/food
-// Story 3.5.5: TriggerLogModal deprecated, trigger logging now uses dedicated page at /log/trigger
+import { RefreshCw, Flame, Pill, Activity, Zap, UtensilsCrossed } from "lucide-react";
 import TimelineView from "@/components/timeline/TimelineView";
-import { TodayQuickActionsCard } from "@/components/dashboard/TodayQuickActionsCard";
 import { TodayTimelineCard } from "@/components/dashboard/TodayTimelineCard";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
 import { cn } from "@/lib/utils/cn";
-import { db } from "@/lib/db/client";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { GlassActionCard } from "@/components/dashboard/GlassActionCard";
+import { InsightSnippet } from "@/components/dashboard/InsightSnippet";
 
 function DashboardContent() {
   const { userId } = useCurrentUser();
@@ -28,86 +23,7 @@ function DashboardContent() {
   const touchStartY = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // DEBUG: Export timeline data to JSON
-  const handleExportDebugData = useCallback(async () => {
-    if (!userId) return;
-
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const startOfDay = today.getTime();
-      const endOfDay = new Date(today).setHours(23, 59, 59, 999);
-
-      const [symptoms, triggers, medications, markers, foods] = await Promise.all([
-        db.symptomInstances.where("userId").equals(userId).toArray(),
-        db.triggerEvents.where("userId").equals(userId).toArray(),
-        db.medicationEvents.where("userId").equals(userId).toArray(),
-        db.bodyMarkers.where("userId").equals(userId).toArray(),
-        db.foodEvents.where("userId").equals(userId).toArray(),
-      ]);
-
-      const debugData = {
-        exportedAt: new Date().toISOString(),
-        userId,
-        todayRange: {
-          startOfDay: new Date(startOfDay).toISOString(),
-          startMs: startOfDay,
-          endOfDay: new Date(endOfDay).toISOString(),
-          endMs: endOfDay,
-        },
-        counts: {
-          symptoms: symptoms.length,
-          triggers: triggers.length,
-          medications: medications.length,
-          markers: markers.length,
-          foods: foods.length,
-        },
-        symptoms: symptoms.map(s => ({
-          id: s.id,
-          name: s.name,
-          severity: s.severity,
-          timestamp: s.timestamp,
-          timestampISO: new Date(s.timestamp).toISOString(),
-          timestampMs: s.timestamp instanceof Date ? s.timestamp.getTime() : new Date(s.timestamp).getTime(),
-          isToday: (s.timestamp instanceof Date ? s.timestamp.getTime() : new Date(s.timestamp).getTime()) >= startOfDay && (s.timestamp instanceof Date ? s.timestamp.getTime() : new Date(s.timestamp).getTime()) <= endOfDay,
-        })),
-        triggers: triggers.map(t => ({
-          id: t.id,
-          triggerId: t.triggerId,
-          intensity: t.intensity,
-          timestamp: t.timestamp,
-          timestampISO: new Date(t.timestamp).toISOString(),
-          timestampMs: t.timestamp,
-          isToday: t.timestamp >= startOfDay && t.timestamp <= endOfDay,
-        })),
-        medications: medications.map(m => ({
-          id: m.id,
-          medicationId: m.medicationId,
-          taken: m.taken,
-          timestamp: m.timestamp,
-          timestampISO: new Date(m.timestamp).toISOString(),
-          timestampMs: m.timestamp,
-          isToday: m.timestamp >= startOfDay && m.timestamp <= endOfDay,
-        })),
-      };
-
-      const json = JSON.stringify(debugData, null, 2);
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `timeline-debug-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      console.log("🔍 DEBUG DATA EXPORTED:", debugData);
-    } catch (error) {
-      console.error("Failed to export debug data:", error);
-    }
-  }, [userId]);
-
   // Route-based modal state derived from search params
-  const quickAction = searchParams?.get("quickAction");
   const refreshFlag = searchParams?.get("refresh");
 
   // Auto-refresh timeline when returning from logging pages (Story 3.5.3, 3.5.4)
@@ -214,7 +130,6 @@ function DashboardContent() {
     void recordUxEvent("quickAction.flare", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
-    // Story 9.1: Navigate to dedicated flare placement page
     router.push("/flares/place?source=dashboard");
   }, [recordUxEvent, router]);
 
@@ -222,7 +137,6 @@ function DashboardContent() {
     void recordUxEvent("quickAction.medication", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
-    // Story 3.5.5: Navigate to dedicated medication logging page
     router.push("/log/medication");
   }, [recordUxEvent, router]);
 
@@ -230,7 +144,6 @@ function DashboardContent() {
     void recordUxEvent("quickAction.symptom", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
-    // Story 3.5.3: Navigate to dedicated symptom logging page
     router.push("/log/symptom");
   }, [recordUxEvent, router]);
 
@@ -238,12 +151,10 @@ function DashboardContent() {
     void recordUxEvent("quickAction.trigger", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
-    // Story 3.5.5: Navigate to dedicated trigger logging page
     router.push("/log/trigger");
   }, [recordUxEvent, router]);
 
   const handleLogFood = useCallback(() => {
-    // Story 3.5.4: Food logging now uses dedicated page at /log/food
     void recordUxEvent("quickAction.food", {
       metadata: { source: "dashboard", surface: "quickActions" },
     });
@@ -251,20 +162,9 @@ function DashboardContent() {
     router.push("/log/food");
   }, [router, recordUxEvent]);
 
-  // Close modal by navigating back to dashboard
-  const handleCloseQuickAction = useCallback(() => {
-    router.push("/dashboard");
-  }, [router]);
-
-  // Handle logged events
-  const handleEventLogged = useCallback(() => {
-    setRefreshKey(prev => prev + 1);
-    router.push("/dashboard");
-  }, [router]);
-
   if (!userId) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         <div className="text-center">Loading...</div>
       </div>
     );
@@ -273,43 +173,69 @@ function DashboardContent() {
   return (
     <div
       ref={scrollContainerRef}
-      className="relative h-screen overflow-y-auto"
+      className="relative h-screen overflow-y-auto bg-background"
     >
       {/* Pull-to-refresh indicator */}
       {isPullToRefresh && (
         <div className="absolute top-0 left-0 right-0 flex justify-center pt-4 z-10">
-          <div className="bg-background/90 backdrop-blur-sm rounded-full p-2">
-            <RefreshCw className={cn("h-5 w-5", isRefreshing && "animate-spin")} />
+          <div className="bg-background/90 backdrop-blur-sm rounded-full p-2 shadow-md">
+            <RefreshCw className={cn("h-5 w-5 text-primary", isRefreshing && "animate-spin")} />
           </div>
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Quick Actions Module */}
-        <TodayQuickActionsCard>
-          <QuickLogButtons
-            onLogFlare={handleLogFlare}
-            onLogMedication={handleLogMedication}
-            onLogSymptom={handleLogSymptom}
-            onLogTrigger={handleLogTrigger}
-            onLogFood={handleLogFood}
-            instrumentationContext="dashboard.quickActions"
-            disableInstrumentation
-          />
-        </TodayQuickActionsCard>
+      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
+        <DashboardHeader />
+
+        <InsightSnippet />
+
+        {/* Quick Actions Grid */}
+        <div>
+          <h3 className="text-lg font-semibold mb-4 text-foreground/80">Quick Actions</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <GlassActionCard
+              title="Log Flare"
+              icon={Flame}
+              colorClass="text-orange-500"
+              gradientClass="from-orange-500/10 to-orange-500/5 hover:border-orange-200"
+              onClick={handleLogFlare}
+            />
+            <GlassActionCard
+              title="Symptom"
+              icon={Activity}
+              colorClass="text-blue-500"
+              gradientClass="from-blue-500/10 to-blue-500/5 hover:border-blue-200"
+              onClick={handleLogSymptom}
+            />
+            <GlassActionCard
+              title="Medication"
+              icon={Pill}
+              colorClass="text-emerald-500"
+              gradientClass="from-emerald-500/10 to-emerald-500/5 hover:border-emerald-200"
+              onClick={handleLogMedication}
+            />
+            <GlassActionCard
+              title="Trigger"
+              icon={Zap}
+              colorClass="text-yellow-500"
+              gradientClass="from-yellow-500/10 to-yellow-500/5 hover:border-yellow-200"
+              onClick={handleLogTrigger}
+            />
+            <GlassActionCard
+              title="Food"
+              icon={UtensilsCrossed}
+              colorClass="text-purple-500"
+              gradientClass="from-purple-500/10 to-purple-500/5 hover:border-purple-200"
+              onClick={handleLogFood}
+            />
+          </div>
+        </div>
 
         {/* Today's Timeline Module */}
         <TodayTimelineCard>
           <TimelineView key={`timeline-${refreshKey}`} />
         </TodayTimelineCard>
       </div>
-
-      {/* Route-based Quick Action Modals */}
-      {/* Story 9.1: Flare creation moved to dedicated page at /flares/place */}
-      {/* Story 3.5.5: Medication logging moved to dedicated page at /log/medication */}
-      {/* Story 3.5.3: Symptom logging moved to dedicated page at /log/symptom */}
-      {/* Story 3.5.5: Trigger logging moved to dedicated page at /log/trigger */}
-      {/* Story 3.5.4: Food Log Modal removed - food logging now uses dedicated page at /log/food */}
     </div>
   );
 }

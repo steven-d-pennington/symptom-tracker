@@ -1,7 +1,7 @@
 "use client";
 
 import { Settings as SettingsIcon, Bell, Lock, Palette, Globe, Database, Keyboard, Activity, Pill, Zap, Utensils, Cloud } from "lucide-react";
-import DevDataControls from "@/components/settings/DevDataControls";
+import { DevDataControls } from "@/components/settings/DevDataControls";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { CorrelationSettings } from "@/components/settings/CorrelationSettings";
 import { MedicationList } from "@/components/manage/MedicationList";
@@ -30,11 +30,10 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setManageDataTab("medications")}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
-                manageDataTab === "medications"
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "medications"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
+                }`}
             >
               <Pill className="h-4 w-4" />
               Medications
@@ -42,11 +41,10 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setManageDataTab("symptoms")}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
-                manageDataTab === "symptoms"
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "symptoms"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
+                }`}
             >
               <Activity className="h-4 w-4" />
               Symptoms
@@ -54,11 +52,10 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setManageDataTab("triggers")}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
-                manageDataTab === "triggers"
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "triggers"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
+                }`}
             >
               <Zap className="h-4 w-4" />
               Triggers
@@ -66,11 +63,10 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setManageDataTab("foods")}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
-                manageDataTab === "foods"
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "foods"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
+                }`}
             >
               <Utensils className="h-4 w-4" />
               Foods
@@ -148,17 +144,17 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+    <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
         <p className="mt-2 text-muted-foreground">
           Customize your app experience
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Settings Sections */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {settingsSections.map((section) => {
             const Icon = section.icon;
             const isExpanded = expandedSection === section.title;
@@ -176,9 +172,8 @@ export default function SettingsPage() {
                       : undefined
                   }
                   disabled={!hasContent}
-                  className={`w-full p-6 text-left ${
-                    hasContent ? "cursor-pointer hover:bg-muted/50" : ""
-                  }`}
+                  className={`w-full p-4 text-left ${hasContent ? "cursor-pointer hover:bg-muted/50" : ""
+                    }`}
                 >
                   <div className="flex items-start gap-4">
                     <div className="p-3 rounded-lg bg-primary/10 text-primary">
@@ -224,7 +219,7 @@ export default function SettingsPage() {
                   href={section.href}
                   className="block rounded-lg border border-border bg-card overflow-hidden hover:bg-muted/50 transition-colors"
                 >
-                  <div className="p-6">
+                  <div className="p-4">
                     <div className="flex items-start gap-4">
                       <div className="p-3 rounded-lg bg-primary/10 text-primary">
                         <Icon className="w-6 h-6" />
@@ -267,9 +262,8 @@ export default function SettingsPage() {
                           : undefined
                       }
                       disabled={!hasContent}
-                      className={`w-full p-6 text-left ${
-                        hasContent ? "cursor-pointer hover:bg-muted/50" : ""
-                      }`}
+                      className={`w-full p-4 text-left ${hasContent ? "cursor-pointer hover:bg-muted/50" : ""
+                        }`}
                     >
                       <div className="flex items-start gap-4">
                         <div className="p-3 rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400">

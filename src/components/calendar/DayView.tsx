@@ -34,12 +34,14 @@ export const DayView = ({ entry, events = [], onEdit }: DayViewProps) => {
           <p className="text-sm text-muted-foreground">
             {entry.hasEntry ? (
               <>
-                {entry.symptomCount} symptoms · {entry.medicationCount} medications · {entry.triggerCount} triggers
+                {entry.symptomsDetails.length} symptoms · {entry.medicationDetails.length} medications · {entry.triggerDetails.length} triggers
                 {/* Story 3.5.7: Display counts for new data types */}
-                {entry.foodCount > 0 && ` · ${entry.foodCount} meals`}
-                {entry.moodCount > 0 && ` · ${entry.moodCount} mood`}
-                {entry.sleepCount > 0 && ` · ${entry.sleepCount} sleep`}
-                {entry.flareCount > 0 && ` · ${entry.flareCount} flares`}
+                {entry.foodDetails?.length > 0 && ` · ${entry.foodDetails.filter((f) => f.mealType !== "snack").length} meals`}
+                {entry.foodDetails?.filter((f) => f.mealType === "snack").length > 0 &&
+                  ` · ${entry.foodDetails.filter((f) => f.mealType === "snack").length} snacks`}
+                {entry.moodDetails?.length > 0 && ` · ${entry.moodDetails.length} mood`}
+                {entry.sleepDetails?.length > 0 && ` · ${entry.sleepDetails.length} sleep`}
+                {entry.flareDetails?.length > 0 && ` · ${entry.flareDetails.length} flares`}
               </>
             ) : (
               "No entry recorded"
@@ -57,9 +59,15 @@ export const DayView = ({ entry, events = [], onEdit }: DayViewProps) => {
 
       <section className="grid gap-3 text-sm text-muted-foreground">
         <div className="rounded-xl border border-border bg-muted/20 p-3">
-          <p>Mood: {entry.mood ?? "Not recorded"}</p>
           <p>
-            Energy: {typeof entry.energyLevel === "number" ? `${entry.energyLevel}/10` : "n/a"}
+            Mood: {entry.moodDetails?.[0]?.moodType ?? entry.mood ?? "Not recorded"}
+            {entry.moodDetails?.[0]?.mood && ` (${entry.moodDetails[0].mood}/10)`}
+          </p>
+          <p>
+            Sleep: {entry.sleepDetails?.[0]?.hours !== undefined
+              ? `${entry.sleepDetails[0].hours}h`
+              : "Not recorded"}
+            {entry.sleepDetails?.[0]?.quality && ` (quality: ${entry.sleepDetails[0].quality}/10)`}
           </p>
           <p>Notes: {entry.notesSummary ?? "Add notes from the daily log."}</p>
         </div>

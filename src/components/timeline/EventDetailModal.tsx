@@ -11,8 +11,10 @@ import { photoRepository } from '@/lib/repositories/photoRepository';
 import { PhotoCapture } from '@/components/photos/PhotoCapture';
 import { PhotoEncryption } from '@/lib/utils/photoEncryption';
 import { MarkdownPreview } from '@/components/common/MarkdownPreview';
-import { announceToScreenReader, handleModalKeyboard, getSliderAriaAttributes, focusFirstElement } from '@/lib/utils/a11y';
+import { announceToScreenReader, handleModalKeyboard, focusFirstElement } from '@/lib/utils/a11y';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+import { SeveritySlider } from '@/components/ui/SeveritySlider';
+import { cn } from '@/lib/utils/cn';
 
 interface EventDetailModalProps {
   event: TimelineEvent | null;
@@ -391,37 +393,34 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
       case 'flare-resolved':
         return (
           <>
-            <div>
-              <label htmlFor="severity" className="block text-sm font-medium text-foreground mb-1">
-                Severity: {severity}/10
-              </label>
-              <input
-                id="severity"
-                type="range"
-                min="1"
-                max="10"
-                value={severity}
-                onChange={(e) => setSeverity(parseInt(e.target.value))}
-                {...getSliderAriaAttributes(severity, 1, 10, 'Flare severity')}
-                className="w-full h-8 cursor-pointer"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Mild (1)</span>
-                <span>Severe (10)</span>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">
+                  Severity
+                </label>
+                <SeveritySlider
+                  value={severity}
+                  onChange={setSeverity}
+                  min={1}
+                  max={10}
+                  step={1}
+                  labels={{ 1: 'Mild', 10: 'Severe' }}
+                />
               </div>
-            </div>
-            <div>
-              <label htmlFor="body-location" className="block text-sm font-medium text-foreground mb-1">
-                Body Location
-              </label>
-              <input
-                id="body-location"
-                type="text"
-                value={bodyLocation}
-                onChange={(e) => setBodyLocation(e.target.value)}
-                placeholder="e.g., Right armpit, Lower back"
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
-              />
+
+              <div>
+                <label htmlFor="body-location" className="block text-sm font-medium text-foreground mb-1">
+                  Body Location
+                </label>
+                <input
+                  id="body-location"
+                  type="text"
+                  value={bodyLocation}
+                  onChange={(e) => setBodyLocation(e.target.value)}
+                  placeholder="e.g., Right armpit, Lower back"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+                />
+              </div>
             </div>
           </>
         );
@@ -437,14 +436,14 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm transition-all duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="event-detail-title"
@@ -452,17 +451,21 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
       >
         <div
           ref={modalRef}
-          className="relative w-full h-full md:h-auto md:max-w-2xl md:max-h-[90vh] overflow-y-auto bg-card rounded-none md:rounded-lg shadow-xl"
+          className={cn(
+            "glass-panel relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200",
+            "border border-border/50"
+          )}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Sticky Header */}
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card p-4">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border/50 bg-muted/20 px-6 py-4">
             <div>
-              <h2 id="event-detail-title" className="text-xl font-semibold text-foreground">
-                {getEventIcon()} Event Details
+              <h2 id="event-detail-title" className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <span>{getEventIcon()}</span>
+                <span>Event Details</span>
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {event.summary} at {formatTime(event.timestamp)}
+              <p className="text-sm text-muted-foreground">
+                {event.summary} • {formatTime(event.timestamp)}
               </p>
             </div>
             <button
@@ -476,13 +479,13 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
           {/* Error message */}
           {error && (
-            <div className="mx-4 mt-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
             </div>
           )}
 
           {/* Form Content */}
-          <div className="p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Type-specific fields */}
             {renderFormFields()}
 
@@ -497,7 +500,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add detailed notes about this event (supports **bold** and - lists)"
                 rows={4}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground resize-none"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background/50 text-foreground resize-none"
               />
               <p className="mt-1 text-xs text-muted-foreground">
                 Markdown supported: **bold**, - bullet points
@@ -511,72 +514,52 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
               )}
             </div>
 
-            {/* Photo attachment button */}
-            <div>
+            {/* Actions Grid */}
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setShowPhotoCapture(true)}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors min-h-[44px] min-w-[44px]"
+                className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
                 type="button"
-                aria-label="Add photo to event"
               >
                 <Camera className="h-4 w-4" />
-                Add Photo
+                {attachedPhotoIds.length > 0 ? `${attachedPhotoIds.length} Photos` : 'Add Photo'}
               </button>
-              {attachedPhotoIds.length > 0 && (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {attachedPhotoIds.length} photo(s) attached
-                </p>
-              )}
-            </div>
 
-            {/* Event linking button */}
-            <div>
               <button
                 onClick={() => setShowEventLinker(true)}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors min-h-[44px] min-w-[44px]"
+                className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
                 type="button"
-                aria-label="Link to related events from same day"
               >
                 <LinkIcon className="h-4 w-4" />
-                Link to Related Events
+                {linkedEvents.length > 0 ? `${linkedEvents.length} Linked` : 'Link Events'}
               </button>
-              {linkedEvents.length > 0 && (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {linkedEvents.length} event(s) linked
-                </p>
-              )}
             </div>
           </div>
 
-          {/* Sticky Footer */}
-          <div className="sticky bottom-0 border-t border-border bg-card p-4">
+          {/* Footer */}
+          <div className="border-t border-border/50 bg-muted/20 px-6 py-4">
             <div className="flex items-center justify-between">
-              {/* Delete button */}
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors flex items-center gap-2 min-h-[44px]"
+                className="text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 px-3 py-2 rounded-lg transition-colors flex items-center gap-2"
                 disabled={isSaving}
-                aria-label="Delete this event"
               >
                 <Trash2 className="h-4 w-4" />
-                Delete Event
+                Delete
               </button>
 
-              {/* Action buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-muted transition-colors min-h-[44px]"
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 rounded-lg transition-colors"
                   disabled={isSaving}
-                  aria-label="Cancel and close modal"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 min-h-[44px]"
-                  aria-label="Save event details"
+                  className="px-6 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
                   {isSaving ? (
                     <>
@@ -586,7 +569,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   ) : (
                     <>
                       <Save className="h-4 w-4" />
-                      Save
+                      Save Changes
                     </>
                   )}
                 </button>
@@ -600,11 +583,11 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
       {showDeleteConfirm && (
         <>
           <div
-            className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm"
             onClick={() => setShowDeleteConfirm(false)}
           />
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div className="bg-card rounded-lg p-6 max-w-sm w-full shadow-xl">
+            <div className="glass-panel border border-border/50 rounded-xl p-6 max-w-sm w-full shadow-2xl">
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 Delete Event?
               </h3>
@@ -614,7 +597,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 rounded-lg transition-colors"
                   disabled={isSaving}
                 >
                   Cancel
@@ -646,11 +629,11 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
       {showEventLinker && (
         <>
           <div
-            className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm"
             onClick={() => setShowEventLinker(false)}
           />
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div className="bg-card rounded-lg p-6 max-w-md w-full shadow-xl">
+            <div className="glass-panel border border-border/50 rounded-xl p-6 max-w-md w-full shadow-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-foreground">
                   Link Related Events
@@ -675,7 +658,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
               <div className="flex justify-end">
                 <button
                   onClick={() => setShowEventLinker(false)}
-                  className="px-4 py-2 text-sm font-medium text-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors"
                 >
                   Done
                 </button>

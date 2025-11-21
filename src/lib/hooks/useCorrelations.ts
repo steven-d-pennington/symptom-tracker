@@ -52,29 +52,18 @@ export function useCorrelations(
         // Query all correlations for user
         const allCorrelations = await correlationRepository.findAll(userId);
 
-        // Calculate date range from timeRange
-        const endDate = Date.now();
-        let startDate: number;
+        // Filter correlations by time range and significance
+        const targetRange = timeRange === 'all' ? '90d' : timeRange;
 
-        if (timeRange === 'all') {
-          startDate = 0; // Beginning of time
-        } else {
-          const rangeMs = timeRangeToMs(timeRange as TimeRange);
-          startDate = endDate - rangeMs;
-        }
-
-        // Filter correlations by date range and significance
         const filtered = allCorrelations.filter((correlation) => {
-          // Check if calculatedAt is within date range
-          const isInRange =
-            correlation.calculatedAt >= startDate &&
-            correlation.calculatedAt <= endDate;
+          // Check if correlation belongs to the selected time range
+          const isCorrectRange = correlation.timeRange === targetRange;
 
           // Check if correlation is significant
           // Story 6.3 already filters at repository level, but double-check here
           const isSignificant = Math.abs(correlation.coefficient) >= 0.3;
 
-          return isInRange && isSignificant;
+          return isCorrectRange && isSignificant;
         });
 
         if (isMounted) {

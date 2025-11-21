@@ -41,6 +41,9 @@ export async function create(entry: Partial<DailyLog>): Promise<string> {
   if (entry.sleepQuality === undefined || entry.sleepQuality === null) {
     throw new Error("dailyLogsRepository.create: sleepQuality is required");
   }
+  if (entry.stressLevel === undefined || entry.stressLevel === null) {
+    throw new Error("dailyLogsRepository.create: stressLevel is required");
+  }
 
   // Check for existing entry on the same date for this user
   const existing = await getByDate(entry.userId, entry.date);
@@ -60,6 +63,7 @@ export async function create(entry: Partial<DailyLog>): Promise<string> {
     mood: entry.mood,
     sleepHours: entry.sleepHours,
     sleepQuality: entry.sleepQuality,
+    stressLevel: entry.stressLevel,
     notes: entry.notes?.trim() || undefined,
     // Stringify flareUpdates array per IndexedDB conventions
     flareUpdates: entry.flareUpdates
@@ -168,7 +172,7 @@ export async function update(
  * If entry exists for the date, updates it. Otherwise creates new entry.
  * This is the preferred method for saving daily logs.
  *
- * @param entry - Partial daily log data (userId, date, mood, sleepHours, sleepQuality required)
+ * @param entry - Partial daily log data (userId, date, mood, sleepHours, sleepQuality, stressLevel required)
  * @returns Promise resolving to the entry ID (existing or new)
  */
 export async function upsert(entry: Partial<DailyLog>): Promise<string> {

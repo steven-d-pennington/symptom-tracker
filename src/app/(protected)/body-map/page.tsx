@@ -194,8 +194,8 @@ export default function FlaresPage() {
   return (
     <div className="h-screen overflow-hidden flex flex-col">
       {/* Stats Bar */}
-      <div className="bg-muted border-b border-border px-6 py-4">
-        <div className="container mx-auto flex items-center gap-6">
+      <div className="bg-muted border-b border-border px-4 py-3">
+        <div className="container mx-auto flex items-center gap-4 max-w-7xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary-light flex items-center justify-center">
               <Activity className="h-5 w-5 text-primary" />
@@ -246,8 +246,8 @@ export default function FlaresPage() {
       {/* Main Content: Cards + Sidebar */}
       <div className="flex-1 overflow-hidden flex">
         {/* Cards Column */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="container mx-auto max-w-4xl">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="container mx-auto max-w-7xl">
             {selectedRegion && (
               <div className="mb-4 badge badge-primary inline-flex items-center gap-2">
                 Filtering: {selectedRegion}
