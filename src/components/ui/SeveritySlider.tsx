@@ -73,24 +73,24 @@ export function SeveritySlider({
 
                 {/* Custom Thumb (Visual only) */}
                 <div
-                    className="absolute h-8 w-8 rounded-full bg-white shadow-lg border-2 border-zinc-200 dark:border-zinc-700 flex items-center justify-center pointer-events-none transition-all duration-150 ease-out z-20"
+                    className="absolute h-8 w-8 rounded-full bg-card shadow-lg border-2 border-border flex items-center justify-center pointer-events-none transition-all duration-150 ease-out z-20"
                     style={{
                         left: `calc(${((value - min) / (max - min)) * 100}% - 16px)`
                     }}
                 >
-                    <span className="text-xs font-bold text-zinc-700">{value}</span>
+                    <span className="text-xs font-bold text-foreground">{value}</span>
                 </div>
             </div>
 
             {/* Labels */}
             <div className="flex justify-between px-1">
-                <span className="text-xs font-medium text-zinc-500">Mild</span>
+                <span className="text-xs font-medium text-muted-foreground">Mild</span>
                 {labels && labels[value] && (
-                    <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 animate-in fade-in slide-in-from-bottom-1">
+                    <span className="text-sm font-semibold text-foreground animate-in fade-in slide-in-from-bottom-1">
                         {labels[value]}
                     </span>
                 )}
-                <span className="text-xs font-medium text-zinc-500">Severe</span>
+                <span className="text-xs font-medium text-muted-foreground">Severe</span>
             </div>
         </div>
     );

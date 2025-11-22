@@ -120,15 +120,15 @@ export default function InsightsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Page container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Page header */}
         <header className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Health Insights Hub</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-foreground">Health Insights Hub</h1>
+              <p className="text-muted-foreground mt-1">
                 Discover patterns in your health data through correlation analysis
               </p>
             </div>
@@ -149,8 +149,8 @@ export default function InsightsPage() {
 
         {/* Error state */}
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded mb-6" role="alert">
-            <p className="text-sm text-red-800">
+          <div className="bg-destructive/10 border-l-4 border-destructive p-4 rounded mb-6" role="alert">
+            <p className="text-sm text-destructive">
               Failed to load insights: {error.message}. Please try again later.
             </p>
           </div>
@@ -176,7 +176,7 @@ export default function InsightsPage() {
         {/* Treatment Effectiveness Section (Story 6.7) */}
         {!showEmptyState && userId && (
           <section className="mt-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl font-bold text-foreground mb-4">
               Treatment Effectiveness
             </h2>
             <TreatmentTracker

@@ -187,54 +187,56 @@ function DashboardContent() {
       <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
         <DashboardHeader />
 
-        <InsightSnippet />
+        <div className="w-full md:w-2/3 space-y-8">
+          <InsightSnippet />
 
-        {/* Quick Actions Grid */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4 text-foreground/80">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <GlassActionCard
-              title="Log Flare"
-              icon={Flame}
-              colorClass="text-orange-500"
-              gradientClass="from-orange-500/10 to-orange-500/5 hover:border-orange-200"
-              onClick={handleLogFlare}
-            />
-            <GlassActionCard
-              title="Symptom"
-              icon={Activity}
-              colorClass="text-blue-500"
-              gradientClass="from-blue-500/10 to-blue-500/5 hover:border-blue-200"
-              onClick={handleLogSymptom}
-            />
-            <GlassActionCard
-              title="Medication"
-              icon={Pill}
-              colorClass="text-emerald-500"
-              gradientClass="from-emerald-500/10 to-emerald-500/5 hover:border-emerald-200"
-              onClick={handleLogMedication}
-            />
-            <GlassActionCard
-              title="Trigger"
-              icon={Zap}
-              colorClass="text-yellow-500"
-              gradientClass="from-yellow-500/10 to-yellow-500/5 hover:border-yellow-200"
-              onClick={handleLogTrigger}
-            />
-            <GlassActionCard
-              title="Food"
-              icon={UtensilsCrossed}
-              colorClass="text-purple-500"
-              gradientClass="from-purple-500/10 to-purple-500/5 hover:border-purple-200"
-              onClick={handleLogFood}
-            />
+          {/* Quick Actions Grid */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-foreground/80">Quick Actions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <GlassActionCard
+                title="Log Flare"
+                icon={Flame}
+                colorClass="text-orange-500"
+                gradientClass="from-orange-500/10 to-orange-500/5 hover:border-orange-200"
+                onClick={handleLogFlare}
+              />
+              <GlassActionCard
+                title="Symptom"
+                icon={Activity}
+                colorClass="text-blue-500"
+                gradientClass="from-blue-500/10 to-blue-500/5 hover:border-blue-200"
+                onClick={handleLogSymptom}
+              />
+              <GlassActionCard
+                title="Medication"
+                icon={Pill}
+                colorClass="text-emerald-500"
+                gradientClass="from-emerald-500/10 to-emerald-500/5 hover:border-emerald-200"
+                onClick={handleLogMedication}
+              />
+              <GlassActionCard
+                title="Trigger"
+                icon={Zap}
+                colorClass="text-yellow-500"
+                gradientClass="from-yellow-500/10 to-yellow-500/5 hover:border-yellow-200"
+                onClick={handleLogTrigger}
+              />
+              <GlassActionCard
+                title="Food"
+                icon={UtensilsCrossed}
+                colorClass="text-purple-500"
+                gradientClass="from-purple-500/10 to-purple-500/5 hover:border-purple-200"
+                onClick={handleLogFood}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Today's Timeline Module */}
-        <TodayTimelineCard>
-          <TimelineView key={`timeline-${refreshKey}`} />
-        </TodayTimelineCard>
+          {/* Today's Timeline Module */}
+          <TodayTimelineCard>
+            <TimelineView key={`timeline-${refreshKey}`} />
+          </TodayTimelineCard>
+        </div>
       </div>
     </div>
   );

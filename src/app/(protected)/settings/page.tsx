@@ -7,6 +7,7 @@ import { CorrelationSettings } from "@/components/settings/CorrelationSettings";
 import { MedicationList } from "@/components/manage/MedicationList";
 import { SymptomList } from "@/components/manage/SymptomList";
 import { TriggerList } from "@/components/manage/TriggerList";
+import { TreatmentList } from "@/components/manage/TreatmentList";
 import { FoodList } from "@/components/manage/FoodList";
 import { DatabaseManager } from "@/components/settings/DatabaseManager";
 import { CloudSyncSection } from "@/components/cloud-sync/CloudSyncSection";
@@ -15,7 +16,7 @@ import Link from "next/link";
 
 export default function SettingsPage() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
-  const [manageDataTab, setManageDataTab] = useState<"medications" | "symptoms" | "triggers" | "foods">("medications");
+  const [manageDataTab, setManageDataTab] = useState<"medications" | "symptoms" | "triggers" | "treatments" | "foods">("medications");
 
   const settingsSections = [
     {
@@ -31,8 +32,8 @@ export default function SettingsPage() {
               type="button"
               onClick={() => setManageDataTab("medications")}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "medications"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
             >
               <Pill className="h-4 w-4" />
@@ -42,8 +43,8 @@ export default function SettingsPage() {
               type="button"
               onClick={() => setManageDataTab("symptoms")}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "symptoms"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
             >
               <Activity className="h-4 w-4" />
@@ -53,8 +54,8 @@ export default function SettingsPage() {
               type="button"
               onClick={() => setManageDataTab("triggers")}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "triggers"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
             >
               <Zap className="h-4 w-4" />
@@ -62,10 +63,21 @@ export default function SettingsPage() {
             </button>
             <button
               type="button"
-              onClick={() => setManageDataTab("foods")}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "foods"
+              onClick={() => setManageDataTab("treatments")}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "treatments"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                }`}
+            >
+              <Activity className="h-4 w-4" />
+              Treatments
+            </button>
+            <button
+              type="button"
+              onClick={() => setManageDataTab("foods")}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${manageDataTab === "foods"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
             >
               <Utensils className="h-4 w-4" />
@@ -78,6 +90,7 @@ export default function SettingsPage() {
             {manageDataTab === "medications" && <MedicationList />}
             {manageDataTab === "symptoms" && <SymptomList />}
             {manageDataTab === "triggers" && <TriggerList />}
+            {manageDataTab === "treatments" && <TreatmentList />}
             {manageDataTab === "foods" && <FoodList />}
           </div>
         </div>

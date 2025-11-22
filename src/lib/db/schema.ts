@@ -387,6 +387,33 @@ export interface TriggerEventRecord {
   updatedAt: number; // Last modified
 }
 
+export interface TreatmentRecord {
+  id: string;
+  userId: string;
+  name: string;
+  category?: string; // e.g., "Physical", "Thermal", "Manual"
+  description?: string;
+  duration?: number; // suggested duration in minutes
+  frequency?: string; // e.g., "As needed", "Daily", "2x daily"
+  isActive: boolean;
+  isDefault: boolean; // True for preset treatments
+  isEnabled: boolean; // For toggling default treatments
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TreatmentEventRecord {
+  id: string;
+  userId: string;
+  treatmentId: string; // Reference to treatments table
+  timestamp: number; // When applied (epoch ms)
+  duration?: number; // actual duration in minutes
+  effectiveness?: number; // 1-10 scale, how effective was it
+  notes?: string; // Optional context
+  createdAt: number; // When logged
+  updatedAt: number; // Last modified
+}
+
 export interface UxEventRecord {
   id: string;
   userId: string;
@@ -867,8 +894,8 @@ export interface TreatmentEffectivenessRecord {
   userId: string; // User ID
 
   // Treatment identification
-  treatmentId: string; // Reference to medication or trigger (intervention) ID
-  treatmentType: 'medication' | 'intervention'; // Type of treatment
+  treatmentId: string; // Reference to medication, intervention, or treatment ID
+  treatmentType: 'medication' | 'intervention' | 'treatment'; // Type of treatment
   treatmentName: string; // Human-readable treatment name
 
   // Effectiveness metrics

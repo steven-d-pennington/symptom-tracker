@@ -3,13 +3,10 @@
 import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { cn } from "@/lib/utils/cn";
-import { useTheme } from "@/components/providers/ThemeProvider";
-import { Moon, Sun } from "lucide-react";
 
 export function DashboardHeader() {
     const { userId } = useCurrentUser();
     const [greeting, setGreeting] = useState("Hello");
-    const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -32,13 +29,7 @@ export function DashboardHeader() {
                     How are you feeling today?
                 </p>
             </div>
-            <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Toggle theme"
-            >
-                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
         </div>
+
     );
 }

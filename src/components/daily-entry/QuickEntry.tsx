@@ -86,11 +86,10 @@ export const QuickEntry = ({
                     key={value}
                     type="button"
                     onClick={() => handleQuickSet(metric, value)}
-                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
-                      current === value
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${current === value
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border text-foreground hover:border-primary"
-                    }`}
+                      }`}
                   >
                     {value}
                   </button>
@@ -109,18 +108,17 @@ export const QuickEntry = ({
           {suggestions.map((suggestion) => (
             <li
               key={suggestion.id}
-              className={`rounded-lg border px-3 py-2 text-sm ${
-                suggestion.type === "encouragement"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              className={`rounded-lg border px-3 py-2 text-sm ${suggestion.type === "encouragement"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100"
                   : suggestion.type === "reminder"
-                    ? "border-amber-200 bg-amber-50 text-amber-900"
-                    : "border-sky-200 bg-sky-50 text-sky-900"
-              }`}
+                    ? "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-100"
+                    : "border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-100"
+                }`}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span>{suggestion.message}</span>
                 {suggestion.actionLabel && (
-                  <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
+                  <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide dark:bg-black/40">
                     {suggestion.actionLabel}
                   </span>
                 )}

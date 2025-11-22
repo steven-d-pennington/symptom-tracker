@@ -77,18 +77,18 @@ export function MedicalDisclaimerBanner() {
 
   return (
     <div
-      className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-6"
+      className="bg-yellow-500/10 dark:bg-yellow-500/20 border-l-4 border-yellow-500/50 p-4 rounded mb-6"
       role="alert"
       aria-live="polite"
       aria-label="Medical disclaimer"
     >
       <div className="flex items-start gap-3">
         {/* Warning icon */}
-        <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="w-5 h-5 text-yellow-700 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
 
         {/* Disclaimer content */}
         <div className="flex-1">
-          <p className="text-sm text-yellow-800 font-medium">
+          <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium">
             Insights show correlations, not causation. Discuss findings with your healthcare
             provider.
           </p>
@@ -97,7 +97,7 @@ export function MedicalDisclaimerBanner() {
         {/* Dismiss button */}
         <button
           onClick={handleDismiss}
-          className="text-yellow-600 hover:text-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 rounded p-1"
+          className="text-yellow-700 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 rounded p-1"
           aria-label="Dismiss medical disclaimer"
         >
           <X className="w-5 h-5" />

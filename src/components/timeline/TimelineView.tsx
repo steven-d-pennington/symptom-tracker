@@ -38,6 +38,7 @@ export interface TimelineEvent {
   hasDetails?: boolean;
   allergens?: string[]; // for food events: aggregated allergen tags
   foodNames?: string[]; // for food events: list of food names in the meal
+  mealType?: string; // for food events: breakfast, lunch, dinner, snack
 }
 
 interface TimelineViewProps {
@@ -205,16 +206,30 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           .filter(f => f?.allergenTags)
           .flatMap(f => JSON.parse(f!.allergenTags) as string[]);
 
+        // Generate summary based on meal type
+        let summary = '';
+        const mealType = event.mealType;
+        const count = foodIds.length;
+
+        if (mealType === 'snack') {
+          summary = 'Snack';
+        } else {
+          // Capitalize first letter
+          const formattedType = mealType.charAt(0).toUpperCase() + mealType.slice(1);
+          summary = `${formattedType} (${count} item${count === 1 ? '' : 's'})`;
+        }
+
         timelineEvents.push({
           id: event.id,
           type: 'food',
           timestamp: event.timestamp,
-          summary: foodIds.length === 1 ? `Ate ${foodNames[0]}` : `Ate ${foodIds.length} foods`,
+          summary: summary,
           details: event.notes,
           eventRef: event,
-          hasDetails: !!event.notes || foodIds.length > 1,
+          hasDetails: !!event.notes || foodIds.length > 0, // Always allow expanding to see items
           allergens: allergenTags.length > 0 ? allergenTags : undefined,
-          foodNames: foodNames
+          foodNames: foodNames,
+          mealType: mealType
         });
       }
 
@@ -403,7 +418,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
   if (!isMounted) {
     return (
-      <div className="w-full md:w-2/3 space-y-4">
+      <div className="w-full space-y-4">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
@@ -418,7 +433,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   }
 
   return (
-    <div id="timeline-container" className="w-full md:w-2/3 space-y-6">
+    <div id="timeline-container" className="w-full space-y-6">
       <TimelineLayerToggle
         visibleEventTypes={visibleEventTypes}
         onToggleEventType={(type) => {
@@ -516,11 +531,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                   let colorClass = 'bg-gray-500';
 
                   switch (event.type) {
-                    case 'medication': icon = '💊'; colorClass = 'bg-emerald-500'; break;
-                    case 'symptom': icon = '🤒'; colorClass = 'bg-blue-500'; break;
-                    case 'trigger': icon = '⚡'; colorClass = 'bg-yellow-500'; break;
-                    case 'food': icon = '🍽️'; colorClass = 'bg-purple-500'; break;
-                    case 'flare-created': icon = '🔥'; colorClass = 'bg-orange-500'; break;
+                    case 'medication': icon = '💊'; colorClass = 'bg-emerald-500 dark:bg-emerald-600'; break;
+                    case 'symptom': icon = '🤒'; colorClass = 'bg-blue-500 dark:bg-blue-600'; break;
+                    case 'trigger': icon = '⚡'; colorClass = 'bg-yellow-500 dark:bg-yellow-600'; break;
+                    case 'food': icon = '🍽️'; colorClass = 'bg-purple-500 dark:bg-purple-600'; break;
+                    case 'flare-created': icon = '🔥'; colorClass = 'bg-orange-500 dark:bg-orange-600'; break;
                   }
 
                   return (
@@ -576,7 +591,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                             </div>
 
                             <h4 className="text-base font-semibold text-foreground leading-tight mb-1">
-                              {event.summary.replace(/^[^\s]+\s/, '')}
+                              {event.type === 'food' ? event.summary : event.summary.replace(/^[^\s]+\s/, '')}
                             </h4>
 
                             {event.type === 'food' ? (

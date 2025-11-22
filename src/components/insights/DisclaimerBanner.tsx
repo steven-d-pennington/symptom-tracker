@@ -76,7 +76,7 @@ export function DisclaimerBanner({
 
   return (
     <div
-      className={`bg-yellow-50 border-l-4 border-yellow-400 rounded ${className}`}
+      className={`bg-yellow-500/10 dark:bg-yellow-500/20 border-l-4 border-yellow-500/50 rounded ${className}`}
       role="alert"
       aria-live="polite"
       aria-label="Treatment effectiveness medical disclaimer"
@@ -84,17 +84,17 @@ export function DisclaimerBanner({
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* Warning icon */}
-          <Info className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <Info className="w-5 h-5 text-yellow-700 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
 
           {/* Disclaimer content */}
           <div className="flex-1">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-yellow-900 mb-1">
+                <p className="text-sm font-medium text-yellow-900 dark:text-yellow-200 mb-1">
                   Treatment Effectiveness Disclaimer
                 </p>
                 {!isCollapsed && (
-                  <div className="text-sm text-yellow-800 space-y-1">
+                  <div className="text-sm text-yellow-800 dark:text-yellow-300 space-y-1">
                     <p>
                       <strong>Effectiveness scores show correlations in your data.</strong>{' '}
                       Many factors affect outcomes, including:
@@ -122,7 +122,7 @@ export function DisclaimerBanner({
               {collapsible && (
                 <button
                   onClick={handleToggle}
-                  className="text-yellow-600 hover:text-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 rounded p-1 ml-2"
+                  className="text-yellow-700 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 rounded p-1 ml-2"
                   aria-label={isCollapsed ? 'Expand disclaimer' : 'Collapse disclaimer'}
                   aria-expanded={!isCollapsed}
                 >

@@ -1,7 +1,7 @@
 // Service Worker for Pocket Symptom Tracker PWA
 // Version: 1.1.0 - Fixed HTML caching to prevent stale content
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3-no-cache';
 const STATIC_CACHE = `symptom-tracker-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `symptom-tracker-dynamic-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `symptom-tracker-runtime-${CACHE_VERSION}`;
@@ -52,9 +52,9 @@ self.addEventListener('activate', (event) => {
           cacheNames
             .filter((cacheName) => {
               return cacheName.startsWith('symptom-tracker-') &&
-                     cacheName !== STATIC_CACHE &&
-                     cacheName !== DYNAMIC_CACHE &&
-                     cacheName !== RUNTIME_CACHE;
+                cacheName !== STATIC_CACHE &&
+                cacheName !== DYNAMIC_CACHE &&
+                cacheName !== RUNTIME_CACHE;
             })
             .map((cacheName) => {
               console.log('[SW] Deleting old cache:', cacheName);
@@ -85,8 +85,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Determine caching strategy based on request
-  let strategy = CACHE_STRATEGIES.STALE_WHILE_REVALIDATE;
+  // DEV MODE: Force NETWORK_ONLY for everything to prevent aggressive caching
+  let strategy = CACHE_STRATEGIES.NETWORK_ONLY;
 
+  /* 
+  // Original caching logic - disabled for development
   // Static assets - cache first
   if (STATIC_ASSETS.includes(url.pathname) ||
       url.pathname.startsWith('/_next/static/') ||
@@ -111,6 +114,7 @@ self.addEventListener('fetch', (event) => {
       url.pathname.startsWith('/insights')) {
     strategy = CACHE_STRATEGIES.NETWORK_ONLY;
   }
+  */
 
   // Apply the selected strategy
   switch (strategy) {

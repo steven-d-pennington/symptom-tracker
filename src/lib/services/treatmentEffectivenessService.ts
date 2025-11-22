@@ -19,10 +19,10 @@ import type { TreatmentEffectiveness, TreatmentCycle } from "../../types/treatme
 import type { TimeRange } from "../../types/correlation";
 import { timeRangeToMs } from "../../types/correlation";
 import { medicationEventRepository } from "../repositories/medicationEventRepository";
-import { triggerEventRepository } from "../repositories/triggerEventRepository";
+import { treatmentRepository } from "../repositories/treatmentRepository";
+import { treatmentEventRepository } from "../repositories/treatmentEventRepository";
 import { symptomInstanceRepository } from "../repositories/symptomInstanceRepository";
 import { medicationRepository } from "../repositories/medicationRepository";
-import { triggerRepository } from "../repositories/triggerRepository";
 
 /**
  * Calculate average symptom severity for a date range
@@ -172,7 +172,7 @@ function assignConfidenceLevel(
 export async function calculateTreatmentEffectiveness(
   userId: string,
   treatmentId: string,
-  treatmentType: 'medication' | 'intervention',
+  treatmentType: 'medication' | 'treatment',
   timeRange: TimeRange
 ): Promise<TreatmentEffectiveness | null> {
   // Calculate date range
@@ -197,20 +197,20 @@ export async function calculateTreatmentEffectiveness(
     // Get medication name
     const medication = await medicationRepository.getById(treatmentId);
     treatmentName = medication?.name || 'Unknown Medication';
-  } else {
-    // Query trigger (intervention) events
-    const events = await triggerEventRepository.findByDateRange(
+  } else if (treatmentType === 'treatment') {
+    // Query treatment events
+    const events = await treatmentEventRepository.findByDateRange(
       userId,
       startDate,
       endDate
     );
     treatmentEvents = events
-      .filter((e) => e.triggerId === treatmentId)
+      .filter((e) => e.treatmentId === treatmentId)
       .map((e) => ({ timestamp: e.timestamp, id: e.id }));
 
-    // Get trigger name
-    const trigger = await triggerRepository.getById(treatmentId);
-    treatmentName = trigger?.name || 'Unknown Intervention';
+    // Get treatment name
+    const treatment = await treatmentRepository.getById(treatmentId);
+    treatmentName = treatment?.name || 'Unknown Treatment';
   }
 
   // Step 2: Calculate effectiveness for each treatment cycle
@@ -300,13 +300,13 @@ export async function calculateAllTreatmentEffectiveness(
     }
   }
 
-  // Get all triggers (interventions) for the user
-  const triggers = await triggerRepository.getAll(userId);
-  for (const trigger of triggers) {
+  // Get all treatments for the user
+  const treatments = await treatmentRepository.getAll(userId);
+  for (const treatment of treatments) {
     const effectiveness = await calculateTreatmentEffectiveness(
       userId,
-      trigger.id,
-      'intervention',
+      treatment.id,
+      'treatment',
       timeRange
     );
     if (effectiveness !== null) {
@@ -317,7 +317,7 @@ export async function calculateAllTreatmentEffectiveness(
   // Sort by effectiveness score (highest first)
   const sorted = results.sort((a, b) => b.effectivenessScore - a.effectivenessScore);
 
-  console.log(`[TreatmentEffectiveness] Analyzed ${medications.length} medications and ${triggers.length} interventions, found ${sorted.length} with sufficient data (minimum 3 treatment cycles with baseline + outcome data)`);
+  console.log(`[TreatmentEffectiveness] Analyzed ${medications.length} medications and ${treatments.length} treatments, found ${sorted.length} with sufficient data (minimum 3 treatment cycles with baseline + outcome data)`);
 
   return sorted;
 }

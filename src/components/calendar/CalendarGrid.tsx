@@ -157,9 +157,9 @@ const getBackgroundGlow = (entry?: CalendarDayDetail) => {
 
   // Combine multiple glows for blended effect
   const glows = [];
-  if (hasSymptoms) glows.push("bg-blue-50/60");
-  if (hasTriggers) glows.push("bg-yellow-50/60");
-  if (hasFlares) glows.push("bg-red-50/60");
+  if (hasSymptoms) glows.push("bg-blue-50/60 dark:bg-blue-900/20");
+  if (hasTriggers) glows.push("bg-yellow-50/60 dark:bg-yellow-900/20");
+  if (hasFlares) glows.push("bg-red-50/60 dark:bg-red-900/20");
 
   if (glows.length === 0) return "bg-card";
   if (glows.length === 1) return glows[0];
@@ -174,18 +174,18 @@ const getSeverityClass = (score?: number) => {
     return "border-border hover:bg-muted/50";
   }
   if (score >= 8) {
-    return "border-emerald-300 hover:bg-emerald-100/50";
+    return "border-emerald-300 hover:bg-emerald-100/50 dark:border-emerald-700 dark:hover:bg-emerald-900/20";
   }
   if (score >= 6) {
-    return "border-sky-300 hover:bg-sky-100/50";
+    return "border-sky-300 hover:bg-sky-100/50 dark:border-sky-700 dark:hover:bg-sky-900/20";
   }
   if (score >= 4) {
-    return "border-amber-300 hover:bg-amber-100/50";
+    return "border-amber-300 hover:bg-amber-100/50 dark:border-amber-700 dark:hover:bg-amber-900/20";
   }
   if (score >= 2) {
-    return "border-orange-300 hover:bg-orange-100/50";
+    return "border-orange-300 hover:bg-orange-100/50 dark:border-orange-700 dark:hover:bg-orange-900/20";
   }
-  return "border-rose-300 hover:bg-rose-100/50";
+  return "border-rose-300 hover:bg-rose-100/50 dark:border-rose-700 dark:hover:bg-rose-900/20";
 };
 const formatDateLabel = (iso: string) => {
   const date = new Date(iso);
@@ -269,13 +269,13 @@ export const CalendarGrid = ({
                       </div>
                       <div className="flex items-center gap-0.5">
                         {hasSymptoms ? (
-                          <Activity className="h-3 w-3 text-blue-600" aria-label="Has symptoms" />
+                          <Activity className="h-3 w-3 text-blue-600 dark:text-blue-400" aria-label="Has symptoms" />
                         ) : null}
                         {hasTriggers ? (
-                          <AlertTriangle className="h-3 w-3 text-yellow-600" aria-label="Has triggers" />
+                          <AlertTriangle className="h-3 w-3 text-yellow-600 dark:text-yellow-400" aria-label="Has triggers" />
                         ) : null}
                         {hasFlares ? (
-                          <Flame className="h-3 w-3 text-red-600" aria-label="Has flares" />
+                          <Flame className="h-3 w-3 text-red-600 dark:text-red-400" aria-label="Has flares" />
                         ) : null}
                       </div>
                     </button>
@@ -384,13 +384,13 @@ export const CalendarGrid = ({
                 </div>
                 <div className="flex items-center gap-1">
                   {hasSymptoms ? (
-                    <Activity className="h-4 w-4 text-blue-600" aria-label="Has symptoms" />
+                    <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-label="Has symptoms" />
                   ) : null}
                   {hasTriggers ? (
-                    <AlertTriangle className="h-4 w-4 text-yellow-600" aria-label="Has triggers" />
+                    <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" aria-label="Has triggers" />
                   ) : null}
                   {hasFlares ? (
-                    <Flame className="h-4 w-4 text-red-600" aria-label="Has flares" />
+                    <Flame className="h-4 w-4 text-red-600 dark:text-red-400" aria-label="Has flares" />
                   ) : null}
                 </div>
               </button>

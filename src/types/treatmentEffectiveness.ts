@@ -13,8 +13,8 @@ export interface TreatmentEffectiveness {
   /** User who owns this effectiveness data */
   userId: string;
 
-  /** Type of treatment: medication or intervention */
-  treatmentType: 'medication' | 'intervention';
+  /** Type of treatment: medication, intervention, or treatment */
+  treatmentType: 'medication' | 'intervention' | 'treatment';
 
   /** Human-readable name of the treatment */
   treatmentName: string;
@@ -64,9 +64,9 @@ export interface TreatmentAlert {
 
   /** Type of alert triggered */
   alertType:
-    | 'effectiveness_drop' // Effectiveness dropped >20% over 30 days
-    | 'low_effectiveness' // Score <30 for 3+ consecutive calculations
-    | 'unused_effective_treatment'; // Score >70 but no instances in 60 days
+  | 'effectiveness_drop' // Effectiveness dropped >20% over 30 days
+  | 'low_effectiveness' // Score <30 for 3+ consecutive calculations
+  | 'unused_effective_treatment'; // Score >70 but no instances in 60 days
 
   /** Alert severity level */
   severity: 'warning' | 'info';
