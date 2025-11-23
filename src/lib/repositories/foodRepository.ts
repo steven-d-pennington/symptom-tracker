@@ -19,12 +19,13 @@ export class FoodRepository {
 
   /**
    * Get active foods for a user
+   * Only returns foods that are both active AND enabled (visible to user)
    */
   async getActive(userId: string): Promise<FoodRecord[]> {
     return await db.foods
       .where("userId")
       .equals(userId)
-      .filter((food) => food.isActive)
+      .filter((food) => food.isActive && food.isEnabled !== false) // isEnabled can be undefined for old records
       .toArray();
   }
 
@@ -194,7 +195,7 @@ export class FoodRepository {
 
     const foods = await this.getActive(userId);
     const favorites = foods.filter((food) => favoriteIds.includes(food.id));
-    
+
     const grouped = new Map<string, FoodRecord[]>();
     for (const food of favorites) {
       const category = food.category;
@@ -228,7 +229,7 @@ export class FoodRepository {
    */
   async getAllByCategory(userId: string): Promise<Map<string, FoodRecord[]>> {
     const foods = await this.getActive(userId);
-    
+
     const grouped = new Map<string, FoodRecord[]>();
     for (const food of foods) {
       const category = food.category;

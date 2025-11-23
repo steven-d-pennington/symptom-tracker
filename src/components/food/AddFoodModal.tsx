@@ -7,7 +7,7 @@ import { focusFirstElement } from "@/lib/utils/a11y";
 import { AllergenBadge } from "@/components/food/AllergenBadge";
 import { ALLERGEN_TYPES, type AllergenType, validateAllergens } from "@/lib/constants/allergens";
 
-// Food categories from seedFoodsService
+// Food categories
 const FOOD_CATEGORIES = [
   "Breakfast",
   "Proteins",
@@ -147,7 +147,7 @@ export function AddFoodModal({ isOpen, onClose, onSave }: AddFoodModalProps) {
       setPreparationMethod("");
       setErrors({});
       setIsSaving(false);
-      
+
       // Close modal after save completes
       onClose();
     } catch (error) {

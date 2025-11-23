@@ -126,47 +126,39 @@ export class UserRepository {
       // No user exists - create one
       // Create default user
       const id = await this.create({
-      name: "User",
-      preferences: {
-        theme: "system",
-        notifications: {
-          remindersEnabled: false,
+        name: "User",
+        preferences: {
+          theme: "system",
+          notifications: {
+            remindersEnabled: false,
+          },
+          privacy: {
+            dataStorage: "encrypted-local",
+            analyticsOptIn: false,
+            crashReportsOptIn: false,
+          },
+          exportFormat: "json",
+          symptomFilterPresets: [],
+          foodFavorites: [],
+          flareViewMode: "cards", // Story 0.3: Default to cards-first layout
         },
-        privacy: {
-          dataStorage: "encrypted-local",
-          analyticsOptIn: false,
-          crashReportsOptIn: false,
-        },
-        exportFormat: "json",
-        symptomFilterPresets: [],
-        foodFavorites: [],
-        flareViewMode: "cards", // Story 0.3: Default to cards-first layout
-      },
-    });
+      });
 
-    const user = await this.getById(id);
-    if (!user) {
-      throw new Error("Failed to create user");
-    }
+      const user = await this.getById(id);
+      if (!user) {
+        throw new Error("Failed to create user");
+      }
 
-    // Store the new user ID in localStorage immediately
-    if (typeof window !== 'undefined') {
-      console.log(`[getOrCreateCurrentUser] Storing new user ID in localStorage: ${id}`);
-      window.localStorage.setItem('pocket:currentUserId', id);
-    }
+      // Store the new user ID in localStorage immediately
+      if (typeof window !== 'undefined') {
+        console.log(`[getOrCreateCurrentUser] Storing new user ID in localStorage: ${id}`);
+        window.localStorage.setItem('pocket:currentUserId', id);
+      }
 
-    // Story 3.5.1: Initialize default data for new user
-    // CRITICAL: Must await to ensure defaults are loaded before user sees the app
-    console.log(`[getOrCreateCurrentUser] Initializing default data for new user: ${id}`);
-    const initResult = await initializeUserDefaults(id);
-
-    if (initResult.success) {
-      console.log(`[getOrCreateCurrentUser] ✅ Defaults initialized successfully:`, initResult.details);
-    } else {
-      console.error(`[getOrCreateCurrentUser] ⚠️ Failed to initialize defaults: ${initResult.error}`);
-      console.error(`[getOrCreateCurrentUser] User can manually initialize via Settings > Advanced > Reinitialize Defaults`);
-      // Don't throw - let user proceed even if defaults fail
-    }
+      // NOTE: We do NOT call initializeUserDefaults() here.
+      // Initialization happens during onboarding via persistUserSettings().
+      // This prevents duplicate/conflicting initialization that overwrites user selections.
+      console.log(`[getOrCreateCurrentUser] User created. Defaults will be initialized during onboarding.`);
 
       return user;
     })();

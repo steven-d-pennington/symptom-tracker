@@ -123,9 +123,17 @@ export const FoodList = () => {
       grouped.get(category)!.push(food);
     });
 
-    // Sort foods within each category
+    // Sort foods within each category: favorites first, then alphabetically
     for (const [, categoryFoods] of grouped) {
-      categoryFoods.sort((a, b) => a.name.localeCompare(b.name));
+      categoryFoods.sort((a, b) => {
+        // Favorites first
+        const aFav = favoriteIds.includes(a.id);
+        const bFav = favoriteIds.includes(b.id);
+        if (aFav && !bFav) return -1;
+        if (!aFav && bFav) return 1;
+        // Then alphabetically
+        return a.name.localeCompare(b.name);
+      });
     }
 
     return grouped;
@@ -467,9 +475,8 @@ export const FoodList = () => {
           title="Delete Custom Food"
           message={
             deleteConfirm.usageCount > 0
-              ? `This food has been used in ${deleteConfirm.usageCount} food ${
-                  deleteConfirm.usageCount === 1 ? "entry" : "entries"
-                }.\n\nDeleting it will permanently remove it from your records.\n\nAre you sure you want to delete "${deleteConfirm.food.name}"?`
+              ? `This food has been used in ${deleteConfirm.usageCount} food ${deleteConfirm.usageCount === 1 ? "entry" : "entries"
+              }.\n\nDeleting it will permanently remove it from your records.\n\nAre you sure you want to delete "${deleteConfirm.food.name}"?`
               : `Are you sure you want to delete "${deleteConfirm.food.name}"?`
           }
           confirmLabel="Delete"

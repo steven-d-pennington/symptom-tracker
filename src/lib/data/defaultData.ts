@@ -322,14 +322,25 @@ export const DEFAULT_MEDICATIONS: DefaultMedication[] = [
     frequency: 'as-needed'
   },
   {
+    name: 'Acetaminophen',
+    type: 'Pain Relief',
+    dosage: '500mg',
+    frequency: 'as-needed'
+  },
+  {
     name: 'Antibiotic (prescribed)',
     type: 'Medication',
     frequency: 'daily'
   },
   {
-    name: 'Pain Relief',
+    name: 'Topical Antibiotic',
     type: 'Medication',
-    frequency: 'as-needed'
+    frequency: 'daily'
+  },
+  {
+    name: 'Biologic Injection',
+    type: 'Medication',
+    frequency: 'weekly'
   },
   {
     name: 'Anti-inflammatory',
@@ -340,6 +351,21 @@ export const DEFAULT_MEDICATIONS: DefaultMedication[] = [
     name: 'Antihistamine',
     type: 'Medication',
     frequency: 'as-needed'
+  },
+  {
+    name: 'Zinc Supplement',
+    type: 'Supplement',
+    frequency: 'daily'
+  },
+  {
+    name: 'Turmeric/Curcumin',
+    type: 'Supplement',
+    frequency: 'daily'
+  },
+  {
+    name: 'Vitamin D',
+    type: 'Supplement',
+    frequency: 'daily'
   }
 ];
 

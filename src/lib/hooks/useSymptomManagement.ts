@@ -5,7 +5,7 @@ import { symptomRepository } from "@/lib/repositories/symptomRepository";
 import { SymptomRecord } from "@/lib/db/schema";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
-import { DEFAULT_SYMPTOMS } from "@/lib/data/defaultPresets";
+import { DEFAULT_SYMPTOMS } from "@/lib/data/defaultData";
 
 export interface SymptomFormData {
   name: string;
