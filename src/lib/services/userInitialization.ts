@@ -20,7 +20,9 @@ import {
   DEFAULT_TRIGGERS,
   DEFAULT_MEDICATIONS,
 } from '../data/defaultData';
-import type { SymptomRecord, FoodRecord, TriggerRecord, MedicationRecord } from '../db/schema';
+import { DEFAULT_TREATMENTS } from '../data/treatment-defaults';
+import { treatmentRepository } from '../repositories/treatmentRepository';
+import type { SymptomRecord, FoodRecord, TriggerRecord, MedicationRecord, TreatmentRecord } from '../db/schema';
 import type { OnboardingSelections } from '../../app/onboarding/types/onboarding';
 
 export interface InitializationResult {
@@ -31,6 +33,7 @@ export interface InitializationResult {
     foodsCreated: number;
     triggersCreated: number;
     medicationsCreated: number;
+    treatmentsCreated: number;
   };
 }
 
@@ -62,6 +65,7 @@ export async function initializeUserDefaults(
         foodsCreated: 0,
         triggersCreated: 0,
         medicationsCreated: 0,
+        treatmentsCreated: 0,
       },
     };
   }
@@ -99,21 +103,23 @@ async function performInitialization(
 
     // Check if defaults already exist (idempotency)
     // Must check ALL four data types, not just symptoms
-    const [existingSymptoms, existingFoods, existingTriggers, existingMedications] =
+    const [existingSymptoms, existingFoods, existingTriggers, existingMedications, existingTreatments] =
       await Promise.all([
         symptomRepository.getAll(userId),
         foodRepository.getAll(userId),
         triggerRepository.getAll(userId),
         medicationRepository.getAll(userId),
+        treatmentRepository.getAll(userId),
       ]);
 
     const hasSymptomDefaults = existingSymptoms.some((s) => s.isDefault);
     const hasFoodDefaults = existingFoods.some((f) => f.isDefault);
     const hasTriggerDefaults = existingTriggers.some((t) => t.isDefault);
     const hasMedicationDefaults = existingMedications.some((m) => m.isDefault);
+    const hasTreatmentDefaults = existingTreatments.some((t) => t.isDefault);
 
     const allDefaultsExist = hasSymptomDefaults && hasFoodDefaults &&
-                              hasTriggerDefaults && hasMedicationDefaults;
+      hasTriggerDefaults && hasMedicationDefaults && hasTreatmentDefaults;
 
     if (allDefaultsExist) {
       console.log(`[performInitialization] All defaults already initialized for user: ${userId}`);
@@ -124,6 +130,7 @@ async function performInitialization(
           foodsCreated: 0,
           triggersCreated: 0,
           medicationsCreated: 0,
+          treatmentsCreated: 0,
         },
       };
     }
@@ -135,6 +142,7 @@ async function performInitialization(
         foods: hasFoodDefaults,
         triggers: hasTriggerDefaults,
         medications: hasMedicationDefaults,
+        treatments: hasTreatmentDefaults,
       });
       console.warn('[performInitialization] Will create only missing defaults...');
     }
@@ -191,12 +199,27 @@ async function performInitialization(
         isEnabled: true,
       }));
 
+    // Prepare default treatments for bulk creation
+    const treatmentsToCreate: Omit<TreatmentRecord, 'id' | 'createdAt' | 'updatedAt'>[] =
+      DEFAULT_TREATMENTS.map((treatment) => ({
+        userId,
+        name: treatment.name,
+        category: treatment.category,
+        description: treatment.description,
+        duration: treatment.duration,
+        frequency: treatment.frequency,
+        isActive: true,
+        isDefault: true,
+        isEnabled: true,
+      }));
+
     // Create all defaults using bulk operations for performance
     // Only create what's missing (for partial initialization recovery)
     let symptomIds: string[] = [];
     let foodIds: string[] = [];
     let triggerIds: string[] = [];
     let medicationIds: string[] = [];
+    let treatmentIds: string[] = [];
 
     if (!hasSymptomDefaults) {
       console.log(`[performInitialization] Creating ${symptomsToCreate.length} default symptoms...`);
@@ -226,11 +249,21 @@ async function performInitialization(
       console.log(`[performInitialization] Skipping medications - defaults already exist`);
     }
 
+    if (!hasTreatmentDefaults) {
+      console.log(`[performInitialization] Creating ${treatmentsToCreate.length} default treatments...`);
+      treatmentIds = await treatmentRepository.bulkCreate(treatmentsToCreate);
+    } else {
+      console.log(`[performInitialization] Skipping treatments - defaults already exist`);
+    }
+
+
+
     console.log(`[performInitialization] Successfully initialized defaults for user: ${userId}`);
     console.log(`  - Symptoms: ${symptomIds.length}`);
     console.log(`  - Foods: ${foodIds.length}`);
     console.log(`  - Triggers: ${triggerIds.length}`);
     console.log(`  - Medications: ${medicationIds.length}`);
+    console.log(`  - Treatments: ${treatmentIds.length}`);
 
     return {
       success: true,
@@ -239,6 +272,7 @@ async function performInitialization(
         foodsCreated: foodIds.length,
         triggersCreated: triggerIds.length,
         medicationsCreated: medicationIds.length,
+        treatmentsCreated: treatmentIds.length,
       },
     };
   } catch (error) {
@@ -292,6 +326,7 @@ async function performSelectionBasedInitialization(
     console.log(`[performSelectionBasedInitialization] Creating selected items for user: ${userId}`);
     console.log(`  - Symptoms: ${selections.symptoms.length}`);
     console.log(`  - Triggers: ${selections.triggers.length}`);
+    console.log(`  - Treatments: ${selections.treatments.length}`);
     console.log(`  - Medications: ${selections.medications.length}`);
     console.log(`  - Foods: ${selections.foods.length}`);
 
@@ -363,11 +398,31 @@ async function performSelectionBasedInitialization(
         };
       });
 
+    // Prepare selected treatments for bulk creation
+    const treatmentsToCreate: Omit<TreatmentRecord, 'id' | 'createdAt' | 'updatedAt'>[] =
+      selections.treatments.map((item) => {
+        // Find the default treatment to get duration/frequency
+        const defaultTreatment = DEFAULT_TREATMENTS.find(t => t.name === item.name);
+        return {
+          userId,
+          name: item.name,
+          category: item.category,
+          description: item.description,
+          duration: defaultTreatment?.duration,
+          frequency: defaultTreatment?.frequency || 'As needed',
+          isActive: true,
+          isDefault: item.isDefault,
+          isEnabled: true,
+          isFavorite: item.isCustom,
+        };
+      });
+
     // Batch create all selected items in parallel
-    const [symptomIds, foodIds, triggerIds, medicationIds] = await Promise.all([
+    const [symptomIds, foodIds, triggerIds, treatmentIds, medicationIds] = await Promise.all([
       symptomsToCreate.length > 0 ? symptomRepository.bulkCreate(symptomsToCreate) : [],
       foodsToCreate.length > 0 ? foodRepository.bulkCreate(foodsToCreate) : [],
       triggersToCreate.length > 0 ? triggerRepository.bulkCreate(triggersToCreate) : [],
+      treatmentsToCreate.length > 0 ? treatmentRepository.bulkCreate(treatmentsToCreate) : [],
       medicationsToCreate.length > 0 ? medicationRepository.bulkCreate(medicationsToCreate) : [],
     ]);
 
@@ -375,6 +430,7 @@ async function performSelectionBasedInitialization(
     console.log(`  - Symptoms created: ${symptomIds.length}`);
     console.log(`  - Foods created: ${foodIds.length}`);
     console.log(`  - Triggers created: ${triggerIds.length}`);
+    console.log(`  - Treatments created: ${treatmentIds.length}`);
     console.log(`  - Medications created: ${medicationIds.length}`);
 
     return {
@@ -383,6 +439,7 @@ async function performSelectionBasedInitialization(
         symptomsCreated: symptomIds.length,
         foodsCreated: foodIds.length,
         triggersCreated: triggerIds.length,
+        treatmentsCreated: treatmentIds.length,
         medicationsCreated: medicationIds.length,
       },
     };

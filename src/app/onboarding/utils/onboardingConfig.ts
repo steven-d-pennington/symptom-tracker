@@ -26,12 +26,6 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
       "Tell us how often you want reminders and which symptom categories matter most to you.",
   },
   {
-    id: "privacy",
-    title: "Review Privacy Controls",
-    description:
-      "Understand exactly how your information stays on your device and under your control.",
-  },
-  {
     id: "symptomSelection",
     title: "Select Your Symptoms",
     description:
@@ -44,10 +38,16 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
       "Choose which triggers you want to monitor. Search and add custom items if needed.",
   },
   {
-    id: "medicationSelection",
+    id: "treatmentSelection",
     title: "Select Your Treatments",
     description:
-      "Choose which medications and treatments you want to track. Search and add custom items if needed.",
+      "Choose which treatments you want to track. Search and add custom items if needed.",
+  },
+  {
+    id: "medicationSelection",
+    title: "Select Your Medications",
+    description:
+      "Choose which medications you want to track. Search and add custom items if needed.",
   },
   {
     id: "foodSelection",

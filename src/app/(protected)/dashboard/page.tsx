@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { RefreshCw, Flame, Pill, Activity, Zap, UtensilsCrossed } from "lucide-react";
+import { RefreshCw, Flame, Pill, Activity, Zap, UtensilsCrossed, Stethoscope } from "lucide-react";
 import TimelineView from "@/components/timeline/TimelineView";
 import { TodayTimelineCard } from "@/components/dashboard/TodayTimelineCard";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
@@ -162,6 +162,13 @@ function DashboardContent() {
     router.push("/log/food");
   }, [router, recordUxEvent]);
 
+  const handleLogTreatment = useCallback(() => {
+    void recordUxEvent("quickAction.treatment", {
+      metadata: { source: "dashboard", surface: "quickActions" },
+    });
+    router.push("/log/treatment");
+  }, [router, recordUxEvent]);
+
   if (!userId) {
     return (
       <div className="container mx-auto px-4 py-6">
@@ -228,6 +235,13 @@ function DashboardContent() {
                 colorClass="text-purple-500"
                 gradientClass="from-purple-500/10 to-purple-500/5 hover:border-purple-200"
                 onClick={handleLogFood}
+              />
+              <GlassActionCard
+                title="Treatment"
+                icon={Stethoscope}
+                colorClass="text-pink-500"
+                gradientClass="from-pink-500/10 to-pink-500/5 hover:border-pink-200"
+                onClick={handleLogTreatment}
               />
             </div>
           </div>

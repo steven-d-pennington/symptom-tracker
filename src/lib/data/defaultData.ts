@@ -322,39 +322,9 @@ export const DEFAULT_MEDICATIONS: DefaultMedication[] = [
     frequency: 'as-needed'
   },
   {
-    name: 'Warm Compress',
-    type: 'Treatment',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Ice Pack',
-    type: 'Treatment',
-    frequency: 'as-needed'
-  },
-  {
     name: 'Antibiotic (prescribed)',
     type: 'Medication',
     frequency: 'daily'
-  },
-  {
-    name: 'Topical Treatment',
-    type: 'Treatment',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Rest',
-    type: 'Self-Care',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Drainage',
-    type: 'Treatment',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Bandaging',
-    type: 'Treatment',
-    frequency: 'as-needed'
   },
   {
     name: 'Pain Relief',
@@ -365,6 +335,11 @@ export const DEFAULT_MEDICATIONS: DefaultMedication[] = [
     name: 'Anti-inflammatory',
     type: 'Medication',
     frequency: 'daily'
+  },
+  {
+    name: 'Antihistamine',
+    type: 'Medication',
+    frequency: 'as-needed'
   }
 ];
 

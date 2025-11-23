@@ -42,6 +42,12 @@ export const CompletionStep = ({ data, onContinue, reset, updateData }: Onboardi
       },
       {
         label: "Treatments tracking",
+        value: getSelectionCount("treatments") > 0
+          ? `${getSelectionCount("treatments")} selected`
+          : "None selected",
+      },
+      {
+        label: "Medications tracking",
         value: getSelectionCount("medications") > 0
           ? `${getSelectionCount("medications")} selected`
           : "None selected",

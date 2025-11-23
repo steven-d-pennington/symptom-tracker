@@ -16,10 +16,10 @@ import { useOnboardingSelections } from "../contexts/OnboardingSelectionsContext
  */
 
 export interface SelectionStepProps {
-  type: "symptoms" | "triggers" | "medications" | "foods";
+  type: "symptoms" | "triggers" | "treatments" | "medications" | "foods";
   title: string;
   description: string;
-  defaultItems: Array<{ name: string; category: string; description?: string; [key: string]: any }>;
+  defaultItems: Array<{ name: string; category: string; description?: string;[key: string]: any }>;
   onNext: () => void;
   onSkip: () => void;
   onBack: () => void;

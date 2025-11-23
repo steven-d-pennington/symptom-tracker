@@ -32,6 +32,7 @@ const STORAGE_KEY = "onboarding-selections";
 const emptySelections: OnboardingSelections = {
   symptoms: [],
   triggers: [],
+  treatments: [],
   medications: [],
   foods: [],
 };
@@ -46,7 +47,14 @@ export function OnboardingSelectionsProvider({ children }: { children: ReactNode
       const stored = sessionStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as OnboardingSelections;
-        setSelections(parsed);
+        // Ensure all fields exist (migration for new fields like treatments)
+        setSelections({
+          symptoms: parsed.symptoms || [],
+          triggers: parsed.triggers || [],
+          treatments: parsed.treatments || [],
+          medications: parsed.medications || [],
+          foods: parsed.foods || [],
+        });
       }
     } catch (error) {
       console.error("[OnboardingSelections] Failed to load from sessionStorage:", error);
