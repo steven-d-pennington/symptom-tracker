@@ -26,6 +26,17 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
       "Tell us how often you want reminders and which symptom categories matter most to you.",
   },
   {
+    id: "privacy",
+    title: "Privacy Preferences",
+    description:
+      "Control where your data is stored and whether to share optional diagnostics.",
+  },
+  {
+    id: "education",
+    title: "Quick Learning Modules",
+    description: "Review privacy basics and tips for consistent, low-effort tracking.",
+  },
+  {
     id: "symptomSelection",
     title: "Select Your Symptoms",
     description:

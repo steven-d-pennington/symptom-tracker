@@ -785,10 +785,29 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     const loadEntries = async () => {
       const entries = await dailyEntryRepository.getAll(userId);
       // Convert DailyEntryRecord to DailyEntry format
-      const converted = entries.map(entry => ({
-        ...entry,
-        completedAt: new Date(entry.createdAt),
-      }));
+      const converted: DailyEntry[] = entries.map((entry) => {
+        const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          date: entry.date,
+          overallHealth: entry.overallHealth,
+          energyLevel: entry.energyLevel,
+          sleepQuality: entry.sleepQuality,
+          stressLevel: entry.stressLevel,
+          symptoms: entry.symptoms,
+          medications: entry.medications,
+          triggers: entry.triggers,
+          treatments,
+          notes: entry.notes,
+          mood: entry.mood,
+          weather: entry.weather,
+          location: entry.location,
+          duration: entry.duration,
+          completedAt: new Date(entry.createdAt),
+        };
+      });
       setHistory(converted);
     };
 

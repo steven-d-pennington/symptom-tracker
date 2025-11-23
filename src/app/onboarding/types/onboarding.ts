@@ -5,6 +5,7 @@ export type OnboardingStepId =
   | "profile"
   | "condition"
   | "preferences"
+  | "privacy"
   | "education"
   | "symptomSelection"
   | "triggerSelection"
