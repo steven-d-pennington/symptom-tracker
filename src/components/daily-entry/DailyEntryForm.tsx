@@ -11,10 +11,13 @@ import { NotesSection } from "./EntrySections/NotesSection";
 import { QuickEntry } from "./QuickEntry";
 import { SmartSuggestions } from "../daily-entry/SmartSuggestions";
 import { Suggestion } from "./hooks/useSmartSuggestions";
-import { DailyMedication, DailySymptom, DailyTrigger } from "@/lib/types/daily-entry";
+import { DailyMedication, DailySymptom, DailyTrigger, DailyTreatment } from "@/lib/types/daily-entry";
 import { symptomRepository } from "@/lib/repositories/symptomRepository";
 import { triggerRepository } from "@/lib/repositories/triggerRepository";
+import { treatmentRepository } from "@/lib/repositories/treatmentRepository";
+import { TreatmentRecord } from "@/lib/db/schema";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { TreatmentSection } from "./EntrySections/TreatmentSection";
 
 interface DailyEntryFormProps {
   entry: DailyEntry;
@@ -26,6 +29,8 @@ interface DailyEntryFormProps {
   toggleMedicationTaken: (medicationId: string) => void;
   upsertTrigger: (triggerId: string, changes?: Partial<DailyTrigger>) => void;
   removeTrigger: (triggerId: string) => void;
+  upsertTreatment: (treatmentId: string, changes?: Partial<DailyTreatment>) => void;
+  removeTreatment: (treatmentId: string) => void;
   saveEntry: () => Promise<void>;
   isSaving: boolean;
   completion: number;
@@ -53,6 +58,8 @@ export const DailyEntryForm = ({
   toggleMedicationTaken,
   upsertTrigger,
   removeTrigger,
+  upsertTreatment,
+  removeTreatment,
   saveEntry,
   isSaving,
   completion,
@@ -68,6 +75,7 @@ export const DailyEntryForm = ({
   const [mode, setMode] = useState<"full" | "quick">("full");
   const [symptomOptions, setSymptomOptions] = useState<SymptomOption[]>([]);
   const [triggerOptions, setTriggerOptions] = useState<TriggerOption[]>([]);
+  const [treatmentOptions, setTreatmentOptions] = useState<TreatmentRecord[]>([]);
 
   // Load symptoms and triggers from database
   useEffect(() => {
@@ -96,6 +104,11 @@ export const DailyEntryForm = ({
             description: t.description || "",
           }))
         );
+
+        // Load treatments (only enabled ones)
+        const treatments = await treatmentRepository.getAll(userId);
+        const enabledTreatments = treatments.filter(t => t.isActive && t.isEnabled);
+        setTreatmentOptions(enabledTreatments);
       } catch (error) {
         console.error("Failed to load symptoms/triggers:", error);
       }
@@ -138,6 +151,7 @@ export const DailyEntryForm = ({
                   symptoms: lastEntry.symptoms.map(s => ({ ...s, notes: '' })), // Clear notes
                   medications: lastEntry.medications.map(m => ({ ...m, taken: false })), // Reset taken status
                   triggers: lastEntry.triggers.map(t => ({ ...t, notes: '' })), // Clear notes
+                  treatments: lastEntry.treatments.map(t => ({ ...t, notes: '' })), // Clear notes
                 });
 
                 // Haptic feedback
@@ -258,6 +272,25 @@ export const DailyEntryForm = ({
                   onAddTrigger={(triggerId) => upsertTrigger(triggerId)}
                   onUpdateTrigger={(triggerId, changes) => upsertTrigger(triggerId, changes)}
                   onRemoveTrigger={removeTrigger}
+                />
+              );
+            }
+
+            if (section === "treatments") {
+              return (
+                <TreatmentSection
+                  key="treatments"
+                  treatments={entry.treatments}
+                  availableTreatments={treatmentOptions}
+                  onToggleTreatment={(treatmentId) => {
+                    const exists = entry.treatments.find(t => t.treatmentId === treatmentId);
+                    if (exists) {
+                      removeTreatment(treatmentId);
+                    } else {
+                      upsertTreatment(treatmentId);
+                    }
+                  }}
+                  onUpdateTreatment={(treatmentId, changes) => upsertTreatment(treatmentId, changes)}
                 />
               );
             }

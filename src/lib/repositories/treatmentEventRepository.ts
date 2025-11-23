@@ -104,6 +104,24 @@ export class TreatmentEventRepository {
         const ids = events.map((e) => e.id);
         await db.treatmentEvents.bulkDelete(ids);
     }
+    /**
+     * Get recent notes for a treatment
+     */
+    async getRecentNotes(
+        userId: string,
+        treatmentId: string,
+        limit: number = 5
+    ): Promise<string[]> {
+        const events = await this.findAllByTreatment(userId, treatmentId);
+        const notes = events
+            .filter((e) => e.notes && e.notes.trim().length > 0)
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .map((e) => e.notes!)
+            .slice(0, limit);
+
+        // Return unique notes
+        return Array.from(new Set(notes));
+    }
 }
 
 export const treatmentEventRepository = new TreatmentEventRepository();

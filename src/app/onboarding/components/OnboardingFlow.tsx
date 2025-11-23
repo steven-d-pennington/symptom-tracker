@@ -15,6 +15,7 @@ import { ProgressIndicator } from "./ProgressIndicator";
 import { WelcomeStep } from "./WelcomeStep";
 import { SymptomSelectionStep } from "./SymptomSelectionStep";
 import { TriggerSelectionStep } from "./TriggerSelectionStep";
+import { TreatmentSelectionStep } from "./TreatmentSelectionStep";
 import { MedicationSelectionStep } from "./MedicationSelectionStep";
 import { FoodSelectionStep } from "./FoodSelectionStep";
 
@@ -23,9 +24,9 @@ const STEP_COMPONENTS: Record<OnboardingStepId, OnboardingStepComponent> = {
   profile: ProfileStep,
   condition: ConditionStep,
   preferences: PreferencesStep,
-  privacy: PrivacyStep,
   symptomSelection: SymptomSelectionStep,
   triggerSelection: TriggerSelectionStep,
+  treatmentSelection: TreatmentSelectionStep,
   medicationSelection: MedicationSelectionStep,
   foodSelection: FoodSelectionStep,
   education: EducationStep,
