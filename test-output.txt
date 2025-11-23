@@ -1,0 +1,4 @@
+
+> symptom-tracker@0.2.0 test
+> node --experimental-vm-modules node_modules/jest/bin/jest.js flareRepository.test.ts
+

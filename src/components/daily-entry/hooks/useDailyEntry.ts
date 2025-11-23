@@ -8,32 +8,32 @@ import {
   DailyTrigger,
 } from "@/lib/types/daily-entry";
 import {
-  MEDICATION_OPTIONS,
   SYMPTOM_OPTIONS,
 } from "@/lib/data/daily-entry-presets";
-import {
-  HISTORY_STORAGE_KEY,
-  HISTORY_UPDATED_EVENT,
-  OFFLINE_QUEUE_STORAGE_KEY,
-  loadDailyEntries,
-  persistDailyEntries,
-} from "@/lib/storage/daily-entry-storage";
+import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
+import { medicationRepository } from "@/lib/repositories/medicationRepository";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { MedicationRecord } from "@/lib/db/schema";
+import { symptomInstanceRepository } from "@/lib/repositories/symptomInstanceRepository";
+import { medicationEventRepository } from "@/lib/repositories/medicationEventRepository";
+import { triggerEventRepository } from "@/lib/repositories/triggerEventRepository";
 
-const createInitialEntry = (): DailyEntry => ({
+const createInitialEntry = (userId: string, medications: MedicationRecord[] = []): DailyEntry => ({
   id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
-  userId: "demo",
+  userId,
   date: new Date().toISOString().slice(0, 10),
   overallHealth: 5,
   energyLevel: 5,
   sleepQuality: 5,
   stressLevel: 5,
   symptoms: [],
-  medications: MEDICATION_OPTIONS.map((medication) => ({
+  medications: medications.map((medication) => ({
     medicationId: medication.id,
     taken: false,
     dosage: medication.dosage,
   })),
   triggers: [],
+  treatments: [],
   duration: 0,
   completedAt: new Date(),
 });
@@ -55,19 +55,18 @@ const defaultTouchedState: TouchedSections = {
 };
 
 export const useDailyEntry = () => {
-  const [entry, setEntry] = useState<DailyEntry>(createInitialEntry);
+  const { userId } = useCurrentUser();
+  const [medications, setMedications] = useState<MedicationRecord[]>([]);
+  const [entry, setEntry] = useState<DailyEntry>(() => createInitialEntry(userId || "", []));
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [touchedSections, setTouchedSections] = useState<TouchedSections>(
     defaultTouchedState,
   );
-  const [history, setHistory] = useState<DailyEntry[]>(() =>
-    loadDailyEntries(HISTORY_STORAGE_KEY),
-  );
-  const [queue, setQueue] = useState<DailyEntry[]>(() =>
-    loadDailyEntries(OFFLINE_QUEUE_STORAGE_KEY),
-  );
+  const [history, setHistory] = useState<DailyEntry[]>([]);
+  const [queue, setQueue] = useState<DailyEntry[]>([]);
   const startTimeRef = useRef<number>(Date.now());
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -83,28 +82,87 @@ export const useDailyEntry = () => {
     return () => window.clearInterval(interval);
   }, []);
 
+  // Load medications from IndexedDB on mount
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (!userId) return;
 
-    persistDailyEntries(HISTORY_STORAGE_KEY, history);
-    window.dispatchEvent(new CustomEvent(HISTORY_UPDATED_EVENT));
-  }, [history]);
+    const loadMedications = async () => {
+      const meds = await medicationRepository.getActive(userId);
+      setMedications(meds);
 
+      // Reset entry with loaded medications
+      setEntry(createInitialEntry(userId, meds));
+    };
+
+    loadMedications().catch(console.error);
+  }, [userId]);
+
+  // Load history from IndexedDB on mount
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (!userId) return;
 
-    persistDailyEntries(OFFLINE_QUEUE_STORAGE_KEY, queue);
-  }, [queue]);
+    const loadHistory = async () => {
+      const entries = await dailyEntryRepository.getAll(userId);
+      const converted: DailyEntry[] = entries.map((entry) => {
+        const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          date: entry.date,
+          overallHealth: entry.overallHealth,
+          energyLevel: entry.energyLevel,
+          sleepQuality: entry.sleepQuality,
+          stressLevel: entry.stressLevel,
+          symptoms: entry.symptoms as DailySymptom[],
+          medications: entry.medications as DailyMedication[],
+          triggers: entry.triggers as DailyTrigger[],
+          treatments,
+          notes: entry.notes,
+          mood: entry.mood,
+          weather: entry.weather,
+          location: entry.location,
+          duration: entry.duration,
+          completedAt: new Date(entry.createdAt),
+        };
+      });
+      setHistory(converted);
+      setIsHydrated(true);
+    };
+
+    loadHistory().catch(console.error);
+  }, [userId]);
+
+  // Load queue from localStorage (offline entries are ephemeral)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("pst-offline-queue");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setQueue(parsed.map(entry => ({
+            ...entry,
+            completedAt: new Date(entry.completedAt),
+          })));
+        }
+      } catch (error) {
+        console.error("Failed to load offline queue", error);
+      }
+    }
+  }, []);
+
+  // Save queue to localStorage (offline entries are ephemeral)
+  useEffect(() => {
+    if (typeof window === "undefined" || !isHydrated) return;
+    localStorage.setItem("pst-offline-queue", JSON.stringify(queue));
+  }, [queue, isHydrated]);
 
   const resetEntry = useCallback(() => {
     startTimeRef.current = Date.now();
-    setEntry(createInitialEntry());
+    setEntry(createInitialEntry(userId || "", medications));
     setTouchedSections(defaultTouchedState);
-  }, []);
+  }, [userId, medications]);
 
   const markSectionTouched = useCallback((section: keyof TouchedSections) => {
     setTouchedSections((prev) => ({ ...prev, [section]: true }));
@@ -141,26 +199,26 @@ export const useDailyEntry = () => {
 
         const updatedSymptoms: DailySymptom[] = existing
           ? prev.symptoms.map((symptom) =>
-              symptom.symptomId === symptomId
-                ? {
-                    ...symptom,
-                    ...changes,
-                    symptomId,
-                    severity:
-                      "severity" in changes
-                        ? Math.min(10, Math.max(0, changes.severity ?? symptom.severity))
-                        : symptom.severity,
-                  }
-                : symptom,
-            )
-          : [
-              ...prev.symptoms,
-              {
+            symptom.symptomId === symptomId
+              ? {
+                ...symptom,
+                ...changes,
                 symptomId,
-                severity: changes.severity ?? 5,
-                notes: changes.notes,
-              },
-            ];
+                severity:
+                  "severity" in changes
+                    ? Math.min(10, Math.max(0, changes.severity ?? symptom.severity))
+                    : symptom.severity,
+              }
+              : symptom,
+          )
+          : [
+            ...prev.symptoms,
+            {
+              symptomId,
+              severity: changes.severity ?? 5,
+              notes: changes.notes,
+            },
+          ];
 
         return {
           ...prev,
@@ -189,9 +247,9 @@ export const useDailyEntry = () => {
         medications: prev.medications.map((medication) =>
           medication.medicationId === medicationId
             ? {
-                ...medication,
-                ...changes,
-              }
+              ...medication,
+              ...changes,
+            }
             : medication,
         ),
       }));
@@ -224,26 +282,26 @@ export const useDailyEntry = () => {
 
         const updatedTriggers: DailyTrigger[] = existing
           ? prev.triggers.map((trigger) =>
-              trigger.triggerId === triggerId
-                ? {
-                    ...trigger,
-                    ...changes,
-                    triggerId,
-                    intensity:
-                      "intensity" in changes
-                        ? Math.min(10, Math.max(0, changes.intensity ?? trigger.intensity))
-                        : trigger.intensity,
-                  }
-                : trigger,
-            )
-          : [
-              ...prev.triggers,
-              {
+            trigger.triggerId === triggerId
+              ? {
+                ...trigger,
+                ...changes,
                 triggerId,
-                intensity: changes.intensity ?? 5,
-                notes: changes.notes,
-              },
-            ];
+                intensity:
+                  "intensity" in changes
+                    ? Math.min(10, Math.max(0, changes.intensity ?? trigger.intensity))
+                    : trigger.intensity,
+              }
+              : trigger,
+          )
+          : [
+            ...prev.triggers,
+            {
+              triggerId,
+              intensity: changes.intensity ?? 5,
+              notes: changes.notes,
+            },
+          ];
 
         return {
           ...prev,
@@ -289,35 +347,187 @@ export const useDailyEntry = () => {
 
     const isOnline = typeof navigator === "undefined" || navigator.onLine;
 
-    const persistHistory = (nextHistory: DailyEntry[]) => {
-      setHistory(nextHistory);
-    };
-
     if (!isOnline) {
       setQueue((prev) => [finalizedEntry, ...prev]);
     } else {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      persistHistory([finalizedEntry, ...history].slice(0, 50));
+      try {
+        // Save to IndexedDB (Daily Entry Journal)
+        await dailyEntryRepository.create({
+          ...finalizedEntry,
+          createdAt: completedAt,
+          updatedAt: completedAt,
+        });
+
+        // Save individual events for Timeline visibility
+        // 1. Symptoms
+        for (const symptom of finalizedEntry.symptoms) {
+          // Fetch symptom definition to get name, category, etc.
+          // We need to import symptomRepository for this, but it's not imported yet.
+          // Wait, it IS imported in line 15 of the original file? No, line 15 is useCurrentUser.
+          // I need to add symptomRepository import.
+          // Actually, I can't import it inside the function.
+          // I will assume it's imported or I will add the import in a separate chunk if needed.
+          // Checking imports... symptomRepository IS imported in the file (line 15 in my previous view, but I might have missed it).
+          // Let's check the file content again. Line 13: dailyEntryRepository. Line 14: medicationRepository.
+          // I need to add symptomRepository import.
+
+          // Wait, I can't see the imports here. I'll assume I need to add it.
+          // But I'm in a replacement chunk.
+
+          // Let's use the existing imports if possible.
+          // I'll use a dynamic import or assume it's there.
+          // Actually, I'll add the import in a separate chunk.
+
+          // For now, let's write the logic assuming symptomRepository is available.
+          // But wait, I can't compile if it's not there.
+          // I'll add the import in the top chunk.
+
+          const symptomDef = await import("@/lib/repositories/symptomRepository").then(m => m.symptomRepository.getById(symptom.symptomId));
+
+          if (symptomDef) {
+            await symptomInstanceRepository.create({
+              userId: finalizedEntry.userId,
+              name: symptomDef.name,
+              category: symptomDef.category,
+              severity: symptom.severity,
+              severityScale: {
+                type: "numeric",
+                min: symptomDef.severityScale.min,
+                max: symptomDef.severityScale.max,
+                labels: symptomDef.severityScale.labels,
+              },
+              notes: symptom.notes,
+              timestamp: completedAt,
+              // Optional fields
+              location: undefined,
+              duration: undefined,
+              triggers: undefined,
+              photos: undefined,
+            });
+          }
+        }
+
+        // 2. Medications (only taken ones)
+        for (const med of finalizedEntry.medications) {
+          if (med.taken) {
+            await medicationEventRepository.create({
+              userId: finalizedEntry.userId,
+              medicationId: med.medicationId,
+              taken: true,
+              dosage: med.dosage,
+              timestamp: completedAt.getTime(),
+              notes: "Logged via Daily Entry",
+            });
+          }
+        }
+
+        // 3. Triggers
+        for (const trigger of finalizedEntry.triggers) {
+          await triggerEventRepository.create({
+            userId: finalizedEntry.userId,
+            triggerId: trigger.triggerId,
+            intensity: trigger.intensity >= 7 ? 'high' : trigger.intensity >= 4 ? 'medium' : 'low',
+            notes: trigger.notes,
+            timestamp: completedAt.getTime(),
+          });
+        }
+
+        // Reload history
+        const entries = await dailyEntryRepository.getAll(finalizedEntry.userId);
+        const converted: DailyEntry[] = entries.map((entry) => {
+          const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+          return {
+            id: entry.id,
+            userId: entry.userId,
+            date: entry.date,
+            overallHealth: entry.overallHealth,
+            energyLevel: entry.energyLevel,
+            sleepQuality: entry.sleepQuality,
+            stressLevel: entry.stressLevel,
+            symptoms: entry.symptoms as DailySymptom[],
+            medications: entry.medications as DailyMedication[],
+            triggers: entry.triggers as DailyTrigger[],
+            treatments,
+            notes: entry.notes,
+            mood: entry.mood,
+            weather: entry.weather,
+            location: entry.location,
+            duration: entry.duration,
+            completedAt: new Date(entry.createdAt),
+          };
+        });
+        setHistory(converted);
+
+        // Dispatch event for other components
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("daily-entry-updated"));
+          // Also trigger timeline refresh
+          window.dispatchEvent(new CustomEvent("timeline-refresh-needed"));
+        }
+      } catch (error) {
+        console.error("Failed to save entry", error);
+        setQueue((prev) => [finalizedEntry, ...prev]);
+      }
     }
 
     setLastSavedAt(completedAt);
     resetEntry();
     setIsSaving(false);
-  }, [entry, history, resetEntry]);
+  }, [entry, resetEntry]);
 
   const syncQueuedEntries = useCallback(async () => {
     if (queue.length === 0) {
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    setHistory((prev) => {
-      const merged = [...queue, ...prev].slice(0, 50);
-      return merged.sort(
-        (a, b) => b.completedAt.getTime() - a.completedAt.getTime(),
-      );
-    });
-    setQueue([]);
+    try {
+      // Save all queued entries to IndexedDB
+      for (const queuedEntry of queue) {
+        await dailyEntryRepository.create({
+          ...queuedEntry,
+          createdAt: queuedEntry.completedAt,
+          updatedAt: queuedEntry.completedAt,
+        });
+      }
+
+      // Reload history from IndexedDB
+      const entries = await dailyEntryRepository.getAll(queue[0].userId);
+      const converted: DailyEntry[] = entries.map((entry) => {
+        const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          date: entry.date,
+          overallHealth: entry.overallHealth,
+          energyLevel: entry.energyLevel,
+          sleepQuality: entry.sleepQuality,
+          stressLevel: entry.stressLevel,
+          symptoms: entry.symptoms as DailySymptom[],
+          medications: entry.medications as DailyMedication[],
+          triggers: entry.triggers as DailyTrigger[],
+          treatments,
+          notes: entry.notes,
+          mood: entry.mood,
+          weather: entry.weather,
+          location: entry.location,
+          duration: entry.duration,
+          completedAt: new Date(entry.createdAt),
+        };
+      });
+      setHistory(converted);
+
+      // Clear queue
+      setQueue([]);
+
+      // Dispatch event
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("daily-entry-updated"));
+      }
+    } catch (error) {
+      console.error("Failed to sync queued entries", error);
+    }
   }, [queue]);
 
   useEffect(() => {
@@ -366,5 +576,6 @@ export const useDailyEntry = () => {
     queue,
     syncQueuedEntries,
     recentSymptoms,
+    medications,
   };
 };

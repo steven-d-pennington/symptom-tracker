@@ -1,0 +1,294 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.7</epicId>
+    <storyId>3.7.7</storyId>
+    <title>Multi-Location Flare Persistence</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-7-7-multi-location-flare-persistence.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user tracking flare-ups</asA>
+    <iWant>all marked body locations to be saved when I create a flare</iWant>
+    <soThat>I can accurately record and review which areas were affected during a single flare episode</soThat>
+    <tasks>
+### Task 1: Update Database Schema (2 pts)
+- Subtask 1.1: Add `FlareBodyLocationRecord` interface to `src/lib/db/schema.ts`
+- Subtask 1.2: Add `flareBodyLocations` table to Dexie schema in `src/lib/db/client.ts`
+- Subtask 1.3: Update `DATABASE_SCHEMA.md` documentation
+
+### Task 2: Extend Repository API (2 pts)
+- Subtask 2.1: Update `CreateFlareInput` interface to accept `bodyLocations` array
+- Subtask 2.2: Implement `createFlare()` multi-location persistence with transaction
+- Subtask 2.3: Add `enrichFlareWithLocations()` helper function
+- Subtask 2.4: Update `getFlareById()` to include body locations
+- Subtask 2.5: Update `getActiveFlares()` to include body locations
+- Subtask 2.6: Update `getResolvedFlares()` to include body locations
+
+### Task 3: Update FlareCreationModal (1 pt)
+- Subtask 3.1: Modify `defaultSave()` to pass all locations to repository
+- Subtask 3.2: Update success toast to display location count
+- Subtask 3.3: Add unit tests for multi-location submission
+
+### Task 4: Update Flare Display Components (Deferred to Story 3.7.8+)
+- Subtask 4.1: Update flare detail view to display all body locations
+- Subtask 4.2: Add location count badge to flare list cards
+- Subtask 4.3: Update body map to show all markers for multi-location flares
+
+### Task 5: Backward Compatibility and Testing
+- Subtask 5.1: Handle legacy flares without body locations
+- Subtask 5.2: Integration tests for multi-location flare lifecycle
+- Subtask 5.3: Test database migration
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+### AC 3.7.7.1: Create flare_body_locations table schema
+- Table exists with fields: id, flareId, bodyRegionId, coordinates, userId, createdAt, updatedAt
+- Compound indexes: [flareId+bodyRegionId], [userId+flareId]
+
+### AC 3.7.7.2: Update CreateFlareInput interface
+- Accepts optional `bodyLocations` array with bodyRegionId and coordinates
+- Maintains backward compatibility with primary bodyRegionId field
+
+### AC 3.7.7.3: Implement transactional multi-location persistence
+- Use Dexie transaction for atomic writes: FlareRecord + FlareEventRecord + multiple FlareBodyLocationRecords
+- Rollback on failure with no partial data persisted
+
+### AC 3.7.7.4: Update flare queries to include body locations
+- getFlareById and getActiveFlares return FlareWithLocations interface
+- bodyLocations array populated from flare_body_locations table
+- Locations ordered by createdAt ascending
+
+### AC 3.7.7.5: FlareCreationModal saves all marked locations
+- Calls createFlare() with bodyLocations array containing all marked locations
+- Success toast displays "Flare logged in {N} locations"
+
+### AC 3.7.7.6: Flare detail view displays all body locations (Deferred to 3.7.8+)
+- Shows body region names, coordinates, visual markers with distinct numbering
+
+### AC 3.7.7.7: Flare list cards show location count badge (Deferred to 3.7.8+)
+- Badge shows "{N} locations" for multiple or region name for single
+
+### AC 3.7.7.8: Body map visualization shows all marked locations (Deferred to 3.7.8+)
+- All markers displayed with severity color-coding
+
+### AC 3.7.7.9: Backward compatibility with single-location flares
+- Legacy flares without flare_body_locations entries either return empty bodyLocations array or synthesize location from FlareRecord fields
+
+### AC 3.7.7.10: Database migration and indexing
+- Database version incremented, Dexie creates new table and indexes
+- Existing data preserved with no data loss
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>DATABASE_SCHEMA.md</path>
+        <title>Database Schema Reference</title>
+        <section>Overview and Schema Design Principles</section>
+        <snippet>Dexie.js wrapper over IndexedDB. Schema v8 with 12 tables. Design principles: user-centric, compound indexes, denormalization for speed, soft deletes, timestamps for sync. Supports offline-first with ~50MB-1GB capacity.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - Flare Tracking & Body Map Enhancements</title>
+        <section>Repository and Service Architecture</section>
+        <snippet>Repository pattern with flareRepository, bodyMapRepository, analyticsRepository. Service layer for business logic. Uses Dexie 4.2.0 for IndexedDB access with transactional writes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR005-FR009: Flare Lifecycle Tracking</section>
+        <snippet>Flare entities have persistent IDs, track complete history (severity changes, trends, interventions), support creation/update/resolution lifecycle. NFR002: All flare data persists to IndexedDB immediately with offline-first architecture.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-7-4-full-screen-mode.md</path>
+        <title>Story 3.7.4: Full-Screen Mode</title>
+        <section>Completion Notes</section>
+        <snippet>UX fully implemented for multi-marker placement in fullscreen mode. "Done Marking" button accumulates all markers. FlareCreationModal displays all marked locations. Only first location currently persists to database due to schema limitation (resolved by Story 3.7.7).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1: Flare Data Model and Repository</title>
+        <section>Flare Repository Implementation</section>
+        <snippet>FlareRecord and FlareEventRecord schemas with append-only event history pattern (ADR-003). createFlare() uses Dexie transactions for atomic writes. Repository methods: createFlare, updateFlare, getFlareById, getActiveFlares, getResolvedFlares, addFlareEvent, getFlareHistory.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>interface</kind>
+        <symbol>FlareRecord, FlareEventRecord</symbol>
+        <lines>293-453</lines>
+        <reason>Current flare schema interfaces. FlareRecord stores single bodyRegionId and coordinates. Story 3.7.7 adds FlareBodyLocationRecord to support multiple locations per flare.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase</symbol>
+        <lines>26-467</lines>
+        <reason>Dexie database configuration. Current version 20. Flares table defined at lines 454-455 with indexes [userId+status], [userId+bodyRegionId], [userId+startDate]. Story 3.7.7 will add flareBodyLocations table in version 21.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>createFlare, CreateFlareInput, flareRepository</symbol>
+        <lines>1-385</lines>
+        <reason>Flare repository with createFlare() method using Dexie transactions (lines 38-89). CreateFlareInput interface at lines 21-27. Story 3.7.7 extends CreateFlareInput with bodyLocations array and updates createFlare() to persist multiple locations.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/FlareCreationModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareCreationModal, defaultSave</symbol>
+        <lines>205-334</lines>
+        <reason>Flare creation UI component. Lines 105-110 accumulate selections in selectionsArray. Lines 246-254 only persist first location (TODO comment at line 246). Story 3.7.7 updates defaultSave() to pass all locations to repository.</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>types</kind>
+        <symbol>FlareRecord, FlareEventRecord, Coordinates</symbol>
+        <lines>1-275</lines>
+        <reason>Type definitions and Zod schemas for flare entities. Includes FlareStatus, FlareEventType, FlareTrend enums. Coordinates interface defines normalized 0-1 scale for anatomical positioning.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>dexie</package>
+        <version>4.2.0</version>
+        <usage>IndexedDB wrapper for offline-first persistence. Provides transaction API for atomic multi-table writes.</usage>
+      </node>
+      <package>uuid</package>
+      <version>13.0.0</version>
+      <usage>Generate UUIDs for flare IDs, flare event IDs, and body location IDs.</usage>
+      </node>
+      <node>
+        <package>zod</package>
+        <version>latest</version>
+        <usage>Runtime schema validation for FlareRecord and FlareEventRecord.</usage>
+      </node>
+      <node>
+        <package>react</package>
+        <version>19.1.0</version>
+        <usage>FlareCreationModal component rendering and state management.</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Must use Dexie transaction API for atomic multi-table writes (db.transaction("rw", [tables...], async () =&gt; {...}))</constraint>
+    <constraint>All database writes must be offline-first with immediate IndexedDB persistence (NFR002 from PRD)</constraint>
+    <constraint>Follow append-only event history pattern (ADR-003) - never modify or delete flare events after creation</constraint>
+    <constraint>Maintain backward compatibility with existing single-location flares created before Story 3.7.7</constraint>
+    <constraint>Increment database version to 21 in src/lib/db/client.ts and add migration logic if needed</constraint>
+    <constraint>Use compound indexes for query performance: [flareId+bodyRegionId] and [userId+flareId]</constraint>
+    <constraint>Store coordinates as normalized 0-1 scale (consistent with existing Coordinates interface)</constraint>
+    <constraint>All timestamps must be Unix epoch milliseconds (Date.now()) not Date objects</constraint>
+    <constraint>Preserve repository pattern: all database access via flareRepository, no direct Dexie calls from UI</constraint>
+    <constraint>Follow existing naming convention: plural table names (flareBodyLocations not flareBodyLocation)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FlareBodyLocationRecord</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface FlareBodyLocationRecord {
+  id: string;                          // UUID v4 primary key
+  flareId: string;                     // Foreign key to flares.id
+  bodyRegionId: string;                // Body region ID (e.g., "left-shoulder")
+  coordinates: { x: number; y: number }; // Normalized coordinates (0-1 scale)
+  userId: string;                      // User ID for multi-user support
+  createdAt: number;                   // Unix timestamp (epoch ms)
+  updatedAt: number;                   // Unix timestamp (epoch ms)
+}
+      </signature>
+      <path>src/lib/db/schema.ts (to be added)</path>
+    </interface>
+
+    <interface>
+      <name>CreateFlareInput (extended)</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+export interface CreateFlareInput extends Partial&lt;FlareRecord&gt; {
+  bodyRegionId: string;           // Primary location (required for backward compatibility)
+  coordinates?: { x: number; y: number }; // Primary location coordinates
+  initialEventNotes?: string;
+  bodyLocations?: {               // NEW: Multiple body locations
+    bodyRegionId: string;
+    coordinates: { x: number; y: number };
+  }[];
+}
+      </signature>
+      <path>src/lib/repositories/flareRepository.ts (to be modified)</path>
+    </interface>
+
+    <interface>
+      <name>FlareWithLocations</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+export interface FlareWithLocations extends FlareRecord {
+  bodyLocations: FlareBodyLocationRecord[];
+}
+      </signature>
+      <path>src/lib/repositories/flareRepository.ts (to be added)</path>
+    </interface>
+
+    <interface>
+      <name>flareRepository.createFlare()</name>
+      <kind>Repository method</kind>
+      <signature>
+async function createFlare(
+  userId: string,
+  data: CreateFlareInput
+): Promise&lt;FlareRecord&gt;
+      </signature>
+      <path>src/lib/repositories/flareRepository.ts:38-89</path>
+    </interface>
+
+    <interface>
+      <name>Dexie transaction API</name>
+      <kind>Database API</kind>
+      <signature>
+db.transaction("rw", [db.flares, db.flareEvents, db.flareBodyLocations], async () =&gt; {
+  await db.flares.add(flare);
+  await db.flareEvents.add(event);
+  for (const location of bodyLocations) {
+    await db.flareBodyLocations.add(locationRecord);
+  }
+});
+      </signature>
+      <path>Dexie API - used in flareRepository.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Jest with ts-jest preset for TypeScript testing. jsdom environment for React components.
+Test framework: Jest 30.x + React Testing Library 16.x + fake-indexeddb 6.2.4 for IndexedDB mocking.
+Pattern: describe/it blocks with beforeEach/afterAll setup. Clear database before each test, delete after all tests.
+Repository tests: Test CRUD operations, user isolation, transaction atomicity, error handling.
+Component tests: Mock repository methods, verify props passed, test user interactions.
+Coverage threshold: 80% branches/functions/lines/statements.
+</standards>
+    <locations>
+src/lib/repositories/__tests__/*.test.ts - Repository unit tests
+src/components/flares/__tests__/*.test.tsx - Component unit tests
+src/lib/db/__tests__/migration-v*.test.ts - Migration tests
+    </locations>
+    <ideas>
+AC 3.7.7.1: Test flareBodyLocations table creation with compound indexes [flareId+bodyRegionId], [userId+flareId]
+AC 3.7.7.2: Test CreateFlareInput interface accepts bodyLocations array, maintains backward compatibility
+AC 3.7.7.3: Test transaction atomicity - rollback on failure, verify no partial data persisted
+AC 3.7.7.3: Test createFlare() with multiple bodyLocations creates FlareRecord + FlareEventRecord + N FlareBodyLocationRecords
+AC 3.7.7.4: Test enrichFlareWithLocations() populates bodyLocations array ordered by createdAt
+AC 3.7.7.4: Test getFlareById() returns FlareWithLocations interface with bodyLocations
+AC 3.7.7.5: Test FlareCreationModal passes bodyLocations array to createFlare() when multiple selections
+AC 3.7.7.9: Test backward compatibility - existing flares without body locations return empty array or synthesized location
+AC 3.7.7.10: Test migration from v20 to v21 preserves existing data, creates new table
+Integration test: Create flare with 3 body locations, retrieve, verify all locations returned with correct coordinates
+Error handling: Test createFlare() failure mid-transaction (e.g., invalid coordinates) rolls back all writes
+User isolation: Test user A cannot retrieve user B's flare body locations
+    </ideas>
+  </tests>
+</story-context>

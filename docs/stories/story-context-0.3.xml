@@ -1,0 +1,83 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>0</epicId>
+    <storyId>3</storyId>
+    <title>Flares View Simplification</title>
+    <status>ContextReadyDraft</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-0.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA><![CDATA[As a user reviewing flare activity]]></asA>
+    <iWant><![CDATA[I want an approachable flares view that grows with my needs]]></iWant>
+    <soThat><![CDATA[so that I am not overwhelmed the first time I open it but can still access map and stats when ready]]></soThat>
+    <tasks><![CDATA[
+- Task 1: Default `/flares` to a cards-only layout, introduce CTA toggles for map/split view, and persist the choice to `UserPreferences` via Dexie.
+- Task 2: Add progressive body map guidance (e.g., `FlaresMapIntro`) that reveals hints after opt-in while maintaining keyboard focus order and screen-reader support.
+- Task 3: Build a collapsible summary panel for flare statistics and filters with accessible announcements and memoized data wiring.
+- Task 4: Harden accessibility and regression coverage by auditing control aria metadata, keyboard flows, and adding RTL tests with `fake-indexeddb`.
+    ]]></tasks>
+  </story>
+
+  <acceptanceCriteria><![CDATA[
+1. AC0.3.1 – Visiting `/flares` shows a cards-first view with clear CTA to enable map or split view; new layout preference persists per user.
+2. AC0.3.2 – Progressive body map guidance exposes inline tips and hints post opt-in, preserves keyboard focus order, and stages for Story 1.6 accessibility upgrades.
+3. AC0.3.3 – Statistics and filters move into a collapsible summary panel that defaults closed and supports screen-reader announcements on expand/collapse.
+4. AC0.3.4 – CTA buttons, toggles, and tabs remain keyboard accessible with descriptive `aria-*` attributes and regression coverage for focus management.
+  ]]></acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md#Story-0.3-Flares-View-Simplification"><![CDATA[Epic entry reiterates the user story, enumerated acceptance criteria, and dependencies on Stories 0.1 and 0.2 for navigation and dashboard groundwork.]]></doc>
+      <doc path="docs/ui/ui-ux-revamp-blueprint.md#Phase-4--Flares-Experience-Hardening"><![CDATA[Blueprint Phase 4 outlines the beginner-friendly cards-only default, progressive hints, and accessibility prep this story must deliver.]]></doc>
+      <doc path="docs/PRD.md#Requirements"><![CDATA[PRD functional requirements describe body map precision, flare lifecycle tracking, and analytics expectations that inform the simplified view.]]></doc>
+      <doc path="docs/solution-architecture.md#solution-architecture---flare-tracking--body-map-enhancements"><![CDATA[Solution architecture details the flare UI module structure, repository layer, and hook contracts the updated flares view must continue to honor.]]></doc>
+    </docs>
+    <code>
+      <file path="src/app/(protected)/flares/page.tsx"><![CDATA[Current flares page manages view mode, stats, region filters, and modal entry; modernization work centers here to refactor layout defaults and guidance.]]></file>
+      <file path="src/components/flares/ActiveFlareCards.tsx"><![CDATA[Card component rendering active flares and actions; cards-first layout wraps this and should respect new CTA styling and filtering.]]></file>
+      <file path="src/components/body-mapping/BodyMapViewer.tsx"><![CDATA[Body map viewer API (view, selectedRegion, onRegionSelect) drives map guidance behavior; hints must integrate without breaking region selection.]]></file>
+      <file path="src/components/body-mapping/BodyViewSwitcher.tsx"><![CDATA[View switcher control that manages body map orientation; keyboard updates should align with new accessibility requirements.]]></file>
+      <file path="src/components/flares/FlareCreationModal.tsx"><![CDATA[Existing flare creation flow triggered from CTA; ensure cards-first onboarding still routes to this modal without regressions.]]></file>
+      <file path="src/lib/repositories/userRepository.ts"><![CDATA[Repository exposes `updatePreferences` and `getOrCreateCurrentUser`; extend to read/write `flareViewMode` for persisted layout preference.]]></file>
+      <file path="src/lib/db/schema.ts"><![CDATA[`UserPreferences` interface defines stored settings; add `flareViewMode` and ensure serialization matches existing patterns.]]></file>
+      <file path="src/lib/db/client.ts"><![CDATA[Dexie migrations currently at version 11; introduce version 12 to seed the new preference field while preserving existing data.]]></file>
+      <file path="src/lib/types/flare.ts"><![CDATA[`ActiveFlare` shape (bodyRegions, severity, trend) underpins cards and summary panel data binding.]]></file>
+      <file path="src/lib/repositories/flareRepository.ts"><![CDATA[`getActiveFlaresWithTrend` supplies trend metadata used in cards and stats; summary panel should reuse this enriched dataset.]]></file>
+    </code>
+    <dependencies>
+      <dependency><![CDATA[Dexie/IndexedDB persistence (`src/lib/db/client.ts`) — new `flareViewMode` must be included in migrations and handled offline.]]></dependency>
+      <dependency><![CDATA[`useCurrentUser` hook (`src/lib/hooks/useCurrentUser.ts`) and `flareRepository` for retrieving active flares; ensure refactors keep data loads idempotent.]]></dependency>
+      <dependency><![CDATA[Tailwind design tokens and `cn` utility (`src/lib/utils/cn.ts`) for consistent CTA styling and responsive layouts aligned with Track pillar conventions.]]></dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints><![CDATA[
+- Maintain offline-first behavior: layout switches and guidance must function without network access and continue writing to IndexedDB.
+- Introduce Dexie version 12 migration that seeds `flareViewMode` to `"cards"` and guards against existing preference records lacking the field.
+- Progressive hints must not disrupt body map focus handling needed for Story 1.6; avoid adding tabbable elements without explicit order.
+- Collapsible summary panel cannot regress current stats accuracy or introduce duplicate repository fetches; reuse existing flare trend data.
+  ]]></constraints>
+  <interfaces><![CDATA[
+- `UserPreferences` (`src/lib/db/schema.ts`): object storing theme, notifications, and should be extended with optional `flareViewMode` string persisted in Dexie.
+- `BodyMapViewerProps` (`src/components/body-mapping/BodyMapViewer.tsx:17-30`): defines required callbacks and view states; guidance overlays must respect `onRegionSelect` contract.
+- `ActiveFlare` (`src/lib/types/flare.ts`): data model supporting cards and summary metrics, including coordinates and interventions fields.
+- `FlareRepository.getActiveFlaresWithTrend` (`src/lib/repositories/flareRepository.ts:209-244`): returns active flares with computed trend labels powering stats and filtering.
+  ]]></interfaces>
+  <tests>
+    <standards><![CDATA[Jest 30 + React Testing Library with `fake-indexeddb` (configured in `jest.setup.js`) continue as baseline; follow accessibility checks outlined in blueprint and existing body map test suites.]]></standards>
+    <locations><![CDATA[
+- src/components/flares/__tests__/
+- src/components/body-mapping/bodies/__tests__/
+- tests leveraging fake-indexeddb helpers under src/__tests__/
+    ]]></locations>
+    <ideas><![CDATA[
+- AC0.3.1: Render `FlaresPage` with mocked repository data, assert default cards-only view, toggle to map/split, and verify persisted preference via Dexie mock.
+- AC0.3.2: Simulate enabling map guidance and traverse via keyboard to confirm focus order, hint announcements, and ability to dismiss tips.
+- AC0.3.3: Expand/collapse the summary panel to ensure stats render from trend data and `aria-expanded` plus live-region messaging behave correctly.
+- AC0.3.4: Use keyboard navigation across CTA buttons, BodyViewSwitcher, and summary panel toggle verifying `aria-pressed`/`aria-controls` states remain synchronized.
+    ]]></ideas>
+  </tests>
+</story-context>

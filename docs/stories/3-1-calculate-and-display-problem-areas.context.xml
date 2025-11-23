@@ -1,0 +1,250 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.1</storyId>
+    <title>Calculate and Display Problem Areas</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user analyzing my flare patterns</asA>
+    <iWant>to see which body regions have the most flares</iWant>
+    <soThat>I can identify my problem areas and discuss them with my doctor</soThat>
+    <tasks>
+- [ ] Task 1: Create analyticsRepository for data aggregation (AC: #3.1.2)
+- [ ] Task 2: Create TimeRange utility functions (AC: #3.1.3)
+- [ ] Task 3: Create useAnalytics hook (AC: #3.1.6)
+- [ ] Task 4: Create ProblemAreaRow component (AC: #3.1.2, #3.1.5, #3.1.7)
+- [ ] Task 5: Create TimeRangeSelector component (AC: #3.1.3)
+- [ ] Task 6: Create ProblemAreasView component (AC: #3.1.1, #3.1.2, #3.1.4)
+- [ ] Task 7: Create ProblemAreasEmptyState component (AC: #3.1.4)
+- [ ] Task 8: Create analytics page (AC: #3.1.1)
+- [ ] Task 9: Create placeholder per-region page (AC: #3.1.5)
+- [ ] Task 10: Add comprehensive tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC3.1.1** — Analytics page displays Problem Areas section: Create analytics page at `/flares/analytics` with "Problem Areas" section as primary feature, page header includes title and time range selector, follows responsive layout patterns from Story 2.8 (grid on desktop, stack on mobile), includes navigation from main flares page.
+
+2. **AC3.1.2** — Problem areas ranked by flare frequency: Calculate and display problem areas ranked by total flare count in selected time range using analyticsRepository.getProblemAreas(userId, timeRange), each problem area shows: (1) body region name from bodyRegions data lookup, (2) total flare count (integer), (3) percentage of total flares (calculated as regionCount/totalFlares * 100, formatted to 1 decimal), (4) visual indicator (horizontal bar chart showing relative frequency), minimum 3 flares in time range required before showing region as problem area, regions with zero flares excluded from list.
+
+3. **AC3.1.3** — Time range selector with multiple options: TimeRangeSelector component provides radio buttons or dropdown with options: "Last 30 days", "Last 90 days", "Last Year", "All Time", default selection is "Last 90 days", selection persisted to localStorage with key 'analytics-time-range-{userId}', time range state triggers re-calculation of problem areas when changed, selected range displayed in section header ("Problem Areas - Last 90 days").
+
+4. **AC3.1.4** — Empty state for insufficient data: ProblemAreasEmptyState component displays when no flares exist in selected time range, shows message "No flares recorded in this time range" with suggestion to "Try selecting a different time range or log your first flare", follows empty state patterns from Story 0.2 (semantic structure, helpful messaging), includes link to create new flare from body map.
+
+5. **AC3.1.5** — Navigation to per-region flare history: Clicking/tapping a problem area row navigates to per-region flare history page (`/flares/analytics/regions/[regionId]`) with regionId as route parameter, navigation uses Next.js router.push(), keyboard accessible via Enter key when row focused, aria-label "View detailed history for {region name}" for screen readers, navigation prepared for Story 3.2 implementation (placeholder page acceptable).
+
+6. **AC3.1.6** — Real-time updates when flares change: Problem areas list updates immediately when new flares are created or existing flares are resolved, uses React Query cache invalidation pattern from Story 2.8, useAnalytics hook provides reactive data fetching with staleTime: 10000ms (10 seconds), loading skeleton shown during recalculation.
+
+7. **AC3.1.7** — Visual bar chart indicator for problem areas: Each problem area row includes horizontal bar chart visualization showing relative frequency, bar width calculated as percentage of maximum flare count (longest bar = region with most flares), bar color coding: (1) red for highest frequency region, (2) orange for 50-99% of max, (3) yellow for 25-49% of max, (4) green for < 25% of max, bar includes text label with count and percentage inside or adjacent to bar, responsive sizing adapts to mobile/desktop viewports.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Epic 3: Flare Analytics and Problem Areas">
+Epic 3 introduces analytics features to transform flare data into actionable intelligence. Story 3.1 is the first story, calculating and displaying problem areas - body regions with highest flare frequency. Provides foundation for subsequent analytics features (Stories 3.2-3.5: per-region history, metrics, trends, intervention effectiveness).
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR010, FR011, FR012">
+FR010: System shall identify and display "problem areas" - body regions with highest flare frequency and recurrence rates.
+FR011: System shall provide per-region flare history showing all flares that have occurred in each body area (Story 3.2).
+FR012: System shall calculate and display flare progression metrics: average duration, severity trends, and resolution patterns (Stories 3.3-3.5).
+NFR001: Body map zoom and pan interactions shall respond within 100ms to maintain smooth user experience on mobile and desktop devices. Applies to analytics UI as well - all interactions <100ms.
+NFR002: All flare data (creation, updates, resolution) shall persist to local IndexedDB immediately with offline-first architecture, ensuring zero data loss even without network connectivity. Analytics calculated from local data only.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="Epic 3: Flare Analytics - Component Architecture">
+Analytics Service Layer: Introduces analyticsRepository and useAnalytics hook following existing repository pattern from Story 2.1. Calculations performed on-demand (not pre-aggregated) per ADR-004, acceptable for typical user data volumes (&lt;1000 flares).
+
+Route Structure: Creates `/flares/analytics` route as sibling to `/flares` (active) and `/flares/resolved` (archive), establishing analytics section for future metrics features.
+
+ADR-004: Analytics Calculated On-Demand - Calculate analytics on page load, no pre-aggregation. Data set small (&lt;1000 flares per user realistic), Dexie indexes make queries fast (&lt;10ms), avoids complex cache invalidation.
+
+Analytics components: ProblemAreasView (ranked list or heat map), PerRegionHistory (drill-down per region), MetricsDashboard (KPIs + charts), FlareTrendChart (time-series line chart), InterventionEffectiveness (correlation view).
+      </doc>
+      <doc path="docs/stories/story-2.8.md" title="Story 2.8: Resolved Flares Archive" section="Implementation Patterns">
+Provides reference patterns for Story 3.1: React Query data fetching with 10-second staleTime for reactive updates, responsive grid layouts (grid-cols-1 md:grid-cols-2 lg:grid-cols-3), empty state patterns, localStorage persistence for user preferences, time range filtering, Next.js router navigation.
+      </doc>
+      <doc path="docs/stories/story-0.2.md" title="Story 0.2: Dashboard Today Refresh" section="Empty State Patterns">
+Empty state UI patterns referenced in AC3.1.4: semantic HTML structure, helpful messaging explaining what action is needed, links to relevant actions (e.g., "Create New Flare"), optional icons from lucide-react, bg-gray-50 rounded p-8 text-center styling.
+      </doc>
+    </docs>
+
+    <code>
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="flareRepository" lines="1-100">
+Primary data access layer for flare entities. Provides getActiveFlares(userId), getResolvedFlares(userId), getFlareHistory(userId, flareId) methods. Story 3.1 will query both active and resolved flares to calculate problem areas. Uses Dexie compound indexes: [userId+status], [userId+bodyRegionId] for efficient queries.
+      </artifact>
+      <artifact path="src/lib/hooks/useFlares.ts" kind="hook" symbol="useFlares" lines="1-165">
+React hook for fetching flare data with real-time updates. Polls every 5 seconds for updates. Demonstrates pattern for Story 3.1's useAnalytics hook: useQuery-like interface with {data, isLoading, error, refetch}, filtering by status/bodyRegionId, localStorage preference persistence.
+      </artifact>
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareRecord, FlareEventRecord" lines="74-153">
+Core flare data types. FlareRecord contains: bodyRegionId, startDate, endDate, status, coordinates, currentSeverity. Story 3.1 will group by bodyRegionId and filter by startDate for time range. FlareStatus enum: Active, Improving, Worsening, Resolved.
+      </artifact>
+      <artifact path="src/lib/data/bodyRegions.ts" kind="data" symbol="FRONT_BODY_REGIONS" lines="1-50">
+Body region definitions with id, name, category. Story 3.1 will use region.id to match FlareRecord.bodyRegionId and region.name for display. Includes groin regions added in Story 1.1: left-groin, center-groin, right-groin.
+      </artifact>
+      <artifact path="src/components/flares/ResolvedFlareCard.tsx" kind="component" symbol="ResolvedFlareCard">
+Reference component showing patterns for Story 3.1 ProblemAreaRow: bodyRegion name lookup, percentage calculation and display, color-coded badges, onClick navigation, keyboard accessibility (role="button", tabIndex, onKeyDown), ARIA labels, min-h-[44px] touch targets.
+      </artifact>
+      <artifact path="src/app/(protected)/flares/resolved/page.tsx" kind="page" symbol="ResolvedFlaresPage">
+Reference page showing patterns for Story 3.1 analytics page: time range state with localStorage persistence, sorting state, loading/error/empty states, responsive container (max-w-6xl), grid layout for cards/rows.
+      </artifact>
+      <artifact path="src/lib/db/client.ts" kind="database" symbol="db">
+Dexie database instance. Story 3.1 will use db.flares.where({userId}).toArray() to fetch all flares for aggregation. Existing indexes support efficient queries without new schema changes.
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="next" version="15.5.4">Next.js App Router framework</package>
+        <package name="react" version="19.1.0">React library</package>
+        <package name="dexie" version="4.2.0">IndexedDB wrapper for offline-first data access</package>
+        <package name="date-fns" version="4.1.0">Date formatting and manipulation for time range calculations</package>
+        <package name="lucide-react" version="0.544.0">Icons for empty states and UI elements</package>
+        <package name="uuid" version="13.0.0">UUID generation (if needed for analytics tracking)</package>
+        <package name="zod" version="4.1.12">Runtime validation for analytics data types</package>
+        <package name="tailwindcss" version="4">Styling framework</package>
+      </node>
+      <devDependencies>
+        <package name="jest" version="30.2.0">Testing framework</package>
+        <package name="@testing-library/react" version="16.3.0">React testing utilities</package>
+        <package name="@testing-library/jest-dom" version="6.9.1">Jest DOM matchers</package>
+        <package name="@testing-library/user-event" version="14.6.1">User interaction simulation</package>
+        <package name="fake-indexeddb" version="6.2.4">Mock IndexedDB for tests</package>
+        <package name="typescript" version="5">TypeScript compiler</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **Repository Pattern**: Follow existing repository pattern from Story 2.1. Create analyticsRepository.ts with getProblemAreas(userId, timeRange) method. Use Dexie queries on db.flares table with existing indexes.
+- **Offline-First Architecture**: All analytics calculations use IndexedDB via Dexie, no network dependency (NFR002). Calculate on-demand per ADR-004, no pre-aggregation.
+- **Performance**: All interactions must respond within 100ms (NFR001). Analytics calculation should complete in <200ms for typical datasets (<1000 flares).
+- **Data Integrity**: Use FlareRecord.startDate for time range filtering (not endDate). Include both active and resolved flares in counts for complete frequency picture.
+- **Accessibility**: All interactive elements keyboard accessible (Tab, Enter), ARIA labels on rows and controls, minimum 44px touch targets, screen reader announcements.
+- **React Query Pattern**: useAnalytics hook follows useFlares pattern - 10-second staleTime for reactive updates, refetch on window focus.
+- **Minimum Threshold**: Only show regions with 3+ flares in time range to avoid noise from one-off incidents (AC3.1.2).
+- **localStorage Persistence**: Time range preference persisted to localStorage with key 'analytics-time-range-{userId}' for user-specific state.
+- **Project-Relative Paths**: All file paths in code and documentation should be project-relative (e.g., "src/lib/repositories/analyticsRepository.ts" not absolute paths).
+- **Responsive Design**: Mobile-first approach with grid-cols-1 on mobile, md:grid-cols-2 lg:grid-cols-3 on larger screens. Stack components vertically on mobile.
+- **Empty State Guidance**: Follow Story 0.2 patterns - semantic HTML, helpful messaging, actionable links, optional icons.
+  </constraints>
+
+  <interfaces>
+    <interface name="ProblemArea" kind="TypeScript interface" path="src/types/analytics.ts">
+      <signature>
+interface ProblemArea {
+  bodyRegionId: string;    // Foreign key to bodyRegions
+  flareCount: number;      // Total flares in time range
+  percentage: number;      // Percentage of total flares (0-100)
+}
+      </signature>
+    </interface>
+    <interface name="TimeRange" kind="TypeScript type" path="src/lib/utils/timeRange.ts">
+      <signature>
+type TimeRange = 'last30d' | 'last90d' | 'lastYear' | 'allTime';
+      </signature>
+    </interface>
+    <interface name="analyticsRepository.getProblemAreas" kind="Repository method" path="src/lib/repositories/analyticsRepository.ts">
+      <signature>
+async function getProblemAreas(
+  userId: string,
+  timeRange: TimeRange
+): Promise&lt;ProblemArea[]&gt;
+      </signature>
+    </interface>
+    <interface name="useAnalytics" kind="React hook" path="src/lib/hooks/useAnalytics.ts">
+      <signature>
+function useAnalytics(options: {
+  timeRange: TimeRange
+}): {
+  problemAreas: ProblemArea[];
+  isLoading: boolean;
+  error: Error | null;
+}
+      </signature>
+    </interface>
+    <interface name="FlareRecord" kind="Database entity" path="src/lib/db/schema.ts">
+      <signature>
+interface FlareRecord {
+  id: string;
+  userId: string;
+  startDate: number;        // Unix timestamp for time range filtering
+  endDate?: number;
+  status: FlareStatus;      // 'active' | 'improving' | 'worsening' | 'resolved'
+  bodyRegionId: string;     // Group by this field for problem areas
+  coordinates?: { x: number; y: number };
+  initialSeverity: number;
+  currentSeverity: number;
+  createdAt: number;
+  updatedAt: number;
+}
+      </signature>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Testing follows Jest + React Testing Library pattern. All components have corresponding test files in __tests__ subdirectories. Tests use fake-indexeddb to mock Dexie database. Component tests cover: rendering with props, user interactions (click, keyboard), accessibility (ARIA labels, focus), empty states, loading states, error states. Repository tests cover: data queries, filtering, aggregation logic, edge cases. Hook tests cover: data fetching, state management, refetch behavior. Use @testing-library/user-event for simulating user actions. Maintain test coverage target of 80% for service/util layers.
+    </standards>
+    <locations>
+- src/lib/repositories/__tests__/analyticsRepository.test.ts
+- src/lib/utils/__tests__/timeRange.test.ts
+- src/lib/hooks/__tests__/useAnalytics.test.ts
+- src/components/analytics/__tests__/ProblemAreaRow.test.tsx
+- src/components/analytics/__tests__/TimeRangeSelector.test.tsx
+- src/components/analytics/__tests__/ProblemAreasView.test.tsx
+- src/components/analytics/__tests__/ProblemAreasEmptyState.test.tsx
+- src/app/(protected)/flares/analytics/__tests__/page.test.tsx
+    </locations>
+    <ideas>
+**analyticsRepository.getProblemAreas tests** (AC 3.1.2):
+- Returns problem areas sorted by flare count descending
+- Filters flares by time range (last30d, last90d, lastYear, allTime)
+- Excludes regions with < 3 flares (minimum threshold)
+- Calculates percentages correctly: (regionCount / totalCount) * 100
+- Includes both active and resolved flares in counts
+- Returns empty array when no flares in time range
+- Groups flares by bodyRegionId accurately
+
+**TimeRange utilities tests** (AC 3.1.3):
+- getTimeRangeMilliseconds returns correct values for all ranges
+- withinTimeRange predicate filters flares correctly
+- Handles edge cases: flares at exact boundary timestamps
+
+**ProblemAreaRow tests** (AC 3.1.2, 3.1.5, 3.1.7):
+- Renders region name, count, percentage
+- Bar chart width calculated correctly: (count / maxCount) * 100
+- Bar color coding: red (100%), orange (50-99%), yellow (25-49%), green (<25%)
+- onClick handler navigates to per-region page
+- Keyboard navigation: Enter key triggers onClick
+- ARIA label includes region, count, percentage
+- Minimum 44px height for touch targets
+
+**ProblemAreasView tests** (AC 3.1.1, 3.1.4, 3.1.6):
+- Renders list of problem area rows
+- Empty state displays when no flares
+- Loading state shows skeleton rows
+- Error state shows error message
+- Time range selector changes trigger data refetch
+- localStorage persists time range preference
+- Navigation to per-region page on row click
+
+**useAnalytics hook tests** (AC 3.1.6):
+- Fetches problem areas from analyticsRepository
+- Updates when time range changes
+- Handles loading state
+- Handles error state
+- Reactive updates every 10 seconds (staleTime)
+
+**Accessibility tests** (All ACs):
+- Keyboard navigation with Tab and Enter
+- ARIA labels on all interactive elements
+- Screen reader announcements
+- Focus indicators visible
+- Touch targets meet 44px minimum
+    </ideas>
+  </tests>
+</story-context>

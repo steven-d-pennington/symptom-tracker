@@ -1,0 +1,228 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.5</storyId>
+    <title>Repurpose Daily Log Page as Optional Reflection</title>
+    <status>TODO</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user who wants to add end-of-day context</asA>
+    <iWant>to access an optional reflection space separate from quick event logging</iWant>
+    <soThat>I can capture mood, sleep quality, and notes without disrupting the event stream workflow</soThat>
+    <tasks>
+      <task id="1">Confirm with Steven whether `/log` keeps an optional reflection form or becomes a redirect to the dashboard banner, and record the decision before implementation (AC 1,5).</task>
+      <task id="2">If Option A is approved, replace the DailyEntryForm stack with a lightweight reflection UI (mood 1-5, sleep 1-5, notes textarea) that clearly states "Optional - Events are your primary logs" and persists entries through dailyEntryRepository while keeping prior reflection history accessible (AC 1,2,3,6,7).</task>
+      <task id="3">If Option B is approved, convert `/log` into a redirect that surfaces the informational banner on the dashboard and ensure navigation still exposes how to reach any retained reflection capability or legacy entries (AC 5,6,7).</task>
+      <task id="4">Maintain backward compatibility by leaving the `dailyEntries` schema and repository untouched, updating exports/imports or analytics call sites only if they assume a full daily log payload, and documenting any deprecated UI affordances (AC 7).</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Daily log page `/log` no longer presents the comprehensive daily entry workflow and instead serves the chosen optional reflection experience.</criterion>
+    <criterion id="AC2">Reflection interface, when present, includes only mood (1-5), sleep quality (1-5), and overall notes inputs.</criterion>
+    <criterion id="AC3">Event stream remains the primary workflow; reflection copy and UI make clear it is supplemental.</criterion>
+    <criterion id="AC4">The application never prompts or reminds users to fill out the reflection; navigation is entirely user-initiated.</criterion>
+    <criterion id="AC5">If redirect is selected, `/log` routes users to the dashboard with a banner message: "Log events as they happen from quick-log buttons."</criterion>
+    <criterion id="AC6">Regardless of approach, navigation surfaces the destination as "Daily Reflection" or "End-of-Day Notes" so users can access it deliberately.</criterion>
+    <criterion id="AC7">Reflection data continues to reside in the `dailyEntries` table for backward compatibility with existing data exports and analytics.</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/stories/story-3.5.md</path>
+        <title>Story 3.5: Repurpose Daily Log Page as Optional Reflection</title>
+        <section>Acceptance Criteria and Tasks</section>
+        <snippet>Defines the decision between a simplified reflection form and a redirect, including navigation label updates and dailyEntries storage requirements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
+        <title>Event Stream Redesign Epics</title>
+        <section>Story 3.5: Repurpose Daily Log Page as Optional Reflection</section>
+        <snippet>Highlights optional reflection goals, banner copy for redirects, and instruction to preserve the dailyEntries table.</snippet>
+      </doc>
+      <doc>
+        <path>docs/event-stream-redesign-spec.md</path>
+        <title>Event Stream Redesign Technical Spec</title>
+        <section>Daily Log Page updates</section>
+        <snippet>Specifies that `/log` should either redirect to the dashboard or become an "End of Day Reflection" form with messaging that events are primary.</snippet>
+      </doc>
+      <doc>
+        <path>build-docs/03-daily-entry-system.md</path>
+        <title>Daily Entry System - Implementation Plan</title>
+        <section>Overview and Component Architecture</section>
+        <snippet>Describes the existing daily entry form stack, templates, and history components that will be removed or repurposed under this story.</snippet>
+      </doc>
+      <doc>
+        <path>build-docs/navigation-system.md</path>
+        <title>Navigation System Plan</title>
+        <section>Route Labels</section>
+        <snippet>Shows current navigation entries labelling `/log` as "Daily Log," which must be retitled to "Daily Reflection" or equivalent when repurposed.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <entry>
+        <path>src/app/(protected)/log/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DailyLogPage</symbol>
+        <lines>1-120</lines>
+        <reason>Currently renders DailyEntryForm, templates, and history; must be replaced with the chosen reflection or redirect logic.</reason>
+      </entry>
+      <entry>
+        <path>src/components/daily-entry/DailyEntryForm.tsx</path>
+        <kind>component</kind>
+        <symbol>DailyEntryForm</symbol>
+        <lines>1-400</lines>
+        <reason>Legacy comprehensive form whose dependencies need auditing when removing or reusing pieces for an optional reflection flow.</reason>
+      </entry>
+      <entry>
+        <path>src/components/daily-entry/hooks/useDailyEntry.ts</path>
+        <kind>hook</kind>
+        <symbol>useDailyEntry</symbol>
+        <lines>1-320</lines>
+        <reason>Bootstraps entry state, queues offline saves, and writes to dailyEntries; understand what can be retained for reflection-only saves.</reason>
+      </entry>
+      <entry>
+        <path>src/components/navigation/BottomTabs.tsx</path>
+        <kind>component</kind>
+        <symbol>BottomTabs</symbol>
+        <lines>1-120</lines>
+        <reason>Displays "Log" navigation label linked to `/log`; must be renamed to "Daily Reflection" or similar.</reason>
+      </entry>
+      <entry>
+        <path>src/components/navigation/Sidebar.tsx</path>
+        <kind>component</kind>
+        <symbol>Sidebar</symbol>
+        <lines>1-200</lines>
+        <reason>Primary navigation for desktop that still lists "Daily Log"; update label and ensure routing stays coherent.</reason>
+      </entry>
+      <entry>
+        <path>src/components/navigation/NavLayout.tsx</path>
+        <kind>component</kind>
+        <symbol>getPageTitle</symbol>
+        <lines>1-140</lines>
+        <reason>Controls top bar titles and needs to reflect the new route name when `/log` is repurposed.</reason>
+      </entry>
+      <entry>
+        <path>src/app/(protected)/dashboard/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DashboardPage</symbol>
+        <lines>1-200</lines>
+        <reason>Destination for the informational banner if redirects are implemented; ensure quick-log messaging matches acceptance criteria.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/repositories/dailyEntryRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>dailyEntryRepository</symbol>
+        <lines>1-260</lines>
+        <reason>Persists dailyEntries and provides history queries; confirms the persisted shape remains compatible when storing reflection-only fields.</reason>
+      </entry>
+      <entry>
+        <path>src/lib/db/schema.ts</path>
+        <kind>types</kind>
+        <symbol>DailyEntryRecord</symbol>
+        <lines>330-420</lines>
+        <reason>Defines required fields and optional notes/mood fields; guides how to populate minimal records for reflection.</reason>
+      </entry>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="15.5.4" />
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="lucide-react" version="^0.544.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="jest" version="^30.2.0" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1">Secure stakeholder approval on Option A versus Option B before deleting or redirecting legacy components to avoid churn.</constraint>
+    <constraint id="2">Do not reinstate daily prompts; reflection must remain discoverable only through navigation per AC4.</constraint>
+    <constraint id="3">If Option A proceeds, populate required DailyEntryRecord fields (overallHealth, energyLevel, etc.) with sensible defaults or restructure saves so analytics expecting numbers do not break.</constraint>
+    <constraint id="4">If Option B proceeds, provide a documented path for power users to reach historical reflection data so existing exports and imports remain meaningful.</constraint>
+    <constraint id="5">Navigation labels, aria-labels, and top bar titles must be updated consistently across Sidebar, BottomTabs, NavLayout, and any breadcrumbs.</constraint>
+    <constraint id="6">Retain TypeScript strictness and functional component patterns outlined in AGENTS.md while removing large components.</constraint>
+    <constraint id="7">Ensure any new banner or reflection messaging meets accessibility requirements (contrast, aria-live where applicable, no focus traps).</constraint>
+    <constraint id="8">Avoid removing dailyEntries repository methods used by analytics/export services, even if the UI no longer surfaces full daily logs.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>dailyEntryRepository.create</name>
+      <kind>repository method</kind>
+      <signature>async create(entryData: Omit&lt;DailyEntryRecord, "id"&gt;): Promise&lt;string&gt;</signature>
+      <path>src/lib/repositories/dailyEntryRepository.ts</path>
+      <notes>Used to persist reflection entries; ensure minimal payloads still satisfy schema expectations.</notes>
+    </interface>
+    <interface>
+      <name>dailyEntryRepository.getByDate</name>
+      <kind>repository method</kind>
+      <signature>async getByDate(userId: string, date: string): Promise&lt;DailyEntryRecord | undefined&gt;</signature>
+      <path>src/lib/repositories/dailyEntryRepository.ts</path>
+      <notes>Provides access to existing reflections so the UI can load and edit prior notes if Option A keeps the form.</notes>
+    </interface>
+    <interface>
+      <name>dailyEntryRepository.getAll</name>
+      <kind>repository method</kind>
+      <signature>async getAll(userId: string): Promise&lt;DailyEntryRecord[]&gt;</signature>
+      <path>src/lib/repositories/dailyEntryRepository.ts</path>
+      <notes>Feeds entry history sidebars and export routines; must continue working even if history UI is removed.</notes>
+    </interface>
+    <interface>
+      <name>useCurrentUser</name>
+      <kind>hook</kind>
+      <signature>function useCurrentUser(): { userId: string | undefined, isLoading: boolean }</signature>
+      <path>src/lib/hooks/useCurrentUser.ts</path>
+      <notes>Used within `/log` to scope entries to the current user; reflection form should keep leveraging this hook.</notes>
+    </interface>
+    <interface>
+      <name>useDailyEntry</name>
+      <kind>hook</kind>
+      <signature>function useDailyEntry(): DailyEntryController</signature>
+      <path>src/components/daily-entry/hooks/useDailyEntry.ts</path>
+      <notes>Currently handles medications, triggers, and templates; evaluate whether to slim down or replace for optional reflection.</notes>
+    </interface>
+    <interface>
+      <name>NextResponse.redirect</name>
+      <kind>framework API</kind>
+      <signature>function redirect(url: string, status?: number): never</signature>
+      <path>next/navigation</path>
+      <notes>Needed if Option B performs a server-side redirect from `/log` to `/dashboard`.</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use Jest with React Testing Library under jsdom; mock Dexie repositories when persisting reflections and use msw or jest.fn() for navigation side effects. Maintain 80% coverage and verify accessibility of new banners or optional messaging.</standards>
+    <locations>
+      <location>src/app/(protected)/log/__tests__/page.test.tsx</location>
+      <location>src/components/navigation/__tests__/NavigationLabels.test.tsx</location>
+      <location>src/lib/repositories/__tests__/dailyEntryRepository.test.ts</location>
+      <location>jest.setup.js</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1,AC2,AC3">
+        <test>Render `/log` after implementation and assert only mood, sleep, and notes controls appear alongside the optional-context messaging.</test>
+        <test>Save a reflection and confirm dailyEntryRepository.create receives mood/sleep values mapped to the legacy fields.</test>
+      </idea>
+      <idea ac="AC4">
+        <test>Verify no timers, notifications, or automatic prompts fire by inspecting component effects and ensuring navigation requires explicit user action.</test>
+      </idea>
+      <idea ac="AC5">
+        <test>When Option B is active, simulate visiting `/log` and assert a redirect occurs with the exact banner copy rendered on the dashboard.</test>
+      </idea>
+      <idea ac="AC6">
+        <test>Assert BottomTabs and Sidebar render "Daily Reflection" (or chosen label) and link to the correct route.</test>
+      </idea>
+      <idea ac="AC7">
+        <test>Run repository integration tests to ensure newly saved reflections remain compatible with exportService and analytics routines.</test>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

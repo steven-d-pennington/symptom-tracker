@@ -1,0 +1,290 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>4</storyId>
+    <title>Health Insights Hub UI</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-4-health-insights-hub-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user reviewing my health patterns</asA>
+    <iWant>a visual insights dashboard that presents correlation findings in clear, actionable cards</iWant>
+    <soThat>I can quickly understand the most important relationships in my data and take action</soThat>
+    <tasks>
+      <task id="1">Create /insights page route and layout structure (AC: #6.4.1)</task>
+      <task id="2">Build InsightCard component (AC: #6.4.2)</task>
+      <task id="3">Implement insight prioritization algorithm (AC: #6.4.3)</task>
+      <task id="4">Query correlation data from repository (Foundation for AC: #6.4.3, #6.4.4, #6.4.5)</task>
+      <task id="5">Create correlation scatter plot visualization (AC: #6.4.4)</task>
+      <task id="6">Build FlareAnalytics heat map component (AC: #6.4.5)</task>
+      <task id="7">Add time range selector (AC: #6.4.6)</task>
+      <task id="8">Implement empty state (AC: #6.4.7)</task>
+      <task id="9">Add medical disclaimer banner (AC: #6.4.8)</task>
+      <task id="10">Create insight detail modal (AC: #6.4.9)</task>
+      <task id="11">Build responsive grid layout with loading skeletons (AC: #6.4.10)</task>
+      <task id="12">Integrate all components into insights page</task>
+      <task id="13">Add navigation link to insights page</task>
+      <task id="14">Write unit tests for components</task>
+      <task id="15">Write integration tests for insights page</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC6.4.1">Create /insights page route with responsive layout using Next.js App Router. Page structure: header with title and time range selector, medical disclaimer banner at top, insights grid below, empty state when insufficient data. Use existing (protected) route group for authentication.</criterion>
+    <criterion id="AC6.4.2">Build InsightCard component displaying: insight type icon, headline text format ("High {item1} → Increased {item2}"), correlation strength badge (strong/moderate/weak with color coding), confidence level indicator, timeframe label, sample size display, action button ("View Details"). Use Tailwind CSS for styling, Lucide React for icons.</criterion>
+    <criterion id="AC6.4.3">Implement insight prioritization algorithm that prioritizes most important correlations: sort by priority score = |coefficient| × log(sampleSize), surface strong correlations (|ρ| >= 0.7) first, group insights by type, filter out weak/insignificant correlations.</criterion>
+    <criterion id="AC6.4.4">Create correlation scatter plot visualization using Chart.js 4.5.0: X-axis = item consumption/exposure frequency, Y-axis = symptom severity, data points for each day in time range, trend line overlay, interactive tooltips on hover, responsive sizing.</criterion>
+    <criterion id="AC6.4.5">Build FlareAnalytics heat map component: Y-axis = body regions, X-axis = time periods, color intensity = flare frequency, clickable cells drill down to region detail page, legend showing color scale. Use Chart.js matrix chart or custom SVG implementation.</criterion>
+    <criterion id="AC6.4.6">Add time range selector: options = "Last 7 days", "Last 30 days", "Last 90 days", "All time". Time range selection affects ALL visualizations on page. Store selected range in component state. Default to "Last 30 days" on initial load.</criterion>
+    <criterion id="AC6.4.7">Implement empty state UI shown when insufficient data: message "Log data for at least 10 days to see insights", progress indicator showing current logged days, call-to-action button linking to daily log page, illustration or icon for visual interest.</criterion>
+    <criterion id="AC6.4.8">Add medical disclaimer banner: text "Insights show correlations, not causation. Discuss findings with your healthcare provider.", warning icon, yellow/amber background color, dismissible with localStorage persistence (30 days), accessible ARIA role="alert".</criterion>
+    <criterion id="AC6.4.9">Create insight detail modal: modal header with correlation headline, full correlation data display (coefficient, p-value, sample size, lag hours, confidence level), embedded scatter plot visualization, related events timeline, export as PDF button (optional), close functionality (Escape key, click outside, X button), focus trap.</criterion>
+    <criterion id="AC6.4.10">Build responsive grid layout: 1 column on mobile (&lt; 768px), 2 columns on tablet (768px - 1024px), 3 columns on desktop (&gt; 1024px). Add smooth loading skeletons (shimmer effect) while correlation data loads from IndexedDB.</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 6: Health Insights & Correlation Analytics</title>
+        <section>Story 6.4: Health Insights Hub UI</section>
+        <snippet>UI layer for Epic 6, consuming correlation engine from Story 6.3. Creates visual insights dashboard with InsightCards, scatter plots, heat maps, and medical disclaimer. Prioritizes insights by statistical significance.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6-3-correlation-engine-and-spearman-algorithm.md</path>
+        <title>Story 6.3: Correlation Engine and Spearman Algorithm</title>
+        <section>Dev Notes - Learnings and Data Models</section>
+        <snippet>Provides CorrelationRepository with CRUD operations (findAll, findByType, findSignificant), CorrelationResult TypeScript interfaces in src/types/correlation.ts, IndexedDB schema version 25 with correlations table, background calculation service with debouncing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Technology Stack and Component Structure</section>
+        <snippet>Next.js 15.5.4 with App Router, React 19.1.0, Chart.js 4.5.0 for analytics visualizations, Dexie 4.2.0 for IndexedDB, Tailwind CSS 4.x for styling, Lucide React for icons. Component structure follows pattern: src/components/{domain}/ComponentName.tsx</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Epic 6 Requirements</section>
+        <snippet>Health insights feature enables users to discover patterns in their data through automated correlation analysis. Medical disclaimer required for all correlation-based insights.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/types/correlation.ts</path>
+        <kind>TypeScript types and interfaces</kind>
+        <symbol>CorrelationResult, CorrelationType, CorrelationStrength, TimeRange</symbol>
+        <lines>1-262</lines>
+        <reason>Complete type definitions for correlation data from Story 6.3. Use these interfaces for InsightCard props and component state. Includes helper functions: timeRangeToDays, timeRangeToMs, meetsSignificanceCriteria, determineConfidence.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/correlationRepository.ts</path>
+        <kind>Repository</kind>
+        <symbol>CorrelationRepository class</symbol>
+        <lines>1-100+</lines>
+        <reason>CRUD operations for querying correlation data from IndexedDB. Use findAll(userId), findByType(userId, type), findSignificant(userId, threshold) methods to retrieve correlation data for insights page.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/MedicalDisclaimerBanner.tsx</path>
+        <kind>React component</kind>
+        <symbol>MedicalDisclaimerBanner</symbol>
+        <lines>1-49</lines>
+        <reason>Existing medical disclaimer component pattern. Shows how to implement warning banner with AlertTriangle icon, yellow background, ARIA role="alert". Can reuse or adapt for insights page disclaimer (AC6.4.8).</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/TimeRangeSelector.tsx</path>
+        <kind>React component</kind>
+        <symbol>TimeRangeSelector</symbol>
+        <lines>1-43</lines>
+        <reason>Existing time range selector component with preset options (7d, 30d, 90d, 1y, all). Can adapt for insights page (AC6.4.6), but story specifies only 7d, 30d, 90d, all - remove 1y option.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/TrendChart.tsx</path>
+        <kind>React Chart.js component</kind>
+        <symbol>TrendChart</symbol>
+        <lines>1-80</lines>
+        <reason>Example of Chart.js usage with react-chartjs-2. Shows pattern for registering Chart.js components, configuring Line charts with trendlines, tooltips, and annotations. Use as reference for scatter plot implementation (AC6.4.4).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/hooks/useAnalytics.ts</path>
+        <kind>Custom React hook</kind>
+        <symbol>useAnalytics</symbol>
+        <reason>Existing analytics hook pattern. Reference for creating useCorrelations hook (Task 4) to query correlationRepository with proper loading/error states.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/dailyLogsRepository.ts</path>
+        <kind>Repository</kind>
+        <symbol>DailyLogsRepository</symbol>
+        <reason>Used for counting logged days in empty state (AC6.4.7). Query listByDateRange(userId, startDate, endDate) to calculate number of unique days with data entries.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>Repository</kind>
+        <symbol>FlareRepository</symbol>
+        <reason>Used for FlareAnalytics heat map (AC6.4.5). Query flare events by time range and body region to build frequency heat map visualization.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/AnalyticsDashboard.tsx</path>
+        <kind>React component</kind>
+        <symbol>AnalyticsDashboard</symbol>
+        <reason>Existing analytics dashboard pattern. Reference for responsive layout, loading states, and component composition. Insights page will follow similar structure.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/body-map/analytics/page.tsx</path>
+        <kind>Next.js page route</kind>
+        <symbol>AnalyticsPage</symbol>
+        <reason>Example of protected page route pattern in Next.js App Router. Shows how to structure page.tsx with server components, authentication, and responsive layout. Use as template for src/app/(protected)/insights/page.tsx.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <chart.js>^4.5.0</chart.js>
+        <react-chartjs-2>^5.3.0</react-chartjs-2>
+        <chartjs-adapter-date-fns>^3.0.0</chartjs-adapter-date-fns>
+        <chartjs-plugin-annotation>^3.1.0</chartjs-plugin-annotation>
+        <dexie>^4.2.0</dexie>
+        <lucide-react>^0.544.0</lucide-react>
+        <next>15.5.4</next>
+        <react>19.1.0</react>
+        <react-dom>19.1.0</react-dom>
+        <date-fns>^4.1.0</date-fns>
+        <uuid>^13.0.0</uuid>
+        <zod>^4.1.12</zod>
+      </node>
+      <devDependencies>
+        <@testing-library/react>^16.3.0</@testing-library/react>
+        <@testing-library/jest-dom>^6.9.1</@testing-library/jest-dom>
+        <@testing-library/user-event>^14.6.1</@testing-library/user-event>
+        <jest>^30.2.0</jest>
+        <jest-environment-jsdom>^30.2.0</jest-environment-jsdom>
+        <typescript>^5</typescript>
+        <tailwindcss>^4</tailwindcss>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1">All components must be client components ("use client" directive) due to Chart.js and interactive UI requirements</constraint>
+    <constraint id="2">Use existing correlationRepository from Story 6.3 - do not create new repository or database schema changes</constraint>
+    <constraint id="3">Follow existing Chart.js patterns: register Chart.js components (CategoryScale, LinearScale, etc.) before use, use react-chartjs-2 wrapper components</constraint>
+    <constraint id="4">Responsive design required: mobile-first approach with Tailwind responsive utilities (sm:, md:, lg: breakpoints)</constraint>
+    <constraint id="5">Accessibility requirements: ARIA labels, keyboard navigation, screen reader support, focus management in modals</constraint>
+    <constraint id="6">Medical disclaimer must be prominent and dismissible - localStorage persistence for 30 days</constraint>
+    <constraint id="7">All paths must be project-relative (not absolute) for portability</constraint>
+    <constraint id="8">Loading states required: skeleton cards prevent layout shift (CLS), smooth transitions when data loads</constraint>
+    <constraint id="9">Empty state shown when: no correlations exist, user has &lt;10 days of logged data, or no significant correlations found</constraint>
+    <constraint id="10">Priority score algorithm: |coefficient| × log(sampleSize) - handle edge case where sampleSize &lt; 2 (log would be ≤ 0)</constraint>
+    <constraint id="11">Time range selector affects ALL visualizations simultaneously - maintain consistent state across page</constraint>
+    <constraint id="12">Follow existing component structure: src/components/insights/ for new components, src/app/(protected)/insights/ for page route</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CorrelationResult</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface CorrelationResult {
+  id: string;
+  userId: string;
+  type: CorrelationType; // "food-symptom" | "trigger-symptom" | "medication-symptom" | "food-flare" | "trigger-flare"
+  item1: string;
+  item2: string;
+  coefficient: number; // -1 to +1
+  strength: CorrelationStrength; // "strong" | "moderate" | "weak"
+  significance: number; // p-value 0-1
+  sampleSize: number;
+  lagHours: number; // 0, 6, 12, 24, 48
+  confidence: CorrelationConfidence; // "high" | "medium" | "low"
+  timeRange: TimeRange; // "7d" | "30d" | "90d"
+  calculatedAt: number;
+  createdAt: number;
+  updatedAt: number;
+}
+      </signature>
+      <path>src/types/correlation.ts</path>
+    </interface>
+    <interface>
+      <name>CorrelationRepository.findAll</name>
+      <kind>Repository method</kind>
+      <signature>async findAll(userId: string): Promise&lt;CorrelationRecord[]&gt;</signature>
+      <path>src/lib/repositories/correlationRepository.ts</path>
+    </interface>
+    <interface>
+      <name>CorrelationRepository.findByType</name>
+      <kind>Repository method</kind>
+      <signature>async findByType(userId: string, type: CorrelationType): Promise&lt;CorrelationRecord[]&gt;</signature>
+      <path>src/lib/repositories/correlationRepository.ts</path>
+    </interface>
+    <interface>
+      <name>CorrelationRepository.findSignificant</name>
+      <kind>Repository method</kind>
+      <signature>async findSignificant(userId: string, threshold: number = 0.3): Promise&lt;CorrelationRecord[]&gt;</signature>
+      <path>src/lib/repositories/correlationRepository.ts</path>
+    </interface>
+    <interface>
+      <name>InsightCard (to be created)</name>
+      <kind>React component props</kind>
+      <signature>
+interface InsightCardProps {
+  correlation: CorrelationResult;
+  onViewDetails: (correlation: CorrelationResult) =&gt; void;
+}
+      </signature>
+      <path>src/components/insights/InsightCard.tsx</path>
+    </interface>
+    <interface>
+      <name>TimeRangeSelector props</name>
+      <kind>React component props</kind>
+      <signature>
+interface TimeRangeSelectorProps {
+  onChange: (timeRange: string) =&gt; void;
+  value?: string;
+  disabled?: boolean;
+}
+      </signature>
+      <path>src/components/analytics/TimeRangeSelector.tsx</path>
+    </interface>
+    <interface>
+      <name>Chart.js Line component</name>
+      <kind>React component from react-chartjs-2</kind>
+      <signature>import { Line } from 'react-chartjs-2';</signature>
+      <path>External dependency - react-chartjs-2</path>
+    </interface>
+    <interface>
+      <name>Chart.js Scatter component</name>
+      <kind>React component from react-chartjs-2</kind>
+      <signature>import { Scatter } from 'react-chartjs-2';</signature>
+      <path>External dependency - react-chartjs-2</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Jest + React Testing Library pattern. Test files located in __tests__ subdirectories. Component tests verify rendering, user interactions, prop handling, and accessibility. Integration tests mock IndexedDB repositories using fake-indexeddb. Coverage target: 80% for branches, functions, lines, statements. Test naming: ComponentName.test.tsx or serviceName.test.ts. Use @testing-library/user-event for user interactions.
+    </standards>
+    <locations>
+      - src/components/insights/__tests__/*.test.tsx (component unit tests)
+      - src/lib/services/__tests__/*.test.ts (service/algorithm unit tests)
+      - src/lib/hooks/__tests__/*.test.ts (hook tests)
+      - src/app/(protected)/insights/__tests__/*.test.tsx (page integration tests)
+    </locations>
+    <ideas>
+      <idea ac="AC6.4.1">Test insights page renders with correct layout structure, header, disclaimer, and grid container. Verify authentication redirect if user not logged in.</idea>
+      <idea ac="AC6.4.2">Test InsightCard renders correlation data correctly: headline format, strength badge color, confidence display, sample size. Test "View Details" button click handler.</idea>
+      <idea ac="AC6.4.3">Test insight prioritization algorithm: verify priority score calculation (|ρ| × log(n)), correct sorting (highest priority first), grouping by type, filtering weak correlations.</idea>
+      <idea ac="AC6.4.4">Test scatter plot component renders Chart.js correctly, displays data points, trend line, tooltips. Test responsive resizing.</idea>
+      <idea ac="AC6.4.5">Test heat map component queries flare data, calculates frequency, renders color-coded cells, handles cell clicks for navigation.</idea>
+      <idea ac="AC6.4.6">Test time range selector changes trigger data re-query, all visualizations update with new time range, default is 30d.</idea>
+      <idea ac="AC6.4.7">Test empty state shown when no correlations or insufficient data (&lt;10 days). Verify progress indicator calculation, CTA button links to daily log page.</idea>
+      <idea ac="AC6.4.8">Test medical disclaimer banner renders with correct text, icon, ARIA role. Test dismiss functionality saves to localStorage, banner stays dismissed for 30 days.</idea>
+      <idea ac="AC6.4.9">Test insight detail modal opens/closes correctly, displays full correlation data, renders scatter plot, handles Escape key and outside click, focus trap works.</idea>
+      <idea ac="AC6.4.10">Test responsive grid layout: 1 column on mobile, 2 on tablet, 3 on desktop. Test loading skeletons shown during data load, smooth transition to real cards.</idea>
+      <idea>Test useCorrelations hook: queries repository with correct parameters, handles loading state, error state, filters by time range.</idea>
+      <idea>Integration test: full user flow from page load → select time range → click insight → view modal → close modal.</idea>
+      <idea>Accessibility test: keyboard navigation works (Tab, Enter, Escape), screen reader labels present, focus indicators visible.</idea>
+    </ideas>
+  </tests>
+</story-context>

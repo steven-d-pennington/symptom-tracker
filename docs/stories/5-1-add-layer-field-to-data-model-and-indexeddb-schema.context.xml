@@ -1,0 +1,287 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>1</storyId>
+    <title>Add Layer Field to Data Model and IndexedDB Schema</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-1-add-layer-field-to-data-model-and-indexeddb-schema.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer implementing multi-layer support</asA>
+    <iWant>to extend the body map data model to include layer information</iWant>
+    <soThat>markers can be categorized by tracking type with efficient querying</soThat>
+    <tasks>
+- Task 1: Define LayerType and LAYER_CONFIG (AC: #5.1.1, #5.1.5, #5.1.9)
+  - 1.1: Create or update `src/lib/db/schema.ts` with LayerType definition
+  - 1.2: Define LAYER_CONFIG object with metadata for all 3 layers
+  - 1.3: Add JSDoc comments documenting layer types and config
+  - 1.4: Export LayerType and LAYER_CONFIG from schema module
+  - 1.5: Create unit tests verifying LAYER_CONFIG structure
+
+- Task 2: Update BodyMapLocationRecord interface (AC: #5.1.1)
+  - 2.1: Add `layer: LayerType` field to BodyMapLocationRecord interface
+  - 2.2: Update interface JSDoc with layer field description
+  - 2.3: Ensure interface maintains backward compatibility with existing code
+  - 2.4: Update any related type guards or validators
+
+- Task 3: Create Dexie schema version 4 migration (AC: #5.1.2, #5.1.3, #5.1.4, #5.1.8)
+  - 3.1: Open `src/lib/db/database.ts` and identify current schema version
+  - 3.2: Create new version() block for version 4
+  - 3.3: Add compound index `[userId+layer+timestamp]` to bodyMapLocations
+  - 3.4: Maintain all existing indexes in version 4
+  - 3.5: Implement upgrade() callback for backward compatibility
+  - 3.6: Write migration logic: assign layer='flares' to existing markers
+  - 3.7: Use trans.table('bodyMapLocations').toCollection().modify() pattern
+  - 3.8: Add error handling for migration failures
+  - 3.9: Test migration runs successfully on app startup
+
+- Task 4: Implement migration tests (AC: #5.1.7)
+  - 4.1: Create test file `src/lib/db/__tests__/migration-v4.test.ts`
+  - 4.2: Write test: "should migrate existing markers to flares layer"
+  - 4.3: Write test: "should create compound index for layer queries"
+  - 4.4: Write test: "should preserve all existing marker data"
+  - 4.5: Write test: "should support layer-filtered queries after migration"
+  - 4.6: Use fake-indexeddb or similar for testing IndexedDB operations
+  - 4.7: Verify zero data loss in migration scenarios
+  - 4.8: Test edge cases (empty database, large dataset)
+
+- Task 5: Extend bodyMapRepository with layer methods (AC: #5.1.6)
+  - 5.1: Open `src/lib/repositories/bodyMapRepository.ts`
+  - 5.2: Add getMarkersByLayer(userId, layer, options?) method
+  - 5.3: Add getMarkersByLayers(userId, layers[], options?) method
+  - 5.4: Add getMarkerCountsByLayer(userId) method
+  - 5.5: Use compound index [userId+layer+timestamp] for efficient queries
+  - 5.6: Ensure existing repository methods continue to work unchanged
+  - 5.7: Add JSDoc documentation for new methods
+  - 5.8: Handle optional parameters (limit, startTime, endTime)
+
+- Task 6: Create repository tests for layer methods (AC: #5.1.6)
+  - 6.1: Create or update `src/lib/repositories/__tests__/bodyMapRepository.test.ts`
+  - 6.2: Write test: "getMarkersByLayer returns correct layer markers"
+  - 6.3: Write test: "getMarkersByLayers returns markers from multiple layers"
+  - 6.4: Write test: "getMarkerCountsByLayer returns accurate counts"
+  - 6.5: Write test: "layer queries respect time range filters"
+  - 6.6: Write test: "existing repository methods work after migration"
+  - 6.7: Test query performance with 50+ markers
+
+- Task 7: Integration testing and validation (AC: All)
+  - 7.1: Run all tests to verify implementation
+  - 7.2: Test migration on development database
+  - 7.3: Verify compound index improves query performance
+  - 7.4: Test backward compatibility with existing flare features
+  - 7.5: Validate TypeScript compilation with new types
+  - 7.6: Check for any console errors or warnings
+  - 7.7: Verify offline-first persistence works correctly
+  - 7.8: Update any affected documentation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC5.1.1 — BodyMapMarker interface extended with layer field:** BodyMapLocationRecord interface includes new `layer` field of type `LayerType = 'flares' | 'pain' | 'inflammation'`. TypeScript LayerType definition created and exported from data model. [Source: docs/epics.md#Story-5.1, docs/epic-5-tech-spec.md#Data-Architecture]
+
+2. **AC5.1.2 — IndexedDB schema migration adds layer field:** Dexie schema migration (version 4) adds `layer` field to `bodyMapLocations` table. Migration script increments schema version and registers migration handler in database.ts. [Source: docs/epic-5-tech-spec.md#Dexie-Schema-Migration]
+
+3. **AC5.1.3 — Backward compatibility for existing markers:** All existing body map location records automatically assigned `layer: 'flares'` during migration using `trans.table().toCollection().modify()` pattern. Migration tested to ensure zero data loss. [Source: docs/epic-5-tech-spec.md#Migration-Safety]
+
+4. **AC5.1.4 — Compound index for efficient layer queries:** New compound index created on `[userId+layer+timestamp]` enabling O(log n) layer-filtered queries. Existing indexes maintained for backward compatibility. [Source: docs/epic-5-tech-spec.md#Index-Strategy]
+
+5. **AC5.1.5 — LayerType and LAYER_CONFIG metadata:** LayerType type definition and LAYER_CONFIG metadata object created with layer properties: id, label, icon (emoji), color (Tailwind class), description. Config includes all 3 layers: flares (🔥 red), pain (⚡ yellow), inflammation (🟣 purple). [Source: docs/epic-5-tech-spec.md#Layer-Field-Addition]
+
+6. **AC5.1.6 — Repository methods support layer filtering:** bodyMapRepository extended with layer-aware query methods without breaking existing functionality. New methods include getMarkersByLayer() and getMarkerCountsByLayer(). [Source: docs/epic-5-tech-spec.md#Repository-Extensions]
+
+7. **AC5.1.7 — Migration testing with data integrity:** Migration script includes comprehensive tests verifying: existing markers receive layer='flares', no data loss occurred, new compound index works correctly, layer-filtered queries return correct results. Test file created at `__tests__/db/migration-v4.test.ts`. [Source: docs/epic-5-tech-spec.md#Migration-Safety]
+
+8. **AC5.1.8 — Schema version and migration handler registration:** Schema version incremented in Dexie configuration, migration handler properly registered, offline-first pattern maintained (NFR002). [Source: docs/epics.md#Story-5.1]
+
+9. **AC5.1.9 — TypeScript type exports:** LayerType and LAYER_CONFIG exported from appropriate module for use throughout application. All types properly defined with JSDoc documentation. [Source: docs/epics.md#Story-5.1]
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>Data Architecture</section>
+        <snippet>Defines LayerType = 'flares' | 'pain' | 'mobility' | 'inflammation' (note: Story 5.1 uses only 3 types per AC), LAYER_CONFIG metadata with icons/colors, Dexie schema migration pattern with compound index [userId+layer+timestamp], backward compatibility via upgrade() callback assigning layer='flares' to existing markers.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>Migration Safety</section>
+        <snippet>Migration testing requirements with append-only event history pattern (ADR-003). Test migrations before rollout to ensure zero data loss. Use trans.table().toCollection().modify() pattern for backward compatibility.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>Repository Extensions</section>
+        <snippet>Extend bodyMapRepository with layer-aware query methods: getMarkersByLayer(userId, layer, options), getMarkersByLayers(userId, layers[], options), getMarkerCountsByLayer(userId). Use compound index for O(log n) queries.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - Flare Tracking &amp; Body Map Enhancements</title>
+        <section>Technology Stack</section>
+        <snippet>Existing stack: Dexie 4.2.0 for IndexedDB wrapper, TypeScript 5.x for type safety, fake-indexeddb 6.2.4 for testing. Jest + React Testing Library for unit/integration tests.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - Flare Tracking &amp; Body Map Enhancements</title>
+        <section>Data Integrity</section>
+        <snippet>Immutability (NFR003): Append-only event history pattern. Never modify existing arrays, use spread operator to create new arrays. Zod schemas for DTO validation, severity range 1-10, coordinate bounds 0-1 normalized.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>BodyMapLocationRecord</symbol>
+        <lines>190-204</lines>
+        <reason>Current body map location interface with userId, symptomId, bodyRegionId, coordinates (x,y), severity. Will serve as reference for adding layer field to this existing interface.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase</symbol>
+        <lines>27-496</lines>
+        <reason>Current Dexie database schema at version 21. Shows existing migration patterns, current bodyMapLocations table indexes, and upgrade() callback pattern for backward compatibility. Version 22 will add layer field.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>BodyMapLocationRepository</symbol>
+        <lines>5-223</lines>
+        <reason>Existing bodyMapLocation repository with CRUD methods, getByBodyRegion(), getMostAffectedRegions(). Will be extended with layer-aware methods: getMarkersByLayer(), getMarkersByLayers(), getMarkerCountsByLayer().</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>migration-example</kind>
+        <symbol>version 18 upgrade callback</symbol>
+        <lines>349-403</lines>
+        <reason>Reference migration pattern using trans.table().toCollection().modify() to backfill existing records. Shows proper async/await handling, console logging, and data preservation strategy during schema changes.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dexie>4.2.0</dexie>
+        <uuid>13.0.0</uuid>
+        <zod>4.1.12</zod>
+        <typescript>5.x</typescript>
+      </node>
+      <testing>
+        <fake-indexeddb>6.2.4</fake-indexeddb>
+        <jest>30.2.0</jest>
+        <@testing-library/react>16.3.0</@testing-library/react>
+        <@testing-library/jest-dom>6.9.1</@testing-library/jest-dom>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>NFR002: Offline-first persistence - All changes must persist immediately to IndexedDB without server roundtrip. Changes survive page reload and browser restart.</constraint>
+    <constraint>NFR001: Response time &lt; 100ms - Use compound index [userId+layer+timestamp] for O(log n) query performance. Avoid full table scans.</constraint>
+    <constraint>NFR003: Immutability - Never modify existing data. Use append-only pattern with spread operators for array updates. Migration must preserve all existing marker data.</constraint>
+    <constraint>Backward Compatibility: All existing bodyMapLocation records must automatically receive layer='flares' during migration. Existing queries without layer filter must continue to work.</constraint>
+    <constraint>TypeScript Strictness: All types must have proper JSDoc documentation. LayerType must be exported for use throughout application. No 'any' types allowed.</constraint>
+    <constraint>Testing Coverage: Migration tests are CRITICAL - must verify zero data loss, correct default layer assignment, compound index functionality, and layer-filtered query results.</constraint>
+    <constraint>Database Version: Current schema is version 21. This story will create version 22 with layer field addition to bodyMapLocations table.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>BodyMapLocationRecord (current)</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface BodyMapLocationRecord { id: string; userId: string; dailyEntryId?: string; symptomId: string; bodyRegionId: string; coordinates?: { x: number; y: number }; severity: number; notes?: string; createdAt: Date; updatedAt: Date; }</signature>
+      <path>src/lib/db/schema.ts:190-204</path>
+    </interface>
+    <interface>
+      <name>BodyMapLocationRecord (after Story 5.1)</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface BodyMapLocationRecord { id: string; userId: string; dailyEntryId?: string; symptomId: string; bodyRegionId: string; coordinates?: { x: number; y: number }; severity: number; layer: LayerType; notes?: string; createdAt: Date; updatedAt: Date; }</signature>
+      <path>src/lib/db/schema.ts (to be modified)</path>
+    </interface>
+    <interface>
+      <name>LayerType (new)</name>
+      <kind>TypeScript type</kind>
+      <signature>export type LayerType = 'flares' | 'pain' | 'inflammation';</signature>
+      <path>src/lib/db/schema.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>Dexie compound index syntax</name>
+      <kind>Database index</kind>
+      <signature>bodyMapLocations: "id, userId, dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], [userId+layer+timestamp], createdAt"</signature>
+      <path>src/lib/db/client.ts (version 22 to be added)</path>
+    </interface>
+    <interface>
+      <name>BodyMapLocationRepository.getMarkersByLayer (new)</name>
+      <kind>Repository method</kind>
+      <signature>async getMarkersByLayer(userId: string, layer: LayerType, options?: { limit?: number; startTime?: number; endTime?: number }): Promise&lt;BodyMapLocationRecord[]&gt;</signature>
+      <path>src/lib/repositories/bodyMapLocationRepository.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>BodyMapLocationRepository.getMarkerCountsByLayer (new)</name>
+      <kind>Repository method</kind>
+      <signature>async getMarkerCountsByLayer(userId: string): Promise&lt;Record&lt;LayerType, number&gt;&gt;</signature>
+      <path>src/lib/repositories/bodyMapLocationRepository.ts (to be added)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Project uses Jest 30.2.0 with fake-indexeddb 6.2.4 for IndexedDB testing. Test framework: @testing-library/react 16.3.0 and @testing-library/jest-dom 6.9.1. Migration tests follow pattern from migration-v13.test.ts: Create testDb with unique name per test, define old version schema, insert test data, upgrade to new version, verify migration effects. Use beforeEach/afterEach with db.delete() cleanup. Tests must verify: (1) new fields added, (2) default values assigned, (3) compound indexes created, (4) zero data loss. Repository tests use fake-indexeddb to mock Dexie operations.
+    </standards>
+    <locations>
+      <location>src/lib/db/__tests__/migration-v22.test.ts (new - for schema v22 migration tests)</location>
+      <location>src/lib/repositories/__tests__/bodyMapLocationRepository.test.ts (existing - extend with layer method tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC5.1.2, AC5.1.3, AC5.1.7">
+        <test>Migration Test: "should add layer field to bodyMapLocations table in v22"</test>
+        <approach>Create v21 testDb, add sample bodyMapLocation records (without layer), upgrade to v22, verify all records have layer='flares'</approach>
+      </idea>
+      <idea ac="AC5.1.3, AC5.1.7">
+        <test>Migration Test: "should assign layer='flares' to all existing markers during upgrade"</test>
+        <approach>Insert 10 markers in v21, upgrade to v22, query all markers and assert every marker.layer === 'flares'</approach>
+      </idea>
+      <idea ac="AC5.1.7">
+        <test>Migration Test: "should preserve all existing marker data during migration"</test>
+        <approach>Insert markers with all fields (id, userId, bodyRegionId, coordinates, severity, notes) in v21, upgrade to v22, verify all original fields remain unchanged and layer field added</approach>
+      </idea>
+      <idea ac="AC5.1.4, AC5.1.7">
+        <test>Migration Test: "should support layer-filtered queries after migration using compound index"</test>
+        <approach>After v22 migration, insert markers with different layers, query using where('[userId+layer+timestamp]'), verify correct subset returned</approach>
+      </idea>
+      <idea ac="AC5.1.5">
+        <test>Unit Test: "LAYER_CONFIG should contain all 3 required layers with metadata"</test>
+        <approach>Assert LAYER_CONFIG has keys: flares, pain, inflammation. Verify each has id, label, icon, color, description fields</approach>
+      </idea>
+      <idea ac="AC5.1.6">
+        <test>Repository Test: "getMarkersByLayer should return only markers from specified layer"</test>
+        <approach>Insert markers with layers flares/pain/inflammation, call getMarkersByLayer(userId, 'pain'), verify only pain markers returned</approach>
+      </idea>
+      <idea ac="AC5.1.6">
+        <test>Repository Test: "getMarkersByLayers should return markers from multiple specified layers"</test>
+        <approach>Insert markers across 3 layers, call getMarkersByLayers(userId, ['flares', 'inflammation']), verify both layer types returned, pain excluded</approach>
+      </idea>
+      <idea ac="AC5.1.6">
+        <test>Repository Test: "getMarkerCountsByLayer should return accurate counts per layer"</test>
+        <approach>Insert known counts (5 flares, 3 pain, 2 inflammation), call getMarkerCountsByLayer(userId), assert returned object matches expected counts</approach>
+      </idea>
+      <idea ac="AC5.1.6">
+        <test>Repository Test: "layer queries should respect time range filters (startTime, endTime)"</test>
+        <approach>Insert markers at different timestamps, call getMarkersByLayer with time range options, verify only markers within range returned</approach>
+      </idea>
+      <idea ac="AC5.1.6">
+        <test>Repository Test: "existing repository methods should work unchanged after migration"</test>
+        <approach>After v22 migration, call existing methods (getAll, getByBodyRegion, getMostAffectedRegions) and verify they still return correct results</approach>
+      </idea>
+      <idea ac="AC5.1.7">
+        <test>Migration Edge Case: "should handle empty database migration gracefully"</test>
+        <approach>Create v21 testDb with no records, upgrade to v22, verify schema updated without errors</approach>
+      </idea>
+      <idea ac="AC5.1.7">
+        <test>Migration Performance: "should migrate 50+ markers without performance degradation"</test>
+        <approach>Insert 60 markers in v21, measure migration time, assert upgrade completes in reasonable time (&lt;500ms)</approach>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

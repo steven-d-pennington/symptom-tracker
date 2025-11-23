@@ -6,7 +6,7 @@ import type {
 } from "../types/onboarding";
 
 export const ONBOARDING_STORAGE_KEY = "pocket:onboarding-state";
-export const USER_SETTINGS_STORAGE_KEY = "pocket:user-settings";
+export const CURRENT_USER_ID_KEY = "pocket:currentUserId";
 
 export const createInitialData = (): OnboardingData => ({
   condition: "Hidradenitis Suppurativa",
@@ -183,31 +183,81 @@ export const persistOnboardingState = (state: OnboardingState) => {
   }
 };
 
-export interface StoredUserSettings {
-  condition: string;
-  experience: OnboardingData["experience"];
-  trackingPreferences: OnboardingData["trackingPreferences"];
-  privacySettings: OnboardingData["privacySettings"];
-  onboardingCompletedAt: string;
-}
-
-export const persistUserSettings = (data: OnboardingData) => {
+export const persistUserSettings = async (data: OnboardingData) => {
   if (typeof window === "undefined") {
     return;
   }
 
-  const payload: StoredUserSettings = {
-    condition: data.condition,
-    experience: data.experience,
-    trackingPreferences: data.trackingPreferences,
-    privacySettings: data.privacySettings,
-    onboardingCompletedAt: new Date().toISOString(),
-  };
+  // Ensure user profile exists
+  if (!data.userProfile) {
+    console.error("[Onboarding] Cannot persist user settings without user profile");
+    return;
+  }
+
+  // DEBUG: Check if selections are present
+  console.log("[Onboarding] persistUserSettings called with data:", {
+    hasUserProfile: !!data.userProfile,
+    hasSelections: !!data.selections,
+    selectionCounts: data.selections ? {
+      symptoms: data.selections.symptoms.length,
+      triggers: data.selections.triggers.length,
+      medications: data.selections.medications.length,
+      foods: data.selections.foods.length,
+    } : null
+  });
 
   try {
-    window.localStorage.setItem(USER_SETTINGS_STORAGE_KEY, JSON.stringify(payload));
+    const { userRepository } = await import("@/lib/repositories/userRepository");
+    const { initializeUserDefaults } = await import("@/lib/services/userInitialization");
+
+    // Use getOrCreateCurrentUser() to ensure we use the same lock mechanism as dashboard components
+    // This prevents race conditions where multiple components try to create users simultaneously
+    const user = await userRepository.getOrCreateCurrentUser();
+    console.log("[Onboarding] Got user from getOrCreateCurrentUser():", user.id);
+
+    // Always update the user with onboarding data
+    // (getOrCreateCurrentUser creates a default "User" if none exists, so we need to update it)
+    await userRepository.update(user.id, {
+      name: data.userProfile.name,
+      email: data.userProfile.email,
+      preferences: {
+        ...user.preferences,
+        notifications: {
+          remindersEnabled: data.trackingPreferences.notificationsEnabled,
+          reminderTime: data.trackingPreferences.reminderTime,
+        },
+        privacy: data.privacySettings,
+      },
+    });
+    console.log("[Onboarding] Updated user with onboarding data");
+
+    const userId = user.id;
+
+    // Story 3.6.1 - AC3.6.1.10: Initialize with selections if provided
+    if (data.selections) {
+      console.log("[Onboarding] Initializing user defaults with selections:", data.selections);
+      const initResult = await initializeUserDefaults(userId, data.selections);
+      if (initResult.success) {
+        console.log("[Onboarding] ✅ Defaults initialized successfully:", initResult.details);
+      } else {
+        console.error("[Onboarding] ⚠️ Failed to initialize defaults:", initResult.error);
+      }
+    } else {
+      // Fallback to old behavior - auto-populate all defaults
+      console.log("[Onboarding] No selections provided, initializing with all defaults");
+      const initResult = await initializeUserDefaults(userId);
+      if (initResult.success) {
+        console.log("[Onboarding] ✅ Defaults initialized successfully:", initResult.details);
+      } else {
+        console.error("[Onboarding] ⚠️ Failed to initialize defaults:", initResult.error);
+      }
+    }
+
+    // Store userId in localStorage for quick access
+    window.localStorage.setItem(CURRENT_USER_ID_KEY, userId);
+    console.log("[Onboarding] Current user ID saved to localStorage");
   } catch (error) {
-    console.warn("[Onboarding] Failed to persist user settings", error);
+    console.error("[Onboarding] Failed to persist user settings", error);
   }
 };
 
@@ -224,5 +274,5 @@ export const resetUserSettings = () => {
     return;
   }
 
-  window.localStorage.removeItem(USER_SETTINGS_STORAGE_KEY);
+  window.localStorage.removeItem(CURRENT_USER_ID_KEY);
 };

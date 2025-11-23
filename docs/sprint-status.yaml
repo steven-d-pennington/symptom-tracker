@@ -1,0 +1,283 @@
+# generated: 2025-11-14
+# project: symptom-tracker
+# project_key: symptom-tracker
+# tracking_system: file-system
+# story_location: {project-root}/docs/stories
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic exists in epic file but not contexted
+#   - contexted: Epic tech context created (required before drafting stories)
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved and story context created
+#   - in-progress: Developer actively working on implementation
+#   - review: Under SM review (via review-story workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epics should be 'contexted' before stories can be 'drafted'
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically drafts next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
+
+generated: 2025-11-14
+project: symptom-tracker
+project_key: symptom-tracker
+tracking_system: file-system
+story_location: "{project-root}/docs/stories"
+
+development_status:
+  epic-0: contexted
+  0-1-consolidate-track-navigation: done
+  0-2-dashboard-today-refresh: done
+  0-3-flares-view-simplification: done
+  0-4-navigation-title-layout-harmonization: done
+  0-5-ux-instrumentation-validation: done
+  epic-0-retrospective: optional
+
+  epic-1: contexted
+  1-1-add-groin-regions-to-body-map-svg: done
+  1-2-implement-zoom-controls-for-body-map: done
+  1-3-implement-pan-controls-for-zoomed-body-map: done
+  1-4-coordinate-based-location-marking-in-zoomed-view: done
+  1-5-display-flare-markers-on-body-map: done
+  1-6-body-map-accessibility-and-keyboard-navigation: done
+  epic-1-retrospective: optional
+
+  epic-2: contexted
+  2-1-flare-data-model-and-indexeddb-schema: done
+  2-2-create-new-flare-from-body-map: done
+  2-3-active-flares-dashboard: done
+  2-4-update-flare-status-severity-and-trend: done
+  2-5-log-flare-interventions: done
+  2-6-view-flare-history-timeline: done
+  2-7-mark-flare-as-resolved: done
+  2-8-resolved-flares-archive: done
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-calculate-and-display-problem-areas: done
+  3-2-per-region-flare-history: done
+  3-3-flare-duration-and-severity-metrics: done
+  3-4-flare-trend-analysis-visualization: done
+  3-5-intervention-effectiveness-analysis: done
+  epic-3-retrospective: completed
+
+  epic-3.5: contexted
+  3.5-1-fix-empty-state-crisis-and-pre-populate-defaults: done
+  3.5-2-mood-and-sleep-basic-logging: done
+  3.5-3-redesign-symptom-logging-modal-to-page: done
+  3.5-4-redesign-food-logging-modal-to-page: done
+  3.5-5-redesign-trigger-and-medication-logging-to-pages: done
+  3.5-6-critical-ui-fixes-bundle: done
+  3.5-7-fix-calendar-data-wiring: done
+  3.5-8-add-keyboard-navigation-accessibility: ready-for-dev
+  epic-3.5-retrospective: optional
+
+  epic-3.6: contexted
+  3.6-1-interactive-data-selection-during-onboarding: done
+  epic-3.6-retrospective: optional
+
+  epic-3.7: backlog
+  3-7-1-region-detail-view-infrastructure: done
+  3-7-2-marker-preview-and-positioning: done
+  3-7-3-smart-defaults-system: done
+  3-7-4-full-screen-mode: done
+  3-7-5-history-toggle: done
+  3-7-6-polish-and-accessibility: review
+  3-7-7-multi-location-flare-persistence: review
+  epic-3.7-retrospective: optional
+
+  epic-3.8: contexted
+  3-8-1-critical-regression-bug-fixes: review
+  epic-3.8-retrospective: optional
+
+  epic-4: backlog
+  4-1-attach-photos-to-flare-entities: backlog
+  4-2-flare-photo-timeline-view: backlog
+  4-3-before-after-photo-comparison: backlog
+  4-4-photo-annotation-simple: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-add-layer-field-to-data-model-and-indexeddb-schema: done
+  5-2-implement-layer-preferences-and-persistence: done
+  5-3-create-layer-selector-component-for-tracking-mode: done
+  5-4-implement-layer-aware-marker-rendering: done
+  5-5-add-multi-layer-view-controls-and-filtering: done
+  5-6-create-layer-legend-and-accessibility-features: ready-for-dev
+  epic-5-retrospective: optional
+
+  # EPIC 6 PLAN (2025-11-12):
+  # - NEXT: Run create-story for 6-6-body-map-gender-type-customization
+  # - THEN: Complete 6-7-treatment-effectiveness-tracker (needs AlertsPanel component and component tests)
+  # - Story 6-8 is DONE and approved
+
+  epic-6: backlog
+  6-1-navigation-restructure-and-shadcn-ui-integration: done
+  6-2-daily-log-page: done
+  6-3-correlation-engine-and-spearman-algorithm: done
+  6-4-health-insights-hub-ui: done
+  6-5-timeline-pattern-detection: done
+  6-6-body-map-gender-type-customization: ready-for-dev
+  6-7-treatment-effectiveness-tracker: in-progress  # COMPLETE AFTER 6.6 - Needs AlertsPanel + component tests
+  6-8-devdata-controls-enhancement-for-analytics-support: done
+  epic-6-retrospective: optional
+
+  # EPIC 7 PLAN (2025-11-13):
+  # Cloud Sync - Manual Backup/Restore MVP
+  # - Story 7.1 DONE - Cloud Sync Infrastructure Setup (2025-11-12)
+  # - Story 7.2 DONE - Encryption and Upload Implementation (2025-11-13)
+  #   * Client-side PBKDF2 key derivation (100K iterations, SHA-256)
+  #   * AES-256-GCM authenticated encryption
+  #   * Complete IndexedDB export (23+ tables)
+  #   * Three API routes: upload, download, cleanup
+  #   * Comprehensive testing (30+ unit tests, 600+ lines)
+  #   * Database schema v28 → v29 with syncMetadata table
+  #   * Dependencies: @vercel/blob, @upstash/redis, @upstash/ratelimit
+  #   * Build errors fixed, all tests passing
+  # - NEXT: Proceed with Story 7.3 (Download and Restore Implementation)
+  # - Epic 7 prioritized for multi-device support
+
+  epic-7: backlog
+  7-1-cloud-sync-infrastructure-setup: done
+  7-2-encryption-and-upload-implementation: done
+  7-3-download-and-restore-implementation: done
+  7-4-ui-and-user-experience-polish: review
+  epic-7-retrospective: optional
+
+  # EPIC 8 PLAN (2025-11-14):
+  # HS Flare Lifecycle Tracking - Medical stage progression tracking
+  # - Story 8.1 DRAFTED - HS Flare Lifecycle Schema & Repository Layer (2025-11-14)
+  #   * Database schema v30 with lifecycle stage fields
+  #   * Six lifecycle stages: onset → growth → rupture → draining → healing → resolved
+  #   * Migration logic for existing flares (active→onset, resolved→resolved)
+  #   * Repository methods: updateLifecycleStage(), getLifecycleStageHistory()
+  #   * Utility functions: getNextLifecycleStage(), isValidStageTransition()
+  #   * Comprehensive testing (35+ test cases)
+  # - NEXT: Run story-context for 8-1, then implement
+  # - Story 8.2 (UI Integration) follows after 8.1 complete
+
+  epic-8: backlog
+  8-1-hs-flare-lifecycle-schema-and-repository-layer: done
+  8-2-lifecycle-stage-ui-components-and-integration: in-progress  # CHANGES REQUESTED - See Senior Developer Review in story file
+  8-3-lifecycle-stage-timeline-visualization: backlog
+  epic-8-retrospective: optional
+
+  # EPIC 9 PLAN (2025-11-14):
+  # Flare Creation UX Redesign - Modal to Full-Page Flow
+  # - PRD: Epic-9-Flare-Creation-UX-Redesign-PRD.md
+  # - Architecture: Epic-9-Architecture-Addendum.md
+  # - Pattern: Consistent full-page flow matching symptom/trigger/food logging
+  # - Stories 9.1-9.4: Required (MVP)
+  # - Story 9.5: Optional (Onboarding enhancement)
+  # - Story 9.1 context generated 2025-11-14
+  # - Story 9.2 context generated 2025-11-14
+  # - NEXT: Run dev-story for 9-2-flare-details-page
+
+  epic-9: contexted
+  9-1-body-map-placement-page: review
+  9-2-flare-details-page: review
+  9-3-success-screen-with-add-another-flow: review
+  9-4-body-map-entry-point-and-component-cleanup: review
+  9-5-multi-flare-onboarding-guidance: backlog  # Optional enhancement
+  epic-9-retrospective: optional
+
+# Epic 9 Test Crisis - 2025-11-15
+epic-9-test-crisis:
+  status: CRITICAL
+  discovery_date: 2025-11-15
+  discovered_by: Code Review Agent (investigating Story 9.4 regression suspicion)
+  
+  test_results:
+    story_9_1: "1/21 passing (5% pass rate) - CRITICAL"
+    story_9_2: "7/55 passing (13% pass rate) - CRITICAL (claimed 48 passing - INVERTED!)"
+    story_9_3: "26/46 passing (57% pass rate) - NEEDS WORK"
+    total: "34/122 passing (28% pass rate) - DISASTER"
+  
+  root_cause: "Tests were broken from creation, never properly executed/validated. NOT a Story 9.4 regression."
+  
+  immediate_actions:
+    - action: "Review Epic-9-Test-Fix-Plan.md for detailed analysis"
+      file: "docs/Epic-9-Test-Fix-Plan.md"
+      status: COMPLETE
+    
+    - action: "Fix Story 9.3 tests (low risk, high ROI)"
+      estimated_time: "2-4 hours"
+      priority: HIGH
+      status: PENDING
+    
+    - action: "Update code review findings with actual test results"
+      status: PENDING
+  
+  short_term_plan:
+    - "Phase 1: Fix Story 9.3 tests (26/46 → 46/46)"
+    - "Phase 2: Create test utility infrastructure"
+    - "Phase 3: Fix Stories 9.1 and 9.2 tests"
+    - "Phase 4: Add integration and performance tests"
+  
+  success_criteria: "122/122 tests passing (100% pass rate) with documented execution results"
+  
+  documentation:
+    - "docs/Epic-9-Test-Fix-Plan.md (comprehensive fix plan)"
+    - "/tmp/epic9-test-summary.md (baseline test results)"
+    - "docs/stories/9-1-body-map-placement-page.md (code review with test findings)"
+    - "docs/stories/9-2-flare-details-page.md (code review with test findings)"
+
+# Next Steps for Epic 9 Code Review Continuation
+next_session_instructions:
+  branch: "claude/code-review-epic-9-01NM1Gr5gwKFwUrmcC5QAMEa"
+  
+  completed_work:
+    - "Story 9.1 code review - BLOCKED (tests not executed)"
+    - "Story 9.2 code review - BLOCKED (test results inverted)"
+    - "Discovered Epic 9 test crisis - all tests broken"
+    - "Created comprehensive fix plan in docs/Epic-9-Test-Fix-Plan.md"
+    - "Documented test baseline in docs/Epic-9-Test-Results-Baseline.md"
+  
+  remaining_work:
+    - task: "Complete Story 9.3 code review"
+      priority: HIGH
+      status: PENDING
+      notes: "Started reading story but never completed review"
+    
+    - task: "Complete Story 9.4 code review"
+      priority: HIGH
+      status: PENDING
+      notes: "Never started"
+    
+    - task: "Update code reviews with actual test results"
+      priority: HIGH
+      status: PENDING
+      notes: "Reviews written based on story claims, need to update with actual test execution findings"
+    
+    - task: "Decision: Fix tests or document only?"
+      priority: HIGH
+      status: PENDING
+      notes: "User needs to decide whether to invest time fixing tests or just documenting issues"
+  
+  recommended_next_session_prompt: |
+    "Continue Epic 9 code reviews on branch claude/code-review-epic-9-01NM1Gr5gwKFwUrmcC5QAMEa.
+    
+    You've completed:
+    - Story 9.1 review (BLOCKED - tests not executed)
+    - Story 9.2 review (BLOCKED - test results inverted)
+    - Discovered test crisis (all Epic 9 tests broken)
+    - Created fix plan in docs/Epic-9-Test-Fix-Plan.md
+    
+    Continue by:
+    1. Complete Story 9.3 code review (started but not finished)
+    2. Complete Story 9.4 code review (not started)
+    3. Update reviews with actual test execution results
+    4. Commit all reviews and push
+    
+    Reference docs/Epic-9-Test-Fix-Plan.md and docs/Epic-9-Test-Results-Baseline.md for context."

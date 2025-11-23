@@ -1,0 +1,722 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>E1</epicId>
+    <storyId>1.2</storyId>
+    <title>Pre-populated Food Database with Allergen Tags</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-16</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to select from a pre-populated database of common foods with allergen information</iWant>
+    <soThat>I can log food quickly without typing and get accurate allergen correlation data</soThat>
+    <tasks>
+      <task id="1" priority="critical">
+        <title>Extend Dexie schema to add foods and foodEvents tables</title>
+        <description>Update schema to version 11 migration with FoodRecord and FoodEventRecord TypeScript interfaces, compound indexes for efficient queries, and migration guard for idempotent seeding</description>
+        <acceptanceCriteria>
+          <ac ref="1">Database includes 200+ common foods</ac>
+          <ac ref="6">Database seeded at app initialization using Dexie migration</ac>
+          <ac ref="7">Foods stored in IndexedDB with compound indexes</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Update src/lib/db/schema.ts with FoodRecord and FoodEventRecord interfaces per tech spec</subtask>
+          <subtask>Update src/lib/db/client.ts to define version 11 migration with foods and foodEvents stores</subtask>
+          <subtask>Define compound indexes: foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]" and foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]"</subtask>
+          <subtask>Create migration guard to ensure seeding runs exactly once using sentinel check</subtask>
+          <subtask>Add unit tests for schema validation and index creation</subtask>
+        </subtasks>
+        <estimatedHours>2-3</estimatedHours>
+      </task>
+      <task id="2" priority="critical">
+        <title>Create foodRepository with CRUD operations</title>
+        <description>Implement repository following existing patterns with methods for get, search, create, update, archive, JSON parsing for allergenTags/category, soft-delete support, and validation</description>
+        <acceptanceCriteria>
+          <ac ref="1">Database includes 200+ common foods</ac>
+          <ac ref="2">Each food tagged with relevant allergens</ac>
+          <ac ref="3">Foods searchable by name using full-text search</ac>
+          <ac ref="4">Foods categorized for filtering</ac>
+          <ac ref="7">Foods stored in IndexedDB with compound indexes</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Implement src/lib/repositories/foodRepository.ts following existing repository patterns</subtask>
+          <subtask>Add methods: getAll(userId), search(userId, query, filters), create(food), update(id, changes), archive(id)</subtask>
+          <subtask>Implement JSON parsing for allergenTags and category fields (stored as JSON strings)</subtask>
+          <subtask>Add soft-delete support using isActive flag consistent with existing patterns</subtask>
+          <subtask>Add validation for allergen taxonomy (dairy, gluten, nuts, shellfish, nightshades, soy, eggs, fish)</subtask>
+          <subtask>Create comprehensive unit tests with mock Dexie (follow patterns from existing repositories)</subtask>
+        </subtasks>
+        <estimatedHours>2-3</estimatedHours>
+      </task>
+      <task id="3" priority="critical">
+        <title>Create foodSeedService to populate default food catalog</title>
+        <description>Implement service with seed data containing 200+ common foods organized by category, tagged with allergens, with idempotent seeding logic</description>
+        <acceptanceCriteria>
+          <ac ref="1">Database includes 200+ common foods with names organized by category</ac>
+          <ac ref="2">Each food tagged with relevant allergens aligned with medical standards</ac>
+          <ac ref="4">Foods categorized for filtering</ac>
+          <ac ref="6">Database seeded at app initialization using Dexie migration (idempotent)</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Implement src/lib/services/food/seedFoodsService.ts with seed data containing 200+ common foods</subtask>
+          <subtask>Organize foods by category: breakfast items, proteins, vegetables, fruits, grains, dairy, snacks, beverages</subtask>
+          <subtask>Tag each food with appropriate allergens using medical-standard taxonomy</subtask>
+          <subtask>Implement idempotent seeding (check sentinel, batch insert in chunks of 50 to avoid blocking)</subtask>
+          <subtask>Set isDefault: true, isActive: true for all seeded foods</subtask>
+          <subtask>Add unit tests verifying seed data structure and idempotency</subtask>
+        </subtasks>
+        <estimatedHours>3-4</estimatedHours>
+      </task>
+      <task id="4" priority="high">
+        <title>Create foodEventRepository for meal logging persistence</title>
+        <description>Implement repository for persisting food events with CRUD operations, validation, JSON-stringified arrays support, and soft-delete</description>
+        <acceptanceCriteria>
+          <ac ref="7">Events stored in IndexedDB for offline access</ac>
+          <ac ref="9">Search functionality in FoodLogModal filters foods by name in real-time</ac>
+          <ac ref="10">Favorites grid in FoodLogModal displays most recently or frequently used foods</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Implement src/lib/repositories/foodEventRepository.ts following repository patterns</subtask>
+          <subtask>Add methods: create(event), update(id, changes), delete(id), findByDateRange(userId, start, end), findByMealType(userId, mealType)</subtask>
+          <subtask>Implement validation: ensure timestamp, at least one food in foodIds, valid mealType enum</subtask>
+          <subtask>Support JSON-stringified arrays for foodIds, photoIds, portionMap per local-first conventions</subtask>
+          <subtask>Add soft-delete support for audit trail</subtask>
+          <subtask>Create unit tests with mock Dexie covering CRUD operations and validation</subtask>
+        </subtasks>
+        <estimatedHours>2-3</estimatedHours>
+      </task>
+      <task id="5" priority="high">
+        <title>Wire FoodLogModal to foodRepository for real data</title>
+        <description>Update FoodLogModal to use foodRepository.search() instead of placeholder data, implement real-time search filtering, replace placeholder favorites</description>
+        <acceptanceCriteria>
+          <ac ref="8">FoodLogModal wired to display real food data instead of placeholders</ac>
+          <ac ref="9">Search functionality in FoodLogModal filters foods by name in real-time</ac>
+          <ac ref="10">Favorites grid displays most recently or frequently used foods</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Update src/components/food/FoodLogModal.tsx to use foodRepository.search() instead of placeholder data</subtask>
+          <subtask>Implement real-time search filtering that queries IndexedDB by name</subtask>
+          <subtask>Replace placeholder favorites with query to foodRepository using isDefault filter or user preferences</subtask>
+          <subtask>Add loading states and error handling for database operations</subtask>
+          <subtask>Update component tests to mock foodRepository and verify data integration</subtask>
+        </subtasks>
+        <estimatedHours>1-2</estimatedHours>
+      </task>
+      <task id="6" priority="high">
+        <title>Implement FoodLogModal save handler to create foodEvents</title>
+        <description>Wire Save button to call foodEventRepository.create(), generate mealId, capture timestamp/mealType/foodIds, show toast notifications</description>
+        <acceptanceCriteria>
+          <ac ref="8">FoodLogModal wired to create food events</ac>
+          <ac ref="9">Events persist to database</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Wire "Save" button in FoodLogModal to call foodEventRepository.create()</subtask>
+          <subtask>Generate mealId using uuid for grouping multiple foods (prepare for Story 1.4 meal composition)</subtask>
+          <subtask>Capture timestamp, mealType (default to 'snack' for now), and selected foodIds</subtask>
+          <subtask>Show success toast notification on save, error toast on failure</subtask>
+          <subtask>Close modal and trigger timeline refresh via context</subtask>
+          <subtask>Add integration tests verifying full save flow</subtask>
+        </subtasks>
+        <estimatedHours>1-2</estimatedHours>
+      </task>
+      <task id="7" priority="medium">
+        <title>Extend FoodContext to manage food state</title>
+        <description>Add useFoods() and useFoodEvents() hooks with Dexie liveQuery subscriptions, favorites management, search debouncing</description>
+        <acceptanceCriteria>
+          <ac ref="8">FoodLogModal has access to food and event data</ac>
+          <ac ref="9">Real-time search filtering</ac>
+          <ac ref="10">Favorites management integrated</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Update src/contexts/FoodContext.tsx to expose useFoods() and useFoodEvents() hooks</subtask>
+          <subtask>Add Dexie liveQuery subscriptions for reactive food and foodEvent updates</subtask>
+          <subtask>Implement favorites management (read from userRepository preferences)</subtask>
+          <subtask>Add search debouncing (300ms) to optimize performance</subtask>
+          <subtask>Update context tests to verify new hooks and subscriptions</subtask>
+        </subtasks>
+        <estimatedHours>2-3</estimatedHours>
+      </task>
+      <task id="8" priority="medium">
+        <title>Add allergen tag color coding system</title>
+        <description>Define allergen color palette, create AllergenBadge component with consistent styling, integrate into FoodLogModal</description>
+        <acceptanceCriteria>
+          <ac ref="5">Allergen tags visually indicated with consistent color coding matching existing design system</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Define allergen color palette in src/lib/constants/allergens.ts (e.g., dairy: blue, gluten: orange, nuts: brown)</subtask>
+          <subtask>Create AllergenBadge component at src/components/food/AllergenBadge.tsx with consistent styling</subtask>
+          <subtask>Use Tailwind utility classes for color coding matching design system</subtask>
+          <subtask>Add unit tests for AllergenBadge component</subtask>
+          <subtask>Update FoodLogModal to display allergen badges for each food item</subtask>
+        </subtasks>
+        <estimatedHours>1-2</estimatedHours>
+      </task>
+      <task id="9" priority="medium">
+        <title>Performance validation and instrumentation</title>
+        <description>Add performance marks for database operations, verify search and save timing requirements</description>
+        <acceptanceCriteria>
+          <ac ref="6">Database operations meet performance requirements</ac>
+          <ac ref="7">Efficient queries using compound indexes</ac>
+          <ac ref="9">Search results return quickly</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Add performance marks for database operations (seed, search, create)</subtask>
+          <subtask>Verify search results return within 250ms for 200+ foods</subtask>
+          <subtask>Ensure modal save completes within 500ms (existing requirement from Story 1.1)</subtask>
+          <subtask>Log Dexie migration timing to console in development</subtask>
+          <subtask>Add performance tests validating timing requirements</subtask>
+        </subtasks>
+        <estimatedHours>1-2</estimatedHours>
+      </task>
+      <task id="10" priority="low">
+        <title>Integration testing and timeline verification</title>
+        <description>Verify full flow end-to-end, test offline functionality, ensure no regressions from Story 1.1</description>
+        <acceptanceCriteria>
+          <ac ref="10">Food events appear in timeline view</ac>
+        </acceptanceCriteria>
+        <subtasks>
+          <subtask>Verify food events appear in existing timeline view (if timeline integration exists)</subtask>
+          <subtask>Test full flow: open modal → search food → select → save → verify database persistence</subtask>
+          <subtask>Test offline functionality (all operations work without network)</subtask>
+          <subtask>Verify no regressions in Story 1.1 functionality (quick-log button, modal open)</subtask>
+          <subtask>Run full test suite to ensure 80%+ coverage maintained</subtask>
+        </subtasks>
+        <estimatedHours>2-3</estimatedHours>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" priority="critical">
+      <description>Database includes 200+ common foods with names organized by category (breakfast items, proteins, vegetables, fruits, grains, etc.)</description>
+      <verificationMethod>Unit tests verify seedFoodsService creates at least 200 foods with proper categorization</verificationMethod>
+    </criterion>
+    <criterion id="2" priority="critical">
+      <description>Each food tagged with relevant allergens (dairy, gluten, nuts, shellfish, nightshades, soy, eggs, fish) aligned with medical standards</description>
+      <verificationMethod>Snapshot tests validate allergen taxonomy consistency across seed data</verificationMethod>
+    </criterion>
+    <criterion id="3" priority="high">
+      <description>Foods searchable by name using full-text search across the IndexedDB-backed catalog</description>
+      <verificationMethod>Component tests verify search input filters foods by name in real-time</verificationMethod>
+    </criterion>
+    <criterion id="4" priority="high">
+      <description>Foods categorized for filtering (breakfast items, proteins, vegetables, fruits, grains, snacks, etc.)</description>
+      <verificationMethod>Integration tests verify category filters return appropriate subsets</verificationMethod>
+    </criterion>
+    <criterion id="5" priority="medium">
+      <description>Allergen tags visually indicated with consistent color coding matching existing design system</description>
+      <verificationMethod>Component tests verify AllergenBadge renders with correct color classes</verificationMethod>
+    </criterion>
+    <criterion id="6" priority="critical">
+      <description>Database seeded at app initialization using Dexie migration (idempotent, version 11)</description>
+      <verificationMethod>Migration tests verify seeding runs once, subsequent upgrades skip</verificationMethod>
+    </criterion>
+    <criterion id="7" priority="critical">
+      <description>Foods stored in IndexedDB for offline access with compound indexes for efficient queries</description>
+      <verificationMethod>Repository tests verify compound index usage and offline functionality</verificationMethod>
+    </criterion>
+    <criterion id="8" priority="critical">
+      <description>FoodLogModal (created in Story 1.1) wired to display real food data instead of placeholders</description>
+      <verificationMethod>Component integration tests verify modal loads foods from foodRepository</verificationMethod>
+    </criterion>
+    <criterion id="9" priority="high">
+      <description>Search functionality in FoodLogModal filters foods by name in real-time</description>
+      <verificationMethod>User event tests simulate typing and verify filtered results update</verificationMethod>
+    </criterion>
+    <criterion id="10" priority="medium">
+      <description>Favorites grid in FoodLogModal displays most recently or frequently used foods</description>
+      <verificationMethod>Integration tests verify favorites query and display logic</verificationMethod>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <document path="docs/tech-spec-epic-E1.md">
+        <section name="Data Models and Contracts">
+          <excerpt>
+            FoodRecord interface:
+            - id: string
+            - userId: string
+            - name: string
+            - category: string (JSON string persisted as category metadata)
+            - allergenTags: string (JSON-stringified string[] per local-first convention)
+            - preparationMethod?: string
+            - isDefault: boolean
+            - isActive: boolean
+            - createdAt: number
+            - updatedAt: number
+
+            FoodEventRecord interface:
+            - id: string
+            - userId: string
+            - mealId: string (uuid links grouped foods)
+            - foodIds: string (JSON-stringified string[])
+            - timestamp: number (epoch ms)
+            - mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+            - portionMap: string (JSON-stringified Record&lt;foodId, PortionSize&gt;)
+            - notes?: string
+            - photoIds?: string (JSON-stringified string[])
+            - favoritesSnapshot?: string
+            - createdAt: number
+            - updatedAt: number
+
+            Dexie migration version 11:
+            - foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]"
+            - foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]"
+
+            Allergen taxonomy: dairy, gluten, nuts, shellfish, nightshades, soy, eggs, fish
+          </excerpt>
+        </section>
+        <section name="Services and Modules">
+          <excerpt>
+            foodRepository API:
+            - getAll(userId: string): Promise&lt;FoodRecord[]&gt;
+            - search(userId: string, query: string, filters: FoodFilters): Promise&lt;FoodRecord[]&gt;
+            - create(food: FoodDraft): Promise&lt;string&gt;
+            - update(id: string, changes: Partial&lt;FoodDraft&gt;): Promise&lt;void&gt;
+            - archive(id: string): Promise&lt;void&gt;
+
+            foodEventRepository API:
+            - create(event: FoodEventDraft): Promise&lt;string&gt;
+            - update(id: string, changes: Partial&lt;FoodEventDraft&gt;): Promise&lt;void&gt;
+            - delete(id: string): Promise&lt;void&gt;
+            - findByDateRange(userId: string, start: number, end: number): Promise&lt;FoodEventRecord[]&gt;
+            - findByMealType(userId: string, mealType: MealType): Promise&lt;FoodEventRecord[]&gt;
+
+            seedFoodsService:
+            - 200+ preset foods organized by category
+            - Batch inserts in chunks of 50
+            - Sentinel check for idempotent seeding
+            - All seeded foods: isDefault: true, isActive: true
+          </excerpt>
+        </section>
+        <section name="Non-Functional Requirements">
+          <excerpt>
+            Performance:
+            - Quick-log modal open and persist: &lt;500ms
+            - Search/filter operations: &lt;250ms for 5-year datasets
+            - Use compound indexes first, then in-memory filtering
+
+            Security:
+            - Reuse existing AES-256-GCM photo encryption
+            - Client-side validation for all mutations
+
+            Reliability:
+            - Offline-first: all CRUD succeeds without network
+            - Soft-delete maintains audit trail (isActive flag)
+          </excerpt>
+        </section>
+      </document>
+      <document path="AGENTS.md">
+        <section name="Database Architecture">
+          <excerpt>
+            - Local-first: All data stored in IndexedDB via Dexie.js
+            - Schema versioning: Currently at version 10, target version 11
+            - Compound indexes: Critical for performance - always query using [userId+field] patterns
+            - JSON stringification: Arrays stored as JSON strings (must parse on read)
+          </excerpt>
+        </section>
+        <section name="Repository Pattern">
+          <excerpt>
+            - All data access through repositories in src/lib/repositories/
+            - Repositories handle CRUD operations and business logic
+            - Use userRepository.getOrCreateCurrentUser() for single-user pattern
+            - Always include userId in queries (future multi-user support)
+          </excerpt>
+        </section>
+        <section name="Testing Requirements">
+          <excerpt>
+            - Coverage: 80% minimum across branches, functions, lines, statements
+            - Test environment: jsdom with custom mocks for IndexedDB
+            - Component testing: React Testing Library with accessible queries
+            - Repository testing: Mock Dexie operations, test business logic
+          </excerpt>
+        </section>
+        <section name="Performance Considerations">
+          <excerpt>
+            - Database queries: Always use indexed fields first, then filter in memory
+            - Analytics caching: Expensive computations cached with TTL
+          </excerpt>
+        </section>
+      </document>
+      <document path="docs/stories/story-1.1.md">
+        <section name="Context">
+          <excerpt>
+            Story 1.1 created:
+            - QuickLogButtons component extended with Food button
+            - FoodContext provider with modal state management
+            - FoodLogModal with placeholder data (to be replaced in Story 1.2)
+            
+            All tests passing (34 total), performance validated (~250ms &lt; 500ms)
+            FoodLogModal ready for database integration
+          </excerpt>
+        </section>
+      </document>
+    </docs>
+    <code>
+      <existingPattern name="Repository Pattern" path="src/lib/repositories/symptomRepository.ts">
+        <description>Established pattern for CRUD operations with Dexie</description>
+        <keyFeatures>
+          - Class-based repository with singleton export
+          - Methods: getAll, getActive, getByCategory, getById, searchByName, create, update, softDelete, delete, bulkCreate
+          - Compound index queries: where("[userId+category]").equals([userId, category])
+          - Soft-delete using isActive flag
+          - generateId() for new records
+          - Timestamps: createdAt, updatedAt
+        </keyFeatures>
+        <usage>
+          Follow this exact pattern for foodRepository:
+          - Use db.foods for Dexie table access
+          - Implement search with in-memory filtering after indexed query
+          - Parse JSON strings for allergenTags array
+          - Add validation for allergen taxonomy
+          - Export singleton: export const foodRepository = new FoodRepository()
+        </usage>
+      </existingPattern>
+      <existingPattern name="Dexie Migration" path="src/lib/db/client.ts">
+        <description>Schema versioning and migration pattern</description>
+        <keyFeatures>
+          - Increment version number (currently 10, target 11)
+          - Define stores with compound indexes
+          - Optional .upgrade() callback for data migrations
+          - Batch operations to avoid blocking
+        </keyFeatures>
+        <usage>
+          For version 11 migration:
+          1. Add foods and foodEvents to class properties
+          2. Call this.version(11).stores({ ...existing, foods: "...", foodEvents: "..." })
+          3. Add .upgrade() with seedFoodsService call inside transaction
+          4. Use sentinel check to ensure seeding runs once
+          5. Batch inserts in chunks of 50
+        </usage>
+      </existingPattern>
+      <existingPattern name="React Context Provider" path="src/contexts/FoodContext.tsx">
+        <description>Context pattern for state management</description>
+        <keyFeatures>
+          - createContext with typed interface
+          - Provider component with useMemo for value
+          - Custom hook with error checking
+          - State management with useState/useCallback
+        </keyFeatures>
+        <usage>
+          Extend FoodContext:
+          - Add useFoods() hook returning Dexie liveQuery subscription
+          - Add useFoodEvents() hook with date range filtering
+          - Implement favorites management reading from UserPreferences
+          - Add debounced search state (300ms)
+          - Keep existing modal state management
+        </usage>
+      </existingPattern>
+      <existingPattern name="Component Testing" path="src/components/food/__tests__/FoodLogModal.test.tsx">
+        <description>React Testing Library test patterns</description>
+        <keyFeatures>
+          - Mock Dexie operations in beforeEach
+          - Use screen.getByRole for accessible queries
+          - userEvent for interaction simulation
+          - waitFor for async operations
+          - toBeInTheDocument assertions
+        </keyFeatures>
+        <usage>
+          Update FoodLogModal tests:
+          - Mock foodRepository.search to return test foods
+          - Mock foodEventRepository.create for save handler
+          - Verify search input triggers repository calls
+          - Assert allergen badges render with correct colors
+          - Test save success/error toast notifications
+        </usage>
+      </existingPattern>
+    </code>
+    <dependencies>
+      <dependency name="dexie" version="4.2.0" usage="IndexedDB wrapper for foods/foodEvents tables, liveQuery subscriptions" />
+      <dependency name="uuid" version="13.0.0" usage="Generate mealId for food events, entity ids" />
+      <dependency name="lucide-react" version="0.544.0" usage="Utensils icon for food quick-log button, allergen badge icons" />
+      <dependency name="react" version="19.1.0" usage="Context hooks, component rendering" />
+      <dependency name="next" version="15.5.4" usage="App router, client components" />
+      <devDependency name="@testing-library/react" version="16.3.0" usage="Component testing" />
+      <devDependency name="@testing-library/user-event" version="14.6.1" usage="User interaction simulation" />
+      <devDependency name="jest" version="30.2.0" usage="Test runner with coverage" />
+      <devDependency name="ts-jest" version="29.4.4" usage="TypeScript support in tests" />
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="performance">
+      <title>Modal save latency</title>
+      <description>Quick-log modal must open and persist a meal within 500ms on median devices</description>
+      <enforcement>Add performance.mark/measure in FoodLogModal, verify in tests</enforcement>
+    </constraint>
+    <constraint type="performance">
+      <title>Search response time</title>
+      <description>Search/filter operations must return results &lt;250ms for 200+ foods</description>
+      <enforcement>Use compound indexes first ([userId+name]), then in-memory filtering; verify with performance tests</enforcement>
+    </constraint>
+    <constraint type="data">
+      <title>JSON stringification convention</title>
+      <description>Arrays (allergenTags, foodIds, photoIds, portionMap) stored as JSON strings in Dexie</description>
+      <enforcement>JSON.stringify on write, JSON.parse on read in repositories</enforcement>
+    </constraint>
+    <constraint type="data">
+      <title>Soft-delete pattern</title>
+      <description>Use isActive flag for foods, deletedAt timestamp for events to maintain audit trail</description>
+      <enforcement>Archive/delete methods set flags, queries filter by isActive</enforcement>
+    </constraint>
+    <constraint type="schema">
+      <title>Allergen taxonomy</title>
+      <description>Allergens limited to: dairy, gluten, nuts, shellfish, nightshades, soy, eggs, fish</description>
+      <enforcement>Validation in foodRepository.create/update throws error for invalid tags</enforcement>
+    </constraint>
+    <constraint type="compatibility">
+      <title>No breaking changes to existing tables</title>
+      <description>Version 11 migration must not modify existing Dexie tables (symptoms, medications, triggers, etc.)</description>
+      <enforcement>Only add new foods/foodEvents stores, preserve all existing store definitions</enforcement>
+    </constraint>
+    <constraint type="testing">
+      <title>80% code coverage minimum</title>
+      <description>All new files must achieve 80% coverage across branches, functions, lines, statements</description>
+      <enforcement>Jest coverage thresholds enforced in jest.config.js; CI fails on under-threshold</enforcement>
+    </constraint>
+    <constraint type="ux">
+      <title>Offline-first operations</title>
+      <description>All CRUD actions must succeed without network connectivity</description>
+      <enforcement>Use Dexie for immediate writes, background sync queues for server updates</enforcement>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface type="database" name="FoodRecord">
+      <description>TypeScript interface for foods table records</description>
+      <schema>
+        {
+          id: string;
+          userId: string;
+          name: string;
+          category: string; // JSON-stringified category metadata
+          allergenTags: string; // JSON-stringified string[]
+          preparationMethod?: string;
+          isDefault: boolean; // true for seeded foods, false for custom
+          isActive: boolean; // soft-delete flag
+          createdAt: number; // epoch ms
+          updatedAt: number; // epoch ms
+        }
+      </schema>
+      <location>src/lib/db/schema.ts</location>
+    </interface>
+    <interface type="database" name="FoodEventRecord">
+      <description>TypeScript interface for foodEvents table records</description>
+      <schema>
+        {
+          id: string;
+          userId: string;
+          mealId: string; // uuid groups foods logged together
+          foodIds: string; // JSON-stringified string[]
+          timestamp: number; // epoch ms
+          mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+          portionMap: string; // JSON-stringified Record&lt;foodId, 'small'|'medium'|'large'&gt;
+          notes?: string;
+          photoIds?: string; // JSON-stringified string[]
+          favoritesSnapshot?: string; // JSON-stringified foodIds favorited at log time
+          createdAt: number;
+          updatedAt: number;
+        }
+      </schema>
+      <location>src/lib/db/schema.ts</location>
+    </interface>
+    <interface type="repository" name="foodRepository">
+      <description>CRUD operations for foods table</description>
+      <methods>
+        - getAll(userId: string): Promise&lt;FoodRecord[]&gt;
+        - search(userId: string, query: string, filters?: { category?: string, allergens?: string[] }): Promise&lt;FoodRecord[]&gt;
+        - create(food: Omit&lt;FoodRecord, 'id' | 'createdAt' | 'updatedAt'&gt;): Promise&lt;string&gt;
+        - update(id: string, changes: Partial&lt;FoodRecord&gt;): Promise&lt;void&gt;
+        - archive(id: string): Promise&lt;void&gt; // sets isActive = false
+      </methods>
+      <location>src/lib/repositories/foodRepository.ts</location>
+    </interface>
+    <interface type="repository" name="foodEventRepository">
+      <description>CRUD operations for foodEvents table</description>
+      <methods>
+        - create(event: Omit&lt;FoodEventRecord, 'id' | 'createdAt' | 'updatedAt'&gt;): Promise&lt;string&gt;
+        - update(id: string, changes: Partial&lt;FoodEventRecord&gt;): Promise&lt;void&gt;
+        - delete(id: string): Promise&lt;void&gt;
+        - findByDateRange(userId: string, startMs: number, endMs: number): Promise&lt;FoodEventRecord[]&gt;
+        - findByMealType(userId: string, mealType: MealType): Promise&lt;FoodEventRecord[]&gt;
+      </methods>
+      <location>src/lib/repositories/foodEventRepository.ts</location>
+    </interface>
+    <interface type="service" name="seedFoodsService">
+      <description>Populate default food catalog during Dexie migration</description>
+      <methods>
+        - seedDefaultFoods(userId: string, db: SymptomTrackerDatabase): Promise&lt;void&gt;
+        - isSeedingComplete(userId: string, db: SymptomTrackerDatabase): Promise&lt;boolean&gt;
+      </methods>
+      <implementation>
+        - Check sentinel (e.g., db.foods.where({ userId, name: '__SEED_COMPLETE__' }).count())
+        - Batch insert 200+ foods in chunks of 50
+        - All seeded foods: isDefault: true, isActive: true
+        - Categories: breakfast, proteins, vegetables, fruits, grains, dairy, snacks, beverages
+        - Allergen tags: dairy, gluten, nuts, shellfish, nightshades, soy, eggs, fish
+      </implementation>
+      <location>src/lib/services/food/seedFoodsService.ts</location>
+    </interface>
+    <interface type="component" name="AllergenBadge">
+      <description>Visual component for allergen tags with color coding</description>
+      <props>
+        allergen: 'dairy' | 'gluten' | 'nuts' | 'shellfish' | 'nightshades' | 'soy' | 'eggs' | 'fish';
+        size?: 'sm' | 'md';
+        className?: string;
+      </props>
+      <styling>
+        - Use Tailwind utility classes for color coding
+        - Example: dairy = blue-500, gluten = orange-500, nuts = amber-700
+        - Accessible contrast ratios (WCAG AA)
+        - Pill-shaped badges with rounded corners
+      </styling>
+      <location>src/components/food/AllergenBadge.tsx</location>
+    </interface>
+    <interface type="context" name="FoodContext">
+      <description>React context for food state management</description>
+      <hooks>
+        - useFoods(): { foods: FoodRecord[], loading: boolean, error?: Error }
+        - useFoodEvents(range?: { start: Date, end: Date }): { events: FoodEventRecord[], loading: boolean }
+        - useFoodFilters(): { filters: FoodFilters, setFilters: (f: FoodFilters) =&gt; void }
+        - useFavoriteFoods(limit?: number): { favorites: FoodRecord[], loading: boolean }
+      </hooks>
+      <implementation>
+        - Use Dexie liveQuery for reactive subscriptions
+        - Debounce search queries (300ms)
+        - Read favorites from UserPreferences.foodFavorites
+        - Maintain existing modal state management (isFoodLogModalOpen, openFoodLog, closeFoodLog)
+      </implementation>
+      <location>src/contexts/FoodContext.tsx</location>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard name="Coverage Threshold">
+        <description>Minimum 80% coverage across branches, functions, lines, statements</description>
+        <enforcement>jest.config.js coverageThreshold enforced by CI</enforcement>
+      </standard>
+      <standard name="Testing Framework">
+        <description>Jest 30.2.0 with React Testing Library 16.3.0</description>
+        <patterns>
+          - Use screen.getByRole for accessible queries
+          - userEvent.type/click for interactions
+          - waitFor for async assertions
+          - Mock Dexie operations in beforeEach
+          - Collocate tests in __tests__ subdirectories
+        </patterns>
+      </standard>
+      <standard name="Repository Testing">
+        <description>Mock Dexie operations, test business logic</description>
+        <approach>
+          - Mock db.foods.add, db.foods.where, etc.
+          - Test JSON parsing/stringification
+          - Verify compound index queries
+          - Test validation (allergen taxonomy)
+          - Test soft-delete behavior
+        </approach>
+      </standard>
+      <standard name="Component Testing">
+        <description>Test user interactions and accessibility</description>
+        <approach>
+          - Mock repository dependencies
+          - Test search input triggers filtering
+          - Verify allergen badges render correctly
+          - Test save handler success/error flows
+          - Validate ARIA labels and keyboard navigation
+        </approach>
+      </standard>
+      <standard name="Performance Testing">
+        <description>Validate timing requirements</description>
+        <approach>
+          - Mock performance.mark/measure
+          - Assert search &lt; 250ms with 200+ foods
+          - Assert modal save &lt; 500ms
+          - Test with realistic dataset sizes
+        </approach>
+      </standard>
+    </standards>
+    <locations>
+      <testFile path="src/lib/repositories/__tests__/foodRepository.test.ts">
+        <description>Unit tests for foodRepository CRUD operations</description>
+        <coverage>
+          - getAll returns all foods for userId
+          - search filters by name and allergens
+          - create validates allergen taxonomy
+          - update modifies records and updates timestamp
+          - archive sets isActive = false
+          - JSON parsing/stringification for allergenTags
+        </coverage>
+      </testFile>
+      <testFile path="src/lib/repositories/__tests__/foodEventRepository.test.ts">
+        <description>Unit tests for foodEventRepository CRUD operations</description>
+        <coverage>
+          - create validates timestamp and foodIds presence
+          - update modifies records
+          - delete removes events
+          - findByDateRange queries with compound indexes
+          - findByMealType filters by mealType enum
+          - JSON parsing for foodIds, portionMap, photoIds
+        </coverage>
+      </testFile>
+      <testFile path="src/lib/services/food/__tests__/seedFoodsService.test.ts">
+        <description>Unit tests for seedFoodsService</description>
+        <coverage>
+          - seedDefaultFoods inserts 200+ foods
+          - isSeedingComplete checks sentinel
+          - Idempotency: second call skips seeding
+          - All seeded foods have isDefault: true, isActive: true
+          - Categories and allergens properly set
+        </coverage>
+      </testFile>
+      <testFile path="src/components/food/__tests__/AllergenBadge.test.tsx">
+        <description>Component tests for AllergenBadge</description>
+        <coverage>
+          - Renders with correct color class for each allergen
+          - Size prop applies correct styling
+          - Accessible text content
+          - Custom className merged properly
+        </coverage>
+      </testFile>
+      <testFile path="src/components/food/__tests__/FoodLogModal.test.tsx">
+        <description>Integration tests for FoodLogModal with real data</description>
+        <coverage>
+          - Loads foods from foodRepository on mount
+          - Search input filters foods in real-time
+          - Favorites grid displays based on preferences
+          - Save button creates foodEvent
+          - Success/error toasts shown appropriately
+          - Loading states render correctly
+          - No regressions from Story 1.1 tests
+        </coverage>
+      </testFile>
+      <testFile path="src/contexts/__tests__/FoodContext.test.tsx">
+        <description>Tests for extended FoodContext hooks</description>
+        <coverage>
+          - useFoods returns Dexie liveQuery subscription
+          - useFoodEvents filters by date range
+          - useFavoriteFoods reads from UserPreferences
+          - Search debouncing (300ms) works correctly
+          - Existing modal state management still functional
+        </coverage>
+      </testFile>
+    </locations>
+    <ideas>
+      <idea>Test Dexie migration upgrade path from version 10 to 11, ensuring existing data preserved</idea>
+      <idea>Simulate offline scenarios: create food events without network, verify persistence</idea>
+      <idea>Test edge case: search with no results displays "No foods found" message</idea>
+      <idea>Verify soft-delete: archived foods excluded from search but still in database</idea>
+      <idea>Test performance: measure search latency with 200+ foods, assert &lt; 250ms</idea>
+      <idea>Test allergen validation: reject invalid allergen tags with descriptive error</idea>
+      <idea>Integration test: save meal → close modal → reopen → verify favorites updated</idea>
+      <idea>Test batch seeding performance: 200+ foods inserted in &lt; 2 seconds</idea>
+      <idea>Verify compound index usage with Dexie query plans (check .explain() if available)</idea>
+      <idea>Test photo attachment: add photo to food event, verify photoId in database</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,317 @@
+<story-context id="6-1-navigation-restructure-and-shadcn-ui-integration" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>6.1</storyId>
+    <title>Navigation Restructure & shadcn/ui Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-08</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-1-navigation-restructure-and-shadcn-ui-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user navigating the symptom tracker application</asA>
+    <iWant>clear, intuitive navigation with renamed routes that reflect their purpose and modern UI components</iWant>
+    <soThat>I can easily find features like the body map, health insights, and timeline without confusion</soThat>
+    <tasks>
+      <task id="1">Initialize shadcn/ui and install core components (AC: #6.1.4, #6.1.10)</task>
+      <task id="2">Update navigation config with new route structure (AC: #6.1.1, #6.1.5, #6.1.7, #6.1.8)</task>
+      <task id="3">Move page components to new route paths (AC: #6.1.3)</task>
+      <task id="4">Implement route redirects (AC: #6.1.2)</task>
+      <task id="5">Handle deprecated mood/sleep pages (AC: #6.1.6)</task>
+      <task id="6">Update navigation component integration tests (AC: #6.1.9)</task>
+      <task id="7">Update references in other components (AC: All)</task>
+      <task id="8">Manual testing and verification (AC: All)</task>
+      <task id="9">Build and production testing (AC: All)</task>
+      <task id="10">Documentation updates (AC: #6.1.10)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="6.1.1">
+      <title>Navigation config updated with new route structure</title>
+      <description>Update src/config/navigation.ts to rename routes: /flares → /body-map, /analytics → /insights, /calendar → /timeline. Add new /daily-log route under Track pillar. Update labels: "Flares" → "Body Map", "Analytics" → "Health Insights", "Calendar" → "Timeline", "Log" → "Daily Log". Preserve pillar structure (Track, Analyze, Manage, Support) and surface filtering (desktop, mobile, all).</description>
+      <source>docs/ux-design-specification.md#Navigation-Changes-Mapping, docs/bmm-workflow-status.md#Epic-6</source>
+    </criterion>
+    <criterion id="6.1.2">
+      <title>Route redirects for renamed paths</title>
+      <description>Implement Next.js redirects in next.config.ts or middleware to redirect old paths to new paths: /flares → /body-map, /analytics → /insights, /calendar → /timeline. Use 308 (permanent redirect) status codes. Preserve query parameters during redirect.</description>
+      <source>docs/ux-design-specification.md#Navigation-Structure-Redesign</source>
+    </criterion>
+    <criterion id="6.1.3">
+      <title>Page components moved to new route paths</title>
+      <description>Move/rename page components to match new routes: app/(protected)/flares/page.tsx → app/(protected)/body-map/page.tsx, app/(protected)/analytics/page.tsx → app/(protected)/insights/page.tsx, app/(protected)/calendar/page.tsx → app/(protected)/timeline/page.tsx. Update all internal imports and references.</description>
+      <source>docs/ux-design-specification.md#Component-Hierarchy</source>
+    </criterion>
+    <criterion id="6.1.4">
+      <title>shadcn/ui initialized and integrated</title>
+      <description>Run npx shadcn@latest init to set up shadcn/ui with Tailwind CSS and Radix UI (already in stack). Initialize with existing design tokens (primary: #0F9D91, success: #86EFAC, warning: #FBBF24, error: #FCA5A5). Install core components: Dialog, Sheet, Card, Badge, Tabs, Select, Calendar using npx shadcn@latest add. Components created in src/components/ui/ directory.</description>
+      <source>docs/ux-design-specification.md#Design-System-Choice</source>
+    </criterion>
+    <criterion id="6.1.5">
+      <title>Navigation icons updated for new routes</title>
+      <description>Update Lucide React icons in navigation config: Body Map uses MapPin icon (was Flame), Health Insights uses TrendingUp (keep), Timeline uses Calendar (keep), Daily Log uses FileText or ClipboardList. Verify icons display correctly in sidebar (desktop) and bottom tabs (mobile).</description>
+      <source>docs/ux-design-specification.md#Navigation-Structure-Redesign</source>
+    </criterion>
+    <criterion id="6.1.6">
+      <title>Remove deprecated mood/sleep routes from nav</title>
+      <description>Remove standalone /mood and /sleep routes from navigation config as these are now unified in /daily-log. Keep pages temporarily for backward compatibility but hide from navigation. Add deprecation notice to old pages directing users to Daily Log.</description>
+      <source>docs/ux-design-specification.md#Daily-Log-Architecture</source>
+    </criterion>
+    <criterion id="6.1.7">
+      <title>Analyze pillar renamed to Insights</title>
+      <description>Update navigation pillar ID from "analyze" to "insights" in NAV_PILLARS. Update type definitions: NavPillar.id type from "track" | "analyze" | "manage" | "support" to "track" | "insights" | "manage" | "support". Update pillar label from "Analyze" to "Insights". Ensure no breaking changes to pillar filtering logic.</description>
+      <source>docs/ux-design-specification.md#Information-Architecture</source>
+    </criterion>
+    <criterion id="6.1.8">
+      <title>Manage Data route renamed</title>
+      <description>Rename /manage route to /my-data for clearer purpose indication. Update route path, navigation label from "Manage Data" to "My Data". Move page component from app/(protected)/manage/page.tsx to app/(protected)/my-data/page.tsx. Add redirect from old /manage path.</description>
+      <source>docs/ux-design-specification.md#Navigation-Changes-Mapping</source>
+    </criterion>
+    <criterion id="6.1.9">
+      <title>Navigation component integration tests</title>
+      <description>Update existing navigation tests in src/config/__tests__/navigation.test.ts to verify new route paths, labels, and icons. Add tests for getDestinationByHref() with new paths. Verify getPageTitle() returns correct titles for renamed routes. Test pillar filtering still works correctly. All existing navigation tests must pass with new structure.</description>
+      <source>ARCHITECTURE.md#Testing-Architecture</source>
+    </criterion>
+    <criterion id="6.1.10">
+      <title>shadcn/ui components documented</title>
+      <description>Create docs/ui/shadcn-ui-components.md documenting which shadcn/ui components are installed, their purpose, and usage examples. Include import paths, props interfaces, and integration guidance. Reference from main architecture docs.</description>
+      <source>docs/ux-design-specification.md#Design-System-Foundation</source>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Epic 6</title>
+        <section>Navigation Structure Redesign</section>
+        <snippet>Complete navigation restructure with route renaming (/flares→/body-map, /analytics→/insights, /calendar→/timeline), pillar reorganization (Track → Insights → Manage), shadcn/ui integration plan, and design system foundation. Includes mobile bottom nav, navigation changes mapping table, and information architecture principles.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Epic 6</title>
+        <section>Design System Foundation</section>
+        <snippet>shadcn/ui integration strategy: NOT a component library, copy-paste components built with Radix UI + Tailwind CSS. Already 90% compatible with existing stack. Components to add: Dialog, Sheet, Card, Badge, Tabs, Select, Calendar. Design tokens: primary #0F9D91, success #86EFAC, warning #FBBF24, error #FCA5A5.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Epic 6</title>
+        <section>Daily Log Architecture</section>
+        <snippet>Important distinction: Quick Actions (existing event-based tracking throughout day) vs Daily Log (NEW end-of-day reflection). /mood and /sleep pages deprecated, unified in /daily-log. Quick Actions remain for timestamped events (food, meds, symptoms, triggers). Daily Log for once-per-day summaries (mood, sleep, notes).</snippet>
+      </doc>
+      <doc>
+        <path>docs/bmm-workflow-status.md</path>
+        <title>BMM Workflow Status</title>
+        <section>Epic 6 Story Breakdown</section>
+        <snippet>Story 6.1 (Navigation Restructure & shadcn/ui Integration): Update nav config, rename paths (/flares→/body-map, /analytics→/insights, /calendar→/timeline), integrate shadcn/ui components. Priority: CRITICAL, 8 story points. First story in Epic 6 (UX Redesign & Navigation Overhaul - required for go-live).</snippet>
+      </doc>
+      <doc>
+        <path>ARCHITECTURE.md</path>
+        <title>Architecture Documentation</title>
+        <section>Routing Architecture</section>
+        <snippet>Next.js App Router with client-side navigation, server-side rendering, file-based routing in app/ directory. PWA offline-first architecture with service worker caching. All routes under (protected) group require user context.</snippet>
+      </doc>
+      <doc>
+        <path>ARCHITECTURE.md</path>
+        <title>Architecture Documentation</title>
+        <section>Testing Architecture</section>
+        <snippet>Jest testing framework with @testing-library/react for component tests. Unit tests in __tests__/ directories co-located with source files. TypeScript strict mode enabled. Test coverage expectations for new features.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>config</kind>
+        <symbol>NAV_PILLARS</symbol>
+        <lines>1-258</lines>
+        <reason>PRIMARY FILE TO MODIFY: Central navigation configuration defining all pillars (Track, Analyze, Manage, Support), destinations, routes, labels, icons, and surface filtering. Must be updated to rename routes, change pillar from "analyze" to "insights", update labels and icons, and remove mood/sleep routes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>type</kind>
+        <symbol>NavPillar</symbol>
+        <lines>35-40</lines>
+        <reason>Type definition that needs updating: change pillar id from "track" | "analyze" | "manage" | "support" to "track" | "insights" | "manage" | "support"</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>function</kind>
+        <symbol>getNavDestinations</symbol>
+        <lines>167-181</lines>
+        <reason>Helper function that filters navigation by surface (desktop/mobile). Should continue working after route changes but needs verification.</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>function</kind>
+        <symbol>getPageTitle</symbol>
+        <lines>198-213</lines>
+        <reason>Returns page title for pathname. Will need to work with new route paths (/body-map, /insights, /timeline, /my-data).</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>function</kind>
+        <symbol>getDestinationByHref</symbol>
+        <lines>215-230</lines>
+        <reason>Finds destination by href. Tests should verify this works with new route paths.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/page.tsx</path>
+        <kind>page</kind>
+        <symbol>FlaresPage</symbol>
+        <lines>1-50</lines>
+        <reason>MOVE TO: src/app/(protected)/body-map/page.tsx - Main flares page that displays body map and active flare cards. Currently at /flares route, needs to move to /body-map.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/analytics/page.tsx</path>
+        <kind>page</kind>
+        <symbol>AnalyticsPage</symbol>
+        <lines>1-50</lines>
+        <reason>MOVE TO: src/app/(protected)/insights/page.tsx - Analytics page that needs to be moved to /insights route. May need to check both app/analytics and app/(protected)/analytics locations.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/calendar/page.tsx</path>
+        <kind>page</kind>
+        <symbol>CalendarPage</symbol>
+        <lines>1-50</lines>
+        <reason>MOVE TO: src/app/(protected)/timeline/page.tsx - Calendar page that will become the timeline page at /timeline route.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/manage/page.tsx</path>
+        <kind>page</kind>
+        <symbol>ManagePage</symbol>
+        <lines>1-50</lines>
+        <reason>MOVE TO: src/app/(protected)/my-data/page.tsx - Manage data customization page, rename route from /manage to /my-data.</reason>
+      </artifact>
+      <artifact>
+        <path>next.config.ts</path>
+        <kind>config</kind>
+        <symbol>nextConfig</symbol>
+        <lines>1-45</lines>
+        <reason>Next.js configuration file where redirects array needs to be added. Currently has PWA headers configuration. Add async redirects() function with permanent (308) redirects for old routes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/__tests__/navigation.test.ts</path>
+        <kind>test</kind>
+        <symbol>Navigation Configuration tests</symbol>
+        <lines>1-100</lines>
+        <reason>Existing navigation tests that need updating. Tests verify pillar order, labels, surface filtering, helper functions. Must update to expect "insights" instead of "analyze", new route paths, new labels.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/NavLayout.tsx</path>
+        <kind>component</kind>
+        <symbol>NavLayout</symbol>
+        <lines>1-50</lines>
+        <reason>Navigation layout component that consumes NAV_PILLARS config. Should automatically reflect changes once navigation.ts is updated, but verify no hardcoded route references.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="15.5.4" />
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="tailwindcss" version="^4" />
+        <package name="lucide-react" version="^0.544.0" note="Icon library - MapPin icon needed for Body Map" />
+        <package name="@radix-ui/react-tooltip" version="^1.2.8" note="Already using Radix UI - shadcn/ui builds on this" />
+        <package name="typescript" version="^5" />
+        <package name="jest" version="^30.2.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+      </node>
+      <shadcn-ui note="To be installed: npx shadcn@latest init, then add dialog sheet card badge tabs select calendar">
+        <component name="dialog" purpose="Better modals for flare creation and future features" />
+        <component name="sheet" purpose="Sidebar/drawer for mobile body map" />
+        <component name="card" purpose="Consistent card styling for flares/insights" />
+        <component name="badge" purpose="Status indicators (worsening, improving, stable)" />
+        <component name="tabs" purpose="Health Insights sections" />
+        <component name="select" purpose="Dropdowns for time ranges, filters" />
+        <component name="calendar" purpose="Enhanced timeline view" />
+      </shadcn-ui>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Navigation as Single Source of Truth: src/config/navigation.ts centrally manages all routes, labels, icons, and surfaces (desktop/mobile). All navigation components must consume this config rather than hardcoding routes.</constraint>
+    <constraint>Pillar-Based Information Architecture: Maintain Track → Insights → Manage → Support structure. Do not add routes outside these pillars without updating the pillar structure.</constraint>
+    <constraint>Graceful Migration: All old route paths must have permanent redirects (308 status) to ensure bookmarks and external links continue working. Query parameters must be preserved during redirect.</constraint>
+    <constraint>Accessibility First: All navigation items must have proper aria-labels. Icons must be accompanied by text labels. Keyboard navigation must work correctly.</constraint>
+    <constraint>Surface Filtering: Navigation config must maintain desktop/mobile/all surface filtering. Desktop sidebar shows different items than mobile bottom tabs.</constraint>
+    <constraint>Type Safety: TypeScript strict mode enabled. No 'any' types. NavPillar type definition must be updated to reflect "insights" pillar.</constraint>
+    <constraint>Design System Integration: shadcn/ui components must integrate with existing Radix UI + Tailwind stack. Preserve existing design tokens (primary: #0F9D91, etc.).</constraint>
+    <constraint>No Breaking Changes to User Experience: Redirects and deprecated page notices ensure users aren't left with broken links or 404 errors.</constraint>
+    <constraint>Testing Requirements: All existing navigation tests must pass with new structure. Add tests for new route paths and helpers.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>NAV_PILLARS</name>
+      <kind>Data structure</kind>
+      <signature>
+        NavPillar[] = [
+          { id: "track" | "insights" | "manage" | "support", label: string, order: number, destinations: NavDestination[] }
+        ]
+      </signature>
+      <path>src/config/navigation.ts</path>
+      <note>Central navigation configuration. Update pillar id from "analyze" to "insights". Update destination hrefs and labels for route renaming.</note>
+    </interface>
+    <interface>
+      <name>NavDestination</name>
+      <kind>Type definition</kind>
+      <signature>
+        { href: string; label: string; ariaLabel?: string; icon?: LucideIcon; surface: "desktop" | "mobile" | "all" }
+      </signature>
+      <path>src/config/navigation.ts</path>
+      <note>Navigation destination interface. Each destination requires href, label, icon, surface, and aria-label for accessibility.</note>
+    </interface>
+    <interface>
+      <name>getNavDestinations</name>
+      <kind>Function</kind>
+      <signature>
+        (surface: "desktop" | "mobile") => NavDestination[]
+      </signature>
+      <path>src/config/navigation.ts</path>
+      <note>Returns navigation destinations filtered by surface. Should continue working after route changes.</note>
+    </interface>
+    <interface>
+      <name>getPageTitle</name>
+      <kind>Function</kind>
+      <signature>
+        (pathname: string) => string
+      </signature>
+      <path>src/config/navigation.ts</path>
+      <note>Returns page title for given pathname. Must work with new paths (/body-map, /insights, /timeline, /my-data).</note>
+    </interface>
+    <interface>
+      <name>nextConfig.redirects</name>
+      <kind>Next.js config</kind>
+      <signature>
+        async redirects() => Promise&lt;Array&lt;{source: string, destination: string, permanent: boolean}&gt;&gt;
+      </signature>
+      <path>next.config.ts</path>
+      <note>Add redirects function to Next.js config. Return array of redirect objects with permanent: true (308 status).</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Jest with @testing-library/react for component tests. Unit tests co-located with source files in __tests__/ directories. TypeScript strict mode enabled for test files. Test coverage expectations for configuration changes: verify all navigation helpers work with new route structure. Accessibility testing: verify aria-labels present and keyboard navigation works. Integration testing: manual testing in dev and production builds to verify redirects and page rendering.
+    </standards>
+    <locations>
+      <location>src/config/__tests__/navigation.test.ts - Existing navigation config tests</location>
+      <location>src/components/navigation/__tests__/ - Navigation component tests</location>
+      <location>Manual testing in browser for redirect verification</location>
+    </locations>
+    <ideas>
+      <idea ac="6.1.1">Test NAV_PILLARS has "insights" pillar instead of "analyze". Verify pillar label is "Insights". Test all destination hrefs updated to new paths (/body-map, /insights, /timeline, /my-data).</idea>
+      <idea ac="6.1.2">Manual test: Visit old URLs (/flares, /analytics, /calendar, /manage) and verify 308 redirect to new paths. Test query parameter preservation: /flares?id=123 → /body-map?id=123.</idea>
+      <idea ac="6.1.3">Test that new page paths exist and render correctly. Verify imports updated in moved files. Search for hardcoded old route references and verify all updated.</idea>
+      <idea ac="6.1.4">Test shadcn/ui components render correctly. Verify components created in src/components/ui/ directory. Test sample usage of Card, Dialog components.</idea>
+      <idea ac="6.1.5">Test navigation icons: Body Map uses MapPin (not Flame), Health Insights uses TrendingUp, Timeline uses Calendar. Verify icons render in both desktop sidebar and mobile bottom tabs.</idea>
+      <idea ac="6.1.6">Test /mood and /sleep routes removed from navigation config. Verify getNavDestinations() does not return these routes. Manual test: old pages still accessible but show deprecation notice.</idea>
+      <idea ac="6.1.7">Test NavPillar type definition updated. TypeScript compilation should fail if "analyze" is used. Test pillar filtering logic still works correctly.</idea>
+      <idea ac="6.1.8">Test getDestinationByHref("/my-data") returns correct destination with label "My Data". Test redirect from /manage → /my-data.</idea>
+      <idea ac="6.1.9">Update existing tests to expect new route paths. Add tests: getDestinationByHref("/body-map"), getDestinationByHref("/insights"), getDestinationByHref("/timeline"). Test getPageTitle() with new paths. Run full test suite and verify all pass.</idea>
+      <idea ac="6.1.10">Verify docs/ui/shadcn-ui-components.md exists and documents all 7 installed components. Test import examples work correctly.</idea>
+    </ideas>
+  </tests>
+</story-context>

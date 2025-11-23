@@ -1,0 +1,243 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>3</storyId>
+    <title>Redesign Symptom Logging (Modal → Dedicated Page)</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-5-3-redesign-symptom-logging-modal-to-page.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user logging symptoms daily</asA>
+    <iWant>a dedicated symptom logging page instead of a modal</iWant>
+    <soThat>I can log symptoms more comfortably without UI constraints</soThat>
+    <tasks>
+      - Task 1: Create symptom logging page component (AC: #3.5.3.1, #3.5.3.4)
+      - Task 2: Build Quick Log form component (AC: #3.5.3.2)
+      - Task 3: Implement Add Details expansion (AC: #3.5.3.3)
+      - Task 4: Redesign symptom selection for full-page (AC: #3.5.3.7)
+      - Task 5: Update dashboard navigation (AC: #3.5.3.5)
+      - Task 6: Implement toast notification system (AC: #3.5.3.6)
+      - Task 7: Mobile responsive optimization (AC: #3.5.3.8)
+      - Task 8: Update existing symptom logging code (AC: All)
+      - Task 9: Add comprehensive tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC3.5.3.1 — Symptom logging opens as dedicated page route: Create symptom logging page at `/log/symptom` route (not modal overlay), dashboard "Log Symptom" button navigates to `/log/symptom` using Next.js router.push(), page has full-screen layout without modal constraints, mobile-first responsive design with proper scrolling (no nested scroll containers), back button returns to previous page.
+
+    2. AC3.5.3.2 — Quick Log mode for essential fields: Default view shows "Quick Log" mode capturing essential fields only: (1) symptom selection (dropdown or searchable list), (2) severity rating (1-10 slider), (3) timestamp (auto-populated, editable), quick log form is compact and focused, minimizes cognitive load for daily logging, submit button prominently positioned at bottom.
+
+    3. AC3.5.3.3 — Add Details button expands to full form: "Add Details" button below quick log form expands to show optional fields: (1) body location (region selector or text), (2) notes (multi-line textarea), (3) tags/categories (multi-select), (4) related data links (to food/trigger/medication), expansion is smooth transition (no page navigation), expanded form scrolls naturally without nested scrollable boxes, user can collapse back to quick log without losing entered data.
+
+    4. AC3.5.3.4 — Page layout allows natural scrolling: Page scrolls naturally from top to bottom without nested scroll containers, symptom selection interface is not in scrollable box (uses native page scroll), full viewport height available for content, mobile touch scrolling works smoothly without conflicts, follows mobile-first best practices for touch interactions.
+
+    5. AC3.5.3.5 — Navigation updates for page-based flow: Dashboard "Log Symptom" button updated to navigate to `/log/symptom` page, remove modal state management (useState for modal open/close), remove modal overlay components (backdrop, close X button), update any direct symptom logging links throughout app to use page route, breadcrumb shows: Home → Log Symptom, keyboard shortcuts (if any) navigate to page instead of opening modal.
+
+    6. AC3.5.3.6 — Toast messages use absolute positioning: Success/error toast messages positioned absolutely (not inline), toast does not push or shift page content when appearing, toast overlay positioned fixed at top or bottom of viewport, toast auto-dismisses after 3-5 seconds, follows accessible toast notification patterns (aria-live regions).
+
+    7. AC3.5.3.7 — Symptom selection redesigned for full-page: Symptom selection interface redesigned for full-page context (not modal constraint), displays all available symptoms in clean list or grid layout, search/filter functionality prominently placed at top, custom symptoms highlighted or grouped separately from defaults, selection state clearly indicated (checkmark, highlight, or button press state), mobile-optimized touch targets (minimum 44x44px), handles long symptom lists gracefully with virtual scrolling or pagination.
+
+    8. AC3.5.3.8 — Mobile responsive design optimized: Page layout optimized for mobile screen sizes (320px width minimum), form controls sized appropriately for touch (44x44px minimum touch targets), text inputs and sliders easy to interact with on mobile, no horizontal scrolling on any screen size, keyboard opens without breaking layout, follows iOS and Android platform conventions for form inputs.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-3.5-production-ux.md</path>
+        <title>Epic 3.5: Production-Ready UI/UX Enhancement</title>
+        <section>Story 3.5.3 Definition</section>
+        <snippet>Redesign Symptom Logging Modal → Page. Establishes page-based logging pattern that will be replicated for Stories 3.5.4-5 (food, triggers, medications). Solves modal cascade failure issues: clunky interactions, nested scrollable boxes, toast layout shifts, overwhelming lists.</snippet>
+      </doc>
+      <doc>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>UI/UX Brainstorming Session Results</title>
+        <section>Modal Pattern Cascade Failure</section>
+        <snippet>Brainstorming session identified modal pattern as causing cascading UX problems in daily active user role-play. Nested scroll containers, toast layout shifts, and constrained symptom lists create friction. Dedicated pages with quick log + details expansion pattern solve these issues. Different logging types need different UX patterns based on complexity.</snippet>
+      </doc>
+      <doc>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>UI/UX Brainstorming Session Results</title>
+        <section>Assumption Reversal Insight</section>
+        <snippet>Different logging types need different UX patterns based on complexity. Simple logs (symptoms, food, triggers, medications) benefit from dedicated pages with quick log + details pattern. Complex logs (flares with body map) need specialized interfaces. Page-based pattern reduces cognitive load and eliminates modal constraints.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Component Architecture & Data Flow</section>
+        <snippet>Next.js App Router with client components for interactive forms. State management: local component state + React Query for data cache. No global state needed. Form submission flow: Component → Repository → Dexie → IndexedDB. Optimistic UI updates for immediate feedback.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR001: Performance & Touch Targets</section>
+        <snippet>Interactions respond within 100ms. Touch targets minimum 44x44px for mobile. No horizontal scrolling. Keyboard behavior doesn't break layout. Follows iOS and Android platform conventions.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/symptoms/SymptomLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>SymptomLogModal</symbol>
+        <lines>all</lines>
+        <reason>Existing symptom modal component that will be deprecated and replaced by new page-based approach. Contains form logic, symptom selection, and validation that must be migrated to new page component.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/symptomInstanceRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>symptomInstanceRepository</symbol>
+        <lines>all</lines>
+        <reason>Repository for symptom instance logging. New page component will use this same repository pattern - no changes to data layer, only UI presentation layer changes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/dashboard/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DashboardPage</symbol>
+        <lines>all</lines>
+        <reason>Dashboard contains "Log Symptom" button that currently opens modal. Needs update to navigate to /log/symptom page route. Remove modal state management.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/food/FoodLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodLogModal</symbol>
+        <lines>all</lines>
+        <reason>Similar modal pattern for food logging. Study for migration patterns - Story 3.5.4 will apply same page-based approach to food logging.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/triggers/TriggerLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>TriggerLogModal</symbol>
+        <lines>all</lines>
+        <reason>Similar modal pattern for trigger logging. Story 3.5.5 will apply same page-based approach to trigger and medication logging.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>next</package>
+        <version>15.5.4</version>
+        <reason>App Router for /log/symptom page route and navigation</reason>
+      </node>
+      <node>
+        <package>react</package>
+        <version>19.1.0</version>
+        <reason>UI components for SymptomQuickLogForm and page layout</reason>
+      </node>
+      <node>
+        <package>tailwindcss</package>
+        <version>4.x</version>
+        <reason>Responsive styling, mobile-first design, touch target sizing</reason>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>0.544.0</version>
+        <reason>Icons for back button, save button, and visual indicators</reason>
+      </node>
+      <node>
+        <package>dexie</package>
+        <version>4.2.0</version>
+        <reason>IndexedDB persistence for symptom logging (no changes, existing pattern)</reason>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. NO changes to data layer or repository pattern - only UI presentation layer changes. [Source: docs/brainstorming-session-results-2025-10-29.md]
+    2. Follow offline-first architecture (NFR002) - all writes use immediate IndexedDB persistence. [Source: docs/PRD.md#NFR002]
+    3. Touch targets minimum 44x44px for WCAG AAA mobile accessibility (NFR001). [Source: docs/PRD.md#NFR001]
+    4. Page scrolls naturally without nested scroll containers - no overflow:hidden constraints on main content area.
+    5. Toast notifications positioned fixed with high z-index (9999+), absolutely positioned, never affect document flow.
+    6. Form state preservation when toggling Quick Log ↔ Detailed views - use React state to maintain entered data.
+    7. Success flow: Save → Show toast → Navigate back (router.back() or router.push('/dashboard')).
+    8. Deprecated modal components kept temporarily with deprecation comments - remove after confirming new page works.
+    9. Pattern established here (Quick Log + Add Details) will be replicated for Stories 3.5.4 (food) and 3.5.5 (triggers, medications).
+    10. Minimum viewport width: 320px (iPhone SE). No horizontal scrolling at any breakpoint (320px, 375px, 414px, 768px, 1024px).
+    11. Back button using Next.js router: router.back() returns to previous page, preserving navigation history.
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>SymptomQuickLogForm Component</name>
+      <kind>component</kind>
+      <signature>
+        function SymptomQuickLogForm(): JSX.Element
+        Props: { onSuccess?: () => void }
+        State: symptomId, severity, timestamp, showDetails, optional fields
+        Methods: handleSubmit, toggleDetails
+      </signature>
+      <path>src/components/symptom-logging/SymptomQuickLogForm.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>Toast Notification System</name>
+      <kind>component</kind>
+      <signature>
+        function Toast({ title, description, variant, onClose }): JSX.Element
+        function useToast(): { toast: (options) => void }
+        Variants: 'default' | 'success' | 'destructive'
+      </signature>
+      <path>src/components/ui/Toast.tsx (NEW), src/components/ui/use-toast.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>SymptomSelectionList Component</name>
+      <kind>component</kind>
+      <signature>
+        function SymptomSelectionList({ value, onChange, userId }): JSX.Element
+        Features: search, filter, default vs custom grouping, virtual scrolling for >50 items
+      </signature>
+      <path>src/components/symptom-logging/SymptomSelectionList.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>Log Symptom Page Route</name>
+      <kind>page</kind>
+      <signature>
+        export default function LogSymptomPage(): JSX.Element
+        Route: /log/symptom (Next.js App Router)
+      </signature>
+      <path>src/app/(protected)/log/symptom/page.tsx (NEW)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing framework: Jest + React Testing Library (existing pattern).
+      Component tests for SymptomQuickLogForm: render, validate, submit, expand/collapse details.
+      Integration tests for complete flow: Dashboard → Navigate → Fill form → Submit → Toast → Back.
+      Accessibility tests: keyboard navigation (Tab, Enter), ARIA labels, screen reader announcements.
+      Responsive tests: layout adapts 320px-1920px, touch targets >= 44x44px, no horizontal scroll.
+      Mobile device tests: iOS Safari, Android Chrome - keyboard behavior, scrolling performance, back button.
+      Toast tests: appears, doesn't shift content, auto-dismisses after 4s, manual close works.
+      Coverage target: 80% for new components, 100% for navigation flow.
+    </standards>
+    <locations>
+      src/app/(protected)/log/symptom/__tests__/page.test.tsx (NEW)
+      src/components/symptom-logging/__tests__/SymptomQuickLogForm.test.tsx (NEW)
+      src/components/symptom-logging/__tests__/SymptomSelectionList.test.tsx (NEW)
+      src/components/ui/__tests__/Toast.test.tsx (NEW)
+      src/components/ui/__tests__/use-toast.test.tsx (NEW)
+    </locations>
+    <ideas>
+      TEST: Page renders with header, back button, and SymptomQuickLogForm component
+      TEST: Quick Log form displays symptom selector, severity slider, timestamp input
+      TEST: Form validation requires symptom and severity (1-10), notes optional
+      TEST: Add Details button toggles expanded form section with smooth transition
+      TEST: Expanded form shows body location, notes textarea, tags fields
+      TEST: Toggling details preserves form data (symptom selection, severity, timestamp)
+      TEST: Submit button calls symptomInstanceRepository.create() with form data
+      TEST: Success toast appears after save, positioned fixed at top-right
+      TEST: Toast doesn't push or shift page content when appearing
+      TEST: After successful save, navigation goes back to previous page (dashboard)
+      TEST: Dashboard "Log Symptom" button navigates to /log/symptom using router.push()
+      TEST: Back button in page header navigates to previous page using router.back()
+      TEST: Symptom selection list displays all symptoms (defaults + customs)
+      TEST: Symptom search filters list by name as user types
+      TEST: Custom symptoms highlighted or grouped separately from defaults
+      TEST: Touch targets for symptom items are minimum 44x44px
+      TEST: Virtual scrolling or pagination handles >50 symptoms
+      TEST: Mobile responsive: 320px width renders correctly, no horizontal scroll
+      TEST: Keyboard opens without breaking layout on iOS/Android
+      TEST: Form inputs sized for touch: text inputs, sliders, buttons >= 44px height
+      TEST: Accessibility: keyboard Tab navigation works, Enter submits form
+      TEST: Screen reader announces form labels, errors, and toast messages
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,323 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.6</storyId>
+    <title>Body Map Accessibility and Keyboard Navigation</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user with accessibility needs</asA>
+    <iWant>to navigate and interact with the body map using keyboard and screen readers</iWant>
+    <soThat>I can use the precision tracking features regardless of input method</soThat>
+    <tasks>
+      - Establish keyboard-first navigation order across body regions and controls (AC1, AC2, AC7)
+      - Add coordinate positioning mode with arrow key deltas, crosshair readouts, and bounds clamping (AC3)
+      - Surface screen reader narration via aria-live updates and dynamic labels for regions, markers, and controls (AC4, AC5)
+      - Implement zoom and pan keyboard shortcuts with conflict-safe key handling and mode transitions (AC6)
+      - Build accessibility hooks and UI affordances (state machine, focus cues, help overlay) to orchestrate modes (AC1-6)
+      - Expand automated and manual accessibility tests covering keyboard, screen reader, and performance scenarios (AC1-7)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Tab key navigates between body regions in logical top-to-bottom, left-to-right anatomical order</criterion>
+    <criterion id="AC2">Enter or Space selects the focused region and triggers the existing selection flow</criterion>
+    <criterion id="AC3">Arrow keys provide fine-tuned coordinate positioning within a zoomed region with visible feedback</criterion>
+    <criterion id="AC4">Screen readers announce region names, flare counts, and interaction context during keyboard use</criterion>
+    <criterion id="AC5">ARIA labels provide descriptive context for interactive elements including regions, zoom controls, and markers</criterion>
+    <criterion id="AC6">Keyboard shortcuts support zoom in/out (+/-), pan (arrow keys when zoomed), and mode reset without clashing with browser defaults</criterion>
+    <criterion id="AC7">Focus indicators clearly show current keyboard focus with visible outline and high contrast</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 1 - Story 1.6</section>
+        <snippet>Acceptance criteria call for tab navigation, keyboard selection, arrow key positioning, screen reader announcements, ARIA coverage, keyboard shortcuts, and focus indicators with prerequisites of Stories 1.1-1.5.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR001: Performance Requirement</section>
+        <snippet>Body map zoom and pan interactions shall respond within 100ms to maintain smooth user experience on mobile and desktop devices.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Body Map Interface Design Goals</section>
+        <snippet>Smooth zoom interactions, status-coded markers, and support for both light and dark themes define the UI baseline this accessibility work must respect.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Accessibility</section>
+        <snippet>Requires ARIA labels on all body map regions, keyboard navigation for zoom (+/- keys), screen reader announcements for flare status changes, and focus management in modals.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Component Architecture - Body Map</section>
+        <snippet>Component list includes BodyMapAccessibility for keyboard navigation and ARIA responsibilities alongside BodyMapInteractive, BodyRegions, CoordinateCapture, and FlareMarkers.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Testing Priorities</section>
+        <snippet>Accessibility edge cases are flagged for coverage with zoom and pan interactions, reinforcing the need for keyboard-only and screen reader validation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.4.md</path>
+        <title>Story 1.4: Coordinate-based Location Marking</title>
+        <section>Accessibility Follow-up</section>
+        <snippet>Notes that Story 1.6 will add keyboard-based fine-tuning of coordinates and tracks accessibility keyboard enhancements as a follow-up.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.5.md</path>
+        <title>Story 1.5: Display Flare Markers on Body Map</title>
+        <section>Accessibility Excellence</section>
+        <snippet>Highlights existing ARIA labels describing flare status plus role="button" and tabIndex=0 for markers, establishing the baseline keyboard support to extend.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>1-224</lines>
+        <reason>Central orchestrator for region selection, coordinate capture, and zoom state; accessibility hooks, aria-live messaging, and mode management will integrate here.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/BodyMapZoom.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapZoom</symbol>
+        <lines>1-146</lines>
+        <reason>Wraps react-zoom-pan-pinch TransformWrapper; keyboard shortcuts must coordinate with zoom controls rendered here without breaking existing pointer interactions.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyRegionSelector.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyRegionSelector</symbol>
+        <lines>1-135</lines>
+        <reason>Routes SVG events to FrontBody and BackBody; will host tabIndex ordering, focus-visible styling, and keyboard handlers for region traversal.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/bodies/FrontBody.tsx</path>
+        <kind>component</kind>
+        <symbol>FrontBody</symbol>
+        <lines>1-716</lines>
+        <reason>Contains all front-view SVG paths with class names used by selectors; needs tab ordering, ARIA labels, and focus indicators per region.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/bodies/BackBody.tsx</path>
+        <kind>component</kind>
+        <symbol>BackBody</symbol>
+        <lines>1-478</lines>
+        <reason>Back-view SVG structure mirrors front view; must receive the same keyboard navigation and focus treatment.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/FlareMarkers.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareMarkers</symbol>
+        <lines>1-176</lines>
+        <reason>Already exposes keyboard-accessible flare markers; dynamic aria-label counts and keyboard focus handoff need to synchronize with new accessibility state.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/CoordinateMarker.tsx</path>
+        <kind>component</kind>
+        <symbol>CoordinateMarker</symbol>
+        <lines>1-97</lines>
+        <reason>Renders the crosshair used for coordinate feedback; arrow key adjustments must update this component smoothly at all zoom levels.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>normalizeCoordinates, denormalizeCoordinates, getRegionBounds</symbol>
+        <lines>1-84</lines>
+        <reason>Provides normalization, clamping, and SVG bounds helpers that arrow-key positioning relies on.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/data/bodyRegions.ts</path>
+        <kind>data</kind>
+        <symbol>FRONT_BODY_REGIONS, BACK_BODY_REGIONS</symbol>
+        <lines>1-114</lines>
+        <reason>Region metadata (names, centers, categories) used to generate logical tab order and descriptive ARIA labels with flare counts.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/hooks/useFlares.ts</path>
+        <kind>hook</kind>
+        <symbol>useFlares</symbol>
+        <lines>1-86</lines>
+        <reason>Supplies reactive flare data; dynamic aria-label strings and announcements should consume this hook to announce counts accurately.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/flareMarkers.ts</path>
+        <kind>utility</kind>
+        <symbol>calculateRadialOffsets, getFlareMarkerColor</symbol>
+        <lines>1-45</lines>
+        <reason>Marker styling helpers used across keyboard flows; focus styling must remain compatible with existing color intents.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <runtime>
+        <package name="react" version="19.1.0"/>
+        <package name="react-dom" version="19.1.0"/>
+        <package name="next" version="15.5.4"/>
+        <package name="react-zoom-pan-pinch" version="3.6.1"/>
+        <package name="dexie" version="4.2.0"/>
+        <package name="lucide-react" version="0.544.0"/>
+      </runtime>
+      <development>
+        <package name="typescript" version="5.x"/>
+        <package name="@types/react" version="^19"/>
+        <package name="@types/react-dom" version="^19"/>
+        <package name="@types/node" version="^20"/>
+        <package name="@types/uuid" version="^11.0.0"/>
+        <package name="jest" version="30.2.0"/>
+        <package name="@testing-library/react" version="16.3.0"/>
+        <package name="@testing-library/jest-dom" version="6.9.1"/>
+        <package name="@testing-library/user-event" version="14.6.1"/>
+        <package name="fake-indexeddb" version="6.2.4"/>
+        <package name="ts-jest" version="29.4.4"/>
+      </development>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="C1">Keyboard-driven zoom, pan, and coordinate responses must meet the 100ms latency target from NFR001.</constraint>
+    <constraint id="C2">Region tab order must follow the anatomical top-to-bottom, left-to-right sequence defined in body region data for every view.</constraint>
+    <constraint id="C3">Enhancements must preserve existing mouse and touch workflows from Stories 1.1-1.5; keyboard logic is additive, not replacing pointer events.</constraint>
+    <constraint id="C4">Arrow key adjustments operate on normalized 0-1 coordinates in 0.01 increments and must clamp to bounds to prevent invalid values.</constraint>
+    <constraint id="C5">ARIA labels must reflect live flare counts by consuming useFlares data so screen readers announce accurate context.</constraint>
+    <constraint id="C6">react-zoom-pan-pinch intercepts pointer events; keyboard listeners should attach at the right level and call preventDefault where needed without breaking wheel or pinch behavior.</constraint>
+    <constraint id="C7">Focus indicators must achieve WCAG 2.1 AA contrast (≥3:1) with at least a 2px outline that remains visible over all body map fills and overlays.</constraint>
+    <constraint id="C8">Keyboard shortcuts should only activate when the body map or help overlay has focus and must avoid conflicting with browser zoom or global shortcuts.</constraint>
+    <constraint id="C9">aria-live announcements should debounce or collapse repeated events to avoid overwhelming screen reader output during rapid navigation.</constraint>
+    <constraint id="C10">Applying role="application" requires providing clear instructions and escape hatches so screen reader users can still access standard navigation modes.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>BodyMapViewerProps</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface BodyMapViewerProps {
+  view: 'front' | 'back' | 'left' | 'right';
+  userId: string;
+  symptoms?: BodyMapLocation[];
+  selectedRegion?: string;
+  onRegionSelect: (regionId: string) => void;
+  onCoordinateMark?: (regionId: string, coordinates: NormalizedCoordinates) => void;
+  readOnly?: boolean;
+  multiSelect?: boolean;
+}
+      </signature>
+      <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+    </interface>
+    <interface>
+      <name>BodyRegionSelectorProps</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface BodyRegionSelectorProps {
+  view: 'front' | 'back' | 'left' | 'right';
+  selectedRegions?: string[];
+  onRegionSelect: (regionId: string) => void;
+  onCoordinateCapture?: (event: React.MouseEvent&lt;SVGSVGElement&gt;) => void;
+  coordinateCursorActive?: boolean;
+  coordinateMarker?: React.ReactNode;
+  flareOverlay?: React.ReactNode;
+}
+      </signature>
+      <path>src/components/body-mapping/BodyRegionSelector.tsx</path>
+    </interface>
+    <interface>
+      <name>BodyRegion</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface BodyRegion {
+  id: string;
+  name: string;
+  category: BodyRegionCategory;
+  side?: BodySide;
+  svgPath: string;
+  selectable: boolean;
+  center?: { x: number; y: number };
+}
+      </signature>
+      <path>src/lib/types/body-mapping.ts</path>
+    </interface>
+    <interface>
+      <name>ActiveFlare</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface ActiveFlare {
+  id: string;
+  bodyRegions: string[];
+  status: 'active' | 'improving' | 'worsening' | 'resolved';
+  coordinates?: Array&lt;{ regionId: string; x: number; y: number }&gt;;
+}
+      </signature>
+      <path>src/lib/types/flare.ts</path>
+    </interface>
+    <interface>
+      <name>NormalizedCoordinates</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface NormalizedCoordinates {
+  x: number; // 0-1 range
+  y: number; // 0-1 range
+}
+      </signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>ReactZoomPanPinchRef</name>
+      <kind>Library Interface</kind>
+      <signature>
+interface ReactZoomPanPinchRef {
+  state: { scale: number; positionX: number; positionY: number };
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetTransform: () => void;
+  centerView: (scale: number, duration: number, easing: string) => void;
+}
+      </signature>
+      <path>node_modules/react-zoom-pan-pinch</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Tests run with Jest 30.2.0, React Testing Library 16.3.0, and @testing-library/user-event 14.6.1 for keyboard simulation. Use jest-dom matchers for accessibility assertions, fake-indexeddb for Dexie-backed hooks, and include manual screen reader spot checks. Capture performance timings to confirm keyboard interactions stay under 100ms per NFR001.
+    </standards>
+    <locations>
+      - src/components/body-map/__tests__/FlareMarkers.test.tsx (update assertions for aria-label changes)
+      - src/components/body-map/__tests__/BodyMapZoom.test.tsx (extend to cover keyboard shortcuts)
+      - src/components/body-mapping/bodies/__tests__/FrontBody.test.tsx (add focus-visible and tab order cases)
+      - src/__tests__/integration/body-map-zoom.test.tsx (expand to cover keyboard-only navigation)
+      - src/__tests__/integration/body-map-keyboard-flow.test.tsx (new end-to-end keyboard workflow)
+      - src/__tests__/hooks/useBodyMapAccessibility.test.ts (new hook unit tests)
+      - src/__tests__/integration/coordinate-marking.test.tsx (reuse to validate arrow key positioning)
+    </locations>
+    <ideas>
+      <idea ac="AC1">Verify tabbing sequences through front and back body regions follow configured order and cycle predictably without skipping selectable regions.</idea>
+      <idea ac="AC2">Assert Enter and Space trigger onRegionSelect and maintain focus context on the selected SVG element.</idea>
+      <idea ac="AC3">Simulate arrow key presses to adjust coordinates by 0.01 per press and confirm values clamp at 0 or 1.</idea>
+      <idea ac="AC3">Check CoordinateMarker updates position and tooltip values in sync with keyboard-driven adjustments.</idea>
+      <idea ac="AC4">Mock useFlares to change flare counts and ensure aria-live region announces updates exactly once per change.</idea>
+      <idea ac="AC5">Ensure every focusable region exposes aria-label text combining region name and active flare count.</idea>
+      <idea ac="AC6">Simulate +/- keys to drive zoom changes and arrow keys to pan while in pan mode, verifying preventDefault prevents browser zoom.</idea>
+      <idea ac="AC6">Test Escape and question mark shortcuts for resetting mode and opening the keyboard help overlay.</idea>
+      <idea ac="AC7">Use jest-dom to assert focus-visible class applies 2px high-contrast outline that meets 3:1 contrast against background swatches.</idea>
+      <idea ac="Performance">Measure keyboard interaction latency (Tab → redraw, Arrow → marker move) stays under 100ms across 20+ flares.</idea>
+      <idea ac="Regression">Run existing pointer-driven integration tests to confirm mouse/touch interactions remain unaffected after keyboard changes.</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,201 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>7</storyId>
+    <title>Treatment Effectiveness Tracker</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>C:\projects\symptom-tracker\docs\stories\6-7-treatment-effectiveness-tracker.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user trying different treatments and interventions</asA>
+    <iWant>a dedicated tracker showing which treatments correlate with symptom improvement over time</iWant>
+    <soThat>I can have data-driven conversations with my doctor about what's working</soThat>
+    <tasks>
+      <task id="1">Create TreatmentEffectiveness data model and IndexedDB schema (AC: 6.7.1)</task>
+      <task id="2">Extend correlation engine for treatment effectiveness (AC: 6.7.2)</task>
+      <task id="3">Implement treatment effectiveness calculation algorithm (AC: 6.7.4)</task>
+      <task id="4">Create TreatmentEffectivenessRepository (AC: 6.7.1, 6.7.4)</task>
+      <task id="5">Build TreatmentTracker component (AC: 6.7.3)</task>
+      <task id="6">Create TreatmentDetailModal component (AC: 6.7.5)</task>
+      <task id="7">Implement TreatmentComparisonView component (AC: 6.7.6)</task>
+      <task id="8">Implement medical disclaimer (AC: 6.7.7)</task>
+      <task id="9">Implement treatment effectiveness alert system (AC: 6.7.8)</task>
+      <task id="10">Create treatment journal integration (AC: 6.7.9)</task>
+      <task id="11">Create treatment report export service (AC: 6.7.5, 6.7.9)</task>
+      <task id="12">Integrate TreatmentTracker into Insights page (AC: 6.7.3)</task>
+      <task id="13">Write comprehensive tests (AC: 6.7.10)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="6.7.1">Create TreatmentEffectiveness data model: Extend data model to support treatment effectiveness tracking with TreatmentEffectiveness interface (treatmentId, userId, treatmentType, treatmentName, effectivenessScore, trendDirection, sampleSize, timeRange, lastCalculated, confidence). Add treatmentEffectiveness table to IndexedDB schema v27 with indexes on userId, userId+treatmentId, userId+effectivenessScore.</criterion>
+    <criterion id="6.7.2">Extend correlation engine to calculate treatment effectiveness: Extend CorrelationEngine service to calculate treatment effectiveness scores using calculateTreatmentEffectiveness method. Extract baseline severity (7 days before treatment), outcome severity (7-30 days after), calculate effectiveness score formula, determine trend direction, set confidence level. Require minimum 3 treatment cycles.</criterion>
+    <criterion id="6.7.3">Build TreatmentTracker component: Create TreatmentTracker component displaying all tracked treatments with name, type badge, effectiveness score (color-coded 0-33 red, 34-66 yellow, 67-100 green), trend arrow, confidence level badge, sample size. Sorted by effectiveness score. Empty state for no treatments.</criterion>
+    <criterion id="6.7.4">Implement effectiveness calculation algorithm: Implement treatment effectiveness calculation in TreatmentEffectivenessService. Identify treatment instances, calculate baseline/outcome severity, calculate individual and aggregate effectiveness scores, determine trend direction, assign confidence levels, store results in database.</criterion>
+    <criterion id="6.7.5">Create TreatmentDetail modal: Build TreatmentDetailModal showing treatment name/type, effectiveness score, before/after severity chart, statistical confidence, correlation data, timeline of cycles, export report button. Uses Chart.js for visualizations.</criterion>
+    <criterion id="6.7.6">Add comparison view: Implement TreatmentComparisonView for side-by-side comparison of 2-4 treatments. Shows effectiveness scores, trends, sample sizes, statistical significance, combination effectiveness, ranked recommendations. Uses Chart.js for bar charts.</criterion>
+    <criterion id="6.7.7">Implement medical disclaimer: Add medical disclaimer to all treatment views. Text: "Effectiveness scores show correlations in your data. Many factors affect outcomes. Always consult your healthcare provider before changing treatment plans." Collapsible in TreatmentTracker, persistent in modals, included in exports.</criterion>
+    <criterion id="6.7.8">Add alert system: Implement TreatmentAlertService with triggers for effectiveness drops (>20% over 30 days), low effectiveness (score &lt;30 for 3+ calculations), unused effective treatments (score >70 but no instances in 60 days). Alerts stored in database with dismiss functionality and browser notifications opt-in.</criterion>
+    <criterion id="6.7.9">Create treatment journal integration: Integrate treatment effectiveness with daily log notes. Show daily log entries during treatment periods, highlight notes mentioning side effects/improvements, overlay effectiveness trend on timeline, include journal entries in export reports.</criterion>
+    <criterion id="6.7.10">Build comprehensive tests: Create test suite for treatment effectiveness. Unit tests for calculation algorithm, baseline/outcome extraction, trend determination, confidence assignment. Component tests for TreatmentTracker, TreatmentDetailModal, TreatmentComparisonView. Integration tests for alerts and exports. All tests passing.</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic 6: Health Insights & Correlation Analytics" section="Story 6.7">
+        Treatment Effectiveness Tracker story requirements. User wants dedicated tracker showing which treatments correlate with symptom improvement. Create TreatmentEffectiveness data model, extend correlation engine, build TreatmentTracker component, implement effectiveness calculation algorithm using baseline/outcome severity comparison. Add comparison view, medical disclaimer, alert system for effectiveness drops.
+      </doc>
+      <doc path="docs/epics.md" title="Epic 6: Story 6.3" section="Correlation Engine">
+        Story 6.3 (IN REVIEW): Correlation Engine and Spearman Algorithm. Implemented Spearman rank correlation, CorrelationEngine service, data windowing logic, correlation pairs (food-symptom, trigger-symptom, medication-symptom), significance filtering (|ρ| >= 0.3, n >= 10, p &lt; 0.05). Background calculation service, 37/37 tests passing. Treatment effectiveness will extend this existing engine.
+      </doc>
+      <doc path="docs/epics.md" title="Epic 6: Story 6.4" section="Health Insights Hub UI">
+        Story 6.4: Health Insights Hub UI. Created /insights page route, InsightCard component, insight prioritization algorithm, Chart.js visualization, medical disclaimer banner. TreatmentTracker will integrate into this existing insights platform following established patterns.
+      </doc>
+      <doc path="docs/epics.md" title="Epic 6: Story 6.5" section="Timeline Pattern Detection">
+        Story 6.5 (done): Timeline Pattern Detection. Created PatternDetailPanel component, patternDetectionService.ts, timelineExportService.ts using jsPDF, IndexedDB schema v26 for patternDetections table. Treatment effectiveness will follow these patterns for TreatmentDetailModal, treatmentReportExportService, and alert system architecture.
+      </doc>
+      <doc path="docs/epics.md" title="Epic 6: Story 6.2" section="Daily Log Page">
+        Story 6.2 (IN REVIEW): Daily Log Page. Created DailyLog data model in IndexedDB (mood, sleep, notes, flare updates), EmoticonMoodSelector, SleepQualityInput, daily notes with auto-save. Treatment effectiveness will integrate with daily log for treatment journal integration showing daily log entries during treatment periods.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Technology Stack" section="Dependencies">
+        Technology stack: React 19, Next.js 15, TypeScript 5, IndexedDB via Dexie 4, Chart.js 4.5 for visualization, jsPDF 3.0 for PDF export, Tailwind CSS 4, shadcn/ui components. Treatment effectiveness uses Chart.js for before/after severity charts and jsPDF for treatment report exports.
+      </doc>
+      <doc path="docs/stories/6-5-timeline-pattern-detection.md" title="Story 6.5 Dev Notes" section="Export Service Pattern">
+        Story 6.5 created timelineExportService.ts using jsPDF for PDF generation with medical disclaimer. Pattern: dynamic import jsPDF to avoid SSR issues, generate cover page, include statistical sections, add disclaimer on each page. Treatment effectiveness will create treatmentReportExportService.ts following identical pattern.
+      </doc>
+      <doc path="docs/stories/6-5-timeline-pattern-detection.md" title="Story 6.5 Dev Notes" section="Alert System Architecture">
+        Story 6.5 implemented pattern detection with debouncing and background processing for non-blocking architecture. Treatment effectiveness alert system will follow similar pattern: detect triggers (effectiveness drops, low effectiveness, unused treatments), store alerts in database, display in AlertsPanel, browser notifications opt-in.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/lib/services/correlationEngine.ts" kind="service" symbol="CorrelationEngine" lines="1-448" reason="Existing correlation engine service to extend with calculateTreatmentEffectiveness method. Implements Spearman correlation, generates correlation pairs, filters by significance. Treatment effectiveness will add new method to this service for treatment-specific effectiveness calculation."/>
+      <artifact path="src/lib/services/correlationEngine.ts" kind="service" symbol="calculateCorrelation" lines="45-50" reason="Calculate correlation between two time series using Spearman. Treatment effectiveness will use this method internally when calculating treatment-symptom correlations."/>
+      <artifact path="src/lib/services/correlationEngine.ts" kind="service" symbol="findSignificantCorrelations" lines="239-317" reason="Find significant correlations with triple filter (threshold, sample size, p-value). Treatment effectiveness calculation will follow similar significance filtering pattern for valid effectiveness scores."/>
+      <artifact path="src/lib/db/schema.ts" kind="schema" symbol="CorrelationRecord" lines="601-640" reason="Existing correlation data model with correlation type, statistical results, temporal context. Treatment effectiveness will create similar TreatmentEffectivenessRecord interface following this pattern."/>
+      <artifact path="src/lib/db/schema.ts" kind="schema" symbol="PatternDetectionRecord" lines="643-666" reason="Pattern detection record from Story 6.5 showing IndexedDB schema pattern for detection results. Treatment effectiveness will create TreatmentEffectivenessRecord and TreatmentAlertRecord following this structure."/>
+      <artifact path="src/lib/db/schema.ts" kind="schema" symbol="DailyLogRecord" lines="574-599" reason="Daily log record from Story 6.2 with mood, sleep, notes, flare updates. Treatment effectiveness will integrate with this for treatment journal showing daily log entries during treatment periods."/>
+      <artifact path="src/lib/db/client.ts" kind="database" symbol="version26" lines="630-659" reason="IndexedDB schema version 26 added patternDetections table (Story 6.5). Treatment effectiveness will increment to schema version 27 adding treatmentEffectiveness and treatmentAlerts tables with compound indexes."/>
+      <artifact path="src/lib/repositories/correlationRepository.ts" kind="repository" symbol="CorrelationRepository" lines="1-310" reason="Correlation repository with CRUD operations, compound indexes ([userId+type], [userId+item1]), efficient queries. TreatmentEffectivenessRepository will follow identical repository pattern."/>
+      <artifact path="src/lib/repositories/correlationRepository.ts" kind="repository" symbol="findAll" lines="43-53" reason="Find all correlations for user sorted by strength. TreatmentEffectivenessRepository.findAll will follow same pattern sorting by effectivenessScore descending."/>
+      <artifact path="src/lib/repositories/correlationRepository.ts" kind="repository" symbol="upsert" lines="197-224" reason="Upsert pattern: find existing record with same parameters, update if exists, create if not. TreatmentEffectivenessRepository will use for updating effectiveness scores when recalculated."/>
+      <artifact path="src/lib/repositories/dailyLogsRepository.ts" kind="repository" reason="Daily logs repository for querying daily log entries. Treatment effectiveness will import this to query daily log notes during treatment periods for journal integration."/>
+      <artifact path="src/lib/services/timelineExportService.ts" kind="service" symbol="exportPatternSummaryPDF" lines="86-211" reason="Export pattern summary as PDF using jsPDF. Shows pattern: dynamic import jsPDF, generate cover page, add statistics, include medical disclaimer, iterate patterns. TreatmentReportExportService will follow identical pattern for treatment report PDF generation."/>
+      <artifact path="src/lib/services/timelineExportService.ts" kind="service" symbol="exportTimelineAsImage" lines="22-52" reason="Export timeline as image using html2canvas. Treatment effectiveness may use for exporting before/after severity charts as images in treatment detail modal."/>
+      <artifact path="src/lib/services/patternDetectionService.ts" kind="service" reason="Pattern detection service from Story 6.5 with debouncing and background processing. Treatment alert service will follow similar non-blocking architecture for alert detection and browser notifications."/>
+      <artifact path="src/app/(protected)/insights/page.tsx" kind="page" symbol="InsightsPage" lines="1-139" reason="Health Insights Hub page (Story 6.4) showing integration point for TreatmentTracker. Uses TimeRangeSelector, MedicalDisclaimerBanner, InsightsGrid, InsightDetailModal. TreatmentTracker will be added as new section in this page below existing insights grid."/>
+      <artifact path="src/components/insights/InsightsGrid.tsx" kind="component" reason="Insights grid component for displaying correlation cards. TreatmentTracker will follow similar grid layout pattern for displaying treatment effectiveness cards."/>
+      <artifact path="src/components/insights/InsightDetailModal.tsx" kind="component" reason="Insight detail modal from Story 6.4. TreatmentDetailModal will follow similar modal pattern with close handlers, Chart.js visualizations, export functionality."/>
+      <artifact path="src/components/insights/MedicalDisclaimerBanner.tsx" kind="component" reason="Medical disclaimer banner component. Treatment effectiveness will use in TreatmentTracker (collapsible), TreatmentDetailModal (persistent), TreatmentComparisonView (persistent header), and export reports."/>
+      <artifact path="src/lib/repositories/medicationRepository.ts" kind="repository" reason="Medication repository for querying medication definitions. Treatment effectiveness will use to identify all medications for effectiveness analysis."/>
+      <artifact path="src/lib/repositories/medicationEventRepository.ts" kind="repository" reason="Medication event repository for querying medication events (when taken). Treatment effectiveness will query this to identify treatment instances for effectiveness calculation."/>
+      <artifact path="src/lib/repositories/symptomInstanceRepository.ts" kind="repository" reason="Symptom instance repository for querying symptom severity data. Treatment effectiveness will query this to calculate baseline severity (7 days before treatment) and outcome severity (7-30 days after treatment)."/>
+      <artifact path="src/lib/repositories/triggerEventRepository.ts" kind="repository" reason="Trigger event repository (intervention events). Treatment effectiveness applies to both medications and interventions, will query trigger events for intervention-type treatments."/>
+    </code>
+    <dependencies>
+      <ecosystem name="Node.js">
+        <package name="chart.js" version="^4.5.0" reason="Chart visualization library for before/after severity charts and comparison bar charts"/>
+        <package name="chartjs-adapter-date-fns" version="^3.0.0" reason="Date adapter for Chart.js time-series charts"/>
+        <package name="chartjs-plugin-annotation" version="^3.1.0" reason="Chart.js plugin for annotations and highlighting"/>
+        <package name="jspdf" version="^3.0.3" reason="PDF generation library for treatment report exports"/>
+        <package name="dexie" version="^4.2.0" reason="IndexedDB wrapper for database operations"/>
+        <package name="react-chartjs-2" version="^5.3.0" reason="React wrapper for Chart.js"/>
+        <package name="date-fns" version="^4.1.0" reason="Date manipulation for time-series calculations"/>
+        <package name="lucide-react" version="^0.544.0" reason="Icon library for UI components"/>
+        <package name="zod" version="^4.1.12" reason="Schema validation"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architectural">Follow existing repository pattern from correlationRepository.ts with CRUD operations, compound indexes, and efficient queries.</constraint>
+    <constraint type="architectural">Extend CorrelationEngine service class by adding calculateTreatmentEffectiveness method. Do not create separate service for correlation logic.</constraint>
+    <constraint type="data-model">IndexedDB schema version 27. Add treatmentEffectiveness table with indexes: [userId], [userId+treatmentId], [userId+effectivenessScore]. Add treatmentAlerts table with indexes for alert querying.</constraint>
+    <constraint type="testing">Comprehensive test suite required. Unit tests for calculation algorithm accuracy, component tests for all React components, integration tests for alert system and export functionality. All tests must pass before story completion.</constraint>
+    <constraint type="ui">Integrate TreatmentTracker into existing /insights page (src/app/(protected)/insights/page.tsx) as new section below existing insights grid. Follow responsive layout patterns from InsightsGrid component.</constraint>
+    <constraint type="ui">Medical disclaimer must appear in all treatment effectiveness views. Collapsible in TreatmentTracker (using localStorage for persistence), persistent in modals, included prominently on first page of all exported PDFs.</constraint>
+    <constraint type="calculation">Require minimum 3 treatment cycles for valid effectiveness score. Return null if insufficient data. Display "Insufficient data" message with progress indicator (e.g., "2 of 3 cycles tracked").</constraint>
+    <constraint type="calculation">Baseline severity: average symptom severity 7 days before treatment start. Outcome severity: average symptom severity 7-30 days after treatment. Effectiveness score = ((baseline - outcome) / baseline) × 100. Positive score = improvement, negative score = worsening.</constraint>
+    <constraint type="alert">Alert system triggers: 1) Effectiveness drop >20% over 30 days, 2) Low effectiveness (score <30 for 3+ consecutive calculations), 3) Unused effective treatment (score >70 but no instances in 60 days). Browser notifications opt-in only.</constraint>
+    <constraint type="export">Export service (treatmentReportExportService.ts) follows pattern from timelineExportService.ts: dynamic import jsPDF to avoid SSR issues, generate cover page, include treatment name/summary, effectiveness score section with chart, timeline of cycles table, statistical confidence, related correlations, journal entries, medical disclaimer on first page and footers.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="TreatmentEffectiveness" type="TypeScript" path="src/types/treatmentEffectiveness.ts">
+      interface TreatmentEffectiveness {
+        treatmentId: string; // UUID
+        userId: string;
+        treatmentType: 'medication' | 'intervention';
+        treatmentName: string;
+        effectivenessScore: number; // 0-100 scale
+        trendDirection: 'improving' | 'stable' | 'declining';
+        sampleSize: number; // Number of treatment cycles analyzed
+        timeRange: { start: number; end: number }; // Unix timestamps
+        lastCalculated: number; // Unix timestamp
+        confidence: 'high' | 'medium' | 'low';
+      }
+    </interface>
+    <interface name="TreatmentAlert" type="TypeScript" path="src/types/treatmentEffectiveness.ts">
+      interface TreatmentAlert {
+        alertId: string;
+        userId: string;
+        treatmentId: string;
+        alertType: 'effectiveness_drop' | 'low_effectiveness' | 'unused_effective_treatment';
+        severity: 'warning' | 'info';
+        message: string;
+        actionSuggestion: string;
+        createdAt: number;
+        dismissed: boolean;
+      }
+    </interface>
+    <interface name="CorrelationEngine.calculateTreatmentEffectiveness" type="method" path="src/lib/services/correlationEngine.ts">
+      calculateTreatmentEffectiveness(
+        userId: string,
+        treatmentId: string,
+        treatmentType: 'medication' | 'intervention',
+        timeRange: TimeRange
+      ): Promise&lt;TreatmentEffectiveness | null&gt;
+      // Returns null if insufficient data (< 3 treatment cycles)
+    </interface>
+    <interface name="TreatmentEffectivenessRepository.findAll" type="method" path="src/lib/repositories/treatmentEffectivenessRepository.ts">
+      findAll(userId: string): Promise&lt;TreatmentEffectiveness[]&gt;
+      // Returns all treatment effectiveness records sorted by effectivenessScore descending
+    </interface>
+    <interface name="TreatmentEffectivenessRepository.findByTreatment" type="method" path="src/lib/repositories/treatmentEffectivenessRepository.ts">
+      findByTreatment(userId: string, treatmentId: string): Promise&lt;TreatmentEffectiveness | undefined&gt;
+      // Uses [userId+treatmentId] compound index for efficient lookup
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses Jest with React Testing Library for component tests and unit tests. Test files located in __tests__ directories adjacent to source files. Pattern: componentName.test.tsx for components, serviceName.test.ts for services. All tests must pass with npm test command. Mock IndexedDB using fake-indexeddb package. Mock repositories for component tests to isolate UI logic from database operations.
+    </standards>
+    <locations>
+      src/lib/services/__tests__/treatmentEffectivenessService.test.ts
+      src/components/insights/__tests__/TreatmentComponents.test.tsx
+      src/lib/repositories/__tests__/treatmentEffectivenessRepository.test.ts
+    </locations>
+    <ideas>
+      <test ac="6.7.2">Unit test: calculateTreatmentEffectiveness with valid data (3+ cycles) returns effectiveness score. Mock medicationEventRepository, symptomInstanceRepository, return baseline severity 7, outcome severity 3. Expect effectiveness score ≈ 57.14.</test>
+      <test ac="6.7.2">Unit test: calculateTreatmentEffectiveness with insufficient data (< 3 cycles) returns null. Mock repositories returning only 2 medication events. Expect null result.</test>
+      <test ac="6.7.4">Unit test: extractBaselineSeverity calculates average symptom severity 7 days before treatment. Mock symptom instances with severity [5, 6, 7]. Expect average 6.</test>
+      <test ac="6.7.4">Unit test: extractOutcomeSeverity calculates average symptom severity 7-30 days after treatment. Mock symptom instances with severity [3, 4, 3]. Expect average 3.33.</test>
+      <test ac="6.7.4">Unit test: determineTrendDirection compares recent vs older effectiveness. Recent cycles [70, 75, 80], older cycles [50, 55, 60]. Expect 'improving'.</test>
+      <test ac="6.7.4">Unit test: assignConfidenceLevel with sampleSize=12 returns 'high'. sampleSize=7 returns 'medium'. sampleSize=3 returns 'low'.</test>
+      <test ac="6.7.3">Component test: TreatmentTracker renders treatments correctly. Pass 3 mock treatments with scores 80, 50, 20. Expect green badge for 80, yellow for 50, red for 20.</test>
+      <test ac="6.7.3">Component test: TreatmentTracker empty state. Pass empty array. Expect "No treatments tracked yet" message.</test>
+      <test ac="6.7.5">Component test: TreatmentDetailModal opens and displays treatment data. Pass mock treatment with name "Ibuprofen". Expect modal to show "Ibuprofen" heading.</test>
+      <test ac="6.7.5">Component test: TreatmentDetailModal closes on X button click. Click close button, expect onClose callback called.</test>
+      <test ac="6.7.6">Component test: TreatmentComparisonView compares 2 treatments. Pass treatments with scores 80 and 50. Expect bar chart with 2 bars, treatment with 80 ranked first.</test>
+      <test ac="6.7.7">Component test: DisclaimerBanner displays medical disclaimer text. Expect text "Effectiveness scores show correlations in your data".</test>
+      <test ac="6.7.8">Unit test: TreatmentAlertService.checkEffectivenessDrop detects >20% drop. Mock effectiveness history: 80 (30 days ago) → 60 (now). Expect alert triggered with type 'effectiveness_drop'.</test>
+      <test ac="6.7.8">Unit test: TreatmentAlertService.checkLowEffectiveness detects score <30 for 3+ calculations. Mock 3 consecutive calculations with scores [25, 28, 22]. Expect alert triggered.</test>
+      <test ac="6.7.8">Unit test: TreatmentAlertService.checkUnusedEffectiveTreatment detects score >70 but no instances in 60 days. Mock treatment score 85, last instance 70 days ago. Expect alert triggered.</test>
+      <test ac="6.7.9">Integration test: Treatment journal integration queries daily logs during treatment periods. Mock treatment period 2025-01-01 to 2025-01-15, mock daily logs with notes. Expect journal section displays log notes from that period.</test>
+      <test ac="6.7.10">Integration test: Export functionality generates PDF. Call exportTreatmentReportPDF, mock jsPDF. Expect PDF generated with cover page, effectiveness section, disclaimer.</test>
+    </ideas>
+  </tests>
+</story-context>

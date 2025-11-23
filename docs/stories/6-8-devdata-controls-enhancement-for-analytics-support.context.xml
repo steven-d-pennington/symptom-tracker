@@ -1,0 +1,432 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>8</storyId>
+    <title>DevData Controls Enhancement for Analytics Support</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-8-devdata-controls-enhancement-for-analytics-support.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer testing analytics features</asA>
+    <iWant>DevDataControls to generate rich synthetic data including daily logs, correlations, treatment effectiveness data, and intentional patterns</iWant>
+    <soThat>I can comprehensively test and demonstrate all Epic 6 analytics capabilities with realistic test scenarios</soThat>
+    <tasks>
+      <task id="1" ac="6.8.1">Create generateDailyLogs.ts generator module
+        <subtask id="1.1">Create src/lib/dev/generators/generateDailyLogs.ts file</subtask>
+        <subtask id="1.2">Import dailyLogRepository from Story 6.2</subtask>
+        <subtask id="1.3">Define DailyLogGenerationConfig interface (userId, startDate, endDate, coveragePercent, correlateWithFlares)</subtask>
+        <subtask id="1.4">Implement generateDailyLogs(userId, config) main function</subtask>
+        <subtask id="1.5">Calculate target days to generate (coveragePercent × total days in range)</subtask>
+        <subtask id="1.6">Randomly select days for coverage (realistic gaps, not consecutive)</subtask>
+        <subtask id="1.7">Generate mood values (1-10) with variation and flare correlation</subtask>
+        <subtask id="1.8">Generate sleep hours (4-10) and sleep quality (1-10) with flare correlation</subtask>
+        <subtask id="1.9">Query flares for each day and reduce mood/sleep on high-severity flare days</subtask>
+        <subtask id="1.10">Generate optional notes (10% of days get notes)</subtask>
+        <subtask id="1.11">Add weekday vs weekend patterns (better mood/sleep on weekends)</subtask>
+        <subtask id="1.12">Batch create daily logs via dailyLogRepository.createBatch()</subtask>
+        <subtask id="1.13">Return {dailyLogsCreated: number}</subtask>
+        <subtask id="1.14">Add console logging for debugging generation progress</subtask>
+      </task>
+
+      <task id="2" ac="6.8.2">Update orchestrator.ts to call daily log generator
+        <subtask id="2.1">Open src/lib/dev/generators/orchestrator.ts</subtask>
+        <subtask id="2.2">Import generateDailyLogs from generateDailyLogs.ts</subtask>
+        <subtask id="2.3">Add Step 13 after existing data generation: Generate daily logs</subtask>
+        <subtask id="2.4">Call generateDailyLogs(userId, {startDate, endDate, coveragePercent: config.dailyLogCoverage || 0.6})</subtask>
+        <subtask id="2.5">Update GenerationResult interface to include dailyLogsCreated: number</subtask>
+        <subtask id="2.6">Store daily logs count in result object</subtask>
+        <subtask id="2.7">Ensure daily logs generate AFTER flares exist (dependency check)</subtask>
+        <subtask id="2.8">Add console log: "Step 13: Generating daily logs..."</subtask>
+      </task>
+
+      <task id="3" ac="6.8.3">Integrate correlation engine into orchestrator
+        <subtask id="3.1">Import CorrelationCalculationService from Story 6.3</subtask>
+        <subtask id="3.2">Add Step 14 after daily log generation: Calculate correlations</subtask>
+        <subtask id="3.3">Call await correlationCalculationService.recalculateCorrelations(userId)</subtask>
+        <subtask id="3.4">Update GenerationResult to include correlationsGenerated, significantCorrelations</subtask>
+        <subtask id="3.5">Query correlationRepository after calculation to get counts</subtask>
+        <subtask id="3.6">Filter significant correlations: Math.abs(correlation.coefficient) >= 0.3</subtask>
+        <subtask id="3.7">Store correlation counts in result object</subtask>
+        <subtask id="3.8">Add console log: "Step 14: Calculating correlations..."</subtask>
+        <subtask id="3.9">Handle case where correlation service not yet implemented (try-catch)</subtask>
+      </task>
+
+      <task id="4" ac="6.8.4">Integrate treatment effectiveness calculation
+        <subtask id="4.1">Import TreatmentEffectivenessService from Story 6.7</subtask>
+        <subtask id="4.2">Add Step 15 after correlation calculation: Calculate treatment effectiveness</subtask>
+        <subtask id="4.3">Check if medicationEventsCreated > 0 before calculating</subtask>
+        <subtask id="4.4">Call await treatmentEffectivenessService.calculateAllTreatmentEffectiveness(userId, timeRange)</subtask>
+        <subtask id="4.5">Update GenerationResult to include treatmentEffectivenessRecordsCreated: number</subtask>
+        <subtask id="4.6">Query treatmentEffectivenessRepository to get count of records created</subtask>
+        <subtask id="4.7">Store treatment effectiveness count in result object</subtask>
+        <subtask id="4.8">Add console log: "Step 15: Calculating treatment effectiveness..."</subtask>
+        <subtask id="4.9">Handle case where treatment effectiveness service not yet implemented (try-catch)</subtask>
+      </task>
+
+      <task id="5" ac="6.8.7">Create generatePatternData.ts module
+        <subtask id="5.1">Create src/lib/dev/generators/generatePatternData.ts file</subtask>
+        <subtask id="5.2">Import repositories: triggerEventRepository, symptomInstanceRepository, foodEventRepository, medicationEventRepository</subtask>
+        <subtask id="5.3">Implement generateMondayStressPattern(userId, startDate, endDate)</subtask>
+        <subtask id="5.4">Find all Mondays in date range</subtask>
+        <subtask id="5.5">Create stress trigger event + headache symptom on each Monday (80% of Mondays)</subtask>
+        <subtask id="5.6">Implement generateDairyHeadachePattern(userId, startDate, endDate)</subtask>
+        <subtask id="5.7">Create dairy food event followed by headache 6-12 hours later (15+ instances)</subtask>
+        <subtask id="5.8">Implement generateMedicationImprovementPattern(userId, startDate, endDate)</subtask>
+        <subtask id="5.9">Create medication event followed by symptom severity reduction 24-48 hours later (10+ instances)</subtask>
+        <subtask id="5.10">Each pattern function returns count of pattern instances created</subtask>
+        <subtask id="5.11">Create orchestrator integration: generateAllPatterns(userId, config) wrapper function</subtask>
+        <subtask id="5.12">Add console logging for each pattern type generated</subtask>
+      </task>
+
+      <task id="6" ac="6.8.5, 6.8.6">Add analytics scenarios to scenarios.ts
+        <subtask id="6.1">Open src/lib/dev/config/scenarios.ts</subtask>
+        <subtask id="6.2">Create analytics-showcase scenario config object</subtask>
+        <subtask id="6.3">Set scenario properties: id: 'analytics-showcase', name: 'Analytics Showcase', icon: '📊', group: 'analytics'</subtask>
+        <subtask id="6.4">Configure scenario: flareCount: 20-25, correlationStrength: 0.85, dailyLogCoverage: 0.8, intentionalPatterns: true, timeframeMonths: 12</subtask>
+        <subtask id="6.5">Add description explaining use case for insights testing</subtask>
+        <subtask id="6.6">Create pattern-detection scenario config object</subtask>
+        <subtask id="6.7">Set scenario properties: id: 'pattern-detection', name: 'Pattern Detection', icon: '🔍', group: 'analytics'</subtask>
+        <subtask id="6.8">Configure scenario: timeframeMonths: 6, recurringPatterns: true, consistentDelays: true, weeklyPatterns: true, dailyLogCoverage: 0.7</subtask>
+        <subtask id="6.9">Add scenarios to getAllScenarios() export array</subtask>
+        <subtask id="6.10">Update scenario TypeScript types if needed</subtask>
+      </task>
+
+      <task id="7" ac="6.8.8">Update orchestrator result reporting
+        <subtask id="7.1">Open GenerationResult interface in orchestrator.ts</subtask>
+        <subtask id="7.2">Add new fields: dailyLogsCreated, correlationsGenerated, significantCorrelations, treatmentEffectivenessRecordsCreated, patternsGenerated</subtask>
+        <subtask id="7.3">Update all return statements to include new fields (default to 0 if not generated)</subtask>
+        <subtask id="7.4">Update console.log summary at end of orchestrator</subtask>
+        <subtask id="7.5">Log analytics data separately: "Analytics Data: X daily logs, Y correlations (Z significant), W treatment records"</subtask>
+        <subtask id="7.6">Ensure all generators return their counts properly</subtask>
+        <subtask id="7.7">Test result object structure matches interface</subtask>
+      </task>
+
+      <task id="8" ac="6.8.9">Update DevDataControls.tsx to display analytics stats
+        <subtask id="8.1">Open src/components/settings/DevDataControls.tsx</subtask>
+        <subtask id="8.2">Update handleGenerateScenario result message construction</subtask>
+        <subtask id="8.3">Add conditional section for daily logs (if dailyLogsCreated > 0)</subtask>
+        <subtask id="8.4">Calculate and display coverage percentage: (dailyLogsCreated / totalDaysInRange) × 100</subtask>
+        <subtask id="8.5">Add conditional section for correlations (if correlationsGenerated > 0)</subtask>
+        <subtask id="8.6">Display total correlations and significant correlations count</subtask>
+        <subtask id="8.7">Add conditional section for treatment effectiveness (if treatmentEffectivenessRecordsCreated > 0)</subtask>
+        <subtask id="8.8">Add conditional section for patterns (if patternsGenerated > 0)</subtask>
+        <subtask id="8.9">Group all analytics stats under "📈 **Analytics Data:**" heading</subtask>
+        <subtask id="8.10">Update message formatting with proper line breaks and emoji icons</subtask>
+        <subtask id="8.11">Test message display with and without analytics data</subtask>
+      </task>
+
+      <task id="9" ac="6.8.10">Add scenario grouping to DevDataControls UI
+        <subtask id="9.1">Open DevDataControls.tsx scenario rendering section</subtask>
+        <subtask id="9.2">Group scenarios by category: basic, analytics, performance</subtask>
+        <subtask id="9.3">Update getAllScenarios() to return scenarios with group field</subtask>
+        <subtask id="9.4">Implement scenario filtering by group in component</subtask>
+        <subtask id="9.5">Create group header UI components (collapsible sections or visual separators)</subtask>
+        <subtask id="9.6">Add group descriptions: "Basic Scenarios: Quick exploration and comprehensive testing"</subtask>
+        <subtask id="9.7">Add group description: "Analytics Scenarios: Optimized for Epic 6 insights features"</subtask>
+        <subtask id="9.8">Add group description: "Performance Scenarios: Stress testing with large datasets"</subtask>
+        <subtask id="9.9">Update scenario card layout within groups (maintain grid layout)</subtask>
+        <subtask id="9.10">Update help text to explain scenario groups</subtask>
+        <subtask id="9.11">Test UI with multiple scenarios in each group</subtask>
+      </task>
+
+      <task id="10" ac="6.8.3, 6.8.4">Handle missing services gracefully
+        <subtask id="10.1">Wrap correlation engine call in try-catch block</subtask>
+        <subtask id="10.2">If CorrelationCalculationService not found, log warning and continue</subtask>
+        <subtask id="10.3">Set correlationsGenerated = 0 if service missing</subtask>
+        <subtask id="10.4">Wrap treatment effectiveness call in try-catch block</subtask>
+        <subtask id="10.5">If TreatmentEffectivenessService not found, log warning and continue</subtask>
+        <subtask id="10.6">Set treatmentEffectivenessRecordsCreated = 0 if service missing</subtask>
+        <subtask id="10.7">Add console warnings for missing services: "Skipping [service] - not yet implemented"</subtask>
+        <subtask id="10.8">Ensure orchestrator completes successfully even if analytics services missing</subtask>
+      </task>
+
+      <task id="11" ac="6.8.5, 6.8.6">Test DevData generation with analytics scenarios
+        <subtask id="11.1">Open DevDataControls UI in Settings page</subtask>
+        <subtask id="11.2">Select "Analytics Showcase" scenario</subtask>
+        <subtask id="11.3">Generate test data and verify all counts appear</subtask>
+        <subtask id="11.4">Check console logs for correlation and treatment effectiveness calculation</subtask>
+        <subtask id="11.5">Navigate to Insights page and verify correlations display</subtask>
+        <subtask id="11.6">Navigate to Timeline page and verify pattern highlighting (if Story 6.5 complete)</subtask>
+        <subtask id="11.7">Generate "Pattern Detection" scenario</subtask>
+        <subtask id="11.8">Verify recurring patterns appear in timeline</subtask>
+        <subtask id="11.9">Test "Clear All Data" button removes analytics data</subtask>
+        <subtask id="11.10">Regenerate scenario and confirm analytics data recreates</subtask>
+      </task>
+
+      <task id="12" ac="all">Update data model imports and dependencies
+        <subtask id="12.1">Ensure dailyLogRepository is exported and accessible (from Story 6.2)</subtask>
+        <subtask id="12.2">Ensure CorrelationCalculationService is exported (from Story 6.3)</subtask>
+        <subtask id="12.3">Ensure TreatmentEffectivenessService is exported (from Story 6.7)</subtask>
+        <subtask id="12.4">Verify all repository imports work with dynamic imports</subtask>
+        <subtask id="12.5">Update TypeScript types for all new interfaces</subtask>
+        <subtask id="12.6">Resolve any circular dependency issues in generators</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="6.8.1">
+      <title>Create generateDailyLogs.ts generator</title>
+      <description>Create src/lib/dev/generators/generateDailyLogs.ts module that generates synthetic daily log entries (from Story 6.2 schema). Generator implements: 60-80% day coverage within date range (realistic gaps), mood/sleep values correlated with flare severity (high flare days = worse mood/sleep), configurable date ranges matching other generators, returns count of daily logs created. DailyLog schema includes: date (YYYY-MM-DD string), mood (1-10), sleep hours (4-10), sleep quality (1-10), notes (optional text), flare updates (optional). Generator creates realistic variations: weekday vs weekend patterns, seasonal mood variations, clustering around flare events.</description>
+    </criterion>
+
+    <criterion id="6.8.2">
+      <title>Update orchestrator.ts to call daily log generator</title>
+      <description>Extend src/lib/dev/generators/orchestrator.ts (from DevDataControls component) to include daily log generation after existing data generation. Add Step 13 in orchestration sequence: await generateDailyLogs(userId, config) after flares/symptoms/food generation (currently Step 12). Pass through date range from scenario config. Update GenerationResult interface to include dailyLogsCreated: number field. Ensure daily logs generate AFTER base data exists (flares, symptoms) so correlations can be created. Return total daily logs count in generation summary.</description>
+    </criterion>
+
+    <criterion id="6.8.3">
+      <title>Integrate correlation engine into orchestrator</title>
+      <description>Extend orchestrator.ts to trigger correlation calculation after all data generated. Add Step 14 (final step): await correlationCalculationService.recalculateCorrelations(userId) which scans all medication/food/trigger/symptom/flare data and calculates Spearman correlations (from Story 6.3). Import CorrelationCalculationService (from Story 6.3). Correlations calculate AFTER all base data exists to ensure sufficient sample sizes (n >= 10). Add correlationsGenerated: number to GenerationResult interface. Log correlation generation progress to console for debugging. Correlation calculation is non-blocking (uses debouncing from Story 6.3).</description>
+    </criterion>
+
+    <criterion id="6.8.4">
+      <title>Integrate treatment effectiveness calculation into orchestrator</title>
+      <description>Extend orchestrator.ts to trigger treatment effectiveness calculation after correlation engine (Step 15). Add call to treatmentEffectivenessService.calculateAllTreatmentEffectiveness(userId, timeRange) from Story 6.7. Treatment effectiveness analyzes medication/intervention events and calculates effectiveness scores (baseline vs outcome severity). Requires sufficient medication/intervention instances (minimum 3 cycles per treatment). Add treatmentEffectivenessRecordsCreated: number to GenerationResult interface. Only calculate if medication events exist (check result.medicationEventsCreated > 0). Treatment effectiveness depends on correlation engine completing first (uses correlation data).</description>
+    </criterion>
+
+    <criterion id="6.8.5">
+      <title>Add analytics-showcase scenario to scenarios.ts</title>
+      <description>Create new scenario in src/lib/dev/config/scenarios.ts called "analytics-showcase" optimized for demonstrating Epic 6 insights features. Scenario config: high correlation strength (0.85 correlation coefficient target), 20-25 flares with clustering patterns, strong food-symptom relationships (dairy → headaches, nightshades → inflammation), 80% daily log coverage (very high), intentional patterns enabled (recurring sequences), 12-month timeframe (sufficient data without overload). Scenario icon: 📊, name: "Analytics Showcase", description: "Demonstrates correlation analysis, treatment effectiveness, and pattern detection with strong intentional patterns for insights testing". Add to scenarios list with group: "Analytics Scenarios".</description>
+    </criterion>
+
+    <criterion id="6.8.6">
+      <title>Add pattern-detection scenario to scenarios.ts</title>
+      <description>Create "pattern-detection" scenario optimized for Story 6.5 timeline pattern visualization. Scenario config: focused 6-month timeframe (concentrated patterns), recurring sequence patterns (Monday stress triggers, Friday relaxation), consistent delay windows for food-symptom correlations (6-12 hours), high pattern clustering (same triggers → same symptoms repeatedly), weekly cycles (day-of-week patterns), medication effectiveness patterns (clear before/after changes). Scenario icon: 🔍, name: "Pattern Detection", description: "Focused dataset with recurring patterns and consistent time windows for testing timeline pattern highlighting and detection". Add to scenarios list with group: "Analytics Scenarios".</description>
+    </criterion>
+
+    <criterion id="6.8.7">
+      <title>Create generatePatternData.ts with intentional pattern functions</title>
+      <description>Create src/lib/dev/generators/generatePatternData.ts module with helper functions for generating intentional patterns in test data. Implement three pattern generators: generateMondayStressPattern(userId, dateRange) creates stress trigger + headache symptom every Monday (day-of-week pattern); generateDairyHeadachePattern(userId, dateRange) creates dairy food event followed by headache 6-12 hours later (food delay pattern); generateMedicationImprovementPattern(userId, dateRange) creates medication event followed by symptom reduction 24-48 hours later (treatment effectiveness pattern). Each pattern creates 10+ instances for statistical significance. Pattern functions integrate with orchestrator when intentionalPatterns config flag is true. Return pattern counts in generation summary.</description>
+    </criterion>
+
+    <criterion id="6.8.8">
+      <title>Update orchestrator result reporting</title>
+      <description>Extend GenerationResult interface in orchestrator.ts with new analytics-related fields. Add fields: dailyLogsCreated: number, correlationsGenerated: number, significantCorrelations: number (|ρ| >= 0.3), treatmentEffectivenessRecordsCreated: number, patternsGenerated: number (if intentional patterns enabled). Update result summary logging to include all new counts. Update DevDataControls.tsx display message to show new statistics when present (conditional display if count > 0). Ensure generation summary clearly shows what analytics data was created for testing insights features.</description>
+    </criterion>
+
+    <criterion id="6.8.9">
+      <title>DevDataControls UI displays generation statistics</title>
+      <description>Update src/components/settings/DevDataControls.tsx (existing component from Epic 3.5) to display analytics generation statistics. Extend result message to include: daily log count + coverage percentage, correlation count (total and significant |ρ| >= 0.3), treatment effectiveness records generated, pattern count (if applicable). Format example: "• 182 daily logs (60% coverage)\n• 47 correlations (12 significant)\n• 8 treatment effectiveness records\n• 3 intentional patterns". Only show counts if > 0 (conditional rendering). Update message formatting to group analytics stats under "📈 **Analytics Data:**" section separate from event counts.</description>
+    </criterion>
+
+    <criterion id="6.8.10">
+      <title>Add scenario grouping in DevDataControls UI</title>
+      <description>Update DevDataControls.tsx scenario display to group scenarios by category for better organization. Create three scenario groups: "Basic Scenarios" (quick-start, comprehensive, minimal), "Analytics Scenarios" (analytics-showcase, pattern-detection), "Performance Scenarios" (stress-test, if exists). Display group headings in UI with visual separators. Each group shows scenarios in collapsible sections or clearly separated cards. Add group descriptions explaining use case for each group. Improve scenario card layout for better scanning (existing grid layout enhanced with group organization). Update help text to explain scenario groups.</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 6: Health Insights & Correlation Analytics</title>
+        <section>Story 6.8: DevData Controls Enhancement for Analytics Support (lines 1443-1469)</section>
+        <snippet>Transform symptom tracker into intelligent health insights platform by implementing correlation analysis. Story 6.8 enhances DevDataControls to generate rich synthetic data including daily logs (60-80% coverage), correlations, treatment effectiveness data, and intentional patterns for comprehensive testing of Epic 6 analytics capabilities. Generates analytics-showcase scenario (high correlation 0.85, 20-25 flares, 80% daily log coverage) and pattern-detection scenario (6-month focused, recurring sequences, consistent delay windows).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Story 6.2: Daily Log Page</title>
+        <section>Lines 1328-1351</section>
+        <snippet>Unified daily log page for mood, sleep quality, and overall day reflection. DailyLog data model in IndexedDB with mood, sleep, notes, flare updates. Provides dailyLogRepository for dev data generation integration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Story 6.3: Correlation Engine and Spearman Algorithm</title>
+        <section>Lines 1352-1373</section>
+        <snippet>Automated correlation analysis system using Spearman rank correlation coefficient (ρ = 1 - (6Σd²)/(n(n²-1))). CorrelationCalculationService calculates correlations with lag windows (0-48 hours), filters by significance |ρ| >= 0.3, sample size n >= 10. Background calculation service recalculates correlations on data changes (debounced). Status: In Review - 37/37 tests passing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Story 6.7: Treatment Effectiveness Tracker</title>
+        <section>Lines 1421-1440</section>
+        <snippet>Treatment effectiveness tracking correlating treatments with symptom improvement. TreatmentEffectivenessService.calculateAllTreatmentEffectiveness(userId, timeRange) compares baseline severity (7 days before) vs outcome severity (7-30 days after). Requires minimum 3 treatment cycles for valid score. Effectiveness score = ((baseline - outcome) / baseline) × 100. Depends on correlation engine completing first.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Story 6.5: Timeline Pattern Detection</title>
+        <section>Lines 1399-1420</section>
+        <snippet>Timeline component extended to visually highlight recurring patterns and symptom-trigger windows. Pattern detection algorithm uses sliding window analysis (24-hour windows), detects recurring sequences (food → symptom after N hours), identifies day-of-week patterns. Visual pattern highlighting with colored bands around correlated events.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>System Architecture and Repository Pattern</title>
+        <section>Lines 47-106</section>
+        <snippet>Repository pattern for data access: flareRepository, bodyMapRepository, analyticsRepository, correlationRepository, dailyLogsRepository. Service layer (flareService, bodyMapService, analyticsService, correlationCalculationService, treatmentEffectivenessService) coordinates business logic. Dexie IndexedDB wrapper with offline-first pattern. All writes use immediate persistence.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ui/shadcn-ui-components.md</path>
+        <title>shadcn/ui Components Integration</title>
+        <section>Full document</section>
+        <snippet>shadcn/ui integrated with Tailwind CSS and Radix UI for modern UI components. Components available: Button, Dialog, Select, Sheet, Tabs, Calendar. Used for DevDataControls UI enhancements (scenario grouping, result display).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6-8-devdata-controls-enhancement-for-analytics-support.md</path>
+        <title>Story 6.8 Dev Notes</title>
+        <section>Dev Notes - Technical Architecture</section>
+        <snippet>Orchestrator pattern chains generators in dependency order (12 existing steps + 3 new analytics steps). Daily Log Generator creates mood/sleep data correlated with flare severity. Correlation Integration triggers Story 6.3 correlation engine after all base data exists. Treatment Effectiveness Integration calculates Story 6.7 scores after correlations complete. Pattern Generation creates intentional recurring patterns for testing pattern detection (Story 6.5). Scenario System grouped (Basic/Analytics/Performance) optimizes test data for specific use cases.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/dev/generators/orchestrator.ts</path>
+        <kind>generator</kind>
+        <symbol>generateComprehensiveData</symbol>
+        <lines>1-242</lines>
+        <reason>Main orchestrator function coordinating data generation. Currently implements Steps 1-12. Story 6.8 adds Steps 13-15 (daily logs, correlations, treatment effectiveness). GeneratedDataResult interface (lines 217-237) needs extension with new analytics fields.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/dev/generators/base/types.ts</path>
+        <kind>types</kind>
+        <symbol>GeneratedDataResult</symbol>
+        <lines>56-76</lines>
+        <reason>Interface defining orchestrator return type. Must be extended with: dailyLogsCreated, correlationsGenerated, significantCorrelations, treatmentEffectivenessRecordsCreated, patternsGenerated fields for Story 6.8 analytics reporting.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/dev/generators/base/types.ts</path>
+        <kind>types</kind>
+        <symbol>GeneratorConfig</symbol>
+        <lines>19-54</lines>
+        <reason>Configuration interface for scenario generators. Story 6.8 scenarios may need config extensions: dailyLogCoverage (0.6-0.8), intentionalPatterns boolean, correlationStrength (0.85 target).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/dev/config/scenarios.ts</path>
+        <kind>config</kind>
+        <symbol>SCENARIOS</symbol>
+        <lines>31-338</lines>
+        <reason>Predefined scenario configurations. Story 6.8 adds two new scenarios: analytics-showcase (high correlation 0.85, 20-25 flares, 80% daily log coverage, 12-month) and pattern-detection (6-month, recurring patterns, consistent delays). Scenarios object needs two new entries with group: 'analytics'.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/dailyLogsRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>dailyLogsRepository</symbol>
+        <lines>1-260</lines>
+        <reason>Daily log data access layer from Story 6.2. Provides create, upsert, getByDate methods. Story 6.8 uses dailyLogsRepository.create() or bulkAdd pattern for batch daily log generation. DailyLogRecord schema: date (YYYY-MM-DD), mood (1-10), sleepHours (4-10), sleepQuality (1-10), notes (optional).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/correlationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>CorrelationRepository</symbol>
+        <lines>1-310</lines>
+        <reason>Correlation data access layer from Story 6.3. Provides findAll, findSignificant, getStatistics methods. Story 6.8 orchestrator calls correlation engine (CorrelationCalculationService) after data generation, then queries correlationRepository for counts.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/dev/generators/orchestrator.ts</path>
+        <kind>generator</kind>
+        <symbol>generateMoodEntries</symbol>
+        <lines>617-662</lines>
+        <reason>Existing mood generator (Story 3.5.2) with 30-40% coverage. Daily log generator (Story 6.8) follows similar pattern but correlates mood/sleep with flare severity for realistic analytics testing.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/dev/generators/orchestrator.ts</path>
+        <kind>generator</kind>
+        <symbol>generateSleepEntries</symbol>
+        <lines>664-714</lines>
+        <reason>Existing sleep generator (Story 3.5.2) with 50-70% coverage. Daily log generator (Story 6.8) combines mood + sleep into unified DailyLog entries with flare correlation.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>dexie</package>
+        <version>^4.2.0</version>
+        <purpose>IndexedDB wrapper for offline-first data persistence. Used by all repositories and generators.</purpose>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>uuid</package>
+        <version>^13.0.0</version>
+        <purpose>UUID generation for unique IDs. Used by dailyLogRepository, correlation records, pattern data.</purpose>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>date-fns</package>
+        <version>^2.x</version>
+        <purpose>Date manipulation utilities. Used for calculating date ranges, formatting YYYY-MM-DD strings.</purpose>
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Offline-first pattern: All generator writes must use immediate IndexedDB persistence (NFR002). Use db.table.bulkAdd() for batch operations.</constraint>
+    <constraint>Data immutability: Historical flare events and correlations are append-only (NFR003). Never modify existing FlareEvent or correlation records.</constraint>
+    <constraint>Performance: Interaction latency must be under 100ms (NFR001). Use batching and efficient Dexie indexes for analytics queries.</constraint>
+    <constraint>Orchestrator pattern: New generator steps (13-15) must execute after existing steps 1-12 to ensure data dependencies are met (flares exist before daily logs, daily logs exist before correlations).</constraint>
+    <constraint>Error handling: Correlation and treatment effectiveness service calls must be wrapped in try-catch. Log warnings but continue orchestrator execution if services not yet implemented.</constraint>
+    <constraint>Date format: Daily logs use YYYY-MM-DD string format (not timestamps). Ensure consistency with Story 6.2 dailyLogRepository schema.</constraint>
+    <constraint>Coverage realism: Daily logs should have 60-80% day coverage (realistic gaps), not 100%. Use random day selection for authentic test data.</constraint>
+    <constraint>Correlation significance: Only count correlations with |ρ| >= 0.3 as "significant". This matches Story 6.3 correlation engine threshold.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>generateDailyLogs</name>
+      <kind>function</kind>
+      <signature>async function generateDailyLogs(userId: string, config: DailyLogGenerationConfig): Promise&lt;{ dailyLogsCreated: number }&gt;</signature>
+      <path>src/lib/dev/generators/generateDailyLogs.ts (NEW)</path>
+      <description>Main daily log generator function. Parameters: userId, config with startDate/endDate/coveragePercent/correlateWithFlares. Returns count of daily logs created. Generates mood (1-10) and sleep (hours 4-10, quality 1-10) correlated with flare severity.</description>
+    </interface>
+    <interface>
+      <name>generateAllPatterns</name>
+      <kind>function</kind>
+      <signature>async function generateAllPatterns(userId: string, config: PatternGenerationConfig): Promise&lt;{ patternsGenerated: number }&gt;</signature>
+      <path>src/lib/dev/generators/generatePatternData.ts (NEW)</path>
+      <description>Orchestrator integration wrapper for intentional pattern generators. Calls generateMondayStressPattern, generateDairyHeadachePattern, generateMedicationImprovementPattern based on config.intentionalPatterns flag.</description>
+    </interface>
+    <interface>
+      <name>CorrelationCalculationService.recalculateCorrelations</name>
+      <kind>method</kind>
+      <signature>async recalculateCorrelations(userId: string): Promise&lt;void&gt;</signature>
+      <path>src/lib/services/correlationCalculationService.ts (Story 6.3)</path>
+      <description>Correlation engine service method. Scans all medication/food/trigger/symptom/flare data, calculates Spearman correlations with lag windows (0-48 hours), filters by significance (|ρ| >= 0.3, n >= 10), stores results in correlations table.</description>
+    </interface>
+    <interface>
+      <name>TreatmentEffectivenessService.calculateAllTreatmentEffectiveness</name>
+      <kind>method</kind>
+      <signature>async calculateAllTreatmentEffectiveness(userId: string, timeRange: { startDate: Date, endDate: Date }): Promise&lt;void&gt;</signature>
+      <path>src/lib/services/treatmentEffectivenessService.ts (Story 6.7)</path>
+      <description>Treatment effectiveness calculation service. Compares baseline severity (7 days before treatment) vs outcome severity (7-30 days after). Requires minimum 3 treatment cycles. Calculates effectiveness score = ((baseline - outcome) / baseline) × 100.</description>
+    </interface>
+    <interface>
+      <name>GeneratedDataResult (extended)</name>
+      <kind>interface</kind>
+      <signature>interface GeneratedDataResult { ...existing fields..., dailyLogsCreated: number, correlationsGenerated: number, significantCorrelations: number, treatmentEffectivenessRecordsCreated: number, patternsGenerated: number }</signature>
+      <path>src/lib/dev/generators/base/types.ts (UPDATE)</path>
+      <description>Extended orchestrator result interface. Add five new fields for analytics generation statistics. All fields default to 0 if not generated.</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      <standard>All generators must use fake-indexeddb for testing (existing test infrastructure pattern)</standard>
+      <standard>Test coverage target: 80% for service/util layers (per ADR-004 in solution-architecture.md)</standard>
+      <standard>Integration tests verify complete data generation workflow from orchestrator through repository writes</standard>
+      <standard>Unit tests use Jest + fake-indexeddb mocking (existing pattern from generateMoodEntries, generateSleepEntries)</standard>
+      <standard>Test data generation with edge cases: zero flares, insufficient samples for correlations, missing services</standard>
+    </standards>
+    <locations>
+      <location>src/lib/dev/generators/__tests__/generateDailyLogs.test.ts (NEW) - Unit tests for daily log generator</location>
+      <location>src/lib/dev/generators/__tests__/generatePatternData.test.ts (NEW) - Unit tests for pattern generators</location>
+      <location>src/lib/dev/generators/__tests__/orchestrator.analytics.test.ts (NEW) - Integration tests for Steps 13-15</location>
+      <location>src/lib/dev/config/__tests__/scenarios.test.ts (UPDATE) - Add tests for new analytics-showcase and pattern-detection scenarios</location>
+    </locations>
+    <ideas>
+      <idea>Test daily log generator creates correct coverage (60-80%) within date range</idea>
+      <idea>Test daily log mood/sleep correlates with flare severity (high flare days = worse mood/sleep)</idea>
+      <idea>Test daily log date format is YYYY-MM-DD string (not timestamp) matching Story 6.2 schema</idea>
+      <idea>Test orchestrator Steps 13-15 execute in correct order (daily logs → correlations → treatment effectiveness)</idea>
+      <idea>Test correlation integration handles missing CorrelationCalculationService gracefully (try-catch logs warning)</idea>
+      <idea>Test treatment effectiveness integration handles missing service gracefully (try-catch logs warning)</idea>
+      <idea>Test GeneratedDataResult includes all new analytics fields with correct counts</idea>
+      <idea>Test analytics-showcase scenario generates high correlation strength (0.85 target), 20-25 flares, 80% daily log coverage</idea>
+      <idea>Test pattern-detection scenario generates recurring patterns (Monday stress, dairy headache, medication improvement)</idea>
+      <idea>Test DevDataControls displays analytics statistics (daily logs with coverage %, correlations with significant count)</idea>
+      <idea>Test orchestrator result reporting formats analytics data correctly (grouped under "📈 Analytics Data:" heading)</idea>
+      <idea>Test scenario grouping displays scenarios in correct categories (Basic/Analytics/Performance)</idea>
+      <idea>Test pattern generators create minimum 10+ instances per pattern for statistical significance</idea>
+      <idea>Test correlation calculation triggers after all base data exists (Step 14 after Step 13)</idea>
+      <idea>Test treatment effectiveness calculation only runs if medicationEventsCreated > 0</idea>
+    </ideas>
+  </tests>
+</story-context>

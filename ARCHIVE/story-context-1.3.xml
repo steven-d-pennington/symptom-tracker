@@ -1,0 +1,820 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Story Context for Story 1.3: Custom Food Creation & Management -->
+<!-- Generated: 2025-10-16 -->
+<!-- Story File: docs/stories/story-1.3.md -->
+<story-context>
+  <story>
+    <id>1.3</id>
+    <title>Custom Food Creation &amp; Management</title>
+    <status>Ready</status>
+    <epic>1</epic>
+    
+    <user-story>
+      <as-a>user</as-a>
+      <i-want>to create and manage my own custom food items</i-want>
+      <so-that>I can log foods not in the pre-populated database</so-that>
+    </user-story>
+    
+    <acceptance-criteria>
+      <criterion id="1">Users can add new food items with a name field (required)</criterion>
+      <criterion id="2">Users can select allergen tags from the predefined list (dairy, gluten, nuts, shellfish, nightshades, soy, eggs, fish)</criterion>
+      <criterion id="3">Users can optionally specify a preparation method (raw, cooked, fried, fermented, etc.)</criterion>
+      <criterion id="4">Users can optionally assign a food category (breakfast items, proteins, vegetables, fruits, grains, etc.)</criterion>
+      <criterion id="5">Users can edit or delete custom foods they've created</criterion>
+      <criterion id="6">Custom foods appear in search results with a "Custom" badge to distinguish from pre-populated foods</criterion>
+    </acceptance-criteria>
+    
+    <tasks>
+      <task id="1" acs="1,2,3,4,6">
+        <title>Add custom food creation UI</title>
+        <subtasks>
+          <subtask>Create AddFoodModal component in src/components/food/AddFoodModal.tsx</subtask>
+          <subtask>Add name input field with validation (required, min 2 chars, max 100 chars)</subtask>
+          <subtask>Add allergen tag multi-select using AllergenBadge components from Story 1.2</subtask>
+          <subtask>Add preparation method dropdown with options (raw, cooked, fried, baked, steamed, fermented, grilled, boiled)</subtask>
+          <subtask>Add category dropdown using existing 12 categories from seedFoodsService</subtask>
+          <subtask>Add "Custom" badge preview in modal header</subtask>
+          <subtask>Add form validation with error messaging</subtask>
+          <subtask>Add unit tests for component and validation logic</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="2" acs="1,2,3,4">
+        <title>Wire AddFoodModal to foodRepository for persistence</title>
+        <subtasks>
+          <subtask>Implement save handler calling foodRepository.create() with isDefault: false</subtask>
+          <subtask>Ensure custom foods include userId for user ownership</subtask>
+          <subtask>Set isActive: true and generate timestamps automatically</subtask>
+          <subtask>Show success notification on save</subtask>
+          <subtask>Handle database errors with user-friendly messages</subtask>
+          <subtask>Close modal after successful save</subtask>
+          <subtask>Add integration tests mocking repository calls</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="3" acs="1">
+        <title>Add "Add Custom Food" entry point in FoodLogModal</title>
+        <subtasks>
+          <subtask>Add "+ Add Custom Food" button at top of search results in FoodLogModal</subtask>
+          <subtask>Wire button to open AddFoodModal as child modal</subtask>
+          <subtask>Pass callback to refresh food list after custom food created</subtask>
+          <subtask>Maintain search query context when returning from AddFoodModal</subtask>
+          <subtask>Update FoodLogModal tests to verify custom food entry point</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="4" acs="6">
+        <title>Update foodRepository search to include custom foods</title>
+        <subtasks>
+          <subtask>Modify search() method to query both default and custom foods</subtask>
+          <subtask>Return isDefault flag in search results for badge rendering</subtask>
+          <subtask>Ensure compound index [userId+name] supports efficient custom food queries</subtask>
+          <subtask>Add unit tests verifying custom foods appear in search results</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="5" acs="6">
+        <title>Add "Custom" badge rendering in FoodLogModal search results</title>
+        <subtasks>
+          <subtask>Create CustomFoodBadge component with distinct styling (e.g., blue badge)</subtask>
+          <subtask>Conditionally render badge when isDefault: false in search results</subtask>
+          <subtask>Position badge next to food name consistently</subtask>
+          <subtask>Ensure badge doesn't interfere with allergen tags</subtask>
+          <subtask>Add visual tests for badge rendering</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="6" acs="5">
+        <title>Add custom food edit functionality</title>
+        <subtasks>
+          <subtask>Add edit icon/button on custom food items in search results (only for isDefault: false)</subtask>
+          <subtask>Open EditFoodModal (variant of AddFoodModal) with pre-filled data</subtask>
+          <subtask>Wire to foodRepository.update() for persistence</subtask>
+          <subtask>Prevent editing of default foods (show disabled state or hide button)</subtask>
+          <subtask>Show success notification on update</subtask>
+          <subtask>Refresh food list after edit</subtask>
+          <subtask>Add tests for edit flow</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="7" acs="5">
+        <title>Add custom food delete functionality</title>
+        <subtasks>
+          <subtask>Add delete icon/button on custom food items in search results (only for isDefault: false)</subtask>
+          <subtask>Show confirmation dialog before deletion</subtask>
+          <subtask>Wire to foodRepository.archive() for soft-delete (sets isActive: false)</subtask>
+          <subtask>Prevent deletion of default foods</subtask>
+          <subtask>Show success notification on delete</subtask>
+          <subtask>Remove deleted food from visible results immediately</subtask>
+          <subtask>Add tests for delete flow including confirmation dialog</subtask>
+        </subtasks>
+      </task>
+      
+      <task id="8" acs="1,5,6">
+        <title>Update FoodContext to handle custom food operations</title>
+        <subtasks>
+          <subtask>Add addCustomFood() method to FoodContext</subtask>
+          <subtask>Add updateCustomFood() method to FoodContext</subtask>
+          <subtask>Add deleteCustomFood() method to FoodContext</subtask>
+          <subtask>Ensure context refresh triggers re-render of FoodLogModal</subtask>
+          <subtask>Add unit tests for new context methods</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+  
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-stories.md</path>
+        <title>Epic Stories</title>
+        <section>Story 1.3</section>
+        <snippet>Users can create custom food items with name, allergen tags, preparation method, and category. Custom foods distinguished from pre-populated with badge and appear in search results.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/tech-spec-epic-E1.md</path>
+        <title>Technical Specification: Food Logging &amp; Management</title>
+        <section>Data Models and Contracts</section>
+        <snippet>FoodRecord interface defines isDefault boolean flag to distinguish custom (false) from pre-populated (true) foods. All foods stored in Dexie foods table with compound indexes for efficient queries.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR002</section>
+        <snippet>Users can create and manage custom food items with names and required categories including pre-tagged common allergens and optional preparation methods.</snippet>
+      </doc>
+      
+      <doc>
+        <path>docs/stories/story-1.2.md</path>
+        <title>Story 1.2: Pre-populated Food Database with Allergen Tags</title>
+        <section>Completion Notes</section>
+        <snippet>Implemented foodRepository with CRUD operations, AllergenBadge components, FoodContext hooks (useFoods, useFoodEvents), and 210 seeded foods across 12 categories with 7 allergen types. All components ready for reuse in Story 1.3.</snippet>
+      </doc>
+      
+      <doc>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guidelines</title>
+        <section>Repository Pattern</section>
+        <snippet>All data access through repositories in src/lib/repositories/. Use userRepository.getOrCreateCurrentUser() for single-user app pattern. Always include userId in queries for future multi-user support.</snippet>
+      </doc>
+      
+      <doc>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guidelines</title>
+        <section>Testing Requirements</section>
+        <snippet>Coverage: 80% minimum across branches, functions, lines, statements. Use React Testing Library with accessible queries. Repository testing with mock Dexie operations. Test environment: jsdom with custom IndexedDB mocks.</snippet>
+      </doc>
+    </docs>
+    
+    <code>
+      <file>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>FoodRepository</symbol>
+        <lines>1-207</lines>
+        <reason>Contains all CRUD operations for foods. Already supports create(), update(), archive(), and search() methods needed for custom food management. Reuse existing methods.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>create</symbol>
+        <lines>80-112</lines>
+        <reason>Create method validates allergens and saves food with timestamps. Use with isDefault: false for custom foods.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>update</symbol>
+        <lines>114-145</lines>
+        <reason>Update method for editing existing foods. Validates allergens and updates timestamps. Use for custom food edits.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>archive</symbol>
+        <lines>147-159</lines>
+        <reason>Soft-delete method sets isActive: false. Use for custom food deletion.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>search</symbol>
+        <lines>47-78</lines>
+        <reason>Search method already returns both default and custom foods. Verify isDefault flag is included in results for badge rendering.</reason>
+      </file>
+      
+      <file>
+        <path>src/contexts/FoodContext.tsx</path>
+        <kind>context</kind>
+        <symbol>FoodProvider</symbol>
+        <lines>1-162</lines>
+        <reason>Manages food log modal state. Add methods: addCustomFood(), updateCustomFood(), deleteCustomFood(). Includes useFoods() and useFoodEvents() hooks.</reason>
+      </file>
+      
+      <file>
+        <path>src/contexts/FoodContext.tsx</path>
+        <kind>hook</kind>
+        <symbol>useFoods</symbol>
+        <lines>72-100</lines>
+        <reason>Hook for loading foods with loading/error states. Use as pattern for refresh after custom food operations.</reason>
+      </file>
+      
+      <file>
+        <path>src/components/food/FoodLogModal.tsx</path>
+        <kind>component</kind>
+        <symbol>FoodLogModal</symbol>
+        <lines>1-424</lines>
+        <reason>Main food logging modal. Add "+ Add Custom Food" button at top of search results. Add edit/delete actions for custom foods. Pass callbacks for refresh.</reason>
+      </file>
+      
+      <file>
+        <path>src/components/food/AllergenBadge.tsx</path>
+        <kind>component</kind>
+        <symbol>AllergenBadge</symbol>
+        <lines>1-69</lines>
+        <reason>Existing allergen badge component with color coding. Reuse pattern for CustomFoodBadge component with distinct blue styling.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FoodRecord</symbol>
+        <lines>230-243</lines>
+        <reason>FoodRecord interface defines isDefault boolean flag. Custom foods have isDefault: false. All required fields: id, userId, name, category, allergenTags, preparationMethod, isActive, timestamps.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase</symbol>
+        <lines>1-189</lines>
+        <reason>Dexie database with foods table. Version 11 includes compound indexes: [userId+name], [userId+isDefault], [userId+isActive] for efficient custom food queries.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/constants/allergens.ts</path>
+        <kind>constants</kind>
+        <symbol>ALLERGEN_TYPES</symbol>
+        <lines>1-50</lines>
+        <reason>Defines 7 allergen types: dairy, gluten, nuts, shellfish, nightshades, soy, eggs. Use for allergen tag multi-select validation.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/services/food/seedFoodsService.ts</path>
+        <kind>service</kind>
+        <symbol>FOOD_CATEGORIES</symbol>
+        <lines>10-25</lines>
+        <reason>Defines 12 food categories: grains, proteins, dairy, fruits, vegetables, nuts/seeds, legumes, seafood, beverages, condiments, snacks, sweeteners. Use for category dropdown.</reason>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/__tests__/foodRepository.test.ts</path>
+        <kind>test</kind>
+        <symbol>FoodRepository tests</symbol>
+        <lines>1-300</lines>
+        <reason>Comprehensive repository tests showing mock Dexie patterns, validation testing, and CRUD operation testing. Follow same patterns for custom food tests.</reason>
+      </file>
+      
+      <file>
+        <path>src/components/food/__tests__/FoodLogModal.test.tsx</path>
+        <kind>test</kind>
+        <symbol>FoodLogModal tests</symbol>
+        <lines>1-400</lines>
+        <reason>Component tests showing mock repository patterns, user interaction testing, and accessibility testing. Follow same patterns for AddFoodModal tests.</reason>
+      </file>
+    </code>
+    
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1"/>
+        <package name="next" version="14.2.24"/>
+        <package name="dexie" version="^4.0.1-alpha.19"/>
+        <package name="dexie-react-hooks" version="^1.1.7"/>
+        <package name="lucide-react" version="^0.344.0"/>
+        <package name="uuid" version="^11.0.3"/>
+        <package name="@testing-library/react" version="^14.2.1"/>
+        <package name="@testing-library/user-event" version="^14.5.2"/>
+        <package name="jest" version="^29.7.0"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+  
+  <interfaces>
+    <interface>
+      <name>FoodRecord</name>
+      <kind>TypeScript interface</kind>
+      <path>src/lib/db/schema.ts</path>
+      <signature>
+interface FoodRecord {
+  id: string;
+  userId: string;
+  name: string;
+  category: string; // JSON string
+  allergenTags: string; // JSON-stringified string[]
+  preparationMethod?: string;
+  isDefault: boolean; // FALSE for custom foods
+  isActive: boolean; // TRUE until soft-deleted
+  createdAt: number;
+  updatedAt: number;
+}
+      </signature>
+    </interface>
+    
+    <interface>
+      <name>foodRepository.create</name>
+      <kind>Repository method</kind>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <signature>
+async create(food: {
+  userId: string;
+  name: string;
+  category: string;
+  allergenTags: string[];
+  preparationMethod?: string;
+  isDefault: boolean;
+  isActive: boolean;
+}): Promise&lt;string&gt;
+      </signature>
+    </interface>
+    
+    <interface>
+      <name>foodRepository.update</name>
+      <kind>Repository method</kind>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <signature>
+async update(id: string, changes: Partial&lt;{
+  name: string;
+  category: string;
+  allergenTags: string[];
+  preparationMethod?: string;
+}&gt;): Promise&lt;void&gt;
+      </signature>
+    </interface>
+    
+    <interface>
+      <name>foodRepository.archive</name>
+      <kind>Repository method</kind>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <signature>
+async archive(id: string): Promise&lt;void&gt;
+// Sets isActive: false for soft-delete
+      </signature>
+    </interface>
+    
+    <interface>
+      <name>foodRepository.search</name>
+      <kind>Repository method</kind>
+      <path>src/lib/repositories/foodRepository.ts</path>
+      <signature>
+async search(
+  userId: string,
+  query: string,
+  filters?: FoodFilters
+): Promise&lt;FoodRecord[]&gt;
+// Returns both default and custom foods
+// Verify isDefault flag is included in results
+      </signature>
+    </interface>
+    
+    <interface>
+      <name>AllergenType</name>
+      <kind>TypeScript type</kind>
+      <path>src/lib/constants/allergens.ts</path>
+      <signature>
+type AllergenType = 
+  | 'dairy' 
+  | 'gluten' 
+  | 'nuts' 
+  | 'shellfish' 
+  | 'nightshades' 
+  | 'soy' 
+  | 'eggs';
+      </signature>
+    </interface>
+    
+    <interface>
+      <name>ALLERGEN_COLORS</name>
+      <kind>Constant map</kind>
+      <path>src/lib/constants/allergens.ts</path>
+      <signature>
+export const ALLERGEN_COLORS: Record&lt;AllergenType, string&gt; = {
+  dairy: 'bg-blue-100 text-blue-800',
+  gluten: 'bg-amber-100 text-amber-800',
+  nuts: 'bg-orange-100 text-orange-800',
+  shellfish: 'bg-red-100 text-red-800',
+  nightshades: 'bg-purple-100 text-purple-800',
+  soy: 'bg-green-100 text-green-800',
+  eggs: 'bg-yellow-100 text-yellow-800',
+};
+      </signature>
+    </interface>
+  </interfaces>
+  
+  <constraints>
+    <constraint type="architecture">
+      <title>Repository Pattern</title>
+      <description>All data access must go through repositories in src/lib/repositories/. Never access Dexie db directly from components.</description>
+    </constraint>
+    
+    <constraint type="architecture">
+      <title>Functional Components Only</title>
+      <description>Use function syntax, not arrow functions for components. Export as named exports.</description>
+    </constraint>
+    
+    <constraint type="architecture">
+      <title>User Ownership</title>
+      <description>All custom foods must include userId field. Always filter queries by userId for future multi-user support.</description>
+    </constraint>
+    
+    <constraint type="architecture">
+      <title>Soft Deletes</title>
+      <description>Use isActive: false for deletions. Never hard-delete records. Use foodRepository.archive() method.</description>
+    </constraint>
+    
+    <constraint type="data">
+      <title>JSON String Storage</title>
+      <description>Arrays stored as JSON strings in database (allergenTags, category). Must parse on read, stringify on write.</description>
+    </constraint>
+    
+    <constraint type="data">
+      <title>Compound Indexes</title>
+      <description>Critical for performance - always query using [userId+field] patterns. Indexes: [userId+name], [userId+isDefault], [userId+isActive].</description>
+    </constraint>
+    
+    <constraint type="ui">
+      <title>Class Names</title>
+      <description>Use cn() utility for conditional Tailwind classes. Import from @/lib/utils/cn.</description>
+    </constraint>
+    
+    <constraint type="ui">
+      <title>Badge Styling</title>
+      <description>"Custom" badge must use distinct color (blue: bg-sky-100 text-sky-800) to differentiate from allergen badges.</description>
+    </constraint>
+    
+    <constraint type="validation">
+      <title>Name Validation</title>
+      <description>Food name required, min 2 chars, max 100 chars. Show real-time validation errors.</description>
+    </constraint>
+    
+    <constraint type="validation">
+      <title>Allergen Validation</title>
+      <description>Use validateAllergens() from src/lib/constants/allergens.ts to validate allergen tags.</description>
+    </constraint>
+    
+    <constraint type="testing">
+      <title>Coverage Requirements</title>
+      <description>80% minimum coverage across branches, functions, lines, statements. Enforced by Jest configuration.</description>
+    </constraint>
+    
+    <constraint type="testing">
+      <title>Mock Patterns</title>
+      <description>Mock Dexie operations in repository tests. Mock repositories in component tests. Use jest.mock() for module mocks.</description>
+    </constraint>
+    
+    <constraint type="accessibility">
+      <title>WCAG 2.1 AA</title>
+      <description>All interactive elements must have aria-labels. Forms must have proper labels and error messages. Support keyboard navigation.</description>
+    </constraint>
+    
+    <constraint type="performance">
+      <title>Search Performance</title>
+      <description>Database queries must complete in &lt;100ms. Use compound indexes for efficient queries.</description>
+    </constraint>
+  </constraints>
+  
+  <tests>
+    <standards>
+      <![CDATA[
+Testing Standards:
+- Framework: Jest with React Testing Library
+- Coverage: 80% minimum (branches, functions, lines, statements)
+- Test Environment: jsdom with custom IndexedDB mocks
+- Component Testing: Use accessible queries (getByRole, getByLabelText)
+- Repository Testing: Mock Dexie operations, test business logic
+- File Location: Place tests in __tests__ subdirectories alongside source files
+- Naming: Component tests: ComponentName.test.tsx, Repository tests: repositoryName.test.ts
+- Async Testing: Use waitFor() for async state changes, findBy queries for async rendering
+- User Interaction: Use @testing-library/user-event for realistic user interactions
+      ]]>
+    </standards>
+    
+    <locations>
+      <location>src/components/food/__tests__/*.test.tsx</location>
+      <location>src/lib/repositories/__tests__/*.test.ts</location>
+      <location>src/contexts/__tests__/*.test.tsx</location>
+    </locations>
+    
+    <ideas>
+      <test-idea ac="1">
+        <title>AddFoodModal renders with required name field</title>
+        <approach>Render AddFoodModal, verify name input exists with required attribute. Test validation: submit with empty name shows error.</approach>
+      </test-idea>
+      
+      <test-idea ac="2">
+        <title>AddFoodModal allows allergen tag selection</title>
+        <approach>Render modal, verify 7 allergen checkboxes/buttons exist. Select multiple allergens, verify selection state updates.</approach>
+      </test-idea>
+      
+      <test-idea ac="3">
+        <title>AddFoodModal includes optional preparation method dropdown</title>
+        <approach>Render modal, verify preparation dropdown with 8 options (raw, cooked, fried, baked, steamed, fermented, grilled, boiled). Test selection.</approach>
+      </test-idea>
+      
+      <test-idea ac="4">
+        <title>AddFoodModal includes optional category dropdown</title>
+        <approach>Render modal, verify category dropdown with 12 categories from seedFoodsService. Test selection.</approach>
+      </test-idea>
+      
+      <test-idea ac="1,2,3,4">
+        <title>AddFoodModal save calls foodRepository.create with isDefault: false</title>
+        <approach>Mock foodRepository.create(), fill form, submit. Verify create called with correct data including isDefault: false, userId, timestamps.</approach>
+      </test-idea>
+      
+      <test-idea ac="5">
+        <title>EditFoodModal pre-fills data for existing custom food</title>
+        <approach>Mock foodRepository.getById(), render EditFoodModal with foodId. Verify form fields pre-filled with existing data.</approach>
+      </test-idea>
+      
+      <test-idea ac="5">
+        <title>EditFoodModal save calls foodRepository.update</title>
+        <approach>Mock foodRepository.update(), pre-fill EditFoodModal, modify fields, submit. Verify update called with changed fields only.</approach>
+      </test-idea>
+      
+      <test-idea ac="5">
+        <title>Delete button shows confirmation dialog before deletion</title>
+        <approach>Render FoodLogModal with custom food, click delete. Verify confirmation dialog appears. Test both confirm and cancel paths.</approach>
+      </test-idea>
+      
+      <test-idea ac="5">
+        <title>Delete confirmation calls foodRepository.archive</title>
+        <approach>Mock foodRepository.archive(), render food with delete button, confirm deletion. Verify archive called with correct food ID.</approach>
+      </test-idea>
+      
+      <test-idea ac="6">
+        <title>CustomFoodBadge renders with distinct blue styling</title>
+        <approach>Render CustomFoodBadge, verify "Custom" text and blue Tailwind classes (bg-sky-100 text-sky-800).</approach>
+      </test-idea>
+      
+      <test-idea ac="6">
+        <title>Custom foods display badge in search results</title>
+        <approach>Mock foodRepository.search returning mix of default and custom foods. Render FoodLogModal, verify badge appears only for isDefault: false foods.</approach>
+      </test-idea>
+      
+      <test-idea ac="6">
+        <title>foodRepository.search returns custom foods in results</title>
+        <approach>Mock Dexie with custom foods, call foodRepository.search(). Verify custom foods (isDefault: false) included in results.</approach>
+      </test-idea>
+      
+      <test-idea ac="1">
+        <title>FoodLogModal shows "+ Add Custom Food" button</title>
+        <approach>Render FoodLogModal, verify button exists at top of search results with correct text and accessible label.</approach>
+      </test-idea>
+      
+      <test-idea ac="1">
+        <title>"+ Add Custom Food" button opens AddFoodModal</title>
+        <approach>Render FoodLogModal, click "+ Add Custom Food" button. Verify AddFoodModal renders and FoodLogModal remains visible (child modal pattern).</approach>
+      </test-idea>
+      
+      <test-idea ac="1,5,6">
+        <title>FoodContext methods refresh food list after operations</title>
+        <approach>Mock foodRepository methods, render component using FoodContext. Call addCustomFood/updateCustomFood/deleteCustomFood, verify useFoods hook triggers re-fetch.</approach>
+      </test-idea>
+      
+      <test-idea ac="5">
+        <title>Edit/delete buttons only appear for custom foods</title>
+        <approach>Mock foodRepository.search with mix of default and custom foods. Render FoodLogModal, verify edit/delete buttons only on isDefault: false items.</approach>
+      </test-idea>
+      
+      <test-idea ac="1,2,3,4">
+        <title>AddFoodModal form validation prevents submission with invalid data</title>
+        <approach>Render AddFoodModal, test edge cases: empty name, name too short (&lt;2 chars), name too long (&gt;100 chars). Verify error messages and submission blocked.</approach>
+      </test-idea>
+      
+      <test-idea ac="1,2,3,4">
+        <title>AddFoodModal shows success notification after save</title>
+        <approach>Mock successful foodRepository.create(), submit form. Verify success notification appears with appropriate message.</approach>
+      </test-idea>
+      
+      <test-idea ac="1,2,3,4">
+        <title>AddFoodModal handles database errors gracefully</title>
+        <approach>Mock foodRepository.create() to throw error, submit form. Verify user-friendly error message displays (not raw error).</approach>
+      </test-idea>
+    </ideas>
+  </tests>
+  
+  <project-structure>
+    <alignment>
+      <item>
+        <pattern>Component organization by feature</pattern>
+        <path>src/components/food/</path>
+        <note>All food-related components in same directory. AddFoodModal.tsx, EditFoodModal.tsx, CustomFoodBadge.tsx go here.</note>
+      </item>
+      
+      <item>
+        <pattern>Test files in __tests__ subdirectories</pattern>
+        <path>src/components/food/__tests__/</path>
+        <note>Component tests: AddFoodModal.test.tsx, EditFoodModal.test.tsx, CustomFoodBadge.test.tsx</note>
+      </item>
+      
+      <item>
+        <pattern>Repository pattern for data access</pattern>
+        <path>src/lib/repositories/</path>
+        <note>Reuse existing foodRepository.ts. Add tests to src/lib/repositories/__tests__/foodRepository.test.ts for custom food queries.</note>
+      </item>
+      
+      <item>
+        <pattern>React Context for state management</pattern>
+        <path>src/contexts/FoodContext.tsx</path>
+        <note>Add methods: addCustomFood(), updateCustomFood(), deleteCustomFood(). Update tests in src/contexts/__tests__/FoodContext.test.tsx</note>
+      </item>
+      
+      <item>
+        <pattern>TypeScript strict mode</pattern>
+        <path>tsconfig.json</path>
+        <note>No any types except specific edge cases. All component props fully typed.</note>
+      </item>
+      
+      <item>
+        <pattern>Functional component exports</pattern>
+        <path>src/components/</path>
+        <note>Use function syntax: export function AddFoodModal(props) { ... }. Not arrow functions.</note>
+      </item>
+    </alignment>
+    
+    <files-to-create>
+      <file>
+        <path>src/components/food/AddFoodModal.tsx</path>
+        <estimated-lines>150</estimated-lines>
+        <dependencies>react, FoodRecord, foodRepository, AllergenBadge, FOOD_CATEGORIES, validateAllergens, generateId</dependencies>
+      </file>
+      
+      <file>
+        <path>src/components/food/EditFoodModal.tsx</path>
+        <estimated-lines>120</estimated-lines>
+        <dependencies>react, FoodRecord, foodRepository, AllergenBadge, FOOD_CATEGORIES, validateAllergens</dependencies>
+      </file>
+      
+      <file>
+        <path>src/components/food/CustomFoodBadge.tsx</path>
+        <estimated-lines>30</estimated-lines>
+        <dependencies>react, cn utility</dependencies>
+      </file>
+      
+      <file>
+        <path>src/components/food/__tests__/AddFoodModal.test.tsx</path>
+        <estimated-lines>100</estimated-lines>
+        <dependencies>react, @testing-library/react, @testing-library/user-event, AddFoodModal, mock foodRepository</dependencies>
+      </file>
+      
+      <file>
+        <path>src/components/food/__tests__/EditFoodModal.test.tsx</path>
+        <estimated-lines>80</estimated-lines>
+        <dependencies>react, @testing-library/react, @testing-library/user-event, EditFoodModal, mock foodRepository</dependencies>
+      </file>
+      
+      <file>
+        <path>src/components/food/__tests__/CustomFoodBadge.test.tsx</path>
+        <estimated-lines>40</estimated-lines>
+        <dependencies>react, @testing-library/react, CustomFoodBadge</dependencies>
+      </file>
+    </files-to-create>
+    
+    <files-to-modify>
+      <file>
+        <path>src/components/food/FoodLogModal.tsx</path>
+        <changes>Add "+ Add Custom Food" button at top of search results. Add edit/delete action buttons for custom foods (isDefault: false). Wire callbacks for refresh after operations. Render CustomFoodBadge for custom foods.</changes>
+        <estimated-additional-lines>80</estimated-additional-lines>
+      </file>
+      
+      <file>
+        <path>src/contexts/FoodContext.tsx</path>
+        <changes>Add addCustomFood(), updateCustomFood(), deleteCustomFood() methods. Ensure refresh triggers after operations.</changes>
+        <estimated-additional-lines>60</estimated-additional-lines>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/foodRepository.ts</path>
+        <changes>Verify search() method includes isDefault flag in results. May need minor adjustment if not already returning it.</changes>
+        <estimated-additional-lines>5</estimated-additional-lines>
+      </file>
+      
+      <file>
+        <path>src/contexts/__tests__/FoodContext.test.tsx</path>
+        <changes>Add tests for new custom food operation methods.</changes>
+        <estimated-additional-lines>40</estimated-additional-lines>
+      </file>
+      
+      <file>
+        <path>src/components/food/__tests__/FoodLogModal.test.tsx</path>
+        <changes>Add tests for "+ Add Custom Food" button, edit/delete actions, custom badge rendering.</changes>
+        <estimated-additional-lines>60</estimated-additional-lines>
+      </file>
+      
+      <file>
+        <path>src/lib/repositories/__tests__/foodRepository.test.ts</path>
+        <changes>Add tests verifying custom foods (isDefault: false) appear in search results.</changes>
+        <estimated-additional-lines>20</estimated-additional-lines>
+      </file>
+    </files-to-modify>
+  </project-structure>
+  
+  <development-notes>
+    <note priority="high">
+      <title>Reuse Existing Repository Methods</title>
+      <content>foodRepository already has create(), update(), archive(), and search() methods. Do NOT recreate these. Just use them with isDefault: false for custom foods.</content>
+    </note>
+    
+    <note priority="high">
+      <title>Custom Badge Must Be Distinct</title>
+      <content>"Custom" badge must use blue color (bg-sky-100 text-sky-800) to differentiate from allergen badge colors. Follow AllergenBadge component pattern but with different color.</content>
+    </note>
+    
+    <note priority="high">
+      <title>Soft Delete Pattern</title>
+      <content>Never hard-delete food records. Always use foodRepository.archive() which sets isActive: false. This is critical for data integrity and future analytics.</content>
+    </note>
+    
+    <note priority="medium">
+      <title>Modal Stacking Pattern</title>
+      <content>AddFoodModal opens on top of FoodLogModal (child modal pattern). Both modals should be visible/accessible. Use z-index layering. Close AddFoodModal returns to FoodLogModal with refreshed data.</content>
+    </note>
+    
+    <note priority="medium">
+      <title>Form Validation UX</title>
+      <content>Show real-time validation errors as user types. Name field: required, min 2 chars, max 100 chars. Use React state for validation messages. Disable submit button while invalid.</content>
+    </note>
+    
+    <note priority="medium">
+      <title>Category Dropdown Source</title>
+      <content>Get 12 categories from seedFoodsService.ts FOOD_CATEGORIES constant: grains, proteins, dairy, fruits, vegetables, nuts/seeds, legumes, seafood, beverages, condiments, snacks, sweeteners.</content>
+    </note>
+    
+    <note priority="medium">
+      <title>Allergen Multi-Select UI</title>
+      <content>Reuse AllergenBadge components from Story 1.2. Make them clickable/toggleable for selection. Show selected state with border or background change. All 7 allergen types must be available.</content>
+    </note>
+    
+    <note priority="medium">
+      <title>Edit vs Delete Actions</title>
+      <content>Edit and delete buttons should only appear for custom foods (isDefault: false). Default foods are read-only. Use conditional rendering: {!food.isDefault && ( ... )}.</content>
+    </note>
+    
+    <note priority="low">
+      <title>Success Notifications</title>
+      <content>Show brief success messages after save/update/delete operations. Auto-dismiss after 3 seconds. Use existing notification system if available, or implement simple toast.</content>
+    </note>
+    
+    <note priority="low">
+      <title>Performance Monitoring</title>
+      <content>Add performance marks for custom food operations. Log to console in development. Target: create/update/delete operations &lt;100ms.</content>
+    </note>
+    
+    <note priority="low">
+      <title>Preparation Method Options</title>
+      <content>8 preparation methods: raw, cooked, fried, baked, steamed, fermented, grilled, boiled. Use dropdown or radio buttons. Optional field.</content>
+    </note>
+    
+    <note priority="low">
+      <title>Search Query Persistence</title>
+      <content>When user clicks "+ Add Custom Food" from search results, maintain the search query. After creating custom food, return to search results with same query to see new food appear.</content>
+    </note>
+  </development-notes>
+  
+  <references>
+    <ref>
+      <source>docs/stories/story-1.2.md</source>
+      <section>Implementation</section>
+      <note>Story 1.2 delivered foundational components: foodRepository (152 lines, 24 tests), AllergenBadge (66 lines), FoodContext hooks, and 210 seeded foods. All reusable for Story 1.3.</note>
+    </ref>
+    
+    <ref>
+      <source>docs/tech-spec-epic-E1.md</source>
+      <section>Data Models and Contracts</section>
+      <note>FoodRecord interface defines isDefault boolean flag. Custom foods: isDefault = false. Pre-populated foods: isDefault = true.</note>
+    </ref>
+    
+    <ref>
+      <source>docs/PRD.md</source>
+      <section>FR002</section>
+      <note>Product requirement: Users can create and manage custom food items with names, categories, allergen tags, and preparation methods.</note>
+    </ref>
+    
+    <ref>
+      <source>AGENTS.md</source>
+      <section>Repository Pattern</section>
+      <note>All data access through repositories. Use userRepository.getOrCreateCurrentUser() for single-user app. Always include userId in queries.</note>
+    </ref>
+    
+    <ref>
+      <source>AGENTS.md</source>
+      <section>Testing Requirements</section>
+      <note>80% minimum coverage. React Testing Library with accessible queries. Mock Dexie in repository tests. jsdom environment with IndexedDB mocks.</note>
+    </ref>
+  </references>
+</story-context>

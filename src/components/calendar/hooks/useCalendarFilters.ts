@@ -117,7 +117,7 @@ export const useCalendarFilters = (initialFilters: CalendarFilters = {}) => {
     });
   }, []);
 
-  const state = useMemo(
+  return useMemo(
     () => ({
       filters,
       updateFilters,
@@ -142,8 +142,7 @@ export const useCalendarFilters = (initialFilters: CalendarFilters = {}) => {
       applyPreset,
       deletePreset,
       activePresetId,
+      // setSearchTerm is omitted from deps because it's a stable useState setter
     ],
   );
-
-  return state;
 };

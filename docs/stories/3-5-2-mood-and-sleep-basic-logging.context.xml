@@ -1,0 +1,264 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>2</storyId>
+    <title>Mood & Sleep Basic Logging</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-5-2-mood-and-sleep-basic-logging.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user tracking my health patterns</asA>
+    <iWant>to log my daily mood and sleep quality</iWant>
+    <soThat>I can later analyze correlations with symptoms and flares</soThat>
+    <tasks>
+      - Task 1: Create mood and sleep TypeScript interfaces (AC: #3.5.2.3-4)
+      - Task 2: Update Dexie schema with mood and sleep tables (AC: #3.5.2.3-4)
+      - Task 3: Create mood repository (AC: #3.5.2.5)
+      - Task 4: Create sleep repository (AC: #3.5.2.6)
+      - Task 5: Create mood logging component (AC: #3.5.2.1)
+      - Task 6: Create sleep logging component (AC: #3.5.2.2)
+      - Task 7: Create mood history page (AC: #3.5.2.7)
+      - Task 8: Create sleep history page (AC: #3.5.2.8)
+      - Task 9: Update import/export for mood and sleep (AC: #3.5.2.9)
+      - Task 10: Add dashboard/navigation integration (AC: #3.5.2.10)
+      - Task 11: Add comprehensive tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC3.5.2.1 — Mood logging interface with scale and notes: Create mood logging interface accessible from dashboard or dedicated navigation item, captures: (1) mood scale 1-10 slider or emotion picker (happy, neutral, sad, anxious, stressed), (2) optional text notes (multi-line text field), (3) timestamp (auto-populated, editable), mood picker styled with emoji or icons for quick visual selection, follows responsive mobile-first design patterns.
+
+    2. AC3.5.2.2 — Sleep logging interface with hours and quality: Create sleep logging interface accessible from dashboard or dedicated navigation item, captures: (1) hours slept (number input or time range picker), (2) sleep quality rating 1-10 scale (slider), (3) optional text notes for sleep disturbances or patterns, (4) timestamp (defaults to morning after sleep, editable), sleep quality slider color-coded: red (1-3 poor), yellow (4-7 moderate), green (8-10 good).
+
+    3. AC3.5.2.3 — Database schema for mood entries: Create `moodEntries` table in IndexedDB with Dexie schema: { id: UUID, userId: string, mood: number (1-10) OR moodType: string (if using emotion picker), notes: string (optional), timestamp: number, createdAt: number, updatedAt: number }, compound indexes for efficient queries: [userId+timestamp], TypeScript interface MoodEntry defined in `src/types/mood.ts`, follows offline-first persistence pattern from NFR002.
+
+    4. AC3.5.2.4 — Database schema for sleep entries: Create `sleepEntries` table in IndexedDB with Dexie schema: { id: UUID, userId: string, hours: number (decimal for 7.5 hours etc), quality: number (1-10), notes: string (optional), timestamp: number (date of sleep), createdAt: number, updatedAt: number }, compound indexes: [userId+timestamp], TypeScript interface SleepEntry defined in `src/types/sleep.ts`, supports fractional hours (e.g., 7.5, 8.25) for precision.
+
+    5. AC3.5.2.5 — Repository pattern for mood data: Create moodRepository following existing repository pattern from Story 2.1, implements: create(entry: MoodEntry), getByUserId(userId, options), getByDateRange(userId, startDate, endDate), update(id, changes), delete(id), all operations use Dexie queries on IndexedDB, offline-first with immediate persistence, TypeScript interfaces and JSDoc comments for API documentation.
+
+    6. AC3.5.2.6 — Repository pattern for sleep data: Create sleepRepository following existing repository pattern from Story 2.1, implements: create(entry: SleepEntry), getByUserId(userId, options), getByDateRange(userId, startDate, endDate), update(id, changes), delete(id), all operations use Dexie queries on IndexedDB, offline-first with immediate persistence, calculate weekly averages for dashboard display.
+
+    7. AC3.5.2.7 — Basic mood history view: Create mood history page at `/mood` showing chronological list of logged mood entries, each entry displays: date/time, mood value or emotion type, notes if present, edit/delete actions, sorted reverse-chronologically (most recent first), pagination or infinite scroll for long lists, responsive grid layout: 1 column mobile, 2 columns tablet, 3 columns desktop, empty state when no mood entries exist.
+
+    8. AC3.5.2.8 — Basic sleep history view: Create sleep history page at `/sleep` showing chronological list of logged sleep entries, each entry displays: date, hours slept, quality rating with color indicator, notes if present, edit/delete actions, sorted reverse-chronologically, include weekly average calculation displayed at top, responsive layout matches mood history pattern, empty state when no sleep entries exist.
+
+    9. AC3.5.2.9 — Import/export functionality for mood and sleep: Update import/export system to include mood and sleep data in exports, export format includes moodEntries array and sleepEntries arrays in JSON structure, import validates mood and sleep entries before adding to database, maintains backwards compatibility with exports without mood/sleep data, DevDataControls updated to generate sample mood and sleep entries for testing.
+
+    10. AC3.5.2.10 — Dashboard integration for mood and sleep logging: Add "Log Mood" and "Log Sleep" quick action buttons to dashboard if using dashboard approach, alternatively add navigation items in sidebar/bottom nav for Mood and Sleep pages, ensure new users can discover mood and sleep tracking features, follow navigation patterns from Epic 0 if completed, otherwise use current dashboard quick action pattern.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-3.5-production-ux.md</path>
+        <title>Epic 3.5: Production-Ready UI/UX Enhancement</title>
+        <section>Story 3.5.2 Definition</section>
+        <snippet>Mood & Sleep Basic Logging adds clinically essential tracking capabilities. Medical expert review flagged these as required for correlation analytics between mental state, sleep quality, and symptom/flare patterns. Foundation for future analytics in calendar views.</snippet>
+      </doc>
+      <doc>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>UI/UX Brainstorming Session Results</title>
+        <section>Medical Expert Review</section>
+        <snippet>Medical expert flagged mood and sleep as clinically essential for HS management. Role-playing as daily active user revealed missing mood/sleep features. These data types enable correlation analysis critical for treatment effectiveness evaluation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Repository Pattern & Data Flow</section>
+        <snippet>Repository pattern encapsulates data access with IndexedDB persistence. Service layer uses React Query for cache/optimistic updates. No global state needed - local component state + React Query handles all data flow. Pattern: Component → Repository → Dexie → IndexedDB.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR002: Offline-First Persistence</section>
+        <snippet>All data must persist to local IndexedDB immediately with offline-first architecture, ensuring zero data loss even without network connectivity. No network dependency for core features.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FlareRecord, SymptomRecord</symbol>
+        <lines>289-329, 69-82</lines>
+        <reason>Schema pattern examples showing TypeScript interface structure with timestamps (createdAt/updatedAt as number), userId field for multi-user, and optional fields. MoodEntry and SleepEntry should follow same conventions.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase.version</symbol>
+        <lines>399-434</lines>
+        <reason>Current Dexie version is 19. Need to increment to v20 for adding moodEntries and sleepEntries tables with compound indexes [userId+timestamp].</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>flareRepository</symbol>
+        <lines>1-50, 152-172, 267-266</lines>
+        <reason>Repository pattern reference: create, getById, getByUserId, getByDateRange, update, delete methods with userId isolation. Shows proper error handling, Dexie queries, and compound index usage.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/symptomRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>SymptomRepository</symbol>
+        <lines>1-50, 68-124</lines>
+        <reason>Repository pattern showing getAll, getActive, create, update, delete, bulkCreate methods. Demonstrates userId filtering and soft delete pattern that mood/sleep repositories should follow.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/settings/DevDataControls.tsx</path>
+        <kind>component</kind>
+        <symbol>DevDataControls</symbol>
+        <lines>all</lines>
+        <reason>Development controls component that needs updating to generate sample mood and sleep entries for testing. Must add mood/sleep data generation similar to existing flare/food generation.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>dexie</package>
+        <version>4.2.0</version>
+        <reason>IndexedDB wrapper for schema management, migrations, and offline-first persistence</reason>
+      </node>
+      <node>
+        <package>uuid</package>
+        <version>13.0.0</version>
+        <reason>Generate unique IDs for mood and sleep entry records</reason>
+      </node>
+      <node>
+        <package>next</package>
+        <version>15.5.4</version>
+        <reason>Framework for React app with routing for /mood and /sleep pages</reason>
+      </node>
+      <node>
+        <package>react</package>
+        <version>19.1.0</version>
+        <reason>UI components for mood/sleep logging forms and history views</reason>
+      </node>
+      <node>
+        <package>tailwindcss</package>
+        <version>4.x</version>
+        <reason>Styling for forms, sliders, color-coded quality indicators</reason>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>0.544.0</version>
+        <reason>Icons for mood/sleep navigation items and visual indicators</reason>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. CRITICAL: Maintain import/export feature compatibility when making schema changes. Update DevDataControls accordingly. [Source: docs/brainstorming-session-results-2025-10-29.md#Action-Planning]
+    2. Follow existing repository pattern from flareRepository (Story 2.1) with userId isolation and error handling. [Source: docs/solution-architecture.md#Repository-Pattern]
+    3. Use immediate IndexedDB transactions (offline-first) - no network dependencies (NFR002). [Source: docs/PRD.md#NFR002]
+    4. All timestamps must be stored as epoch milliseconds (number) not Date objects for consistency with existing schema (FlareRecord, FlareEventRecord patterns).
+    5. Compound indexes [userId+timestamp] required for efficient chronological queries and date range filtering.
+    6. Sleep quality color coding: red (1-3), yellow (4-7), green (8-10) must be consistent across all components.
+    7. Support fractional hours for sleep (7.5, 8.25) using number type with decimal precision.
+    8. Mood can support dual input: numeric scale (1-10) OR emotion picker (happy, neutral, sad, anxious, stressed) - both stored.
+    9. Weekly average calculation for sleep uses simple mean of past 7 days, displayed at top of history page.
+    10. Current Dexie version is 19. Increment to v20 for adding moodEntries and sleepEntries tables. No data migration needed (new tables).
+    11. Timestamp defaults: mood defaults to "now" (Date.now()), sleep defaults to previous night (now - 12 hours) since users log in morning.
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>MoodEntry Interface</name>
+      <kind>type</kind>
+      <signature>
+        interface MoodEntry {
+          id: string;
+          userId: string;
+          mood: number; // 1-10 scale
+          moodType?: 'happy' | 'neutral' | 'sad' | 'anxious' | 'stressed';
+          notes?: string;
+          timestamp: number; // epoch ms
+          createdAt: number;
+          updatedAt: number;
+        }
+      </signature>
+      <path>src/types/mood.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>SleepEntry Interface</name>
+      <kind>type</kind>
+      <signature>
+        interface SleepEntry {
+          id: string;
+          userId: string;
+          hours: number; // supports fractional (7.5)
+          quality: number; // 1-10 scale
+          notes?: string;
+          timestamp: number; // epoch ms - date of sleep
+          createdAt: number;
+          updatedAt: number;
+        }
+      </signature>
+      <path>src/types/sleep.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>MoodRepository API</name>
+      <kind>repository</kind>
+      <signature>
+        create(entry: Partial&lt;MoodEntry&gt;): Promise&lt;string&gt;
+        getByUserId(userId: string): Promise&lt;MoodEntry[]&gt;
+        getByDateRange(userId: string, startDate: number, endDate: number): Promise&lt;MoodEntry[]&gt;
+        update(id: string, changes: Partial&lt;MoodEntry&gt;): Promise&lt;void&gt;
+        delete(id: string): Promise&lt;void&gt;
+        getById(id: string): Promise&lt;MoodEntry | undefined&gt;
+      </signature>
+      <path>src/lib/repositories/moodRepository.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>SleepRepository API</name>
+      <kind>repository</kind>
+      <signature>
+        create(entry: Partial&lt;SleepEntry&gt;): Promise&lt;string&gt;
+        getByUserId(userId: string): Promise&lt;SleepEntry[]&gt;
+        getByDateRange(userId: string, startDate: number, endDate: number): Promise&lt;SleepEntry[]&gt;
+        getWeeklyAverage(userId: string, weekStartDate: number): Promise&lt;{avgHours: number, avgQuality: number}&gt;
+        update(id: string, changes: Partial&lt;SleepEntry&gt;): Promise&lt;void&gt;
+        delete(id: string): Promise&lt;void&gt;
+        getById(id: string): Promise&lt;SleepEntry | undefined&gt;
+      </signature>
+      <path>src/lib/repositories/sleepRepository.ts (NEW)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing framework: Jest + React Testing Library + fake-indexeddb (existing pattern from Story 2.1).
+      Unit tests for repositories using fake-indexeddb mocking.
+      Integration tests for complete flows (log mood → verify in database → display in history).
+      Component tests for MoodLoggingForm and SleepLoggingForm using React Testing Library.
+      Accessibility tests with @testing-library/jest-dom for keyboard navigation and screen reader labels.
+      Migration tests to verify Dexie v20 upgrade creates new tables without affecting existing data.
+      Coverage target: 80% for repository layers, 100% for schema migrations.
+    </standards>
+    <locations>
+      src/lib/repositories/__tests__/moodRepository.test.ts (NEW)
+      src/lib/repositories/__tests__/sleepRepository.test.ts (NEW)
+      src/components/mood/__tests__/MoodLoggingForm.test.tsx (NEW)
+      src/components/sleep/__tests__/SleepLoggingForm.test.tsx (NEW)
+      src/app/(protected)/mood/__tests__/page.test.tsx (NEW)
+      src/app/(protected)/sleep/__tests__/page.test.tsx (NEW)
+      src/lib/services/__tests__/importService.test.ts (extend for mood/sleep)
+      src/lib/db/__tests__/migration-v20.test.ts (NEW)
+    </locations>
+    <ideas>
+      TEST: moodRepository.create generates UUID, sets timestamps, persists to IndexedDB
+      TEST: moodRepository.getByDateRange queries efficiently using [userId+timestamp] index
+      TEST: sleepRepository.getWeeklyAverage calculates mean hours and quality for 7-day window
+      TEST: SleepLoggingForm color codes quality slider: red (1-3), yellow (4-7), green (8-10)
+      TEST: MoodLoggingForm supports both numeric slider (1-10) and emotion picker selection
+      TEST: Mood history page displays entries reverse-chronologically, shows empty state when no entries
+      TEST: Sleep history page displays weekly average at top, formatted to 1 decimal place
+      TEST: Import/export preserves mood and sleep data through export → import cycle
+      TEST: DevDataControls generates 10-20 sample mood entries with varying timestamps
+      TEST: DevDataControls generates 10-20 sample sleep entries with fractional hours (7.5, 8.0)
+      TEST: Dexie v20 migration creates moodEntries and sleepEntries tables without affecting existing flares/symptoms
+      TEST: Form validation: mood/quality required (1-10), hours required, notes optional
+      TEST: Timestamp editing allows retroactive logging for past dates
+      TEST: Dashboard navigation includes "Log Mood" and "Log Sleep" buttons routing to /mood and /sleep
+    </ideas>
+  </tests>
+</story-context>

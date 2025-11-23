@@ -18,6 +18,7 @@ const SECTION_OPTIONS: Array<{ type: TemplateSectionType; label: string }> = [
   { type: "health", label: "Health metrics" },
   { type: "symptoms", label: "Symptoms" },
   { type: "medications", label: "Medications" },
+  { type: "treatments", label: "Treatments" },
   { type: "triggers", label: "Triggers" },
   { type: "notes", label: "Notes & context" },
 ];
@@ -39,11 +40,10 @@ const renderSectionsList = (
       return (
         <label
           key={option.type}
-          className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-            isChecked
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:border-primary/60"
-          }`}
+          className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${isChecked
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border text-muted-foreground hover:border-primary/60"
+            }`}
         >
           <input
             type="checkbox"
@@ -174,11 +174,10 @@ export const EntryTemplates = ({
             return (
               <li
                 key={template.id}
-                className={`space-y-3 rounded-2xl border p-4 shadow-sm transition-colors ${
-                  template.id === activeTemplateId
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-background/60"
-                }`}
+                className={`space-y-3 rounded-2xl border p-4 shadow-sm transition-colors ${template.id === activeTemplateId
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-background/60"
+                  }`}
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <div>
@@ -193,7 +192,7 @@ export const EntryTemplates = ({
                     </span>
                   )}
                   {template.id === activeTemplate?.id && (
-                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-900">
+                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-900 dark:bg-sky-900/30 dark:text-sky-100">
                       Active
                     </span>
                   )}

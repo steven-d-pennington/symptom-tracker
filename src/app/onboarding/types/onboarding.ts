@@ -2,10 +2,16 @@ import type { ComponentType } from "react";
 
 export type OnboardingStepId =
   | "welcome"
+  | "profile"
   | "condition"
   | "preferences"
-  | "education"
   | "privacy"
+  | "education"
+  | "symptomSelection"
+  | "triggerSelection"
+  | "treatmentSelection"
+  | "medicationSelection"
+  | "foodSelection"
   | "completion";
 
 export interface TrackingPreferences {
@@ -26,12 +32,44 @@ export interface EducationalProgress {
   lastViewedAt?: Date;
 }
 
+export interface UserProfile {
+  name: string;
+  email: string;
+}
+
+/**
+ * Selection item for onboarding (symptoms, triggers, medications, foods)
+ * Story 3.6.1 - AC3.6.1.9, AC3.6.1.10
+ */
+export interface SelectionItem {
+  id?: string;
+  name: string;
+  category: string;
+  description?: string;
+  isDefault: boolean;
+  isCustom: boolean;
+}
+
+/**
+ * Onboarding selections for all data types
+ * Story 3.6.1 - Task 1
+ */
+export interface OnboardingSelections {
+  symptoms: SelectionItem[];
+  triggers: SelectionItem[];
+  treatments: SelectionItem[];
+  medications: SelectionItem[];
+  foods: SelectionItem[];
+}
+
 export interface OnboardingData {
+  userProfile?: UserProfile;
   condition: string;
   experience: "new" | "experienced" | "returning";
   trackingPreferences: TrackingPreferences;
   privacySettings: PrivacySettings;
   educationalContent: EducationalProgress;
+  selections?: OnboardingSelections;
 }
 
 export interface OnboardingState {

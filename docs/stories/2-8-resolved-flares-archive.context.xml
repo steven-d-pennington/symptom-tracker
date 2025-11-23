@@ -1,0 +1,434 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>8</storyId>
+    <title>Resolved Flares Archive</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>c:\projects\symptom-tracker\docs\stories\story-2.8.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user reviewing past flares</asA>
+    <iWant>to access a list of all resolved flares</iWant>
+    <soThat>I can review historical patterns and outcomes</soThat>
+    <tasks>
+      <task id="1" ac="2.8.2">Create ResolvedFlareCard component
+        - Display body region name, resolution date (relative + full on hover), duration badge (color-coded), peak severity badge (1-10 scale)
+        - Minimum 44x44px touch targets, keyboard accessible (Enter key), proper ARIA labels
+        - Style matching ActiveFlareCard patterns from Story 2.3
+      </task>
+      <task id="2" ac="2.8.1,2.8.3">Create Resolved Flares page at /flares/resolved
+        - Fetch resolved flares using useFlares hook with status='resolved' filter
+        - Display grid/list layout with ResolvedFlareCard components
+        - Page header with count badge showing total resolved count
+        - Sort dropdown (resolution date / duration / peak severity) with localStorage persistence
+        - Default sort: resolution date descending (most recent first)
+      </task>
+      <task id="3" ac="2.8.5">Implement filtering UI (ResolvedFlaresFilters component)
+        - Body region filter (multi-select, only regions with resolved flares)
+        - Date range filter (resolution date start/end)
+        - Duration range filter (min/max days)
+        - Filters combine with AND logic, persist to URL query params
+        - Clear Filters button, active filter count badge
+      </task>
+      <task id="4" ac="2.8.6">Create empty state component (ResolvedFlaresEmptyState)
+        - "No resolved flares yet" state with link to Active Flares page
+        - "No results found" state when filters return empty with Clear Filters suggestion
+        - Follow empty state patterns from Story 0.2
+      </task>
+      <task id="5" ac="2.8.7">Integrate resolved flares count badge
+        - Display count in page header and optionally in navigation sidebar
+        - Count updates in real-time via React Query cache invalidation
+        - ARIA label for screen readers
+      </task>
+      <task id="6" ac="2.8.4">Add navigation to read-only detail view
+        - Card click/tap navigates to /flares/[id] using Next.js router.push()
+        - Detail page shows read-only view from Story 2.7 (action buttons hidden, "Flare Resolved" badge)
+        - Keyboard accessible (Enter key), back navigation returns to resolved list
+      </task>
+      <task id="7" ac="all">Add comprehensive tests
+        - Unit tests: ResolvedFlareCard component (duration calc, peak severity, badge colors, ARIA)
+        - Integration tests: page rendering, filtering, sorting, navigation, localStorage persistence
+        - Accessibility tests: keyboard navigation, screen reader support, touch targets
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="2.8.1">Resolved Flares page displays filtered list
+      - Page at /flares/resolved displays all flares with status='resolved'
+      - Uses flareRepository.getResolvedFlares(userId) method
+      - Implements useFlares hook pattern from Story 2.3 with resolved status filter
+      - Renders ResolvedFlareCard components in grid/list layout
+      - Page header "Resolved Flares" with count badge showing total resolved count
+    </criterion>
+    <criterion id="2.8.2">Each card shows comprehensive resolved flare information
+      - Body region name from bodyRegions data lookup
+      - Resolution date formatted as relative time ("2 days ago") with full date on hover
+      - Total duration badge calculated as (endDate - startDate) in days with color coding:
+        * &lt; 7 days: green
+        * 7-14 days: yellow
+        * &gt; 14 days: orange
+      - Peak severity badge computed from FlareEventRecord history (max severity) with 1-10 color scale
+      - Card styling matches ActiveFlareCard patterns from Story 2.3
+      - Minimum 44x44px touch targets per NFR001
+    </criterion>
+    <criterion id="2.8.3">List sorted by resolution date
+      - Default sort: resolution date descending (most recent first)
+      - Sort dropdown allows switching: resolution date / total duration / peak severity
+      - Sort order persisted to localStorage with key 'resolved-flares-sort-{userId}'
+      - Sort state survives page refresh and navigation
+    </criterion>
+    <criterion id="2.8.4">Navigation to read-only detail view
+      - Tapping/clicking ResolvedFlareCard navigates to /flares/[id] using Next.js router.push()
+      - Detail page automatically displays read-only view from Story 2.7 (action buttons hidden, "Flare Resolved" badge)
+      - Keyboard accessible via Enter key when card focused
+      - aria-label "View resolved flare in {region}" for screen readers
+      - Back navigation returns to resolved flares list
+    </criterion>
+    <criterion id="2.8.5">Search and filter capabilities
+      - ResolvedFlaresFilters component provides:
+        * Body region filter (multi-select dropdown, only regions with resolved flares)
+        * Date range filter (date pickers for resolution date start/end)
+        * Duration range filter (number inputs/slider for min/max days)
+      - Filters combine with AND logic (flare must match ALL active filters)
+      - Filter state persisted to URL query params (?region=groin&amp;dateFrom=2025-10-01&amp;dateTo=2025-10-27&amp;durationMin=7&amp;durationMax=14)
+      - "Clear Filters" button resets all filters
+      - Active filter count badge shows number of filters applied
+      - Filtered results count updates in page header
+    </criterion>
+    <criterion id="2.8.6">Empty state guidance
+      - ResolvedFlaresEmptyState displays when resolvedFlares.length === 0 and no active filters
+      - Shows message "No resolved flares yet" with explanatory text "Flares marked as resolved will appear here."
+      - Includes link to Active Flares page ("/flares") with text "View Active Flares →"
+      - Follows empty state patterns from Story 0.2 (semantic structure, helpful messaging)
+      - Separate "No results found" state shown when filters return empty with "Clear Filters" suggestion
+    </criterion>
+    <criterion id="2.8.7">Resolved flares count badge
+      - Total resolved flares count displayed in page header ("Resolved Flares (12)")
+      - Optionally in navigation sidebar/bottom tabs
+      - Count updates in real-time via React Query cache invalidation when flares are resolved
+      - Uses useFlares hook with {status: 'resolved'} to fetch count reactively
+      - Badge includes aria-label "{count} resolved flares" for screen readers
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR009 - Mark Flares Resolved</section>
+        <snippet>System shall allow users to mark flares as resolved with resolution date and optional resolution notes</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR011 - Per-Region History</section>
+        <snippet>System shall provide per-region flare history showing all flares that have occurred in each body area</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR012 - Flare Progression Metrics</section>
+        <snippet>System shall calculate and display flare progression metrics: average duration, severity trends, and resolution patterns</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR001 - Performance Requirements</section>
+        <snippet>Body map zoom and pan interactions shall respond within 100ms. 44x44px minimum touch targets required for mobile accessibility.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR002 - Offline-First Architecture</section>
+        <snippet>All flare data (creation, updates, resolution) shall persist to local IndexedDB immediately with offline-first architecture</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Specifications</title>
+        <section>Story 2.8 - Resolved Flares Archive</section>
+        <snippet>Resolved Flares page displays list of all flares with status "Resolved". Each item shows body location, resolution date, total duration, peak severity. List sorted by resolution date (most recent first). Search/filter by body region, date range, duration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Epic 2 - Flare Lifecycle Management</section>
+        <snippet>Flare management components include FlareList, FlareDetail, and flare repository with IndexedDB persistence</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1 - Flare Data Layer</title>
+        <section>Data Model &amp; Repository</section>
+        <snippet>Defines FlareRecord schema with endDate field, FlareEventRecord for history, flareRepository.getResolvedFlares() and getFlareHistory() methods</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.3.md</path>
+        <title>Story 2.3 - Active Flares Dashboard</title>
+        <section>useFlares Hook &amp; ActiveFlareCard</section>
+        <snippet>Implements useFlares hook pattern for fetching flares with React Query, ActiveFlareCard styling patterns, localStorage sort persistence</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.7.md</path>
+        <title>Story 2.7 - Mark Flare as Resolved</title>
+        <section>Resolution Flow &amp; Read-Only View</section>
+        <snippet>Flare resolution sets status='resolved' and endDate, detail page shows read-only view with action buttons hidden and "Flare Resolved" badge</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-0.2.md</path>
+        <title>Story 0.2 - Dashboard Empty State</title>
+        <section>Empty State Patterns</section>
+        <snippet>Empty state components use semantic HTML, helpful messaging, links to relevant actions. Distinguish between true empty and filtered empty states.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Story 1.1 - Body Regions Data</title>
+        <section>Body Regions Array</section>
+        <snippet>bodyRegions data array provides mapping from bodyRegionId to human-readable region names for UI display</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/hooks/useFlares.ts</path>
+        <kind>hook</kind>
+        <symbol>useFlares</symbol>
+        <lines>1-50</lines>
+        <reason>Core hook for fetching flares with React Query pattern. Supports status filtering (includeResolved, status='resolved') and real-time updates needed for resolved flares list.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getResolvedFlares</symbol>
+        <lines>181-189</lines>
+        <reason>Repository method to fetch all resolved flares for a user. Uses compound index [userId+status] for efficient querying.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getFlareHistory</symbol>
+        <lines>249-264</lines>
+        <reason>Fetches complete FlareEventRecord history for a flare, required to calculate peak severity from historical data.</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/flare.ts</path>
+        <kind>types</kind>
+        <symbol>FlareRecord, FlareEventRecord, FlareStatus</symbol>
+        <lines>1-80</lines>
+        <reason>Type definitions for FlareRecord (includes endDate field for resolved flares), FlareEventRecord (event history for peak severity), and FlareStatus enum.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/ActiveFlareCard.tsx</path>
+        <kind>component</kind>
+        <symbol>ActiveFlareCard</symbol>
+        <lines>1-60</lines>
+        <reason>Reference implementation for flare card styling patterns. ResolvedFlareCard should match this styling (border, rounded, p-4, hover:shadow-md, min-h-[44px]).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/data/bodyRegions.ts</path>
+        <kind>data</kind>
+        <symbol>FRONT_BODY_REGIONS, BACK_BODY_REGIONS</symbol>
+        <lines>all</lines>
+        <reason>Body regions data arrays for looking up region names from bodyRegionId. Used in ResolvedFlareCard to display human-readable region names.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flares/ActiveFlaresEmptyState.tsx</path>
+        <kind>component</kind>
+        <symbol>ActiveFlaresEmptyState</symbol>
+        <lines>1-35</lines>
+        <reason>Reference empty state pattern for resolved flares. Shows semantic HTML structure, helpful messaging, icon usage, and link to action.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/[id]/page.tsx</path>
+        <kind>page</kind>
+        <symbol>FlareDetailPage</symbol>
+        <lines>all</lines>
+        <reason>Flare detail page with read-only view for resolved flares (Story 2.7). Navigation target from ResolvedFlareCard clicks.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/(protected)/flares/page.tsx</path>
+        <kind>page</kind>
+        <symbol>ActiveFlaresPage</symbol>
+        <lines>all</lines>
+        <reason>Active flares list page. Reference for page structure, loading states, and grid layout patterns.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="15.5.4">Next.js framework for routing, page components, and useRouter/useSearchParams hooks</package>
+        <package name="react" version="19.1.0">React library for component development</package>
+        <package name="react-dom" version="19.1.0">React DOM rendering</package>
+        <package name="date-fns" version="^4.1.0">Date formatting utilities (formatDistanceToNow for relative dates, toLocaleDateString)</package>
+        <package name="dexie" version="^4.2.0">IndexedDB wrapper used by flareRepository for offline-first data persistence</package>
+        <package name="lucide-react" version="^0.544.0">Icon library (Archive icon for empty state)</package>
+        <package name="uuid" version="^13.0.0">UUID generation for entity IDs</package>
+        <package name="zod" version="^4.1.12">Schema validation for TypeScript types</package>
+      </node>
+      <devDependencies>
+        <package name="@testing-library/react" version="^16.3.0">React component testing utilities</package>
+        <package name="@testing-library/jest-dom" version="^6.9.1">Jest DOM matchers for assertions</package>
+        <package name="@testing-library/user-event" version="^14.6.1">User interaction simulation for tests</package>
+        <package name="jest" version="^30.2.0">Testing framework</package>
+        <package name="jest-environment-jsdom" version="^30.2.0">JSDOM environment for Jest</package>
+        <package name="typescript" version="^5">TypeScript language support</package>
+        <package name="tailwindcss" version="^4">Utility-first CSS framework</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Offline-First Architecture: All data fetching uses flareRepository with IndexedDB via Dexie. No network dependency required (NFR002).</constraint>
+    <constraint>Performance: Touch targets must be minimum 44x44px for mobile accessibility (NFR001). Interactions should respond within 100ms.</constraint>
+    <constraint>Pattern Consistency: ResolvedFlareCard must match ActiveFlareCard styling patterns (border, rounded, p-4, hover:shadow-md, bg-white).</constraint>
+    <constraint>Empty State Patterns: Follow Story 0.2 patterns - semantic HTML structure, helpful messaging, links to relevant actions. Distinguish between true empty state and filtered empty state.</constraint>
+    <constraint>Read-Only Navigation: Clicking resolved flare navigates to /flares/[id] which automatically shows read-only view from Story 2.7 (no code changes needed).</constraint>
+    <constraint>Sort Persistence: Sort preferences must persist to localStorage with key pattern 'resolved-flares-sort-{userId}' to survive page refresh.</constraint>
+    <constraint>URL Filter State: Filter state must sync to URL query params for shareable filtered views (e.g., ?region=groin&amp;dateFrom=2025-10-01).</constraint>
+    <constraint>Accessibility: All interactive elements must be keyboard accessible (Tab, Enter). ARIA labels required for screen readers. Focus indicators must be visible.</constraint>
+    <constraint>Data Immutability: Resolved flares are read-only. No updates allowed after resolution (Story 2.7 enforcement).</constraint>
+    <constraint>Duration Calculation: Always use Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) for consistent day rounding.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>flareRepository.getResolvedFlares</name>
+      <kind>Repository Method</kind>
+      <signature>async function getResolvedFlares(userId: string): Promise&lt;FlareRecord[]&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <description>Fetches all resolved flares for a user using compound index [userId+status]='resolved'</description>
+    </interface>
+    <interface>
+      <name>flareRepository.getFlareHistory</name>
+      <kind>Repository Method</kind>
+      <signature>async function getFlareHistory(userId: string, flareId: string): Promise&lt;FlareEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <description>Fetches complete event history for a flare, required to calculate peak severity from FlareEventRecords</description>
+    </interface>
+    <interface>
+      <name>useFlares Hook</name>
+      <kind>React Hook</kind>
+      <signature>function useFlares(options: UseFlaresOptions): { data: FlareRecord[], isLoading: boolean, error: Error | null }</signature>
+      <path>src/lib/hooks/useFlares.ts</path>
+      <description>React Query hook for fetching flares with options: {userId, status: 'resolved', includeResolved: true, bodyRegionId?}. Provides automatic caching and real-time updates.</description>
+    </interface>
+    <interface>
+      <name>FlareRecord Type</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface FlareRecord { id: string; userId: string; startDate: number; endDate?: number; status: 'active'|'improving'|'worsening'|'resolved'; bodyRegionId: string; currentSeverity: number; ... }</signature>
+      <path>src/types/flare.ts</path>
+      <description>Main flare entity. endDate field populated when status='resolved'. Used for duration calculation.</description>
+    </interface>
+    <interface>
+      <name>FlareEventRecord Type</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface FlareEventRecord { id: string; flareId: string; eventType: string; timestamp: number; severity?: number; ... }</signature>
+      <path>src/types/flare.ts</path>
+      <description>Event history records for tracking flare changes. severity field used to calculate peak severity.</description>
+    </interface>
+    <interface>
+      <name>Next.js Router</name>
+      <kind>Navigation API</kind>
+      <signature>const router = useRouter(); router.push(path: string)</signature>
+      <path>next/navigation</path>
+      <description>Navigation to flare detail page: router.push(`/flares/${flareId}`)</description>
+    </interface>
+    <interface>
+      <name>Body Regions Data</name>
+      <kind>Data Array</kind>
+      <signature>const bodyRegions: Array&lt;{ id: string; name: string; ... }&gt;</signature>
+      <path>src/lib/data/bodyRegions.ts</path>
+      <description>Array of body region definitions for looking up region names from bodyRegionId</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing framework: Jest v30.2.0 with @testing-library/react v16.3.0 for component testing.
+      Test files located in __tests__ directories alongside components using .test.tsx extension.
+      Component tests use render() from @testing-library/react, screen queries, and jest-dom matchers.
+      Mock Next.js router with jest.mock('next/navigation') providing useRouter with mockPush function.
+      Mock IndexedDB operations using fake-indexeddb for repository testing.
+      Accessibility testing uses ARIA queries (getByRole, getByLabelText) and keyboard event simulation.
+      Test structure follows AAA pattern (Arrange, Act, Assert) with descriptive test names referencing AC IDs.
+      Coverage target: All acceptance criteria must have corresponding test cases.
+    </standards>
+    <locations>
+      src/components/flares/__tests__/ResolvedFlareCard.test.tsx
+      src/components/flares/__tests__/ResolvedFlaresFilters.test.tsx
+      src/components/flares/__tests__/ResolvedFlaresEmptyState.test.tsx
+      src/app/(protected)/flares/resolved/__tests__/page.test.tsx
+    </locations>
+    <ideas>
+      <idea ac="2.8.1">
+        - Test page renders with resolved flares list when data loaded
+        - Test useFlares hook called with {status: 'resolved', includeResolved: true}
+        - Test page header displays "Resolved Flares" with count badge
+        - Test grid layout renders ResolvedFlareCard components
+        - Test loading state shows skeleton cards during fetch
+        - Test error state displays error message with retry option
+      </idea>
+      <idea ac="2.8.2">
+        - Test ResolvedFlareCard renders body region name from bodyRegions lookup
+        - Test resolution date displays as relative time ("2 days ago")
+        - Test full date appears in title attribute on hover
+        - Test duration badge calculation: (endDate - startDate) in days
+        - Test duration badge color coding: green (&lt;7), yellow (7-14), orange (&gt;14)
+        - Test peak severity fetched from flareRepository.getFlareHistory()
+        - Test peak severity badge computed as Math.max(...history.map(e => e.severity))
+        - Test peak severity color scale: green (1-3), yellow (4-6), orange (7-8), red (9-10)
+        - Test card has minimum 44px height (min-h-[44px] class)
+        - Test card styling matches ActiveFlareCard pattern (border, rounded, p-4, hover:shadow-md)
+      </idea>
+      <idea ac="2.8.3">
+        - Test default sort is resolution date descending (most recent first)
+        - Test sort dropdown changes flare order
+        - Test sort by resolution date ascending/descending
+        - Test sort by duration shortest/longest
+        - Test sort by peak severity lowest/highest
+        - Test sort preference saved to localStorage with key 'resolved-flares-sort-{userId}'
+        - Test sort state loads from localStorage on mount
+        - Test sort state survives page refresh
+      </idea>
+      <idea ac="2.8.4">
+        - Test clicking card calls router.push(`/flares/${flareId}`)
+        - Test Enter key on focused card triggers navigation
+        - Test card has role="button" and tabIndex={0}
+        - Test card has aria-label with full context (region, date, duration, severity)
+        - Test keyboard focus moves between cards with Tab key
+        - Test back navigation returns to /flares/resolved
+      </idea>
+      <idea ac="2.8.5">
+        - Test body region filter reduces visible flares to selected regions
+        - Test date range filter (dateFrom and dateTo inputs)
+        - Test duration range filter (durationMin and durationMax inputs)
+        - Test multiple filters combine with AND logic
+        - Test filter state syncs to URL query params
+        - Test URL query params initialize filters on page load
+        - Test "Clear Filters" button resets all filters and removes query params
+        - Test active filter count badge displays correct number
+        - Test filtered results count updates in page header
+      </idea>
+      <idea ac="2.8.6">
+        - Test empty state displays when resolvedFlares.length === 0 and no filters
+        - Test empty state shows "No resolved flares yet" message
+        - Test empty state includes link to /flares (Active Flares page)
+        - Test "No results found" state displays when filters return empty
+        - Test "No results found" includes "Clear Filters" button
+        - Test empty state uses semantic HTML and ARIA labels
+      </idea>
+      <idea ac="2.8.7">
+        - Test page header count updates when resolved flares change
+        - Test count badge has aria-label "{count} resolved flares"
+        - Test count badge reactive to React Query cache updates
+        - Test optional navigation badge shows count (if implemented)
+      </idea>
+      <idea ac="all">
+        - Test responsive grid layout on mobile (1 column) and desktop (2-3 columns)
+        - Test all interactive elements accessible via keyboard
+        - Test screen reader announces flare information correctly
+        - Test focus indicators visible on all focusable elements
+        - Test touch targets meet 44x44px minimum on mobile viewports
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

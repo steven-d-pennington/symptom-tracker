@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context>
+  <metadata>
+    <story-id>2.3</story-id>
+    <epic-id>2</epic-id>
+    <title>Combination Effects Detection</title>
+    <status>Ready</status>
+    <generated-at>2025-10-17T14:30:00Z</generated-at>
+    <agent>SM (Scrum Master Bob)</agent>
+  </metadata>
+
+  <story>
+    <user-story>As a user, I want to see if food combinations trigger symptoms more than individual foods, so that I can identify synergistic dietary triggers</user-story>
+    
+    <acceptance-criteria>
+      <criterion id="AC1">
+        <description>System identifies meals where combinations correlate with symptoms</description>
+        <technical-notes>Group meals by mealId, enumerate unique food pairs from meal events</technical-notes>
+      </criterion>
+      <criterion id="AC2">
+        <description>System compares combination correlation vs individual food max correlation</description>
+        <technical-notes>Compute individual correlations for each food in pair, compare against combination correlation</technical-notes>
+      </criterion>
+      <criterion id="AC3">
+        <description>System highlights significantly stronger correlation (>15% delta)</description>
+        <technical-notes>Synergy threshold: combinationCorrelation > maxIndividual + 0.15</technical-notes>
+      </criterion>
+      <criterion id="AC4">
+        <description>System enforces minimum 3 instances required for analysis</description>
+        <technical-notes>Sample size filter before Chi-square test execution</technical-notes>
+      </criterion>
+      <criterion id="AC5">
+        <description>Dashboard displays synergy indicators</description>
+        <technical-notes>Visual badges, color coding, confidence levels in FoodCombinationCard</technical-notes>
+      </criterion>
+      <criterion id="AC6">
+        <description>System uses Chi-square test (p &lt; 0.05) per ADR-008</description>
+        <technical-notes>Statistical significance validation using existing chi-square implementation</technical-notes>
+      </criterion>
+    </acceptance-criteria>
+
+    <tasks>
+      <task id="1" acs="1,2,4,6">
+        <title>Implement CombinationAnalysisService core logic</title>
+        <details>
+          - Create src/lib/services/food/CombinationAnalysisService.ts with combination detection
+          - Implement meal grouping by mealId to identify food combinations
+          - Build unique food pair enumeration from meal events
+          - Calculate combination correlation using Chi-square test
+          - Compare combination correlation vs. individual food max correlation
+          - Enforce minimum 3-instance threshold before analysis
+          - Add unit tests for combination detection with known datasets (15+ tests)
+        </details>
+      </task>
+      <task id="2" acs="1,5">
+        <title>Extend data model with FoodCombination entity</title>
+        <details>
+          - Add FoodCombination Prisma model to schema (userId, foodIds[], foodNames[], symptomId, correlationPct, individualMax, synergistic flag, p-value, confidence, sample size)
+          - Add compound index on [userId, foodIds[], symptomId]
+          - Generate Prisma migration
+          - NOTE: This project uses IndexedDB/Dexie, not Prisma - adapt to Dexie schema instead
+        </details>
+      </task>
+      <task id="3" acs="1,2,6">
+        <title>Integrate with CorrelationOrchestrationService</title>
+        <details>
+          - Extend CorrelationOrchestrationService to invoke CombinationAnalysisService
+          - Pass grouped meal events after individual correlations computed
+          - Wire combination results into cache alongside individual correlations
+        </details>
+      </task>
+      <task id="4" acs="3,5">
+        <title>Build FoodCombinationCard component</title>
+        <details>
+          - Create src/components/food/FoodCombinationCard.tsx
+          - Display food pair names, synergy indicator (>15% delta), confidence badges
+          - Show comparison: "Dairy + Gluten: 65% correlation (vs. 42% individually)"
+          - Add accessible tooltips explaining synergy calculations
+          - Implement 8+ component tests (rendering, synergy badge display, accessibility)
+        </details>
+      </task>
+      <task id="5" acs="1,2,3,6">
+        <title>Extend API routes for combination queries</title>
+        <details>
+          - Add combination results to /api/correlation/compute response payload
+          - Add query param includeCombinations to /api/correlation/results
+          - Ensure cron job (/api/correlation/cron) invokes CombinationAnalysisService
+        </details>
+      </task>
+      <task id="6" acs="5">
+        <title>Integrate combination cards into Trigger Analysis dashboard</title>
+        <details>
+          - Add FoodCombinationCard section to TriggerCorrelationDashboard.tsx
+          - Filter combinations by minConfidence, allergen tags (if applicable)
+          - Sort by synergy strength (correlationPct - individualMax)
+          - Add toggle to show/hide combination analysis section
+        </details>
+      </task>
+      <task id="7" acs="1,2,3,4,6">
+        <title>Comprehensive testing and validation</title>
+        <details>
+          - Unit tests: CombinationAnalysisService (15+ tests covering pair enumeration, chi-square, thresholds, edge cases)
+          - Component tests: FoodCombinationCard (8+ tests covering synergy display, accessibility, confidence badges)
+          - Integration tests: CorrelationOrchestrationService (6+ tests covering end-to-end combination detection with mocked repositories)
+          - Validate minimum coverage: 80% branches, functions, lines, statements
+        </details>
+      </task>
+    </tasks>
+  </story>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>Services and Modules</section>
+        <snippet>CombinationAnalysisService detects synergistic food pairs/meals and compares against individual correlations. Input: grouped meal events; Output: FoodCombinationResult. Owner: Data Science.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>Data Models and Contracts</section>
+        <snippet>FoodCombination model with foodIds[], foodNames[], symptomId, combinationCorrelation, individualMax, synergistic flag, pValue, confidence, sampleSize. Compound index on [userId, foodIds[], symptomId]. NOTE: This project uses Dexie, not Prisma - adapt schema accordingly.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-E2.md</path>
+        <title>Technical Specification: Food-Symptom Correlation Analysis</title>
+        <section>APIs and Interfaces</section>
+        <snippet>CombinationAnalysisService.buildPairs(mealEvents) → enumerates unique combinations with sample size thresholds. CorrelationJobRunner invokes both individual and combination analysis. /api/correlation/results supports includeCombinations query param.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epic-stories.md</path>
+        <title>Epic Breakdown: Story 2.3</title>
+        <section>Story 2.3: Combination Effects Detection</section>
+        <snippet>User story: See if food combinations trigger symptoms more than individual foods. AC includes meal analysis, correlation comparison, Chi-square test, 15% synergy threshold. Technical notes: meal-level analysis, combination enumeration, statistical significance testing.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture: Application Architecture</title>
+        <section>Epic Alignment Matrix</section>
+        <snippet>E2 Food-Symptom Correlation Analysis includes CorrelationService, FoodCorrelationService, CombinationAnalysisService using chi-square and Pearson statistics. Prisma FoodCorrelation/FoodCombination models, correlation cache, trigger analysis dashboard. NOTE: Project actually uses IndexedDB/Dexie, not Prisma.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>ADR-008: Statistical Correlation Methods (Chi-Square + Pearson)</title>
+        <section>Decision</section>
+        <snippet>Use Chi-Square test for categorical food-symptom correlation (p &lt; 0.05 significance threshold). Industry-standard method providing p-value calculation. Balances statistical rigor with simplicity. Requires minimum sample size (3-5 occurrences).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR018: Combination Effects Analysis</section>
+        <snippet>System analyzes combination effects, identifying when specific food pairs correlate with symptoms more strongly than individual foods alone. Enables discovery of synergistic dietary triggers.</snippet>
+      </artifact>
+      <artifact>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guide</title>
+        <section>Database Architecture</section>
+        <snippet>Local-First: All data stored in IndexedDB via Dexie.js, no backend. Schema at version 9, migrations in src/lib/db/client.ts. Compound indexes critical for performance - always query using [userId+field] patterns. Arrays stored as JSON strings in database (must parse on read).</snippet>
+      </artifact>
+      <artifact>
+        <path>AGENTS.md</path>
+        <title>Agent Development Guide</title>
+        <section>Testing Requirements</section>
+        <snippet>Coverage: 80% minimum across branches, functions, lines, statements. Use React Testing Library with accessible queries. Repository testing: mock Dexie operations, test business logic. Component testing: test accessibility, user interactions, error states.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/lib/services/correlation/CorrelationService.ts</path>
+        <kind>service</kind>
+        <symbol>CorrelationService</symbol>
+        <lines>1-187</lines>
+        <reason>REUSABLE - Pure correlation computation layer with chi-square implementation. Shows pattern for statistical analysis services. CombinationAnalysisService should follow similar design (pure, testable, stateless). Contains chiSquare() function to reuse for combination analysis.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/services/correlation/CorrelationOrchestrationService.ts</path>
+        <kind>service</kind>
+        <symbol>CorrelationOrchestrationService</symbol>
+        <lines>1-138</lines>
+        <reason>EXTEND - Orchestrates correlation computation by hydrating data from repositories. Need to add CombinationAnalysisService invocation when meal data is available. Shows pattern for repository integration and error handling.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/services/food/DoseResponseService.ts</path>
+        <kind>service</kind>
+        <symbol>DoseResponseService</symbol>
+        <lines>1-213</lines>
+        <reason>REFERENCE - Recently implemented service (Story 2.2) showing similar pattern. Pure computation layer with confidence level determination, sample size thresholds, and comprehensive test coverage. Follow similar structure for CombinationAnalysisService.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/foodEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>foodEventRepository</symbol>
+        <lines>1-150</lines>
+        <reason>REFERENCE - Repository pattern for FoodEvent data access. Shows compound index usage [userId+timestamp], JSON parsing for arrays (foodIds, portionMap), and batch operations. Use similar pattern for querying meals by mealId.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>FoodEventRecord</symbol>
+        <lines>150-200</lines>
+        <reason>EXTEND - Database schema definitions. Need to understand FoodEvent structure (mealId, foodIds[], timestamp) to build combination detection logic. Arrays stored as JSON strings per Dexie convention.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/triggers/TriggerCorrelationDashboard.tsx</path>
+        <kind>component</kind>
+        <symbol>TriggerCorrelationDashboard</symbol>
+        <lines>1-100</lines>
+        <reason>EXTEND - Main dashboard component for trigger analysis. Need to integrate FoodCombinationCard section here. Shows pattern for loading correlations, displaying insights, and handling loading states.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <package name="dexie" version="^4.2.0" usage="IndexedDB database wrapper - all data access" />
+      <package name="react" version="19.1.0" usage="Component framework" />
+      <package name="chart.js" version="^4.5.0" usage="Visualization (if combination charts needed)" />
+      <package name="lucide-react" version="^0.544.0" usage="Icons for synergy indicators" />
+      <package name="@testing-library/react" version="^16.3.0" usage="Component testing" />
+      <package name="jest" version="^30.2.0" usage="Test framework" />
+    </dependencies>
+
+    <constraints>
+      <constraint type="architecture">
+        <description>Local-First Architecture</description>
+        <details>All data stored in IndexedDB via Dexie.js, no backend. Tech spec references Prisma/Postgres but project uses Dexie. Adapt all data models to Dexie schema (src/lib/db/schema.ts).</details>
+      </constraint>
+      <constraint type="architecture">
+        <description>Pure Computation Layers</description>
+        <details>Service layer must be pure and testable. Separate computation (CombinationAnalysisService) from orchestration (CorrelationOrchestrationService) and data access (repositories). Follow CorrelationService pattern.</details>
+      </constraint>
+      <constraint type="data">
+        <description>JSON Array Storage</description>
+        <details>Arrays stored as JSON strings in Dexie (foodIds, foodNames). Must JSON.parse() on read, JSON.stringify() on write. Per AGENTS.md: "Arrays stored as JSON strings in database (must parse on read)".</details>
+      </constraint>
+      <constraint type="data">
+        <description>Compound Index Performance</description>
+        <details>Always query using compound indexes [userId+field] to avoid full scans. Per AGENTS.md: "Compound indexes critical for performance - always query using [userId+field] patterns." For combination queries, index on [userId+mealId] or [userId+timestamp].</details>
+      </constraint>
+      <constraint type="statistics">
+        <description>Chi-Square Test Requirements</description>
+        <details>Use Chi-square test for statistical significance (p &lt; 0.05 per ADR-008). Reuse chiSquare() function from CorrelationService. Requires minimum sample size (3 instances per AC4). Follow existing implementation pattern.</details>
+      </constraint>
+      <constraint type="statistics">
+        <description>Synergy Threshold</description>
+        <details>Synergy defined as combination correlation exceeding max individual correlation by 15% (0.15 delta). Per Dev Notes: "synergistic = combinationCorrelation > maxIndividual + 0.15". Clear threshold for flagging synergistic effects.</details>
+      </constraint>
+      <constraint type="testing">
+        <description>80% Code Coverage</description>
+        <details>Minimum coverage: 80% branches, functions, lines, statements. Per AGENTS.md: "Coverage: 80% minimum across branches, functions, lines, statements." Use Jest + React Testing Library. Test all edge cases (empty meals, single foods, insufficient samples).</details>
+      </constraint>
+      <constraint type="accessibility">
+        <description>WCAG 2.1 AA Compliance</description>
+        <details>FoodCombinationCard must meet WCAG 2.1 Level AA. Use semantic HTML, ARIA labels, keyboard navigation, color contrast. Test with screen readers. Follow existing component accessibility patterns.</details>
+      </constraint>
+    </constraints>
+
+    <interfaces>
+      <interface>
+        <name>CombinationAnalysisService</name>
+        <purpose>Pure computation service for detecting synergistic food combinations</purpose>
+        <signature>
+          <![CDATA[
+export interface FoodCombination {
+  foodIds: string[];
+  foodNames: string[];
+  symptomId: string;
+  symptomName: string;
+  combinationCorrelation: number; // 0-1 percentage as decimal
+  individualMax: number; // Max individual correlation from pair
+  synergistic: boolean; // combinationCorrelation > individualMax + 0.15
+  pValue: number;
+  confidence: 'high' | 'medium' | 'low';
+  sampleSize: number;
+  computedAt: number;
+}
+
+export interface MealEvent {
+  mealId: string;
+  foodIds: string[];
+  timestamp: number;
+}
+
+export interface IndividualCorrelation {
+  foodId: string;
+  symptomId: string;
+  correlation: number;
+}
+
+export function detectCombinations(
+  mealEvents: MealEvent[],
+  symptomInstances: SymptomInstanceLike[],
+  individualCorrelations: IndividualCorrelation[],
+  range: TimeRange,
+  minSampleSize?: number // default 3 per AC4
+): FoodCombination[]
+          ]]>
+        </signature>
+      </interface>
+      <interface>
+        <name>FoodCombinationCard</name>
+        <purpose>React component displaying synergistic food combination with visual indicators</purpose>
+        <props>
+          <![CDATA[
+interface FoodCombinationCardProps {
+  combination: FoodCombination;
+  onExpand?: () => void;
+  className?: string;
+}
+
+// Component renders:
+// - Food pair names with + separator
+// - Synergy badge (">15% stronger together")
+// - Correlation comparison bar chart
+// - Confidence level indicator
+// - Sample size and p-value details
+// - Accessible tooltips for all metrics
+          ]]>
+        </props>
+      </interface>
+    </interfaces>
+
+    <existing-patterns>
+      <pattern name="Pure Service Layer">
+        <description>Computation logic separated from data access. Services are pure functions, testable without DB mocking.</description>
+        <example>CorrelationService.computePairWithData() accepts in-memory data arrays, returns WindowScore[]. No DB calls inside pure service.</example>
+        <application>CombinationAnalysisService.detectCombinations() should accept meal events array and symptom instances array as parameters. No repository calls inside detection logic.</application>
+      </pattern>
+      <pattern name="Orchestration Service">
+        <description>Orchestration layer hydrates data from repositories and delegates to pure services.</description>
+        <example>CorrelationOrchestrationService hydrates food events and symptom instances via repositories, then calls computePairWithData().</example>
+        <application>Extend CorrelationOrchestrationService.computeCorrelation() to invoke CombinationAnalysisService after individual correlations computed. Pass meal-grouped events and individual results.</application>
+      </pattern>
+      <pattern name="Chi-Square Statistical Test">
+        <description>2x2 contingency table for categorical correlation (food present vs symptom present).</description>
+        <example>chiSquare(a, b, c, d) in CorrelationService computes chi-square statistic from contingency table. Returns score, higher = stronger association.</example>
+        <application>Reuse chiSquare() function for combination analysis. Table: [combination+symptom, combination+noSymptom, noCombination+symptom, noCombination+noSymptom].</application>
+      </pattern>
+      <pattern name="Confidence Level Determination">
+        <description>Classify statistical confidence based on sample size, r-squared/p-value, and correlation strength.</description>
+        <example>DoseResponseService determines confidence: high (n≥10, r²≥0.7), medium (n≥5, r²≥0.5), low (otherwise).</example>
+        <application>CombinationAnalysisService should classify confidence: high (n≥10, p&lt;0.01), medium (n≥5, p&lt;0.05), low (n&lt;5 or p≥0.05). Reject if n&lt;3 per AC4.</application>
+      </pattern>
+      <pattern name="JSON Array Parsing">
+        <description>Dexie stores arrays as JSON strings. Must parse on read, stringify on write.</description>
+        <example>foodEventRepository parses foodIds: const foodIds = JSON.parse(event.foodIds) as string[];</example>
+        <application>When reading FoodEventRecords for combination analysis, parse foodIds and foodNames arrays. When writing FoodCombination results, stringify foodIds[] and foodNames[].</application>
+      </pattern>
+      <pattern name="Compound Index Queries">
+        <description>Use compound indexes [userId+field] for efficient range queries.</description>
+        <example>foodEventRepository.findByDateRange() uses [userId, timestamp] compound index, filters by userId first.</example>
+        <application>Query meal events by [userId+mealId] or [userId+timestamp]. Ensure Dexie schema has appropriate compound indexes for combination queries.</application>
+      </pattern>
+    </existing-patterns>
+  </artifacts>
+
+  <tests>
+    <standards>
+      <standard>Jest 30.2.0 with ts-jest for TypeScript support</standard>
+      <standard>React Testing Library 16.3.0 for component testing</standard>
+      <standard>80% minimum coverage (branches, functions, lines, statements)</standard>
+      <standard>Tests in __tests__ subdirectories alongside source files</standard>
+      <standard>Mock Dexie operations for repository tests</standard>
+      <standard>Use accessible queries (getByRole, getByLabelText) for component tests</standard>
+      <standard>Test edge cases: empty data, insufficient samples, null values</standard>
+    </standards>
+
+    <ideas>
+      <test-idea ac="1">
+        <description>Unit: Meal grouping by mealId correctly identifies food combinations</description>
+        <approach>Given 3 meal events with mealIds (M1, M1, M2), each with 2 foods. Verify function returns 2 unique combinations for M1, 1 for M2. Test single-food meals are excluded (no combination with self).</approach>
+      </test-idea>
+      <test-idea ac="1">
+        <description>Unit: Food pair enumeration generates unique combinations without duplicates</description>
+        <approach>Given meal with foods [A, B, C], verify function returns pairs [(A,B), (A,C), (B,C)] without duplicates like (B,A). Test ordering consistency.</approach>
+      </test-idea>
+      <test-idea ac="2">
+        <description>Unit: Combination correlation calculation uses Chi-square correctly</description>
+        <approach>Mock meal events with known food combinations. Mock symptom instances at known times. Verify Chi-square score computed for combination vs baseline. Compare against hand-calculated expected value.</approach>
+      </test-idea>
+      <test-idea ac="2">
+        <description>Unit: Individual max correlation correctly identified from pair</description>
+        <approach>Given individualCorrelations [(A→symptom: 0.4), (B→symptom: 0.6)], verify maxIndividual = 0.6 for combination (A+B). Test with missing individual correlations (fallback to 0).</approach>
+      </test-idea>
+      <test-idea ac="3">
+        <description>Unit: Synergy detection flags combinations exceeding 15% threshold</description>
+        <approach>Test cases: combinationCorr=0.75, maxIndividual=0.55 → synergistic=true (0.75 > 0.70). Test boundary: 0.70 vs 0.55 → true, 0.69 vs 0.55 → false. Test negative cases.</approach>
+      </test-idea>
+      <test-idea ac="4">
+        <description>Unit: Sample size filter rejects combinations with &lt;3 instances</description>
+        <approach>Test combinations with sampleSize [0, 1, 2, 3, 10]. Verify n&lt;3 returns empty array or undefined. Verify n≥3 proceeds to analysis. Test minSampleSize parameter override.</approach>
+      </test-idea>
+      <test-idea ac="5">
+        <description>Component: FoodCombinationCard renders synergy indicator correctly</description>
+        <approach>Render with synergistic=true combination. Verify synergy badge visible with text ">15% stronger together" or similar. Test color coding (green/yellow). Verify accessible ARIA labels.</approach>
+      </test-idea>
+      <test-idea ac="5">
+        <description>Component: FoodCombinationCard displays correlation comparison</description>
+        <approach>Render with combinationCorr=0.65, individualMax=0.42. Verify both values displayed. Test comparison bar chart or visual indicator. Verify accessible text "65% vs 42% individually".</approach>
+      </test-idea>
+      <test-idea ac="5">
+        <description>Component: FoodCombinationCard confidence badge rendering</description>
+        <approach>Test rendering with confidence=high, medium, low. Verify correct badge color and text. Test accessible tooltips explaining confidence levels. Verify ARIA attributes for screen readers.</approach>
+      </test-idea>
+      <test-idea ac="6">
+        <description>Unit: Chi-square p-value calculation and significance filtering</description>
+        <approach>Given Chi-square score, compute p-value (or mock). Test filtering: p&lt;0.05 → included, p≥0.05 → excluded per ADR-008. Test edge case p=0.05 (boundary).</approach>
+      </test-idea>
+      <test-idea ac="1,2,6">
+        <description>Integration: End-to-end combination detection with mocked repositories</description>
+        <approach>Mock foodEventRepository to return meal events with shared mealIds. Mock symptomInstanceRepository to return symptom instances. Mock individual correlations. Call orchestration service, verify FoodCombination results include all expected fields, correct synergy flags, and proper confidence levels.</approach>
+      </test-idea>
+      <test-idea ac="all">
+        <description>Integration: Combination analysis in CorrelationOrchestrationService</description>
+        <approach>Mock repositories with realistic meal data (10 meals, 5 food pairs, 20 symptom instances). Call computeCorrelation(), verify both individual correlations and combinations returned. Test caching of combination results alongside individual results.</approach>
+      </test-idea>
+      <test-idea ac="all">
+        <description>Edge case: Empty meal data returns empty combinations</description>
+        <approach>Test with no meal events. Verify detectCombinations() returns empty array without errors. Test with meals containing single foods (no pairs) - verify no combinations generated.</approach>
+      </test-idea>
+      <test-idea ac="all">
+        <description>Edge case: Insufficient sample size for all pairs</description>
+        <approach>Given 5 different food pairs, each with only 2 instances. Verify all pairs filtered out (n&lt;3). Test mixed scenario: 2 pairs with n≥3, 3 pairs with n&lt;3, verify only valid pairs analyzed.</approach>
+      </test-idea>
+      <test-idea ac="2,3">
+        <description>Edge case: No individual correlations available for comparison</description>
+        <approach>Test combination analysis when individualCorrelations array is empty. Verify maxIndividual defaults to 0. Test synergy detection still works (combinationCorr > 0.15 → synergistic).</approach>
+      </test-idea>
+    </ideas>
+  </tests>
+
+  <dev-notes>
+    <note category="architecture">
+      <title>Dexie vs Prisma Discrepancy</title>
+      <content>Tech spec references Prisma/Postgres models but project actually uses IndexedDB via Dexie.js. All data models must be adapted to Dexie schema in src/lib/db/schema.ts. Use existing FoodEventRecord pattern with JSON stringified arrays. No Prisma migrations - use Dexie version upgrades in db/client.ts if schema changes needed.</content>
+    </note>
+    <note category="statistics">
+      <title>Chi-Square Implementation</title>
+      <content>Reuse existing chiSquare() function from CorrelationService. Builds 2x2 contingency table: [combination+symptom, combination+noSymptom, noCombination+symptom, noCombination+noSymptom]. Returns Chi-square score, higher = stronger association. Pair with p-value calculation for significance filtering (p &lt; 0.05 per ADR-008).</content>
+    </note>
+    <note category="statistics">
+      <title>Synergy Threshold Calculation</title>
+      <content>Synergy defined as combination correlation exceeding max individual correlation by 15% absolute (0.15 delta). Formula: synergistic = combinationCorrelation > maxIndividual + 0.15. Example: if dairy=0.42 and gluten=0.38, then maxIndividual=0.42. Combination must be >0.57 (0.42+0.15) to flag as synergistic. Clear, interpretable threshold for users.</content>
+    </note>
+    <note category="data">
+      <title>Meal Grouping Strategy</title>
+      <content>FoodEventRecords with shared mealId represent foods consumed together. Query foodEventRepository by userId and timestamp range, then group by mealId in memory. For each meal group, enumerate unique food pairs using combinations logic (avoid duplicates, no self-pairs). Filter single-food meals (no combinations possible).</content>
+    </note>
+    <note category="data">
+      <title>Sample Size Filtering</title>
+      <content>Per AC4, minimum 3 instances required for combination analysis. Count number of meal events containing specific food pair. If count &lt; 3, skip analysis for that pair (insufficient statistical power). This prevents false positives from small samples. Apply filter before calling Chi-square to avoid wasted computation.</content>
+    </note>
+    <note category="integration">
+      <title>Orchestration Integration</title>
+      <content>Extend CorrelationOrchestrationService.computeCorrelation() to invoke CombinationAnalysisService after individual correlations computed. Pass meal-grouped food events, symptom instances, and individual correlation results. Append combination results to return payload. Cache combinations alongside individual correlations in analysisResults table (extend schema if needed).</content>
+    </note>
+    <note category="ui">
+      <title>Dashboard Integration</title>
+      <content>Add FoodCombinationCard section to TriggerCorrelationDashboard below individual correlations. Sort combinations by synergy strength (combinationCorr - individualMax) descending. Add toggle to show/hide combinations section. Filter by confidence level and allergen tags (if applicable). Maintain consistent visual language with existing correlation cards.</content>
+    </note>
+    <note category="testing">
+      <title>Test Coverage Strategy</title>
+      <content>Target 15+ unit tests for CombinationAnalysisService (pair enumeration, Chi-square, thresholds, edge cases). Target 8+ component tests for FoodCombinationCard (rendering, accessibility, synergy badges, confidence levels). Target 6+ integration tests for orchestration (end-to-end with mocked repositories, caching, error handling). Aim for 85%+ coverage to exceed 80% minimum.</content>
+    </note>
+  </dev-notes>
+
+  <validation>
+    <checklist>
+      <item>✓ All acceptance criteria (6) covered in tasks</item>
+      <item>✓ All tasks (7) mapped to acceptance criteria</item>
+      <item>✓ Technical specification excerpts included</item>
+      <item>✓ Existing code patterns documented for reuse</item>
+      <item>✓ Database schema constraints (Dexie, JSON arrays, compound indexes) noted</item>
+      <item>✓ Statistical methods (Chi-square, p-value, synergy threshold) specified</item>
+      <item>✓ Testing standards (80% coverage, Jest, RTL) documented</item>
+      <item>✓ Test ideas (15) mapped to acceptance criteria</item>
+      <item>✓ Dependencies (Dexie, React, Jest) listed with versions</item>
+      <item>✓ Accessibility requirements (WCAG 2.1 AA) included</item>
+      <item>✓ Dev notes (8) cover architecture, statistics, data, integration, UI, testing</item>
+      <item>✓ Interfaces defined for CombinationAnalysisService and FoodCombinationCard</item>
+      <item>✓ Dexie vs Prisma discrepancy highlighted with resolution guidance</item>
+      <item>✓ All file paths use project-relative format</item>
+      <item>✓ Reusable artifacts (CorrelationService, DoseResponseService) identified</item>
+    </checklist>
+  </validation>
+</story-context>

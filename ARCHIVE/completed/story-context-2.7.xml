@@ -1,0 +1,161 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.7</storyId>
+    <title>Mobile Responsive Design and Accessibility</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>c:\projects\symptom-tracker\docs\stories\story-2.7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user on mobile devices, and a user with accessibility needs</asA>
+    <iWant>to operate all quick-log flows with one hand, and to use screen readers and keyboard navigation</iWant>
+    <soThat>I can log events while in pain or on-the-go, and the app is usable regardless of my abilities</soThat>
+    <tasks>
+- Audit all Epic 2 components for mobile responsiveness (AC-Mobile: 1-6)
+  - QuickLogButtons (Story 2.1)
+  - ActiveFlareCards (Story 2.2)
+  - TimelineView (Story 2.3)
+  - FlareCreationModal & FlareUpdateModal (Story 2.4)
+  - MedicationLogModal, SymptomLogModal, TriggerLogModal (Story 2.5)
+  - EventDetailModal (Story 2.6)
+- Implement mobile-specific styles (AC-Mobile: 1,2,3,4)
+  - Full-screen modals on mobile using Tailwind responsive utilities
+  - Minimum tap target size: className="min-h-[44px] min-w-[44px]"
+  - Position important buttons in bottom half for thumb reach
+  - Large touch areas for sliders and range inputs
+- Test on mobile devices (AC-Mobile: 6)
+  - iPhone SE (small screen, 4.7")
+  - iPhone 14 Pro (large screen, 6.1")
+  - Test all flows with one-handed operation
+- Add ARIA labels and attributes (AC-Accessibility: 1,6)
+  - QuickLog buttons: aria-label="Log new flare"
+  - Severity sliders: aria-valuenow, aria-valuemin="1", aria-valuemax="10"
+  - All interactive elements have descriptive labels
+- Implement keyboard navigation (AC-Accessibility: 2,3)
+  - Tab through all form fields
+  - Enter to submit forms
+  - Esc to close modals
+  - Focus management: useEffect(() => inputRef.current?.focus(), [isOpen])
+- Add screen reader announcements (AC-Accessibility: 4)
+  - Use aria-live regions for success messages
+  - Announce modal open/close
+  - Announce form validation errors
+- Ensure semantic HTML (AC-Accessibility: 7)
+  - Timeline events use &lt;article&gt; tags
+  - Dates use &lt;time&gt; element
+  - Proper heading hierarchy (h1, h2, h3)
+- Verify color contrast (AC-Accessibility: 5)
+  - Run axe-core accessibility audit
+  - Check all text meets 4.5:1 contrast ratio
+  - Check UI components meet 3:1 contrast ratio
+  - Fix any contrast issues
+- Test with screen readers (AC-Accessibility: 8)
+  - VoiceOver on iOS
+  - TalkBack on Android
+  - Verify all flows are navigable
+  - Verify all content is announced correctly</tasks>
+  </story>
+
+  <acceptanceCriteria>
+**Mobile Responsive:**
+1. All modals full-screen on mobile (&lt;768px), centered dialog on desktop
+2. Tap targets ≥44px for buttons and interactive elements
+3. Thumb-zone optimization: important actions in bottom half of screen
+4. Sliders operable with thumb (large touch area)
+5. Keyboard closes automatically when not needed (severity slider, checkboxes)
+6. Tested on iPhone SE (small screen) and iPhone 14 Pro (large screen)
+
+**Accessibility:**
+1. All interactive elements have ARIA labels
+2. Keyboard navigation: Tab through form fields, Enter to submit, Esc to close modals
+3. Focus management: when modal opens, focus moves to first input
+4. Screen reader announcements: "Flare logged successfully" on save
+5. Color contrast meets WCAG 2.1 AA (4.5:1 for text, 3:1 for UI components)
+6. Severity slider has aria-valuenow, aria-valuemin, aria-valuemax
+7. Timeline events have semantic HTML: &lt;article&gt; tags with time element
+8. Tested with VoiceOver (iOS) and TalkBack (Android)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRODUCT/event-stream-redesign-epics.md" section="Story 2.7">
+        Complete story definition with mobile responsive and accessibility acceptance criteria. Specifies full-screen modals on mobile, 44px tap targets, thumb-zone optimization, keyboard navigation, ARIA labels, WCAG 2.1 AA color contrast, semantic HTML, and screen reader testing requirements.
+      </doc>
+      <doc path="docs/PRODUCT/event-stream-redesign-PRD.md" section="NFR6-NFR9">
+        Non-functional requirements: One-handed operation with ≥44px tap targets, offline capability, accessibility with ARIA labels and keyboard navigation, WCAG 2.1 AA compliance required for all quick-log flows.
+      </doc>
+      <doc path="docs/DEVELOPMENT/component-library.md" section="Accessibility & Testing">
+        Existing accessibility patterns: ARIA labels on all interactive components, keyboard navigation (Tab/Enter/Esc), screen reader support with aria-live regions, role attributes, focus management. Testing strategy with Jest, React Testing Library, 80% coverage target.
+      </doc>
+      <doc path="docs/DEVELOPMENT/testing-strategy.md" section="Component Testing">
+        Component testing patterns using React Testing Library with accessible queries (getByRole, getByLabelText priority). Includes examples of testing user interactions, forms, keyboard navigation, and ARIA attributes.
+      </doc>
+      <doc path="ARCHITECTURE.md" section="Component Architecture & PWA">
+        Component design principles: Accessibility First with ARIA labels, keyboard navigation, screen reader support. Mobile-First responsive design with touch-friendly targets. Uses Tailwind responsive utilities and Radix UI primitives for accessible components.
+      </doc>
+    </docs>
+    <code>
+      <ref path="src/components/flare/ActiveFlareDashboard.tsx" kind="component" symbol="ActiveFlareDashboard" reason="Story 2.2 component - requires mobile responsive layout, accessible card display, and ARIA labels for flare status" />
+      <ref path="src/components/flare/FlareCard.tsx" kind="component" symbol="FlareCard" reason="Individual flare display - needs 44px tap targets for Update/Resolve buttons, touch-friendly interaction" />
+      <ref path="src/components/flare/NewFlareDialog.tsx" kind="component" symbol="NewFlareDialog" reason="Story 2.4 modal - must be full-screen on mobile, keyboard navigable, focus management required" />
+      <ref path="src/components/navigation/BottomTabs.tsx" kind="component" symbol="BottomTabs" reason="Existing mobile navigation pattern showing touch target implementation and responsive utilities" />
+      <ref path="src/components/navigation/Sidebar.tsx" kind="component" symbol="Sidebar" reason="Desktop navigation example with keyboard navigation and ARIA roles" />
+      <ref path="src/components/photos/PhotoViewer.tsx" kind="component" symbol="PhotoViewer" reason="Full-screen modal pattern on mobile with keyboard controls (Esc to close)" />
+      <ref path="src/components/daily-entry/EntrySections/PhotoSection.tsx" kind="component" symbol="PhotoSection" reason="Contains PhotoCapture integration showing mobile-responsive patterns" />
+      <ref path="src/lib/db/schema.ts" kind="schema" symbol="FlareRecord, MedicationEventRecord" reason="Type definitions for data shown in Epic 2 components" />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="next" version="15.5.4" note="React framework with App Router and responsive utilities" />
+        <package name="react" version="19.1.0" note="UI library with hooks for state/focus management" />
+        <package name="tailwindcss" version="4.0.0" note="Responsive utilities: md:, lg:, min-h-[44px], min-w-[44px]" />
+        <package name="@radix-ui/react-dialog" version="1.2.8" note="Accessible modal primitives with focus trap" />
+        <package name="@radix-ui/react-tooltip" version="1.2.8" note="Accessible tooltips for UI guidance" />
+        <package name="lucide-react" version="0.544.0" note="Icon library with consistent sizing" />
+        <package name="jest" version="30.2.0" note="Testing framework" />
+        <package name="@testing-library/react" version="16.3.0" note="Component testing with accessible queries" />
+        <package name="@testing-library/user-event" version="14.6.4" note="User interaction simulation" />
+        <package name="@axe-core/react" version="latest" note="Automated accessibility testing (to be added)" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="docs/stories/story-2.7.md">Mobile: Full-screen modals on <768px, 44px tap targets, thumb-zone optimization (bottom half), large slider touch areas. Accessibility: ARIA labels on all interactive elements, keyboard navigation (Tab/Enter/Esc), focus management, screen reader announcements, WCAG 2.1 AA color contrast, semantic HTML with article/time elements.</constraint>
+    <constraint source="docs/PRODUCT/event-stream-redesign-PRD.md">NFR6: One-handed operation with ≥44px tap targets, no required two-handed interactions. NFR9: ARIA labels and keyboard navigation for WCAG 2.1 AA compliance on all quick-log flows.</constraint>
+    <constraint source="docs/DEVELOPMENT/component-library.md">Design Principles: (1) Accessibility First - ARIA labels, keyboard navigation, screen reader support, (2) Mobile-First - Responsive design with touch-friendly targets (3) Type Safety - Full TypeScript coverage.</constraint>
+    <constraint source="ARCHITECTURE.md">Tailwind responsive utilities (md:, lg:), Radix UI primitives for accessible components, React hooks for focus management (useEffect + refs).</constraint>
+    <constraint source="docs/DEVELOPMENT/testing-strategy.md">80% coverage threshold (branches, functions, lines). Use accessible queries priority: getByRole > getByLabelText > getByText. Test keyboard navigation and ARIA attributes.</constraint>
+  </constraints>
+  <interfaces>
+    <interface name="ResponsiveModalPattern" kind="pattern" signature="className='fixed inset-0 md:relative md:max-w-2xl'" note="Full-screen mobile, centered desktop dialog" />
+    <interface name="TouchTargetPattern" kind="pattern" signature="className='min-h-[44px] min-w-[44px]'" note="Minimum tap target size for buttons and interactive elements" />
+    <interface name="ARIAPattern" kind="pattern" signature="aria-label, aria-valuenow, aria-valuemin, aria-valuemax, role" note="Required accessibility attributes" />
+    <interface name="KeyboardNavPattern" kind="pattern" signature="onKeyDown={handleKeyDown}, tabIndex, ref.current?.focus()" note="Tab/Enter/Esc support with focus management" />
+    <interface name="ScreenReaderPattern" kind="pattern" signature="aria-live='polite', role='status'" note="Announcements for state changes" />
+  </interfaces>
+  <tests>
+    <standards>Jest 30.2.0 with React Testing Library 16.3.0 in jsdom environment. Coverage threshold: 80% (branches, functions, lines, statements). Mock IndexedDB via jest.setup.js. Use accessible queries (getByRole, getByLabelText priority). Test keyboard navigation and ARIA attributes explicitly. Run axe-core for automated accessibility audits.</standards>
+    <locations>
+      <location>src/components/**/__tests__/*.test.tsx</location>
+      <location>src/components/**/__tests__/*.a11y.test.tsx (accessibility-specific tests)</location>
+    </locations>
+    <ideas>
+      <idea criteria="AC-Mobile 1,2,3">Test responsive modal behavior: render modals in containers simulating <768px viewport, assert className contains 'fixed inset-0', then simulate ≥768px and assert centered dialog classes. Verify button elements have min-h-[44px] and min-w-[44px] classes. Test that primary action buttons render in bottom half of modal on mobile.</idea>
+      <idea criteria="AC-Mobile 4,5">Render slider components and verify touch-friendly interaction: assert range input has large touch area (padding/sizing), simulate touch events (user-event), verify keyboard dismissal on slider interaction and checkbox selection.</idea>
+      <idea criteria="AC-Mobile 6">Integration test suite using Playwright or manual test plan for iPhone SE (4.7") and iPhone 14 Pro (6.1"): verify one-handed thumb operation, no horizontal scroll, all interactive elements reachable.</idea>
+      <idea criteria="AC-Accessibility 1">Iterate through all Epic 2 components (QuickLogButtons, ActiveFlareCards, TimelineView, all modals) and assert every interactive element has aria-label or aria-labelledby. Use getByRole queries with { name } option to verify labels.</idea>
+      <idea criteria="AC-Accessibility 2,3">Test keyboard navigation: simulate Tab key presses through form fields in modals, verify focus order matches visual order. Simulate Enter key on submit buttons, verify form submission. Simulate Escape key, verify modal closes. Test focus management: when modal opens, verify first input receives focus using document.activeElement.</idea>
+      <idea criteria="AC-Accessibility 4">Test screen reader announcements: render components with aria-live regions, trigger save actions, assert screen reader text includes success messages like "Flare logged successfully". Use @testing-library/react's waitFor to verify announcement timing.</idea>
+      <idea criteria="AC-Accessibility 5">Run axe-core accessibility audit on rendered components: import { axe } from 'jest-axe', run axe(container), assert no violations. Verify text color contrast meets 4.5:1 and UI components meet 3:1 using contrast checker tools or manual verification in dev tools.</idea>
+      <idea criteria="AC-Accessibility 6">Test severity slider ARIA attributes: render slider, assert aria-valuenow equals current value, aria-valuemin='1', aria-valuemax='10', aria-label describes purpose. Simulate value changes, verify aria-valuenow updates.</idea>
+      <idea criteria="AC-Accessibility 7">Test semantic HTML in TimelineView: assert timeline events use article elements, dates use time elements with datetime attributes, proper heading hierarchy (h1→h2→h3) without skips.</idea>
+      <idea criteria="AC-Accessibility 8">Manual testing plan with VoiceOver (iOS) and TalkBack (Android): Document test scenarios verifying all flows navigable, content announced correctly, no elements hidden from screen readers, interactive elements clearly identified.</idea>
+      <idea criteria="Integration">Create cross-component responsive test: render full dashboard with ActiveFlareCards + QuickLogButtons + TimelineView, simulate mobile viewport, verify layout stacks correctly, buttons accessible, modals open full-screen. Test desktop viewport shows side-by-side layouts.</idea>
+      <idea criteria="Performance">Test modal open/close performance on mobile: measure time from button tap to modal visible, target <200ms. Test timeline scroll performance with 100+ events, verify 60fps using performance.now().</idea>
+    </ideas>
+  </tests>
+</story-context>

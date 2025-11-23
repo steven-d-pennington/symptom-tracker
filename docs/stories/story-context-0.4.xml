@@ -1,0 +1,298 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>0</epicId>
+    <storyId>4</storyId>
+    <title>Navigation Title & Layout Harmonization</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-22</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-0.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer maintaining navigation</asA>
+    <iWant>a single source of truth for route titles and layout behaviors</iWant>
+    <soThat>future pages automatically display the right heading and navigation state</soThat>
+    <tasks>- Task 1: Verify shared navigation configuration completeness
+  - Task 2: Audit component consumption of shared config
+  - Task 3: Implement navigation visibility logic
+  - Task 4: Add integration tests for title rendering
+  - Task 5: Update documentation and validate</tasks>
+  </story>
+
+  <acceptanceCriteria>1. Create/shared configuration defining route metadata (title, pillar, mobile/desktop visibility) consumed by `NavLayout`, `TopBar`, Sidebar, and Bottom Tabs.
+2. Top bar titles and breadcrumbs automatically update based on the shared config.
+3. Route configuration supports hiding nav for special pages (onboarding, landing) without duplicated logic.
+4. Unit tests cover key routes to prevent regressions (e.g., verifying "Log" renders the expected title on mobile and desktop).</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/ui/ui-ux-revamp-blueprint.md</path>
+        <title>UI/UX Revamp Blueprint</title>
+        <section>3. Proposed Information Architecture</section>
+        <snippet>Defines the Track/Analyze/Manage/Support pillar structure and navigation guidelines that this story implements and validates.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 0: UI/UX Revamp & Navigation Harmonization</section>
+        <snippet>Contains the detailed acceptance criteria for Story 0.4 focusing on navigation harmonization and shared configuration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Technology Stack and Library Decisions</section>
+        <snippet>Documents the Next.js/React/TypeScript stack that constrains navigation implementation patterns.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>configuration</kind>
+        <symbol>NAV_PILLARS</symbol>
+        <reason>Core shared navigation configuration that defines route metadata, titles, and visibility rules for all surfaces.</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>function</kind>
+        <symbol>getPageTitle</symbol>
+        <reason>Function that returns page titles based on route, consumed by NavLayout component.</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>function</kind>
+        <symbol>getNavPillars</symbol>
+        <reason>Function that returns navigation pillars filtered by surface (desktop/mobile), consumed by Sidebar.</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/navigation.ts</path>
+        <kind>function</kind>
+        <symbol>getNavDestinations</symbol>
+        <reason>Function that returns navigation destinations filtered by surface, consumed by BottomTabs.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/NavLayout.tsx</path>
+        <kind>component</kind>
+        <symbol>NavLayout</symbol>
+        <reason>Main navigation layout component that orchestrates title resolution and navigation visibility logic.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/NavLayout.tsx</path>
+        <kind>constant</kind>
+        <symbol>NO_NAV_ROUTES</symbol>
+        <reason>Array defining routes that should not show navigation, may need to be moved to shared config.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/TopBar.tsx</path>
+        <kind>component</kind>
+        <symbol>TopBar</symbol>
+        <reason>Component that displays page titles and navigation controls, receives title via props from NavLayout.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/Sidebar.tsx</path>
+        <kind>component</kind>
+        <symbol>Sidebar</symbol>
+        <reason>Desktop navigation component that consumes pillar structure from shared navigation config.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/navigation/BottomTabs.tsx</path>
+        <kind>component</kind>
+        <symbol>BottomTabs</symbol>
+        <reason>Mobile navigation component that consumes destination list from shared navigation config.</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/__tests__/navigation.test.ts</path>
+        <kind>test</kind>
+        <symbol>describe("Navigation Configuration")</symbol>
+        <reason>Existing unit tests for navigation configuration functions that may need extension for integration testing.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>react</package>
+        <version>19.1.0</version>
+        <reason>Core React framework for component development and navigation state management.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>next</package>
+        <version>15.5.4</version>
+        <reason>Next.js App Router framework providing navigation context and routing infrastructure.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>typescript</package>
+        <version>5.x</version>
+        <reason>TypeScript for type-safe navigation configuration and component props.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>lucide-react</package>
+        <version>0.544.0</version>
+        <reason>Icon library providing consistent navigation icons across all surfaces.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>@testing-library/react</package>
+        <version>16.3.0</version>
+        <reason>React Testing Library for component testing and accessibility queries.</reason>
+      </dependency>
+      <dependency>
+        <ecosystem>node</ecosystem>
+        <package>jest</package>
+        <version>30.x</version>
+        <reason>Testing framework for unit and integration tests of navigation functionality.</reason>
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <category>Architecture</category>
+      <rule>Brownfield enhancement maintaining existing Next.js/App Router structure</rule>
+      <reason>Navigation implementation must preserve existing component hierarchy and routing patterns</reason>
+    </constraint>
+    <constraint>
+      <category>Configuration</category>
+      <rule>Shared configuration follows existing repository pattern used in other config files</rule>
+      <reason>Navigation config must align with established patterns in src/config/ directory</reason>
+    </constraint>
+    <constraint>
+      <category>Component Organization</category>
+      <rule>Follows existing component organization in src/components/navigation/</rule>
+      <reason>No structural changes needed - validate existing organization meets requirements</reason>
+    </constraint>
+    <constraint>
+      <category>Testing</category>
+      <rule>Maintain 80% coverage threshold across all navigation-related code</rule>
+      <reason>Testing standards require comprehensive coverage for navigation-critical functionality</reason>
+    </constraint>
+    <constraint>
+      <category>Navigation Logic</category>
+      <rule>Navigation visibility logic must be centralized to avoid duplication</rule>
+      <reason>AC3 requires single source of truth for route visibility, no component-specific logic</reason>
+    </constraint>
+    <constraint>
+      <category>Accessibility</category>
+      <rule>All navigation components must maintain WCAG compliance</rule>
+      <reason>Navigation changes must preserve accessibility features for screen readers and keyboard navigation</reason>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>NavDestination</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface NavDestination {
+  href: string;
+  label: string;
+  ariaLabel?: string;
+  icon?: LucideIcon;
+  surface: "desktop" | "mobile" | "all";
+}</signature>
+      <path>src/config/navigation.ts</path>
+      <reason>Defines the structure for navigation destination objects used across all surfaces</reason>
+    </interface>
+    <interface>
+      <name>NavPillar</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface NavPillar {
+  id: "track" | "analyze" | "manage" | "support";
+  label: string;
+  order: number;
+  destinations: NavDestination[];
+}</signature>
+      <path>src/config/navigation.ts</path>
+      <reason>Defines the structure for navigation pillar objects organizing destinations by functional area</reason>
+    </interface>
+    <interface>
+      <name>getPageTitle</name>
+      <kind>function</kind>
+      <signature>function getPageTitle(pathname: string): string</signature>
+      <path>src/config/navigation.ts</path>
+      <reason>Function signature for retrieving page titles based on route pathname</reason>
+    </interface>
+    <interface>
+      <name>getNavPillars</name>
+      <kind>function</kind>
+      <signature>function getNavPillars(surface: "desktop" | "mobile"): NavPillar[]</signature>
+      <path>src/config/navigation.ts</path>
+      <reason>Function signature for retrieving navigation pillars filtered by surface type</reason>
+    </interface>
+    <interface>
+      <name>getNavDestinations</name>
+      <kind>function</kind>
+      <signature>function getNavDestinations(surface: "desktop" | "mobile"): NavDestination[]</signature>
+      <path>src/config/navigation.ts</path>
+      <reason>Function signature for retrieving navigation destinations filtered by surface type</reason>
+    </interface>
+    <interface>
+      <name>NavLayout Props</name>
+      <kind>React component props</kind>
+      <signature>interface NavLayoutProps {
+  children: React.ReactNode;
+}</signature>
+      <path>src/components/navigation/NavLayout.tsx</path>
+      <reason>Props interface for the main navigation layout component</reason>
+    </interface>
+    <interface>
+      <name>TopBar Props</name>
+      <kind>React component props</kind>
+      <signature>interface TopBarProps {
+  title: string;
+  showBack?: boolean;
+  showMenu?: boolean;
+  onMenuClick?: () => void;
+  actions?: React.ReactNode;
+}</signature>
+      <path>src/components/navigation/TopBar.tsx</path>
+      <reason>Props interface for the top bar component that displays titles and navigation controls</reason>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Follow existing Jest + React Testing Library patterns for navigation component tests. Use React Testing Library with accessible queries for component integration tests. Maintain 80% coverage threshold. Test navigation configuration functions for correctness and pillar ordering. Include accessibility testing for ARIA labels and keyboard navigation.</standards>
+    <locations>src/config/__tests__/navigation.test.ts - Existing unit tests for navigation configuration
+src/components/navigation/__tests__/ - Component-level tests for navigation components
+__tests__/integration/navigation/ - Integration tests for cross-component navigation behavior</locations>
+    <ideas>
+      <idea>
+        <id>AC1</id>
+        <description>Test that NAV_PILLARS configuration includes all required metadata (title, pillar, surface visibility) for each route</description>
+        <type>unit</type>
+      </idea>
+      <idea>
+        <id>AC1</id>
+        <description>Test that NavLayout, TopBar, Sidebar, and BottomTabs all consume shared navigation configuration</description>
+        <type>integration</type>
+      </idea>
+      <idea>
+        <id>AC2</id>
+        <description>Test that TopBar displays correct titles from getPageTitle() function for different routes</description>
+        <type>component</type>
+      </idea>
+      <idea>
+        <id>AC2</id>
+        <description>Test breadcrumb rendering consistency across desktop and mobile surfaces</description>
+        <type>integration</type>
+      </idea>
+      <idea>
+        <id>AC3</id>
+        <description>Test that navigation visibility logic is centralized and works for special routes (onboarding, landing)</description>
+        <type>unit</type>
+      </idea>
+      <idea>
+        <id>AC4</id>
+        <description>Test that "Log" route renders expected title on both mobile and desktop surfaces</description>
+        <type>integration</type>
+      </idea>
+      <idea>
+        <id>AC4</id>
+        <description>Test that navigation regression tests prevent title inconsistencies</description>
+        <type>regression</type>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

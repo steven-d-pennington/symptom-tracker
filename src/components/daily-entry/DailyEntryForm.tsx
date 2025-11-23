@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { DailyEntry, DailyEntryTemplate } from "@/lib/types/daily-entry";
-import { SYMPTOM_OPTIONS, MEDICATION_OPTIONS, TRIGGER_OPTIONS } from "@/lib/data/daily-entry-presets";
+import { MedicationOption, SymptomOption, TriggerOption } from "@/lib/data/daily-entry-presets";
 import { HealthSection } from "./EntrySections/HealthSection";
 import { SymptomSection } from "./EntrySections/SymptomSection";
 import { MedicationSection } from "./EntrySections/MedicationSection";
@@ -11,7 +11,13 @@ import { NotesSection } from "./EntrySections/NotesSection";
 import { QuickEntry } from "./QuickEntry";
 import { SmartSuggestions } from "../daily-entry/SmartSuggestions";
 import { Suggestion } from "./hooks/useSmartSuggestions";
-import { DailyMedication, DailySymptom, DailyTrigger } from "@/lib/types/daily-entry";
+import { DailyMedication, DailySymptom, DailyTrigger, DailyTreatment } from "@/lib/types/daily-entry";
+import { symptomRepository } from "@/lib/repositories/symptomRepository";
+import { triggerRepository } from "@/lib/repositories/triggerRepository";
+import { treatmentRepository } from "@/lib/repositories/treatmentRepository";
+import { TreatmentRecord } from "@/lib/db/schema";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { TreatmentSection } from "./EntrySections/TreatmentSection";
 
 interface DailyEntryFormProps {
   entry: DailyEntry;
@@ -23,6 +29,8 @@ interface DailyEntryFormProps {
   toggleMedicationTaken: (medicationId: string) => void;
   upsertTrigger: (triggerId: string, changes?: Partial<DailyTrigger>) => void;
   removeTrigger: (triggerId: string) => void;
+  upsertTreatment: (treatmentId: string, changes?: Partial<DailyTreatment>) => void;
+  removeTreatment: (treatmentId: string) => void;
   saveEntry: () => Promise<void>;
   isSaving: boolean;
   completion: number;
@@ -31,6 +39,8 @@ interface DailyEntryFormProps {
   queueLength: number;
   onSyncQueue: () => Promise<void> | void;
   recentSymptomIds: string[];
+  medicationSchedule: MedicationOption[];
+  entryHistory: DailyEntry[];
 }
 
 const formatLastSaved = (date: Date | null) => {
@@ -48,6 +58,8 @@ export const DailyEntryForm = ({
   toggleMedicationTaken,
   upsertTrigger,
   removeTrigger,
+  upsertTreatment,
+  removeTreatment,
   saveEntry,
   isSaving,
   completion,
@@ -56,8 +68,54 @@ export const DailyEntryForm = ({
   queueLength,
   onSyncQueue,
   recentSymptomIds,
+  medicationSchedule,
+  entryHistory,
 }: DailyEntryFormProps) => {
+  const { userId } = useCurrentUser();
   const [mode, setMode] = useState<"full" | "quick">("full");
+  const [symptomOptions, setSymptomOptions] = useState<SymptomOption[]>([]);
+  const [triggerOptions, setTriggerOptions] = useState<TriggerOption[]>([]);
+  const [treatmentOptions, setTreatmentOptions] = useState<TreatmentRecord[]>([]);
+
+  // Load symptoms and triggers from database
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadData = async () => {
+      try {
+        // Load symptoms (only enabled ones)
+        const symptoms = await symptomRepository.getAll(userId);
+        const enabledSymptoms = symptoms.filter(s => s.isActive && s.isEnabled);
+        setSymptomOptions(
+          enabledSymptoms.map(s => ({
+            id: s.id,
+            label: s.name,
+            category: s.category,
+          }))
+        );
+
+        // Load triggers (only enabled ones)
+        const triggers = await triggerRepository.getAll(userId);
+        const enabledTriggers = triggers.filter(t => t.isActive && t.isEnabled);
+        setTriggerOptions(
+          enabledTriggers.map(t => ({
+            id: t.id,
+            label: t.name,
+            description: t.description || "",
+          }))
+        );
+
+        // Load treatments (only enabled ones)
+        const treatments = await treatmentRepository.getAll(userId);
+        const enabledTreatments = treatments.filter(t => t.isActive && t.isEnabled);
+        setTreatmentOptions(enabledTreatments);
+      } catch (error) {
+        console.error("Failed to load symptoms/triggers:", error);
+      }
+    };
+
+    loadData();
+  }, [userId]);
 
   const orderedSections = useMemo(
     () =>
@@ -69,32 +127,65 @@ export const DailyEntryForm = ({
     <section className="space-y-8" aria-label="Daily entry form">
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
-          <h2 className="text-2xl font-semibold text-foreground">Daily check-in</h2>
-          <p className="text-sm text-muted-foreground">
-            Capture a quick snapshot of how you’re feeling today. Smart suggestions help you focus where it matters.
+          <h2 className="text-2xl font-semibold text-foreground">
+            {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening"}, Steven.
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            How are you feeling today?
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-muted-foreground">Mode:</span>
+          <button
+            type="button"
+            onClick={async () => {
+              // Find the most recent entry from history
+              const lastEntry = entryHistory.length > 0 ? entryHistory[0] : null;
+
+              if (lastEntry) {
+                // Copy symptoms, medications, and triggers
+                updateEntry({
+                  overallHealth: lastEntry.overallHealth,
+                  energyLevel: lastEntry.energyLevel,
+                  sleepQuality: lastEntry.sleepQuality,
+                  stressLevel: lastEntry.stressLevel,
+                  symptoms: lastEntry.symptoms.map(s => ({ ...s, notes: '' })), // Clear notes
+                  medications: lastEntry.medications.map(m => ({ ...m, taken: false })), // Reset taken status
+                  triggers: lastEntry.triggers.map(t => ({ ...t, notes: '' })), // Clear notes
+                  treatments: lastEntry.treatments.map(t => ({ ...t, notes: '' })), // Clear notes
+                });
+
+                // Haptic feedback
+                if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                  navigator.vibrate([10, 50, 10]);
+                }
+              }
+            }}
+            className="flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+            title="Copy data from last entry"
+          >
+            <span>↺ Same as yesterday</span>
+          </button>
+
+          <div className="h-4 w-px bg-border mx-1" />
+
+          <span className="text-muted-foreground hidden sm:inline">Mode:</span>
           <button
             type="button"
             onClick={() => setMode("full")}
-            className={`rounded-lg px-3 py-1 font-semibold transition-colors ${
-              mode === "full"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border text-foreground hover:border-primary"
-            }`}
+            className={`rounded-lg px-3 py-1 font-semibold transition-colors ${mode === "full"
+              ? "bg-primary text-primary-foreground"
+              : "border border-border text-foreground hover:border-primary"
+              }`}
           >
             Guided
           </button>
           <button
             type="button"
             onClick={() => setMode("quick")}
-            className={`rounded-lg px-3 py-1 font-semibold transition-colors ${
-              mode === "quick"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border text-foreground hover:border-primary"
-            }`}
+            className={`rounded-lg px-3 py-1 font-semibold transition-colors ${mode === "quick"
+              ? "bg-primary text-primary-foreground"
+              : "border border-border text-foreground hover:border-primary"
+              }`}
           >
             Quick
           </button>
@@ -151,7 +242,7 @@ export const DailyEntryForm = ({
                 <SymptomSection
                   key="symptoms"
                   symptoms={entry.symptoms}
-                  availableSymptoms={SYMPTOM_OPTIONS}
+                  availableSymptoms={symptomOptions}
                   recentSymptomIds={recentSymptomIds}
                   onAddSymptom={(symptomId) => upsertSymptom(symptomId)}
                   onUpdateSymptom={(symptomId, changes) => upsertSymptom(symptomId, changes)}
@@ -165,7 +256,7 @@ export const DailyEntryForm = ({
                 <MedicationSection
                   key="medications"
                   medications={entry.medications}
-                  schedule={MEDICATION_OPTIONS}
+                  schedule={medicationSchedule}
                   onToggleTaken={toggleMedicationTaken}
                   onUpdateMedication={updateMedication}
                 />
@@ -177,10 +268,29 @@ export const DailyEntryForm = ({
                 <TriggerSection
                   key="triggers"
                   triggers={entry.triggers}
-                  availableTriggers={TRIGGER_OPTIONS}
+                  availableTriggers={triggerOptions}
                   onAddTrigger={(triggerId) => upsertTrigger(triggerId)}
                   onUpdateTrigger={(triggerId, changes) => upsertTrigger(triggerId, changes)}
                   onRemoveTrigger={removeTrigger}
+                />
+              );
+            }
+
+            if (section === "treatments") {
+              return (
+                <TreatmentSection
+                  key="treatments"
+                  treatments={entry.treatments}
+                  availableTreatments={treatmentOptions}
+                  onToggleTreatment={(treatmentId) => {
+                    const exists = entry.treatments.find(t => t.treatmentId === treatmentId);
+                    if (exists) {
+                      removeTreatment(treatmentId);
+                    } else {
+                      upsertTreatment(treatmentId);
+                    }
+                  }}
+                  onUpdateTreatment={(treatmentId, changes) => upsertTreatment(treatmentId, changes)}
                 />
               );
             }

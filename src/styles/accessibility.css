@@ -1,0 +1,380 @@
+/**
+ * Accessibility Styles (Story 3.7.6)
+ *
+ * Comprehensive accessibility styles including:
+ * - Focus indicators (AC 3.7.6.3, 3.7.6.9)
+ * - High contrast mode support (AC 3.7.6.7)
+ * - Visual feedback for interactions (AC 3.7.6.9)
+ * - Smooth transitions (AC 3.7.6.6)
+ */
+
+/* ============================================
+   FOCUS INDICATORS (AC 3.7.6.3, 3.7.6.9)
+   ============================================ */
+
+/* Visible focus indicators for keyboard navigation */
+*:focus {
+  outline: none; /* Remove default to apply custom */
+}
+
+*:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Enhanced focus for interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+/* Focus for SVG elements (body map regions, buttons) */
+svg [role="button"]:focus-visible,
+svg rect:focus-visible,
+svg circle:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+/* ============================================
+   VISUAL FEEDBACK (AC 3.7.6.9)
+   ============================================ */
+
+/* Hover states for desktop */
+@media (hover: hover) and (pointer: fine) {
+  button:hover,
+  a:hover,
+  [role="button"]:hover {
+    transition: background-color 150ms ease-in-out,
+                transform 150ms ease-in-out,
+                box-shadow 150ms ease-in-out;
+    transform: translateY(-1px);
+  }
+
+  button:hover:not(:disabled) {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* Active states for click/tap feedback */
+button:active:not(:disabled),
+a:active,
+[role="button"]:active {
+  transform: translateY(0) scale(0.98);
+  transition: transform 100ms ease-in-out;
+}
+
+/* Touch feedback for mobile */
+@media (hover: none) and (pointer: coarse) {
+  button:active:not(:disabled),
+  [role="button"]:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    transition: background-color 150ms ease-in-out;
+  }
+}
+
+/* Disabled state visual feedback */
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================
+   SMOOTH TRANSITIONS (AC 3.7.6.6)
+   ============================================ */
+
+/* View transition classes - GPU accelerated */
+.view-transition {
+  transition: transform 250ms ease-in-out,
+              opacity 250ms ease-in-out;
+  will-change: transform, opacity;
+}
+
+.view-transition-enter {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.view-transition-enter-active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.view-transition-exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.view-transition-exit-active {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+/* Fullscreen mode transitions */
+.fullscreen-enter {
+  animation: fullscreen-expand 300ms ease-in-out;
+}
+
+.fullscreen-exit {
+  animation: fullscreen-collapse 300ms ease-in-out;
+}
+
+@keyframes fullscreen-expand {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fullscreen-collapse {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* Region detail view transitions */
+.region-detail-enter {
+  animation: slide-in-right 250ms ease-in-out;
+}
+
+.region-detail-exit {
+  animation: slide-out-right 250ms ease-in-out;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   HIGH CONTRAST MODE (AC 3.7.6.7)
+   ============================================ */
+
+@media (forced-colors: active) {
+  /* Use system colors for all interactive elements */
+  button,
+  a,
+  [role="button"] {
+    border: 2px solid ButtonText !important;
+    background: ButtonFace !important;
+    color: ButtonText !important;
+  }
+
+  button:hover,
+  a:hover,
+  [role="button"]:hover {
+    forced-color-adjust: none;
+    border-color: Highlight !important;
+    background: Highlight !important;
+    color: HighlightText !important;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 3px solid Highlight !important;
+  }
+
+  /* Form inputs */
+  input,
+  textarea,
+  select {
+    border: 2px solid ButtonText !important;
+    background: Field !important;
+    color: FieldText !important;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 3px solid Highlight !important;
+  }
+
+  /* SVG elements - body map markers and regions */
+  svg .body-region {
+    fill: Canvas !important;
+    stroke: ButtonText !important;
+    stroke-width: 2 !important;
+  }
+
+  svg .body-region[aria-selected="true"] {
+    fill: Highlight !important;
+    stroke: HighlightText !important;
+  }
+
+  /* Marker preview in high contrast */
+  svg .marker-preview circle {
+    fill: Highlight !important;
+    stroke: HighlightText !important;
+  }
+
+  /* Historical markers */
+  svg .historical-marker circle {
+    fill: GrayText !important;
+    stroke: ButtonText !important;
+  }
+
+  /* Session markers (new markers) */
+  svg .session-marker circle {
+    fill: Highlight !important;
+    stroke: HighlightText !important;
+  }
+
+  /* Remove decorative elements that would be confusing */
+  .animate-pulse,
+  .animate-ping {
+    animation: none !important;
+  }
+
+  /* Simplify shadows and gradients */
+  * {
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+
+  /* Ensure text remains visible */
+  * {
+    forced-color-adjust: auto;
+  }
+
+  /* Allow custom colors for critical elements */
+  .severity-indicator,
+  .status-badge {
+    forced-color-adjust: none;
+  }
+}
+
+/* ============================================
+   TOUCH TARGETS (AC 3.7.6.5)
+   ============================================ */
+
+/* Ensure minimum 44x44px touch targets on all interactive elements */
+/* Exclude inline links to prevent layout issues */
+button,
+a.btn,
+a[role="button"],
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  min-width: 44px;
+  min-height: 44px;
+  /* Use padding to expand hit area if content is smaller */
+  padding: max(12px, calc((44px - 1em) / 2));
+}
+
+/* For standalone navigation links (not inline text links) */
+nav a,
+a.nav-link {
+  min-width: 44px;
+  min-height: 44px;
+  padding: max(12px, calc((44px - 1em) / 2));
+}
+
+/* Touch target enforcement for SVG buttons */
+svg [role="button"] {
+  /* SVG doesn't support min-width/height, ensure stroke-width provides sufficient hit area */
+  cursor: pointer;
+}
+
+/* Ensure form controls meet minimum size */
+input[type="checkbox"],
+input[type="radio"] {
+  min-width: 24px;
+  min-height: 24px;
+}
+
+/* Range slider thumb should be at least 24px for precise control */
+input[type="range"]::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+}
+
+/* ============================================
+   SCREEN READER ONLY UTILITY
+   ============================================ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================
+   COLOR CONTRAST (AC 3.7.6.9)
+   ============================================ */
+
+/* Ensure sufficient contrast ratios */
+/* These are enforced through Tailwind utilities but documented here for reference */
+
+/* Text: 4.5:1 minimum (WCAG AA) */
+/* Large text (18px+): 3:1 minimum */
+/* UI components: 3:1 minimum */
+
+/* ============================================
+   REDUCED MOTION SUPPORT
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-pulse,
+  .animate-ping,
+  .animate-bounce {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "exportedAt": "2025-11-04T05:42:41.892Z",
+  "userId": "08300cb1-930f-420c-8888-7b0505f3a1cc",
+  "todayRange": {
+    "startOfDay": "2025-11-03T08:00:00.000Z",
+    "startMs": 1762156800000,
+    "endOfDay": "2025-11-04T07:59:59.999Z",
+    "endMs": 1762243199999
+  },
+  "counts": {
+    "symptoms": 0,
+    "triggers": 0,
+    "medications": 0,
+    "flares": 0,
+    "foods": 0
+  },
+  "symptoms": [],
+  "triggers": [],
+  "medications": []
+}

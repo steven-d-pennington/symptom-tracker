@@ -19,12 +19,19 @@ import {
   SYMPTOM_OPTIONS,
   TRIGGER_OPTIONS,
 } from "@/lib/data/daily-entry-presets";
-import {
-  HISTORY_STORAGE_KEY,
-  HISTORY_UPDATED_EVENT,
-  loadDailyEntries,
-} from "@/lib/storage/daily-entry-storage";
+import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
+import { symptomRepository } from "@/lib/repositories/symptomRepository";
+import { medicationRepository } from "@/lib/repositories/medicationRepository";
+import { triggerRepository } from "@/lib/repositories/triggerRepository";
+import { moodRepository } from "@/lib/repositories/moodRepository"; // Story 3.5.7
+import { sleepRepository } from "@/lib/repositories/sleepRepository"; // Story 3.5.7
+import { foodEventRepository } from "@/lib/repositories/foodEventRepository"; // Story 3.5.7
+import { symptomInstanceRepository } from "@/lib/repositories/symptomInstanceRepository"; // Story 3.5.7
+import { medicationEventRepository } from "@/lib/repositories/medicationEventRepository"; // Story 3.5.7
+import { triggerEventRepository } from "@/lib/repositories/triggerEventRepository"; // Story 3.5.7
+import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository"; // Unified marker system
 import { useDateNavigation } from "./useDateNavigation";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 interface CalendarDataHookOptions {
   filters: CalendarFilters;
@@ -48,30 +55,45 @@ interface CalendarDataResult {
   eventsByDate: Map<string, TimelineEvent[]>;
 }
 
-const symptomOptions = new Map(
-  SYMPTOM_OPTIONS.map((option) => [option.id, option]),
-);
-const medicationOptions = new Map(
-  MEDICATION_OPTIONS.map((option) => [option.id, option]),
-);
-const triggerOptions = new Map(
-  TRIGGER_OPTIONS.map((option) => [option.id, option]),
-);
-const moodOptions = new Map(MOOD_OPTIONS.map((option) => [option.id, option]));
+type SymptomLookupValue = { label: string; category: string };
+type MedicationLookupValue = { name: string; dosage?: string; schedule?: string };
+type TriggerLookupValue = { label: string; category: string; description?: string };
 
-const DEFAULT_FILTER_OPTIONS: CalendarFilterOptions = {
-  symptoms: SYMPTOM_OPTIONS.map((option) => option.label),
-  medications: MEDICATION_OPTIONS.map((option) => option.name),
-  triggers: TRIGGER_OPTIONS.map((option) => option.label),
-  categories: Array.from(
-    new Set([
-      ...SYMPTOM_OPTIONS.map((option) => option.category),
-      "Medication",
-      "Trigger",
-      "Note",
-    ]),
-  ),
-};
+const presetSymptomLookup = new Map<string, SymptomLookupValue>(
+  SYMPTOM_OPTIONS.map((option) => [option.id, {
+    label: option.label,
+    category: option.category,
+  }]),
+);
+
+const presetMedicationLookup = new Map<string, MedicationLookupValue>(
+  MEDICATION_OPTIONS.map((option) => [option.id, {
+    name: option.name,
+    dosage: option.dosage,
+    schedule: option.schedule,
+  }]),
+);
+
+const presetTriggerLookup = new Map<string, TriggerLookupValue>(
+  TRIGGER_OPTIONS.map((option) => [option.id, {
+    label: option.label,
+    description: option.description,
+    category: "Trigger",
+  }]),
+);
+
+const moodLookup = new Map(MOOD_OPTIONS.map((option) => [option.id, option]));
+
+const createPresetSymptomLookup = () => new Map(presetSymptomLookup);
+const createPresetMedicationLookup = () => new Map(presetMedicationLookup);
+const createPresetTriggerLookup = () => new Map(presetTriggerLookup);
+
+interface LookupMaps {
+  symptoms: Map<string, SymptomLookupValue>;
+  medications: Map<string, MedicationLookupValue>;
+  triggers: Map<string, TriggerLookupValue>;
+  moods: Map<string, typeof MOOD_OPTIONS[number]>;
+}
 
 const createBaseRange = () => {
   const now = new Date();
@@ -89,7 +111,20 @@ const impactFromIntensity = (value: number): "low" | "medium" | "high" => {
   return "low";
 };
 
-const buildDataset = (history: DailyEntry[]) => {
+// Story 3.5.7: Enhanced buildDataset to include food, mood, sleep, and flare data
+const buildDataset = (
+  history: DailyEntry[],
+  lookups: LookupMaps,
+  additionalData?: {
+    moodEntries: any[];
+    sleepEntries: any[];
+    foodEvents: any[];
+    symptomInstances: any[];
+    medicationEvents: any[];
+    triggerEvents: any[];
+    flares: any[];
+  }
+) => {
   const entries: CalendarEntry[] = [];
   const dayLookup = new Map<string, CalendarDayDetail>();
   const events: TimelineEvent[] = [];
@@ -103,8 +138,9 @@ const buildDataset = (history: DailyEntry[]) => {
       : new Date(entry.completedAt);
 
     const symptomsDetails = entry.symptoms.map((symptom, index) => {
-      const option = symptomOptions.get(symptom.symptomId);
+      const option = lookups.symptoms.get(symptom.symptomId);
       return {
+        symptomId: symptom.symptomId,
         id: `${iso}-symptom-${symptom.symptomId}-${index}`,
         name: option?.label ?? symptom.symptomId,
         severity: Math.max(0, Math.min(10, Math.round(symptom.severity))),
@@ -114,8 +150,9 @@ const buildDataset = (history: DailyEntry[]) => {
     });
 
     const medicationDetails = entry.medications.map((medication, index) => {
-      const option = medicationOptions.get(medication.medicationId);
+      const option = lookups.medications.get(medication.medicationId);
       return {
+        medicationId: medication.medicationId,
         id: `${iso}-medication-${medication.medicationId}-${index}`,
         name: option?.name ?? medication.medicationId,
         dose: medication.dosage ?? option?.dosage ?? "",
@@ -126,16 +163,18 @@ const buildDataset = (history: DailyEntry[]) => {
     });
 
     const triggerDetails = entry.triggers.map((trigger, index) => {
-      const option = triggerOptions.get(trigger.triggerId);
+      const option = lookups.triggers.get(trigger.triggerId);
       return {
+        triggerId: trigger.triggerId,
         id: `${iso}-trigger-${trigger.triggerId}-${index}`,
         name: option?.label ?? trigger.triggerId,
-        category: "Trigger",
+        category: option?.category ?? "Trigger",
         impact: impactFromIntensity(trigger.intensity),
+        intensity: trigger.intensity,
       };
     });
 
-    const moodLabel = entry.mood ? moodOptions.get(entry.mood)?.label ?? entry.mood : undefined;
+    const moodLabel = entry.mood ? lookups.moods.get(entry.mood)?.label ?? entry.mood : undefined;
 
     const calendarEntry: CalendarEntry = {
       date: iso,
@@ -144,16 +183,20 @@ const buildDataset = (history: DailyEntry[]) => {
       symptomCount: symptomsDetails.length,
       medicationCount: medicationDetails.filter((item) => item.taken).length,
       triggerCount: triggerDetails.length,
+      foodCount: 0, // Will be populated from additionalData
+      moodCount: 0,
+      sleepCount: 0,
+      flareCount: 0,
       mood: moodLabel,
       notes: Boolean(entry.notes),
       symptomCategories: [...new Set(symptomsDetails.map((item) => item.category))],
       triggerCategories: triggerDetails.length > 0 ? ["Trigger"] : [],
       medicationCategories: medicationDetails.length > 0 ? ["Medication"] : [],
-      symptomTags: symptomsDetails.map((item) => item.name),
-      triggerTags: triggerDetails.map((item) => item.name),
+      symptomTags: symptomsDetails.map((item) => lookups.symptoms.get(item.symptomId)?.label ?? item.name),
+      triggerTags: triggerDetails.map((item) => lookups.triggers.get(item.triggerId)?.label ?? item.name),
       medicationTags: medicationDetails
         .filter((item) => item.taken)
-        .map((item) => item.name),
+        .map((item) => lookups.medications.get(item.medicationId)?.name ?? item.name),
     };
 
     const detail: CalendarDayDetail = {
@@ -163,6 +206,10 @@ const buildDataset = (history: DailyEntry[]) => {
       symptomsDetails,
       medicationDetails,
       triggerDetails,
+      foodDetails: [],
+      moodDetails: [],
+      sleepDetails: [],
+      flareDetails: [],
     };
 
     entries.push(calendarEntry);
@@ -234,6 +281,275 @@ const buildDataset = (history: DailyEntry[]) => {
     }
   });
 
+  // Story 3.5.7: Process additional data sources and group by date
+  if (additionalData) {
+    // Process mood entries
+    additionalData.moodEntries.forEach((mood) => {
+      const iso = new Date(mood.timestamp).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const moodDetail = {
+        id: mood.id,
+        mood: mood.mood,
+        moodType: mood.moodType,
+        notes: mood.notes,
+        timestamp: mood.timestamp,
+      };
+
+      if (existing) {
+        existing.moodCount = (existing.moodCount || 0) + 1;
+        existing.moodDetails.push(moodDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 0,
+          moodCount: 1,
+          sleepCount: 0,
+          flareCount: 0,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [],
+          moodDetails: [moodDetail],
+          sleepDetails: [],
+          flareDetails: [],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+
+    // Process sleep entries
+    additionalData.sleepEntries.forEach((sleep) => {
+      const iso = new Date(sleep.timestamp).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const sleepDetail = {
+        id: sleep.id,
+        hours: sleep.hours,
+        quality: sleep.quality,
+        notes: sleep.notes,
+        timestamp: sleep.timestamp,
+      };
+
+      if (existing) {
+        existing.sleepCount = (existing.sleepCount || 0) + 1;
+        existing.sleepDetails.push(sleepDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 0,
+          moodCount: 0,
+          sleepCount: 1,
+          flareCount: 0,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [],
+          moodDetails: [],
+          sleepDetails: [sleepDetail],
+          flareDetails: [],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+
+    // Process food events
+    additionalData.foodEvents.forEach((food) => {
+      const iso = new Date(food.timestamp).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const foodIds = JSON.parse(food.foodIds || "[]");
+      const foodDetail = {
+        id: food.id,
+        foodIds,
+        foodNames: foodIds, // TODO: Resolve actual food names from food repository
+        mealType: food.mealType,
+        timestamp: food.timestamp,
+        notes: food.notes,
+      };
+
+      if (existing) {
+        existing.foodCount = (existing.foodCount || 0) + 1;
+        existing.foodDetails.push(foodDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 1,
+          moodCount: 0,
+          sleepCount: 0,
+          flareCount: 0,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [foodDetail],
+          moodDetails: [],
+          sleepDetails: [],
+          flareDetails: [],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+
+    // Process symptom instances (standalone symptoms from quick log)
+    additionalData.symptomInstances.forEach((symptom) => {
+      const iso = new Date(symptom.timestamp).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const symptomDetail = {
+        id: symptom.id,
+        symptomId: symptom.id,
+        name: symptom.name,
+        severity: symptom.severity,
+        category: symptom.category,
+        note: symptom.notes,
+      };
+
+      if (existing) {
+        existing.symptomCount = (existing.symptomCount || 0) + 1;
+        existing.symptomsDetails.push(symptomDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 1,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 0,
+          moodCount: 0,
+          sleepCount: 0,
+          flareCount: 0,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [symptomDetail],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [],
+          moodDetails: [],
+          sleepDetails: [],
+          flareDetails: [],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+
+    // Process trigger events (standalone triggers from quick log)
+    additionalData.triggerEvents.forEach((trigger) => {
+      const iso = new Date(trigger.timestamp).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      // Map intensity string to number for TriggerDetail interface
+      const intensityMap: Record<"low" | "medium" | "high", number> = { low: 3, medium: 6, high: 9 };
+      const intensity = intensityMap[trigger.intensity as "low" | "medium" | "high"] || 6;
+
+      const triggerDetail = {
+        id: trigger.id,
+        triggerId: trigger.triggerId,
+        name: lookups.triggers.get(trigger.triggerId)?.label || "Unknown Trigger",
+        impact: trigger.intensity,
+        category: lookups.triggers.get(trigger.triggerId)?.category || "Trigger",
+        intensity: intensity,
+      };
+
+      if (existing) {
+        existing.triggerCount = (existing.triggerCount || 0) + 1;
+        existing.triggerDetails.push(triggerDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 1,
+          foodCount: 0,
+          moodCount: 0,
+          sleepCount: 0,
+          flareCount: 0,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [triggerDetail],
+          foodDetails: [],
+          moodDetails: [],
+          sleepDetails: [],
+          flareDetails: [],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+
+    // Process flares (show on start date)
+    additionalData.flares.forEach((flare) => {
+      const iso = new Date(flare.startDate).toISOString().slice(0, 10);
+      const existing = dayLookup.get(iso);
+
+      const flareDetail = {
+        id: flare.id,
+        bodyRegionId: flare.bodyRegionId,
+        status: flare.status,
+        currentSeverity: flare.currentSeverity,
+        startDate: flare.startDate,
+      };
+
+      if (existing) {
+        existing.flareCount = (existing.flareCount || 0) + 1;
+        existing.flareDetails.push(flareDetail);
+      } else {
+        const newEntry: CalendarEntry = {
+          date: iso,
+          hasEntry: true,
+          symptomCount: 0,
+          medicationCount: 0,
+          triggerCount: 0,
+          foodCount: 0,
+          moodCount: 0,
+          sleepCount: 0,
+          flareCount: 1,
+        };
+        const newDetail: CalendarDayDetail = {
+          ...newEntry,
+          symptomsDetails: [],
+          medicationDetails: [],
+          triggerDetails: [],
+          foodDetails: [],
+          moodDetails: [],
+          sleepDetails: [],
+          flareDetails: [flareDetail],
+        };
+        entries.push(newEntry);
+        dayLookup.set(iso, newDetail);
+      }
+    });
+  }
+
   events.sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return { entries, dayLookup, events };
@@ -290,7 +606,7 @@ const entryMatchesFilters = (
       ...(entry.symptomCategories ?? []),
       ...(entry.medicationCategories ?? []),
       ...(entry.triggerCategories ?? []),
-      entry.notes ? ["Note"] : [],
+      ...(entry.notes ? ["Note"] : []),
     ];
 
     if (!includesSome(categories, filters.categories)) {
@@ -364,68 +680,248 @@ const emptyMetrics: CalendarMetrics = {
   healthTrend: [],
   symptomFrequency: [],
   medicationAdherence: [],
-  correlationInsights: [],
 };
 
 export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions): CalendarDataResult => {
-  const [viewType, setViewType] = useState<CalendarViewType>("month");
+  const [viewType, setViewType] = useState<CalendarViewType>(() => {
+    // Load saved view preference from localStorage, default to "week"
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("timeline-view-preference");
+      if (saved && ["year", "month", "week", "day", "timeline"].includes(saved)) {
+        return saved as CalendarViewType;
+      }
+    }
+    return "week";
+  });
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
     showHealthScore: true,
     showSymptoms: true,
     showMedications: true,
     showTriggers: true,
-    colorScheme: "severity",
   });
+  const { userId } = useCurrentUser();
   const [timelineZoom, setTimelineZoom] = useState<"week" | "month" | "quarter" | "year">("month");
   const [history, setHistory] = useState<DailyEntry[]>([]);
+  const [symptomLookup, setSymptomLookup] = useState<Map<string, SymptomLookupValue>>(
+    () => createPresetSymptomLookup(),
+  );
+  const [medicationLookup, setMedicationLookup] = useState<Map<string, MedicationLookupValue>>(
+    () => createPresetMedicationLookup(),
+  );
+  const [triggerLookup, setTriggerLookup] = useState<Map<string, TriggerLookupValue>>(
+    () => createPresetTriggerLookup(),
+  );
   const navigation = useDateNavigation(createBaseRange(), viewType);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
+    if (!userId) {
+      setSymptomLookup(createPresetSymptomLookup());
+      setMedicationLookup(createPresetMedicationLookup());
+      setTriggerLookup(createPresetTriggerLookup());
+      return;
+    }
 
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === HISTORY_STORAGE_KEY) {
-        setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
-      }
+    const loadLookups = async () => {
+      const [symptoms, medications, triggers] = await Promise.all([
+        symptomRepository.getAll(userId),
+        medicationRepository.getAll(userId),
+        triggerRepository.getAll(userId),
+      ]);
+
+      setSymptomLookup(() => {
+        const map = createPresetSymptomLookup();
+        symptoms.forEach((symptom) => {
+          map.set(symptom.id, {
+            label: symptom.name,
+            category: symptom.category ?? "Symptom",
+          });
+        });
+        return map;
+      });
+
+      setMedicationLookup(() => {
+        const map = createPresetMedicationLookup();
+        medications.forEach((medication) => {
+          const scheduleTimes = medication.schedule?.map((slot) => slot.time).join(", ");
+          const scheduleSummary = scheduleTimes || medication.frequency;
+          map.set(medication.id, {
+            name: medication.name,
+            dosage: medication.dosage,
+            schedule: scheduleSummary,
+          });
+        });
+        return map;
+      });
+
+      setTriggerLookup(() => {
+        const map = createPresetTriggerLookup();
+        triggers.forEach((trigger) => {
+          map.set(trigger.id, {
+            label: trigger.name,
+            category: trigger.category ?? "Trigger",
+            description: trigger.description,
+          });
+        });
+        return map;
+      });
     };
 
+    loadLookups().catch(console.error);
+  }, [userId]);
+
+  // Story 3.5.7: Store additional calendar data
+  const [moodEntries, setMoodEntries] = useState<any[]>([]);
+  const [sleepEntries, setSleepEntries] = useState<any[]>([]);
+  const [foodEvents, setFoodEvents] = useState<any[]>([]);
+  const [symptomInstances, setSymptomInstances] = useState<any[]>([]);
+  const [medicationEvents, setMedicationEvents] = useState<any[]>([]);
+  const [triggerEvents, setTriggerEvents] = useState<any[]>([]);
+  const [flares, setFlares] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadEntries = async () => {
+      const entries = await dailyEntryRepository.getAll(userId);
+      // Convert DailyEntryRecord to DailyEntry format
+      const converted: DailyEntry[] = entries.map((entry) => {
+        const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          date: entry.date,
+          overallHealth: entry.overallHealth,
+          energyLevel: entry.energyLevel,
+          sleepQuality: entry.sleepQuality,
+          stressLevel: entry.stressLevel,
+          symptoms: entry.symptoms,
+          medications: entry.medications,
+          triggers: entry.triggers,
+          treatments,
+          notes: entry.notes,
+          mood: entry.mood,
+          weather: entry.weather,
+          location: entry.location,
+          duration: entry.duration,
+          completedAt: new Date(entry.createdAt),
+        };
+      });
+      setHistory(converted);
+    };
+
+    loadEntries().catch(console.error);
+
     const handleHistoryUpdate = () => {
-      setHistory(loadDailyEntries(HISTORY_STORAGE_KEY));
+      loadEntries().catch(console.error);
     };
 
     if (typeof window !== "undefined") {
-      window.addEventListener("storage", handleStorageChange);
-      window.addEventListener(HISTORY_UPDATED_EVENT, handleHistoryUpdate);
+      window.addEventListener("daily-entry-updated", handleHistoryUpdate);
     }
 
     return () => {
       if (typeof window !== "undefined") {
-        window.removeEventListener("storage", handleStorageChange);
-        window.removeEventListener(HISTORY_UPDATED_EVENT, handleHistoryUpdate);
+        window.removeEventListener("daily-entry-updated", handleHistoryUpdate);
       }
     };
-  }, []);
+  }, [userId]);
 
-  const dataset = useMemo(() => buildDataset(history), [history]);
-
+  // Story 3.5.7: Load additional calendar data from all repositories
   useEffect(() => {
-    if (dataset.entries.length === 0) {
+    if (!userId) return;
+
+    const loadAllCalendarData = async () => {
+      try {
+        // Fetch from all repositories in parallel for performance (AC 3.5.7.1, 3.5.7.7)
+        const [
+          moods,
+          sleeps,
+          foods,
+          symptoms,
+          medications,
+          triggers,
+          activeFlares,
+        ] = await Promise.all([
+          moodRepository.getByUserId(userId),
+          sleepRepository.getByUserId(userId),
+          foodEventRepository.getAll(userId),
+          symptomInstanceRepository.getAll(userId),
+          medicationEventRepository.getAll(userId),
+          triggerEventRepository.getAll(userId),
+          bodyMarkerRepository.getActiveMarkers(userId, 'flare'), // Use unified marker system for flares
+        ]);
+
+        setMoodEntries(moods);
+        setSleepEntries(sleeps);
+        setFoodEvents(foods);
+        setSymptomInstances(symptoms);
+        setMedicationEvents(medications);
+        setTriggerEvents(triggers);
+        setFlares(activeFlares);
+      } catch (error) {
+        console.error("Error loading calendar data:", error);
+      }
+    };
+
+    loadAllCalendarData();
+
+    // Listen for updates from new data sources
+    const handleUpdate = () => {
+      loadAllCalendarData().catch(console.error);
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("mood-entry-updated", handleUpdate);
+      window.addEventListener("sleep-entry-updated", handleUpdate);
+      window.addEventListener("food-event-updated", handleUpdate);
+      window.addEventListener("symptom-instance-updated", handleUpdate);
+      window.addEventListener("medication-event-updated", handleUpdate);
+      window.addEventListener("trigger-event-updated", handleUpdate);
+      window.addEventListener("flare-updated", handleUpdate);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("mood-entry-updated", handleUpdate);
+        window.removeEventListener("sleep-entry-updated", handleUpdate);
+        window.removeEventListener("food-event-updated", handleUpdate);
+        window.removeEventListener("symptom-instance-updated", handleUpdate);
+        window.removeEventListener("medication-event-updated", handleUpdate);
+        window.removeEventListener("trigger-event-updated", handleUpdate);
+        window.removeEventListener("flare-updated", handleUpdate);
+      }
+    };
+  }, [userId]);
+
+  const dataset = useMemo(
+    () => buildDataset(history, {
+      symptoms: symptomLookup,
+      medications: medicationLookup,
+      triggers: triggerLookup,
+      moods: moodLookup,
+    }, {
+      moodEntries,
+      sleepEntries,
+      foodEvents,
+      symptomInstances,
+      medicationEvents,
+      triggerEvents,
+      flares,
+    }),
+    [history, symptomLookup, medicationLookup, triggerLookup, moodEntries, sleepEntries, foodEvents, symptomInstances, medicationEvents, triggerEvents, flares],
+  );
+
+  // Initialize selected date to latest entry on first load only
+  useEffect(() => {
+    if (dataset.entries.length === 0 || selectedDate) {
       return;
     }
 
     const latest = dataset.entries[dataset.entries.length - 1];
-    const latestDate = new Date(latest.date);
-    const withinRange =
-      latestDate >= navigation.range.start && latestDate <= navigation.range.end;
-    if (!withinRange) {
-      navigation.setRange({ start: latestDate, end: latestDate });
-    }
-
-    if (!selectedDate || !dataset.dayLookup.has(selectedDate)) {
-      setSelectedDate(latest.date);
-    }
-  }, [dataset.entries, dataset.dayLookup, navigation, selectedDate]);
+    setSelectedDate(latest.date);
+  }, [dataset.entries, selectedDate]);
 
   const entriesInRange = useMemo(
     () =>
@@ -485,67 +981,66 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
       return emptyMetrics;
     }
 
-    const healthTrend = filteredEntries.map((entry) => ({
-      date: entry.date,
-      score: entry.overallHealth ?? 0,
-    }));
+    // Group symptom instances by date and calculate average severity
+    const symptomsByDate = new Map<string, { severitySum: number; count: number }>();
 
+    symptomInstances.forEach((instance: any) => {
+      const date = instance.timestamp instanceof Date
+        ? instance.timestamp.toISOString().slice(0, 10)
+        : new Date(instance.timestamp).toISOString().slice(0, 10);
+
+      const existing = symptomsByDate.get(date) ?? { severitySum: 0, count: 0 };
+      existing.severitySum += instance.severity ?? 0;
+      existing.count += 1;
+      symptomsByDate.set(date, existing);
+    });
+
+    // Calculate average symptom severity per day based on filtered entries
+    const healthTrend = filteredEntries.map((entry) => {
+      const dayData = symptomsByDate.get(entry.date);
+
+      if (!dayData || dayData.count === 0) {
+        return { date: entry.date, score: 0 };
+      }
+
+      const avgSeverity = dayData.severitySum / dayData.count;
+
+      return {
+        date: entry.date,
+        score: Number(avgSeverity.toFixed(1)),
+      };
+    });
+
+    // Symptom Frequency - use symptomInstances directly
     const symptomFrequencyMap = new Map<string, number>();
-    filteredEntries.forEach((entry) => {
-      const detail = dataset.dayLookup.get(entry.date);
-      detail?.symptomsDetails.forEach((symptom) => {
+
+    symptomInstances.forEach((instance: any) => {
+      const date = instance.timestamp instanceof Date
+        ? instance.timestamp.toISOString().slice(0, 10)
+        : new Date(instance.timestamp).toISOString().slice(0, 10);
+
+      // Only count symptoms for filtered date range
+      if (filteredEntries.some((entry) => entry.date === date)) {
         symptomFrequencyMap.set(
-          symptom.name,
-          (symptomFrequencyMap.get(symptom.name) ?? 0) + 1,
+          instance.name,
+          (symptomFrequencyMap.get(instance.name) ?? 0) + 1,
         );
-      });
+      }
     });
 
     const medicationAdherenceMap = new Map<string, { taken: number; missed: number }>();
     filteredEntries.forEach((entry) => {
       const detail = dataset.dayLookup.get(entry.date);
       detail?.medicationDetails.forEach((medication) => {
+        const resolvedName = medicationLookup.get(medication.medicationId)?.name ?? medication.name;
         const current =
-          medicationAdherenceMap.get(medication.name) ?? { taken: 0, missed: 0 };
+          medicationAdherenceMap.get(resolvedName) ?? { taken: 0, missed: 0 };
         if (medication.taken) {
           current.taken += 1;
         } else {
           current.missed += 1;
         }
-        medicationAdherenceMap.set(medication.name, current);
-      });
-    });
-
-    const correlationMap = new Map<
-      string,
-      { symptom: string; trigger: string; occurrences: number; intensityTotal: number }
-    >();
-
-    filteredEntries.forEach((entry) => {
-      const detail = dataset.dayLookup.get(entry.date);
-      if (!detail) {
-        return;
-      }
-
-      detail.symptomsDetails.forEach((symptom) => {
-        detail.triggerDetails.forEach((trigger, index) => {
-          const key = `${symptom.name}__${trigger.name}`;
-          const baseTrigger = entry.triggers[index];
-          const intensity = baseTrigger?.intensity ??
-            (trigger.impact === "high" ? 9 : trigger.impact === "medium" ? 6 : 3);
-
-          const current =
-            correlationMap.get(key) ?? {
-              symptom: symptom.name,
-              trigger: trigger.name,
-              occurrences: 0,
-              intensityTotal: 0,
-            };
-
-          current.occurrences += 1;
-          current.intensityTotal += intensity;
-          correlationMap.set(key, current);
-        });
+        medicationAdherenceMap.set(resolvedName, current);
       });
     });
 
@@ -557,25 +1052,40 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
       .sort((a, b) => b[1].taken + b[1].missed - (a[1].taken + a[1].missed))
       .map(([name, value]) => ({ name, ...value }));
 
-    const correlationInsights = Array.from(correlationMap.values())
-      .sort((a, b) => b.occurrences - a.occurrences)
-      .slice(0, 6)
-      .map((item) => ({
-        symptom: item.symptom,
-        trigger: item.trigger,
-        correlation: Number(
-          (item.intensityTotal / (item.occurrences * 10)).toFixed(2),
-        ),
-        occurrences: item.occurrences,
-      }));
-
     return {
       healthTrend,
       symptomFrequency,
       medicationAdherence,
-      correlationInsights,
     };
-  }, [dataset.dayLookup, filteredEntries]);
+  }, [dataset.dayLookup, filteredEntries, medicationLookup, symptomInstances]);
+
+  const filterOptions = useMemo<CalendarFilterOptions>(() => {
+    const symptomLabels = new Set<string>();
+    symptomLookup.forEach((option) => {
+      symptomLabels.add(option.label);
+    });
+
+    const medicationNames = new Set<string>();
+    medicationLookup.forEach((option) => {
+      medicationNames.add(option.name);
+    });
+
+    const triggerLabels = new Set<string>();
+    triggerLookup.forEach((option) => {
+      triggerLabels.add(option.label);
+    });
+
+    const categories = new Set<string>(["Medication", "Trigger", "Note"]);
+    symptomLookup.forEach((option) => categories.add(option.category));
+    triggerLookup.forEach((option) => categories.add(option.category));
+
+    return {
+      symptoms: Array.from(symptomLabels).sort((a, b) => a.localeCompare(b)),
+      medications: Array.from(medicationNames).sort((a, b) => a.localeCompare(b)),
+      triggers: Array.from(triggerLabels).sort((a, b) => a.localeCompare(b)),
+      categories: Array.from(categories),
+    };
+  }, [medicationLookup, symptomLookup, triggerLookup]);
 
   const viewConfig = useMemo<CalendarViewConfig>(
     () => ({
@@ -590,6 +1100,10 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
   const updateView = (update: Partial<CalendarViewConfig>) => {
     if (update.viewType && update.viewType !== viewType) {
       setViewType(update.viewType as CalendarViewType);
+      // Persist view preference
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("timeline-view-preference", update.viewType);
+      }
     }
 
     if (update.displayOptions) {
@@ -610,7 +1124,7 @@ export const useCalendarData = ({ filters, searchTerm }: CalendarDataHookOptions
     entries: filteredEntries,
     events: filteredEvents,
     metrics,
-    filterOptions: DEFAULT_FILTER_OPTIONS,
+    filterOptions,
     selectedDate,
     selectDate: setSelectedDate,
     selectedDay: selectedDate ? dataset.dayLookup.get(selectedDate) : undefined,

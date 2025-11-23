@@ -55,11 +55,11 @@ const getBucketKey = (date: Date, zoom: TimelineViewProps["zoom"]) => {
 };
 
 const eventTypeStyles: Record<TimelineEvent["type"], string> = {
-  symptom: "bg-rose-500/15 text-rose-700",
-  medication: "bg-sky-500/15 text-sky-700",
-  trigger: "bg-amber-500/15 text-amber-700",
-  note: "bg-slate-500/15 text-slate-700",
-  milestone: "bg-emerald-500/15 text-emerald-700",
+  symptom: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+  medication: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+  trigger: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  note: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+  milestone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
 };
 
 export const TimelineView = ({ events, zoom, onZoomChange, onSelectEvent, selectedEventId }: TimelineViewProps) => {
@@ -118,11 +118,10 @@ export const TimelineView = ({ events, zoom, onZoomChange, onSelectEvent, select
                 key={level.value}
                 type="button"
                 onClick={() => onZoomChange(level.value)}
-                className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors ${
-                  zoom === level.value
+                className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors ${zoom === level.value
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border text-foreground hover:bg-muted"
-                }`}
+                  }`}
               >
                 {level.label}
               </button>
@@ -147,18 +146,16 @@ export const TimelineView = ({ events, zoom, onZoomChange, onSelectEvent, select
                   key={event.id}
                   type="button"
                   onClick={() => onSelectEvent?.(event)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition-colors ${
-                    selectedEventId === event.id
+                  className={`w-full rounded-2xl border px-4 py-3 text-left transition-colors ${selectedEventId === event.id
                       ? "border-primary bg-primary/10"
                       : "border-border bg-card hover:border-primary/60"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                          eventTypeStyles[event.type]
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${eventTypeStyles[event.type]
+                          }`}
                       >
                         {event.type}
                       </span>
