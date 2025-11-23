@@ -33,9 +33,9 @@ export default function HelpPage() {
       description: "Learn how to track your health data effectively.",
       topics: [
         {
-          title: "Tracking Flares",
-          description: "Mark flare locations on the body map and track severity over time",
-          href: "/help/tracking-flares",
+          title: "Body Markers",
+          description: "Track Flares, Pain, and Inflammation on the Body Map",
+          href: "/help/body-markers",
           icon: Map,
         },
         {
@@ -105,9 +105,9 @@ export default function HelpPage() {
           icon: Settings,
         },
         {
-          title: "Import & Export",
-          description: "Back up your data and move it between devices",
-          href: "/help/import-export",
+          title: "Sync & Backup",
+          description: "Enable Cloud Sync or manually export your data",
+          href: "/help/sync-and-backup",
           icon: Download,
         },
       ],

@@ -1,12 +1,111 @@
 "use client";
 
-import { useState } from "react";
-import { Activity, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Activity, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight, Star, ChevronDown, ChevronRight } from "lucide-react";
 import { TreatmentRecord } from "@/lib/db/schema";
 import { EmptyState } from "./EmptyState";
 import { TreatmentForm } from "./TreatmentForm";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useTreatmentManagement } from "@/lib/hooks/useTreatmentManagement";
+import { cn } from "@/lib/utils/cn";
+
+// Treatment Card Component
+const TreatmentCard = ({
+    treatment,
+    showCategory,
+    onToggleFavorite,
+    onToggleActive,
+    onEdit,
+    onDelete,
+}: {
+    treatment: TreatmentRecord;
+    showCategory: boolean;
+    onToggleFavorite: (treatment: TreatmentRecord) => void;
+    onToggleActive: (treatment: TreatmentRecord) => void;
+    onEdit: (treatment: TreatmentRecord) => void;
+    onDelete: (treatment: TreatmentRecord) => void;
+}) => (
+    <div
+        className={`flex items-start gap-4 rounded-lg border ${treatment.isActive ? "border-border bg-card" : "border-border bg-muted/30 opacity-60"
+            } p-4 transition-all hover:shadow-sm`}
+    >
+        {/* Icon */}
+        <div
+            className={`mt-0.5 rounded-lg p-2 ${treatment.isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                }`}
+        >
+            <Activity className="h-5 w-5" />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                    <h3 className="font-semibold text-foreground">{treatment.name}</h3>
+                    {showCategory && treatment.category && (
+                        <p className="mt-0.5 text-sm text-muted-foreground">{treatment.category}</p>
+                    )}
+                    {treatment.frequency && (
+                        <p className="mt-0.5 text-sm text-muted-foreground">{treatment.frequency}</p>
+                    )}
+                    {treatment.duration && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">{treatment.duration} min</p>
+                    )}
+                </div>
+
+                {/* Status Badge */}
+                <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${treatment.isActive
+                        ? "bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400"
+                        : "bg-muted text-muted-foreground"
+                        }`}
+                >
+                    {treatment.isActive ? "Active" : "Inactive"}
+                </span>
+            </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1">
+            <button
+                type="button"
+                onClick={() => onToggleFavorite(treatment)}
+                className={cn(
+                    "rounded-lg p-2 transition-colors",
+                    treatment.isFavorite ? "text-yellow-500 hover:bg-yellow-50" : "text-muted-foreground hover:bg-muted"
+                )}
+                aria-label={treatment.isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+                <Star className={cn("h-4 w-4", treatment.isFavorite && "fill-yellow-500")} />
+            </button>
+            <button
+                type="button"
+                onClick={() => onToggleActive(treatment)}
+                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title={treatment.isActive ? "Deactivate" : "Activate"}
+                aria-label={treatment.isActive ? "Deactivate treatment" : "Activate treatment"}
+            >
+                {treatment.isActive ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+            </button>
+            <button
+                type="button"
+                onClick={() => onEdit(treatment)}
+                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Edit treatment"
+            >
+                <Edit2 className="h-4 w-4" />
+            </button>
+            <button
+                type="button"
+                onClick={() => onDelete(treatment)}
+                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-red-100 hover:text-red-600"
+                aria-label="Delete treatment"
+            >
+                <Trash2 className="h-4 w-4" />
+            </button>
+        </div>
+    </div>
+);
 
 export const TreatmentList = () => {
     const {
@@ -30,6 +129,7 @@ export const TreatmentList = () => {
         treatment: TreatmentRecord;
         usageCount: number;
     } | null>(null);
+    const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set(["__favorites__"]));
 
     const handleAddClick = () => {
         setEditingTreatment(null);
@@ -65,6 +165,48 @@ export const TreatmentList = () => {
             console.error("Failed to toggle treatment:", error);
         }
     };
+
+    const toggleFavorite = async (treatment: TreatmentRecord) => {
+        try {
+            // Use updateTreatment to ensure the hook refetches data
+            await updateTreatment(treatment.id, {
+                ...treatment,
+                isFavorite: !treatment.isFavorite,
+            });
+        } catch (error) {
+            console.error("Failed to toggle favorite:", error);
+        }
+    };
+
+    // Group treatments by category
+    const treatmentsByCategory = useMemo(() => {
+        const grouped = new Map<string, TreatmentRecord[]>();
+
+        treatments.forEach((treatment) => {
+            const category = treatment.category || "Other";
+            if (!grouped.has(category)) {
+                grouped.set(category, []);
+            }
+            grouped.get(category)!.push(treatment);
+        });
+
+        // Sort treatments within each category: favorites first, then alphabetically
+        for (const [, categoryTreatments] of grouped) {
+            categoryTreatments.sort((a, b) => {
+                // Favorites first
+                if (a.isFavorite && !b.isFavorite) return -1;
+                if (!a.isFavorite && b.isFavorite) return 1;
+                // Then alphabetically
+                return a.name.localeCompare(b.name);
+            });
+        }
+
+        return grouped;
+    }, [treatments]);
+
+    const favoriteTreatments = treatments.filter(t => t.isFavorite);
+    const hasSearch = searchQuery.trim().length > 0;
+    const hasFilter = filterStatus !== "all";
 
     if (loading) {
         return (
@@ -134,90 +276,132 @@ export const TreatmentList = () => {
                     actionLabel="Add Treatment"
                     onAction={handleAddClick}
                 />
-            ) : (
+            ) : hasSearch || hasFilter ? (
+                /* Search/Filter Results - Flat List */
                 <div className="space-y-3">
-                    {treatments.map((treatment) => (
-                        <div
+                    {Array.from(treatmentsByCategory.values()).flat().map((treatment) => (
+                        <TreatmentCard
                             key={treatment.id}
-                            className={`flex items-start gap-4 rounded-lg border ${treatment.isActive ? "border-border bg-card" : "border-border bg-muted/30 opacity-60"
-                                } p-4 transition-all hover:shadow-sm`}
-                        >
-                            {/* Icon */}
-                            <div className={`mt-0.5 rounded-lg p-2 ${treatment.isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                                }`}>
-                                <Activity className="h-5 w-5" />
-                            </div>
+                            treatment={treatment}
+                            showCategory={true}
+                            onToggleFavorite={toggleFavorite}
+                            onToggleActive={handleToggleActive}
+                            onEdit={handleEditClick}
+                            onDelete={handleDeleteClick}
+                        />
+                    ))}
+                    {favoriteTreatments.length === 0 && Array.from(treatmentsByCategory.values()).flat().length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">No treatments found matching your criteria.</p>
+                    )}
+                </div>
+            ) : (
+                /* Category View */
+                <div className="space-y-3">
+                    {/* Favorites Category */}
+                    {favoriteTreatments.length > 0 && (
+                        <div className="border border-border rounded-lg overflow-hidden bg-yellow-50/50 dark:bg-yellow-950/20">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const newCollapsed = new Set(collapsedCategories);
+                                    if (collapsedCategories.has("__favorites__")) {
+                                        newCollapsed.delete("__favorites__");
+                                    } else {
+                                        newCollapsed.add("__favorites__");
+                                    }
+                                    setCollapsedCategories(newCollapsed);
+                                }}
+                                className="w-full px-4 py-3 bg-yellow-100/50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 flex items-center justify-between transition-colors"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                    <span className="font-medium text-foreground">Favorites</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-muted-foreground">
+                                        {favoriteTreatments.length} {favoriteTreatments.length === 1 ? "item" : "items"}
+                                    </span>
+                                    {collapsedCategories.has("__favorites__") ? (
+                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                    ) : (
+                                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                    )}
+                                </div>
+                            </button>
 
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold text-foreground">
-                                            {treatment.name}
-                                        </h3>
-                                        {treatment.category && (
-                                            <p className="mt-0.5 text-sm text-muted-foreground">
-                                                {treatment.category}
-                                            </p>
-                                        )}
-                                        {treatment.frequency && (
-                                            <p className="mt-0.5 text-sm text-muted-foreground">
-                                                {treatment.frequency}
-                                            </p>
-                                        )}
-                                        {treatment.duration && (
-                                            <p className="mt-0.5 text-xs text-muted-foreground">
-                                                {treatment.duration} min
-                                            </p>
+                            {!collapsedCategories.has("__favorites__") && (
+                                <div className="p-4 bg-background space-y-3">
+                                    {favoriteTreatments.map((treatment) => (
+                                        <TreatmentCard
+                                            key={treatment.id}
+                                            treatment={treatment}
+                                            showCategory={true}
+                                            onToggleFavorite={toggleFavorite}
+                                            onToggleActive={handleToggleActive}
+                                            onEdit={handleEditClick}
+                                            onDelete={handleDeleteClick}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Treatments by Category */}
+                    {Array.from(treatmentsByCategory.entries()).map(([category, categoryTreatments]) => {
+                        // Don't render categories that are empty after filtering, unless it's "Other" and there are treatments in it
+                        if (categoryTreatments.length === 0) return null;
+
+                        const isCollapsed = collapsedCategories.has(category);
+                        return (
+                            <div key={category} className="border border-border rounded-lg overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const newCollapsed = new Set(collapsedCategories);
+                                        if (isCollapsed) {
+                                            newCollapsed.delete(category);
+                                        } else {
+                                            newCollapsed.add(category);
+                                        }
+                                        setCollapsedCategories(newCollapsed);
+                                    }}
+                                    className="w-full px-4 py-3 bg-muted/50 hover:bg-muted flex items-center justify-between transition-colors"
+                                >
+                                    <span className="font-medium text-foreground">{category}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-muted-foreground">
+                                            {categoryTreatments.length} {categoryTreatments.length === 1 ? "item" : "items"}
+                                        </span>
+                                        {isCollapsed ? (
+                                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                        ) : (
+                                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
                                         )}
                                     </div>
+                                </button>
 
-                                    {/* Status Badge */}
-                                    <span
-                                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${treatment.isActive
-                                                ? "bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400"
-                                                : "bg-muted text-muted-foreground"
-                                            }`}
-                                    >
-                                        {treatment.isActive ? "Active" : "Inactive"}
-                                    </span>
-                                </div>
+                                {!isCollapsed && (
+                                    <div className="p-4 space-y-3">
+                                        {categoryTreatments.map((treatment) => (
+                                            <TreatmentCard
+                                                key={treatment.id}
+                                                treatment={treatment}
+                                                showCategory={false}
+                                                onToggleFavorite={toggleFavorite}
+                                                onToggleActive={handleToggleActive}
+                                                onEdit={handleEditClick}
+                                                onDelete={handleDeleteClick}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    onClick={() => handleToggleActive(treatment)}
-                                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                    title={treatment.isActive ? "Deactivate" : "Activate"}
-                                    aria-label={treatment.isActive ? "Deactivate treatment" : "Activate treatment"}
-                                >
-                                    {treatment.isActive ? (
-                                        <ToggleRight className="h-5 w-5" />
-                                    ) : (
-                                        <ToggleLeft className="h-5 w-5" />
-                                    )}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleEditClick(treatment)}
-                                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                    aria-label="Edit treatment"
-                                >
-                                    <Edit2 className="h-4 w-4" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleDeleteClick(treatment)}
-                                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-red-100 hover:text-red-600"
-                                    aria-label="Delete treatment"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
+                    {favoriteTreatments.length === 0 && Array.from(treatmentsByCategory.values()).flat().length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">No treatments found matching your criteria.</p>
+                    )}
                 </div>
             )}
 

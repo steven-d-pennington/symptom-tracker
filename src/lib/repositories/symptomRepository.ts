@@ -12,12 +12,13 @@ export class SymptomRepository {
 
   /**
    * Get active symptoms for a user
+   * Only returns symptoms that are both active AND enabled (visible to user)
    */
   async getActive(userId: string): Promise<SymptomRecord[]> {
     return await db.symptoms
       .where("userId")
       .equals(userId)
-      .filter((symptom) => symptom.isActive)
+      .filter((symptom) => symptom.isActive && symptom.isEnabled !== false) // isEnabled can be undefined for old records
       .toArray();
   }
 

@@ -893,6 +893,83 @@ export class SymptomTrackerDatabase extends Dexie {
       treatmentAlerts: "id, userId, [userId+treatmentId], [userId+alertType], [userId+dismissed], treatmentId, alertType, dismissed, createdAt",
       syncMetadata: "id",
     });
+
+    // Version 32: Add isFavorite field to all record types and isEnabled to foods (Favorites Feature)
+    this.version(32).stores({
+      users: "id",
+      symptoms: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      symptomInstances: "id, userId, category, timestamp, [userId+timestamp], [userId+category]",
+      medications: "id, userId, [userId+isActive], [userId+isDefault]",
+      medicationEvents: "id, userId, medicationId, timestamp, [userId+timestamp], [userId+medicationId]",
+      triggers: "id, userId, category, [userId+category], [userId+isActive], [userId+isDefault]",
+      triggerEvents: "id, userId, triggerId, timestamp, [userId+timestamp], [userId+triggerId]",
+      treatments: "id, userId, [userId+isActive], [userId+isDefault]",
+      treatmentEvents: "id, userId, treatmentId, timestamp, [userId+timestamp], [userId+treatmentId]",
+      dailyEntries: "id, userId, date, [userId+date], completedAt",
+      dailyLogs: "id, [userId+date], userId, date, createdAt",
+      attachments: "id, userId, relatedEntryId",
+      bodyMapLocations: "id, userId, [markerId], [markerType], dailyEntryId, symptomId, bodyRegionId, [userId+symptomId], [userId+layer+createdAt], createdAt",
+      bodyMapPreferences: "userId",
+      photoAttachments: "id, userId, dailyEntryId, symptomId, bodyRegionId, capturedAt, [userId+capturedAt], [userId+bodyRegionId], [originalFileName+capturedAt]",
+      photoComparisons: "id, userId, beforePhotoId, afterPhotoId, createdAt",
+      bodyMarkers: "id, [userId+type+status], [userId+status], [userId+bodyRegionId], [userId+startDate], userId, type, status",
+      bodyMarkerEvents: "id, [markerId+timestamp], [userId+timestamp], [userId+eventType], markerId, userId, eventType",
+      bodyMarkerLocations: "id, [markerId], [userId+markerId], [userId+bodyRegionId], markerId, userId, bodyRegionId",
+      flares: null,
+      flareEvents: null,
+      flareBodyLocations: null,
+      analysisResults: "++id, userId, [userId+metric+timeRange], createdAt",
+      foods: "id, userId, [userId+name], [userId+isDefault], [userId+isActive]",
+      foodEvents: "id, userId, timestamp, [userId+timestamp], [userId+mealType], [userId+mealId]",
+      foodCombinations: "id, userId, symptomId, [userId+symptomId], [userId+synergistic], [userId+confidence], lastAnalyzedAt",
+      uxEvents: "id, userId, eventType, timestamp, [userId+eventType], [userId+timestamp]",
+      moodEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      sleepEntries: "id, userId, timestamp, [userId+timestamp], createdAt",
+      correlations: "id, [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt], userId, type, item1, item2, calculatedAt",
+      patternDetections: "id, [userId+type], [userId+correlationId], [userId+detectedAt], userId, type, correlationId, detectedAt",
+      treatmentEffectiveness: "id, userId, [userId+treatmentId], [userId+effectivenessScore], [userId+lastCalculated], treatmentId, effectivenessScore, lastCalculated",
+      treatmentAlerts: "id, userId, [userId+treatmentId], [userId+alertType], [userId+dismissed], treatmentId, alertType, dismissed, createdAt",
+      syncMetadata: "id",
+    }).upgrade(async (tx) => {
+      console.log('[Migration v32] Setting default values for isFavorite and isEnabled fields...');
+
+      try {
+        // Set defaults for symptoms
+        await tx.table('symptoms').toCollection().modify((symptom: any) => {
+          if (symptom.isEnabled === undefined) symptom.isEnabled = true; // Existing records were implicitly enabled
+          if (symptom.isFavorite === undefined) symptom.isFavorite = false;
+        });
+
+        // Set defaults for medications
+        await tx.table('medications').toCollection().modify((medication: any) => {
+          if (medication.isEnabled === undefined) medication.isEnabled = true; // Existing records were implicitly enabled
+          if (medication.isFavorite === undefined) medication.isFavorite = false;
+        });
+
+        // Set defaults for triggers
+        await tx.table('triggers').toCollection().modify((trigger: any) => {
+          if (trigger.isEnabled === undefined) trigger.isEnabled = true; // Existing records were implicitly enabled
+          if (trigger.isFavorite === undefined) trigger.isFavorite = false;
+        });
+
+        // Set defaults for treatments
+        await tx.table('treatments').toCollection().modify((treatment: any) => {
+          if (treatment.isEnabled === undefined) treatment.isEnabled = true; // Existing records were implicitly enabled
+          if (treatment.isFavorite === undefined) treatment.isFavorite = false;
+        });
+
+        // Set defaults for foods
+        await tx.table('foods').toCollection().modify((food: any) => {
+          if (food.isEnabled === undefined) food.isEnabled = true;
+          if (food.isFavorite === undefined) food.isFavorite = false;
+        });
+
+        console.log('[Migration v32] Successfully set default values for all existing records');
+      } catch (error) {
+        console.error('[Migration v32] Error during migration:', error);
+        throw error;
+      }
+    });
   }
 }
 

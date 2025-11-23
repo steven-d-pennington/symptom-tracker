@@ -37,8 +37,8 @@ export function MedicationSelectionStep({
   return (
     <SelectionStep
       type="medications"
-      title="What treatments do you use?"
-      description="Select medications and treatments you want to track"
+      title="What medications do you use?"
+      description="Select medications you want to track"
       defaultItems={medicationItems}
       onNext={handleNext}
       onSkip={handleSkip}

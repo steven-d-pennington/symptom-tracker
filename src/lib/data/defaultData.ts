@@ -322,13 +322,9 @@ export const DEFAULT_MEDICATIONS: DefaultMedication[] = [
     frequency: 'as-needed'
   },
   {
-    name: 'Warm Compress',
-    type: 'Treatment',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Ice Pack',
-    type: 'Treatment',
+    name: 'Acetaminophen',
+    type: 'Pain Relief',
+    dosage: '500mg',
     frequency: 'as-needed'
   },
   {
@@ -337,33 +333,38 @@ export const DEFAULT_MEDICATIONS: DefaultMedication[] = [
     frequency: 'daily'
   },
   {
-    name: 'Topical Treatment',
-    type: 'Treatment',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Rest',
-    type: 'Self-Care',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Drainage',
-    type: 'Treatment',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Bandaging',
-    type: 'Treatment',
-    frequency: 'as-needed'
-  },
-  {
-    name: 'Pain Relief',
+    name: 'Topical Antibiotic',
     type: 'Medication',
-    frequency: 'as-needed'
+    frequency: 'daily'
+  },
+  {
+    name: 'Biologic Injection',
+    type: 'Medication',
+    frequency: 'weekly'
   },
   {
     name: 'Anti-inflammatory',
     type: 'Medication',
+    frequency: 'daily'
+  },
+  {
+    name: 'Antihistamine',
+    type: 'Medication',
+    frequency: 'as-needed'
+  },
+  {
+    name: 'Zinc Supplement',
+    type: 'Supplement',
+    frequency: 'daily'
+  },
+  {
+    name: 'Turmeric/Curcumin',
+    type: 'Supplement',
+    frequency: 'daily'
+  },
+  {
+    name: 'Vitamin D',
+    type: 'Supplement',
     frequency: 'daily'
   }
 ];

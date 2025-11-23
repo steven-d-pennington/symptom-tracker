@@ -33,6 +33,7 @@ const createInitialEntry = (userId: string, medications: MedicationRecord[] = []
     dosage: medication.dosage,
   })),
   triggers: [],
+  treatments: [],
   duration: 0,
   completedAt: new Date(),
 });
@@ -102,10 +103,29 @@ export const useDailyEntry = () => {
 
     const loadHistory = async () => {
       const entries = await dailyEntryRepository.getAll(userId);
-      const converted = entries.map(entry => ({
-        ...entry,
-        completedAt: new Date(entry.createdAt),
-      }));
+      const converted: DailyEntry[] = entries.map((entry) => {
+        const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          date: entry.date,
+          overallHealth: entry.overallHealth,
+          energyLevel: entry.energyLevel,
+          sleepQuality: entry.sleepQuality,
+          stressLevel: entry.stressLevel,
+          symptoms: entry.symptoms as DailySymptom[],
+          medications: entry.medications as DailyMedication[],
+          triggers: entry.triggers as DailyTrigger[],
+          treatments,
+          notes: entry.notes,
+          mood: entry.mood,
+          weather: entry.weather,
+          location: entry.location,
+          duration: entry.duration,
+          completedAt: new Date(entry.createdAt),
+        };
+      });
       setHistory(converted);
       setIsHydrated(true);
     };
@@ -413,11 +433,30 @@ export const useDailyEntry = () => {
         }
 
         // Reload history
-        const entries = await dailyEntryRepository.getAll("demo");
-        const converted = entries.map(entry => ({
-          ...entry,
-          completedAt: new Date(entry.createdAt),
-        }));
+        const entries = await dailyEntryRepository.getAll(finalizedEntry.userId);
+        const converted: DailyEntry[] = entries.map((entry) => {
+          const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+          return {
+            id: entry.id,
+            userId: entry.userId,
+            date: entry.date,
+            overallHealth: entry.overallHealth,
+            energyLevel: entry.energyLevel,
+            sleepQuality: entry.sleepQuality,
+            stressLevel: entry.stressLevel,
+            symptoms: entry.symptoms as DailySymptom[],
+            medications: entry.medications as DailyMedication[],
+            triggers: entry.triggers as DailyTrigger[],
+            treatments,
+            notes: entry.notes,
+            mood: entry.mood,
+            weather: entry.weather,
+            location: entry.location,
+            duration: entry.duration,
+            completedAt: new Date(entry.createdAt),
+          };
+        });
         setHistory(converted);
 
         // Dispatch event for other components
@@ -453,11 +492,30 @@ export const useDailyEntry = () => {
       }
 
       // Reload history from IndexedDB
-      const entries = await dailyEntryRepository.getAll("demo");
-      const converted = entries.map(entry => ({
-        ...entry,
-        completedAt: new Date(entry.createdAt),
-      }));
+      const entries = await dailyEntryRepository.getAll(queue[0].userId);
+      const converted: DailyEntry[] = entries.map((entry) => {
+        const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          date: entry.date,
+          overallHealth: entry.overallHealth,
+          energyLevel: entry.energyLevel,
+          sleepQuality: entry.sleepQuality,
+          stressLevel: entry.stressLevel,
+          symptoms: entry.symptoms as DailySymptom[],
+          medications: entry.medications as DailyMedication[],
+          triggers: entry.triggers as DailyTrigger[],
+          treatments,
+          notes: entry.notes,
+          mood: entry.mood,
+          weather: entry.weather,
+          location: entry.location,
+          duration: entry.duration,
+          completedAt: new Date(entry.createdAt),
+        };
+      });
       setHistory(converted);
 
       // Clear queue

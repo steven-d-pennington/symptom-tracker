@@ -17,6 +17,13 @@ export interface DailyTrigger {
   notes?: string;
 }
 
+export interface DailyTreatment {
+  treatmentId: string;
+  duration?: number; // minutes
+  effectiveness?: number; // 1-10
+  notes?: string;
+}
+
 export interface WeatherData {
   temperatureCelsius?: number;
   humidity?: number;
@@ -34,6 +41,7 @@ export interface DailyEntry {
   symptoms: DailySymptom[];
   medications: DailyMedication[];
   triggers: DailyTrigger[];
+  treatments: DailyTreatment[];
   notes?: string;
   mood?: string;
   weather?: WeatherData;
@@ -52,7 +60,7 @@ export interface DailyEntryTemplate {
 }
 
 export interface EntrySection {
-  type: "health" | "symptoms" | "medications" | "triggers" | "notes";
+  type: "health" | "symptoms" | "medications" | "treatments" | "triggers" | "notes";
   required: boolean;
   order: number;
   config: SectionConfig;

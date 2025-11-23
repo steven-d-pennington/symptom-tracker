@@ -7,7 +7,7 @@ import { AllergenBadge } from "@/components/food/AllergenBadge";
 import { ALLERGEN_TYPES, type AllergenType, validateAllergens } from "@/lib/constants/allergens";
 import type { FoodRecord } from "@/lib/db/schema";
 
-// Food categories from seedFoodsService
+// Food categories
 const FOOD_CATEGORIES = [
   "Breakfast",
   "Proteins",
@@ -62,7 +62,7 @@ export function EditFoodModal({ food, isOpen, onClose, onSave }: EditFoodModalPr
     if (isOpen && food) {
       setName(food.name);
       setCategory(food.category || "");
-      
+
       // Parse allergen tags (stored as JSON string in DB)
       try {
         const allergens = JSON.parse(food.allergenTags || "[]") as AllergenType[];
@@ -70,7 +70,7 @@ export function EditFoodModal({ food, isOpen, onClose, onSave }: EditFoodModalPr
       } catch {
         setSelectedAllergens([]);
       }
-      
+
       setPreparationMethod(food.preparationMethod || "");
       setErrors({});
     }

@@ -79,6 +79,7 @@ export interface SymptomRecord {
   isActive: boolean;
   isDefault: boolean; // True for preset symptoms, false for custom
   isEnabled: boolean; // For toggling default symptoms visibility
+  isFavorite?: boolean; // For marking favorites (optional for backward compat)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,6 +117,7 @@ export interface MedicationRecord {
   isActive: boolean;
   isDefault: boolean; // True for preset medications, false for custom (Story 3.5.1)
   isEnabled: boolean; // For toggling default medications visibility (Story 3.5.1)
+  isFavorite?: boolean; // For marking favorites (optional for backward compat)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -129,6 +131,7 @@ export interface TriggerRecord {
   isActive: boolean;
   isDefault: boolean; // True for preset triggers, false for custom
   isEnabled: boolean; // For toggling default triggers visibility
+  isFavorite?: boolean; // For marking favorites (optional for backward compat)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -398,6 +401,7 @@ export interface TreatmentRecord {
   isActive: boolean;
   isDefault: boolean; // True for preset treatments
   isEnabled: boolean; // For toggling default treatments
+  isFavorite?: boolean; // For marking favorites (optional for backward compat)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -725,6 +729,8 @@ export interface FoodRecord {
   preparationMethod?: string;
   isDefault: boolean; // true for seeded foods, false for custom
   isActive: boolean; // soft-delete flag
+  isEnabled?: boolean; // For toggling default foods visibility (optional for backward compat)
+  isFavorite?: boolean; // For marking favorites (optional for backward compat)
   createdAt: number; // epoch ms
   updatedAt: number; // epoch ms
 }

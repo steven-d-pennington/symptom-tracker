@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Pill, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Pill, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight, Star } from "lucide-react";
 import { MedicationRecord } from "@/lib/db/schema";
 import { EmptyState } from "./EmptyState";
 import { MedicationForm } from "./MedicationForm";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useMedicationManagement } from "@/lib/hooks/useMedicationManagement";
+import { medicationRepository } from "@/lib/repositories/medicationRepository";
+import { cn } from "@/lib/utils/cn";
 
 export const MedicationList = () => {
   const {
@@ -22,6 +24,7 @@ export const MedicationList = () => {
     deleteMedication,
     getMedicationUsageCount,
     checkDuplicateName,
+    refresh,
   } = useMedicationManagement();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -65,6 +68,34 @@ export const MedicationList = () => {
       console.error("Failed to toggle medication:", error);
     }
   };
+
+  const toggleFavorite = async (medication: MedicationRecord) => {
+    try {
+      // Use repository directly for isFavorite (not in FormData type)
+      await medicationRepository.update(medication.id, {
+        isFavorite: !medication.isFavorite,
+      });
+      // Manually refresh to update UI
+      await refresh();
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+    }
+  };
+
+  // Sort medications: favorites first, then alphabetically
+  const sortedMedications = useMemo(() => {
+    return [...medications].sort((a, b) => {
+      // Favorites first
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      // Then alphabetically
+      return a.name.localeCompare(b.name);
+    });
+  }, [medications]);
+
+  // Separate favorites and non-favorites for display
+  const favoriteMedications = sortedMedications.filter(m => m.isFavorite);
+  const nonFavoriteMedications = sortedMedications.filter(m => !m.isFavorite);
 
   if (loading) {
     return (
@@ -135,85 +166,201 @@ export const MedicationList = () => {
           onAction={handleAddClick}
         />
       ) : (
-        <div className="space-y-3">
-          {medications.map((medication) => (
-            <div
-              key={medication.id}
-              className={`flex items-start gap-4 rounded-lg border ${
-                medication.isActive ? "border-border bg-card" : "border-border bg-muted/30 opacity-60"
-              } p-4 transition-all hover:shadow-sm`}
-            >
-              {/* Icon */}
-              <div className={`mt-0.5 rounded-lg p-2 ${
-                medication.isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-              }`}>
-                <Pill className="h-5 w-5" />
+        <div className="space-y-4">
+          {/* Favorites Section */}
+          {favoriteMedications.length > 0 && (
+            <div className="border border-yellow-200 dark:border-yellow-900 rounded-lg overflow-hidden bg-yellow-50/50 dark:bg-yellow-950/20">
+              <div className="px-4 py-2 bg-yellow-100/50 dark:bg-yellow-900/30 flex items-center gap-2">
+                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                <span className="font-medium text-foreground">Favorites</span>
+                <span className="text-sm text-muted-foreground ml-auto">
+                  {favoriteMedications.length} {favoriteMedications.length === 1 ? "item" : "items"}
+                </span>
               </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">
-                      {medication.name}
-                    </h3>
-                    {medication.dosage && (
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        {medication.dosage}
-                      </p>
-                    )}
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                      {medication.frequency}
-                    </p>
-                  </div>
-
-                  {/* Status Badge */}
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      medication.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
+              <div className="p-4 bg-background space-y-3">
+                {favoriteMedications.map((medication) => (
+                  <div
+                    key={medication.id}
+                    className={`flex items-start gap-4 rounded-lg border ${medication.isActive ? "border-border bg-card" : "border-border bg-muted/30 opacity-60"
+                      } p-4 transition-all hover:shadow-sm`}
                   >
-                    {medication.isActive ? "Active" : "Inactive"}
-                  </span>
-                </div>
-              </div>
+                    {/* Icon */}
+                    <div
+                      className={`mt-0.5 rounded-lg p-2 ${medication.isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        }`}
+                    >
+                      <Pill className="h-5 w-5" />
+                    </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => handleToggleActive(medication)}
-                  className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  title={medication.isActive ? "Deactivate" : "Activate"}
-                  aria-label={medication.isActive ? "Deactivate medication" : "Activate medication"}
-                >
-                  {medication.isActive ? (
-                    <ToggleRight className="h-5 w-5" />
-                  ) : (
-                    <ToggleLeft className="h-5 w-5" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleEditClick(medication)}
-                  className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  aria-label="Edit medication"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteClick(medication)}
-                  className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-red-100 hover:text-red-600"
-                  aria-label="Delete medication"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-foreground">{medication.name}</h3>
+                          {medication.dosage && (
+                            <p className="mt-0.5 text-sm text-muted-foreground">{medication.dosage}</p>
+                          )}
+                          {medication.frequency && (
+                            <p className="mt-0.5 text-sm text-muted-foreground">{medication.frequency}</p>
+                          )}
+                        </div>
+
+                        {/* Status Badge */}
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${medication.isActive
+                            ? "bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400"
+                            : "bg-muted text-muted-foreground"
+                            }`}
+                        >
+                          {medication.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleFavorite(medication)}
+                        className={cn(
+                          "rounded-lg p-2 transition-colors",
+                          medication.isFavorite
+                            ? "text-yellow-500 hover:bg-yellow-50"
+                            : "text-muted-foreground hover:bg-muted",
+                        )}
+                        aria-label={medication.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                      >
+                        <Star className={cn("h-4 w-4", medication.isFavorite && "fill-yellow-500")} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(medication)}
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title={medication.isActive ? "Deactivate" : "Activate"}
+                        aria-label={medication.isActive ? "Deactivate medication" : "Activate medication"}
+                      >
+                        {medication.isActive ? (
+                          <ToggleRight className="h-5 w-5" />
+                        ) : (
+                          <ToggleLeft className="h-5 w-5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleEditClick(medication)}
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        aria-label="Edit medication"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteClick(medication)}
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-red-100 hover:text-red-600"
+                        aria-label="Delete medication"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Other Medications */}
+          {nonFavoriteMedications.length > 0 && (
+            <div className="space-y-3">
+              {nonFavoriteMedications.map((medication) => (
+                <div
+                  key={medication.id}
+                  className={`flex items-start gap-4 rounded-lg border ${medication.isActive ? "border-border bg-card" : "border-border bg-muted/30 opacity-60"
+                    } p-4 transition-all hover:shadow-sm`}
+                >
+                  {/* Icon */}
+                  <div className={`mt-0.5 rounded-lg p-2 ${medication.isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                    }`}>
+                    <Pill className="h-5 w-5" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">
+                          {medication.name}
+                        </h3>
+                        {medication.dosage && (
+                          <p className="mt-0.5 text-sm text-muted-foreground">
+                            {medication.dosage}
+                          </p>
+                        )}
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          {medication.frequency}
+                        </p>
+                      </div>
+
+                      {/* Status Badge */}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${medication.isActive
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-700"
+                          }`}
+                      >
+                        {medication.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite(medication)}
+                      className={cn(
+                        "rounded-lg p-2 transition-colors",
+                        medication.isFavorite
+                          ? "text-yellow-500 hover:bg-yellow-50"
+                          : "text-muted-foreground hover:bg-muted",
+                      )}
+                      aria-label={medication.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    >
+                      <Star className={cn("h-4 w-4", medication.isFavorite && "fill-yellow-500")} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(medication)}
+                      className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      title={medication.isActive ? "Deactivate" : "Activate"}
+                      aria-label={medication.isActive ? "Deactivate medication" : "Activate medication"}
+                    >
+                      {medication.isActive ? (
+                        <ToggleRight className="h-5 w-5" />
+                      ) : (
+                        <ToggleLeft className="h-5 w-5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEditClick(medication)}
+                      className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      aria-label="Edit medication"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClick(medication)}
+                      className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-red-100 hover:text-red-600"
+                      aria-label="Delete medication"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -244,9 +391,8 @@ export const MedicationList = () => {
           title="Delete Medication"
           message={
             deleteConfirm.usageCount > 0
-              ? `This medication has been used in ${deleteConfirm.usageCount} daily ${
-                  deleteConfirm.usageCount === 1 ? "entry" : "entries"
-                }.\n\nDeleting it will permanently remove it from your records. Consider deactivating instead to preserve your history.\n\nAre you sure you want to delete "${deleteConfirm.medication.name}"?`
+              ? `This medication has been used in ${deleteConfirm.usageCount} daily ${deleteConfirm.usageCount === 1 ? "entry" : "entries"
+              }.\n\nDeleting it will permanently remove it from your records. Consider deactivating instead to preserve your history.\n\nAre you sure you want to delete "${deleteConfirm.medication.name}"?`
               : `Are you sure you want to delete "${deleteConfirm.medication.name}"?`
           }
           confirmLabel="Delete"

@@ -5,7 +5,7 @@ import { triggerRepository } from "@/lib/repositories/triggerRepository";
 import { TriggerRecord } from "@/lib/db/schema";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
-import { DEFAULT_TRIGGERS } from "@/lib/data/defaultPresets";
+import { DEFAULT_TRIGGERS } from "@/lib/data/defaultData";
 
 export interface TriggerFormData {
   name: string;

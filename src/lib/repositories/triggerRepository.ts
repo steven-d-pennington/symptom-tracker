@@ -12,12 +12,13 @@ export class TriggerRepository {
 
   /**
    * Get active triggers for a user
+   * Only returns triggers that are both active AND enabled (visible to user)
    */
   async getActive(userId: string): Promise<TriggerRecord[]> {
     return await db.triggers
       .where("userId")
       .equals(userId)
-      .filter((trigger) => trigger.isActive)
+      .filter((trigger) => trigger.isActive && trigger.isEnabled !== false) // isEnabled can be undefined for old records
       .toArray();
   }
 

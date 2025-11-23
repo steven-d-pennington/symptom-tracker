@@ -7,6 +7,7 @@ import { importService, type ImportOptions, type ImportResult } from "@/lib/serv
 import { userRepository } from "@/lib/repositories";
 import { persistOnboardingState } from "../utils/storage";
 import { createInitialState } from "../utils/storage";
+import { ONBOARDING_STEPS } from "../utils/onboardingConfig";
 import type { OnboardingStepId } from "../types/onboarding";
 
 const CURRENT_USER_ID_KEY = "pocket:currentUserId";
@@ -88,12 +89,15 @@ export function OnboardingImportOption() {
         window.localStorage.setItem(CURRENT_USER_ID_KEY, user.id);
 
         // Mark onboarding as complete
-        const allSteps: OnboardingStepId[] = ['welcome', 'profile', 'condition', 'preferences', 'education', 'privacy', 'completion'];
+        const allSteps: OnboardingStepId[] = ONBOARDING_STEPS.map((step) => step.id);
+        const lastStepIndex = Math.max(allSteps.length - 1, 0);
         const completedState = {
           ...createInitialState(),
           isComplete: true,
           completedSteps: allSteps,
-          currentStep: 6,
+          orderedSteps: allSteps,
+          currentStep: lastStepIndex,
+          hydrated: true,
         };
         persistOnboardingState(completedState);
 

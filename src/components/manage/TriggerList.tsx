@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Zap, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight, ChevronDown, ChevronRight } from "lucide-react";
+import { Zap, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Star } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { TriggerRecord } from "@/lib/db/schema";
 import { EmptyState } from "./EmptyState";
 import { TriggerForm } from "./TriggerForm";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useTriggerManagement } from "@/lib/hooks/useTriggerManagement";
+import { triggerRepository } from "@/lib/repositories/triggerRepository";
 
 export const TriggerList = () => {
   const {
@@ -24,6 +25,7 @@ export const TriggerList = () => {
     deleteTrigger,
     getTriggerUsageCount,
     checkDuplicateName,
+    refresh,
   } = useTriggerManagement();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -78,10 +80,23 @@ export const TriggerList = () => {
     }
   };
 
+  const toggleFavorite = async (trigger: TriggerRecord) => {
+    try {
+      // Use repository directly for isFavorite (not in FormData type)
+      await triggerRepository.update(trigger.id, {
+        isFavorite: !trigger.isFavorite,
+      });
+      // Manually refresh to update UI
+      await refresh();
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+    }
+  };
+
   // Group triggers by category
   const triggersByCategory = useMemo(() => {
     const grouped = new Map<string, TriggerRecord[]>();
-    
+
     triggers.forEach((trigger) => {
       const category = trigger.category;
       if (!grouped.has(category)) {
@@ -90,9 +105,15 @@ export const TriggerList = () => {
       grouped.get(category)!.push(trigger);
     });
 
-    // Sort triggers within each category
+    // Sort triggers within each category: favorites first, then alphabetically
     for (const [, categoryTriggers] of grouped) {
-      categoryTriggers.sort((a, b) => a.name.localeCompare(b.name));
+      categoryTriggers.sort((a, b) => {
+        // Favorites first
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        // Then alphabetically
+        return a.name.localeCompare(b.name);
+      });
     }
 
     return grouped;
@@ -181,10 +202,10 @@ export const TriggerList = () => {
               >
                 <div className={cn(
                   "mt-0.5 rounded-lg p-2",
-                  isCustom 
+                  isCustom
                     ? "bg-orange-100 text-orange-700"
-                    : trigger.isEnabled 
-                      ? "bg-primary/10 text-primary" 
+                    : trigger.isEnabled
+                      ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground"
                 )}>
                   <Zap className="h-5 w-5" />
@@ -216,6 +237,19 @@ export const TriggerList = () => {
                 </div>
 
                 <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorite(trigger)}
+                    className={cn(
+                      "rounded-lg p-2 transition-colors",
+                      trigger.isFavorite
+                        ? "text-yellow-500 hover:bg-yellow-50"
+                        : "text-muted-foreground hover:bg-muted",
+                    )}
+                    aria-label={trigger.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    <Star className={cn("h-4 w-4", trigger.isFavorite && "fill-yellow-500")} />
+                  </button>
                   {isCustom ? (
                     <>
                       <button
@@ -312,6 +346,19 @@ export const TriggerList = () => {
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
+                          onClick={() => toggleFavorite(trigger)}
+                          className={cn(
+                            "rounded-lg p-2 transition-colors",
+                            trigger.isFavorite
+                              ? "text-yellow-500 hover:bg-yellow-50"
+                              : "text-muted-foreground hover:bg-muted",
+                          )}
+                          aria-label={trigger.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                        >
+                          <Star className={cn("h-4 w-4", trigger.isFavorite && "fill-yellow-500")} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleEditClick(trigger)}
                           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                           aria-label="Edit trigger"
@@ -399,19 +446,35 @@ export const TriggerList = () => {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleToggleEnabled(trigger)}
-                          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          title={trigger.isEnabled ? "Disable" : "Enable"}
-                          aria-label={trigger.isEnabled ? "Disable trigger" : "Enable trigger"}
-                        >
-                          {trigger.isEnabled ? (
-                            <ToggleRight className="h-5 w-5" />
-                          ) : (
-                            <ToggleLeft className="h-5 w-5" />
-                          )}
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(trigger)}
+                            className={cn(
+                              "rounded-lg p-2 transition-colors",
+                              trigger.isFavorite
+                                ? "text-yellow-500 hover:bg-yellow-50"
+                                : "text-muted-foreground hover:bg-muted",
+                            )}
+                            aria-label={trigger.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Star className={cn("h-4 w-4", trigger.isFavorite && "fill-yellow-500")} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEnabled(trigger)}
+                            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title={trigger.isEnabled ? "Disable" : "Enable"}
+                            aria-label={trigger.isEnabled ? "Disable trigger" : "Enable trigger"}
+                          >
+                            {trigger.isEnabled ? (
+                              <ToggleRight className="h-5 w-5" />
+                            ) : (
+                              <ToggleLeft className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -448,9 +511,8 @@ export const TriggerList = () => {
           title="Delete Custom Trigger"
           message={
             deleteConfirm.usageCount > 0
-              ? `This trigger has been used in ${deleteConfirm.usageCount} daily ${
-                  deleteConfirm.usageCount === 1 ? "entry" : "entries"
-                }.\n\nDeleting it will permanently remove it from your records.\n\nAre you sure you want to delete "${deleteConfirm.trigger.name}"?`
+              ? `This trigger has been used in ${deleteConfirm.usageCount} daily ${deleteConfirm.usageCount === 1 ? "entry" : "entries"
+              }.\n\nDeleting it will permanently remove it from your records.\n\nAre you sure you want to delete "${deleteConfirm.trigger.name}"?`
               : `Are you sure you want to delete "${deleteConfirm.trigger.name}"?`
           }
           confirmLabel="Delete"

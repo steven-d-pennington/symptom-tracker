@@ -12,12 +12,13 @@ export class TreatmentRepository {
 
     /**
      * Get active treatments for a user
+     * Only returns treatments that are both active AND enabled (visible to user)
      */
     async getActive(userId: string): Promise<TreatmentRecord[]> {
         return await db.treatments
             .where("userId")
             .equals(userId)
-            .filter((treatment) => treatment.isActive)
+            .filter((treatment) => treatment.isActive && treatment.isEnabled !== false) // isEnabled can be undefined for old records
             .toArray();
     }
 

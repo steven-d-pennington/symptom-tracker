@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Activity, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight, ChevronDown, ChevronRight } from "lucide-react";
+import { Activity, Plus, Edit2, Trash2, Search, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Star } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { SymptomRecord } from "@/lib/db/schema";
 import { EmptyState } from "./EmptyState";
 import { SymptomForm } from "./SymptomForm";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useSymptomManagement } from "@/lib/hooks/useSymptomManagement";
+import { symptomRepository } from "@/lib/repositories/symptomRepository";
 
 export const SymptomList = () => {
   const {
@@ -24,6 +25,7 @@ export const SymptomList = () => {
     deleteSymptom,
     getSymptomUsageCount,
     checkDuplicateName,
+    refresh,
   } = useSymptomManagement();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -78,10 +80,23 @@ export const SymptomList = () => {
     }
   };
 
+  const toggleFavorite = async (symptom: SymptomRecord) => {
+    try {
+      // Use repository directly for isFavorite (not in FormData type)
+      await symptomRepository.update(symptom.id, {
+        isFavorite: !symptom.isFavorite,
+      });
+      // Manually refresh to update UI
+      await refresh();
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+    }
+  };
+
   // Group symptoms by category
   const symptomsByCategory = useMemo(() => {
     const grouped = new Map<string, SymptomRecord[]>();
-    
+
     symptoms.forEach((symptom) => {
       const category = symptom.category;
       if (!grouped.has(category)) {
@@ -90,15 +105,22 @@ export const SymptomList = () => {
       grouped.get(category)!.push(symptom);
     });
 
-    // Sort symptoms within each category
+    // Sort symptoms within each category: favorites first, then alphabetically
     for (const [, categorySymptoms] of grouped) {
-      categorySymptoms.sort((a, b) => a.name.localeCompare(b.name));
+      categorySymptoms.sort((a, b) => {
+        // Favorites first
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        // Then alphabetically
+        return a.name.localeCompare(b.name);
+      });
     }
 
     return grouped;
   }, [symptoms]);
 
   const customSymptoms = symptoms.filter(s => !s.isDefault);
+  const favoriteSymptoms = symptoms.filter(s => s.isFavorite);
   const hasSearch = searchQuery.trim().length > 0;
   const hasFilter = filterCategory !== "all";
 
@@ -119,7 +141,7 @@ export const SymptomList = () => {
         <div>
           <h2 className="text-2xl font-semibold text-foreground">Symptoms</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Browse and manage symptoms • {symptoms.length} total • {customSymptoms.length} custom
+            Browse and manage symptoms • {symptoms.length} total • {customSymptoms.length} custom • {favoriteSymptoms.length} favorites
           </p>
         </div>
         <button
@@ -181,10 +203,10 @@ export const SymptomList = () => {
               >
                 <div className={cn(
                   "mt-0.5 rounded-lg p-2",
-                  isCustom 
+                  isCustom
                     ? "bg-purple-100 text-purple-700"
-                    : symptom.isEnabled 
-                      ? "bg-primary/10 text-primary" 
+                    : symptom.isEnabled
+                      ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground"
                 )}>
                   <Activity className="h-5 w-5" />
@@ -216,6 +238,20 @@ export const SymptomList = () => {
                 </div>
 
                 <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorite(symptom)}
+                    className={cn(
+                      "rounded-lg p-2 transition-colors",
+                      symptom.isFavorite
+                        ? "text-yellow-500 hover:bg-yellow-50"
+                        : "text-muted-foreground hover:bg-muted",
+                    )}
+                    aria-label={symptom.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    title={symptom.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    <Star className={cn("h-4 w-4", symptom.isFavorite && "fill-yellow-500")} />
+                  </button>
                   {isCustom ? (
                     <>
                       <button
@@ -312,6 +348,19 @@ export const SymptomList = () => {
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
+                          onClick={() => toggleFavorite(symptom)}
+                          className={cn(
+                            "rounded-lg p-2 transition-colors",
+                            symptom.isFavorite
+                              ? "text-yellow-500 hover:bg-yellow-50"
+                              : "text-muted-foreground hover:bg-muted",
+                          )}
+                          aria-label={symptom.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                        >
+                          <Star className={cn("h-4 w-4", symptom.isFavorite && "fill-yellow-500")} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleEditClick(symptom)}
                           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                           aria-label="Edit symptom"
@@ -399,19 +448,35 @@ export const SymptomList = () => {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleToggleEnabled(symptom)}
-                          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          title={symptom.isEnabled ? "Disable" : "Enable"}
-                          aria-label={symptom.isEnabled ? "Disable symptom" : "Enable symptom"}
-                        >
-                          {symptom.isEnabled ? (
-                            <ToggleRight className="h-5 w-5" />
-                          ) : (
-                            <ToggleLeft className="h-5 w-5" />
-                          )}
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(symptom)}
+                            className={cn(
+                              "rounded-lg p-2 transition-colors",
+                              symptom.isFavorite
+                                ? "text-yellow-500 hover:bg-yellow-50"
+                                : "text-muted-foreground hover:bg-muted",
+                            )}
+                            aria-label={symptom.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Star className={cn("h-4 w-4", symptom.isFavorite && "fill-yellow-500")} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEnabled(symptom)}
+                            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title={symptom.isEnabled ? "Disable" : "Enable"}
+                            aria-label={symptom.isEnabled ? "Disable symptom" : "Enable symptom"}
+                          >
+                            {symptom.isEnabled ? (
+                              <ToggleRight className="h-5 w-5" />
+                            ) : (
+                              <ToggleLeft className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -448,9 +513,8 @@ export const SymptomList = () => {
           title="Delete Custom Symptom"
           message={
             deleteConfirm.usageCount > 0
-              ? `This symptom has been used in ${deleteConfirm.usageCount} daily ${
-                  deleteConfirm.usageCount === 1 ? "entry" : "entries"
-                }.\n\nDeleting it will permanently remove it from your records.\n\nAre you sure you want to delete "${deleteConfirm.symptom.name}"?`
+              ? `This symptom has been used in ${deleteConfirm.usageCount} daily ${deleteConfirm.usageCount === 1 ? "entry" : "entries"
+              }.\n\nDeleting it will permanently remove it from your records.\n\nAre you sure you want to delete "${deleteConfirm.symptom.name}"?`
               : `Are you sure you want to delete "${deleteConfirm.symptom.name}"?`
           }
           confirmLabel="Delete"

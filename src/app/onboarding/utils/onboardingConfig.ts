@@ -27,9 +27,14 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
   },
   {
     id: "privacy",
-    title: "Review Privacy Controls",
+    title: "Privacy Preferences",
     description:
-      "Understand exactly how your information stays on your device and under your control.",
+      "Control where your data is stored and whether to share optional diagnostics.",
+  },
+  {
+    id: "education",
+    title: "Quick Learning Modules",
+    description: "Review privacy basics and tips for consistent, low-effort tracking.",
   },
   {
     id: "symptomSelection",
@@ -44,10 +49,16 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
       "Choose which triggers you want to monitor. Search and add custom items if needed.",
   },
   {
-    id: "medicationSelection",
+    id: "treatmentSelection",
     title: "Select Your Treatments",
     description:
-      "Choose which medications and treatments you want to track. Search and add custom items if needed.",
+      "Choose which treatments you want to track. Search and add custom items if needed.",
+  },
+  {
+    id: "medicationSelection",
+    title: "Select Your Medications",
+    description:
+      "Choose which medications you want to track. Search and add custom items if needed.",
   },
   {
     id: "foodSelection",

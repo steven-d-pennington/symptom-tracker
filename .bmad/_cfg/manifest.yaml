@@ -1,7 +1,7 @@
 installation:
-  version: 6.0.0-alpha.10
-  installDate: '2025-11-16T22:47:04.180Z'
-  lastUpdated: '2025-11-16T22:47:04.180Z'
+  version: 6.0.0-alpha.12
+  installDate: '2025-11-23T05:11:16.674Z'
+  lastUpdated: '2025-11-23T05:11:16.674Z'
 modules:
   - core
   - bmm
@@ -15,3 +15,4 @@ ides:
   - roo
   - cursor
   - kilo
+  - antigravity

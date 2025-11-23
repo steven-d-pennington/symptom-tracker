@@ -1,7 +1,6 @@
 import { db } from "../db/client";
 import { FoodRecord, FoodEventRecord, MealType, PortionSize } from "../db/schema";
 import { generateId } from "../utils/idGenerator";
-import { seedFoodsService } from "../services/food/seedFoodsService";
 
 export type FoodEventPreset = "first-day" | "one-week" | "heavy-user" | "one-year-heavy";
 
@@ -52,14 +51,7 @@ export async function generateFoodEventData(
   startDate.setDate(startDate.getDate() - presetConfig.daysBack);
   startDate.setHours(0, 0, 0, 0);
 
-  // Ensure foods are seeded
-  try {
-    await seedFoodsService.seedDefaultFoods(userId, db);
-  } catch (error) {
-    console.error("[Food Event Data] Error seeding foods:", error);
-    throw new Error(`Failed to seed foods: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-
+  // Foods should already be seeded through onboarding or userInitialization.ts
   const foods = await db.foods.where({ userId }).toArray();
   const activeFoods = foods.filter((f: FoodRecord) => f.isActive && f.name !== "__SEED_COMPLETE_V1__");
 
@@ -98,8 +90,8 @@ export async function generateFoodEventData(
   // Validate events before persisting
   for (const event of foodEvents) {
     if (!event.id || !event.userId || !event.mealId || !event.foodIds ||
-        typeof event.timestamp !== 'number' || !event.mealType || !event.portionMap ||
-        typeof event.createdAt !== 'number' || typeof event.updatedAt !== 'number') {
+      typeof event.timestamp !== 'number' || !event.mealType || !event.portionMap ||
+      typeof event.createdAt !== 'number' || typeof event.updatedAt !== 'number') {
       console.error("[Food Event Data] Invalid event:", event);
       throw new Error("Generated food event is missing required fields");
     }

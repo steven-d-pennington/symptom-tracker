@@ -47,7 +47,6 @@ BMAD rules have been installed to: `.cursor/rules/bmad/`
 - @bmad/bmm/agents/analyst - analyst
 - @bmad/bmm/agents/architect - architect
 - @bmad/bmm/agents/dev - dev
-- @bmad/bmm/agents/frame-expert - frame-expert
 - @bmad/bmm/agents/pm - pm
 - @bmad/bmm/agents/sm - sm
 - @bmad/bmm/agents/tea - tea
@@ -59,11 +58,11 @@ BMAD rules have been installed to: `.cursor/rules/bmad/`
 - @bmad/bmm/workflows/domain-research - domain-research
 - @bmad/bmm/workflows/product-brief - product-brief
 - @bmad/bmm/workflows/research - research
-- @bmad/bmm/workflows/create-epics-and-stories - create-epics-and-stories
 - @bmad/bmm/workflows/create-ux-design - create-ux-design
 - @bmad/bmm/workflows/prd - prd
 - @bmad/bmm/workflows/tech-spec - tech-spec
 - @bmad/bmm/workflows/architecture - architecture
+- @bmad/bmm/workflows/create-epics-and-stories - create-epics-and-stories
 - @bmad/bmm/workflows/implementation-readiness - implementation-readiness
 - @bmad/bmm/workflows/code-review - code-review
 - @bmad/bmm/workflows/correct-course - correct-course
@@ -75,11 +74,11 @@ BMAD rules have been installed to: `.cursor/rules/bmad/`
 - @bmad/bmm/workflows/story-context - story-context
 - @bmad/bmm/workflows/story-done - story-done
 - @bmad/bmm/workflows/story-ready - story-ready
+- @bmad/bmm/workflows/create-excalidraw-dataflow - create-excalidraw-dataflow
+- @bmad/bmm/workflows/create-excalidraw-diagram - create-excalidraw-diagram
+- @bmad/bmm/workflows/create-excalidraw-flowchart - create-excalidraw-flowchart
+- @bmad/bmm/workflows/create-excalidraw-wireframe - create-excalidraw-wireframe
 - @bmad/bmm/workflows/document-project - document-project
-- @bmad/bmm/workflows/create-dataflow - create-dataflow
-- @bmad/bmm/workflows/create-diagram - create-diagram
-- @bmad/bmm/workflows/create-flowchart - create-flowchart
-- @bmad/bmm/workflows/create-wireframe - create-wireframe
 - @bmad/bmm/workflows/workflow-init - workflow-init
 - @bmad/bmm/workflows/workflow-status - workflow-status
 
@@ -91,6 +90,7 @@ BMAD rules have been installed to: `.cursor/rules/bmad/`
 - @bmad/cis/agents/creative-problem-solver - creative-problem-solver
 - @bmad/cis/agents/design-thinking-coach - design-thinking-coach
 - @bmad/cis/agents/innovation-strategist - innovation-strategist
+- @bmad/cis/agents/presentation-master - presentation-master
 - @bmad/cis/agents/storyteller - storyteller
 
 **Workflows:**

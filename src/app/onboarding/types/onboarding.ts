@@ -9,6 +9,7 @@ export type OnboardingStepId =
   | "education"
   | "symptomSelection"
   | "triggerSelection"
+  | "treatmentSelection"
   | "medicationSelection"
   | "foodSelection"
   | "completion";
@@ -56,6 +57,7 @@ export interface SelectionItem {
 export interface OnboardingSelections {
   symptoms: SelectionItem[];
   triggers: SelectionItem[];
+  treatments: SelectionItem[];
   medications: SelectionItem[];
   foods: SelectionItem[];
 }
