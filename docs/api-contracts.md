@@ -1,305 +1,155 @@
 # API Contracts
 
-**Project**: Pocket Symptom Tracker
-**Last Updated**: 2025-11-04
-**Architecture**: Next.js App Router API Routes
-
 ## Overview
 
-The application uses Next.js 15 App Router API routes for server-side correlation computation. All routes are located in `src/app/api/` and handle food-symptom correlation analysis with caching.
+This document details the API endpoints available in the Symptom Tracker application. The API is built using Next.js App Router Route Handlers.
 
-## API Routes
+## Endpoints
 
-### 1. Correlation Compute API
+### Beta Signup
 
-**Endpoint**: `/api/correlation/compute`
+**POST** `/api/beta-signup`
 
-**Purpose**: Computes correlation for food-symptom pairs with intelligent caching
+Accepts beta signup email submissions, sends a welcome email with a verification code, and notifies the admin.
 
-**Methods**:
+**Request Body:**
 
-#### POST - Compute Correlation
-
-Computes or retrieves cached correlation for a specific food-symptom pair.
-
-**Request Body**:
 ```json
 {
-  "userId": "string (required)",
-  "foodId": "string (required)",
-  "symptomId": "string (required)",
-  "startMs": "number (optional, default: 30 days ago)",
-  "endMs": "number (optional, default: now)"
+  "email": "user@example.com"
 }
 ```
 
-**Response** (200 OK):
+**Response (200 OK):**
+
 ```json
 {
-  "correlation": {
-    "foodId": "string",
-    "symptomId": "string",
-    "coefficient": "number",
-    "pValue": "number",
-    "sampleSize": "number",
-    "confidence": "string"
-  },
-  "fromCache": "boolean",
-  "cacheAge": "number (ms)",
-  "computedAt": "number (timestamp)"
+  "success": true,
+  "message": "Successfully signed up for beta access!",
+  "verificationCode": "ABC12345"
 }
 ```
 
-**Response** (400 Bad Request):
-```json
-{
-  "error": "Missing required fields: userId, foodId, symptomId"
-}
-```
-
-**Response** (500 Internal Server Error):
-```json
-{
-  "error": "Failed to compute correlation"
-}
-```
-
-#### GET - Retrieve Cached Correlation
-
-Retrieves cached correlation (read-only, does not compute).
-
-**Query Parameters**:
-- `userId` (required): User identifier
-- `foodId` (required): Food identifier
-- `symptomId` (required): Symptom identifier
-
-**Response** (200 OK):
-```json
-{
-  "correlation": { },
-  "fromCache": true,
-  "cacheAge": "number (ms)"
-}
-```
-
-**Response** (404 Not Found):
-```json
-{
-  "error": "No cached correlation found. Use POST to compute."
-}
-```
+**Error Responses:**
+- 400 Bad Request: Invalid email or missing fields
+- 503 Service Unavailable: Email service not configured or failed
 
 ---
 
-### 2. Correlation Cron API
+### Correlation Analysis
 
-**Endpoint**: `/api/correlation/cron`
+**POST** `/api/correlation/compute`
 
-**Purpose**: Scheduled correlation recomputation triggered by Vercel Cron
+Computes correlation between a specific food and symptom for a user. Returns cached results if available.
 
-**Methods**:
+**Request Body:**
 
-#### GET/POST - Execute Cron Job
+```json
+{
+  "userId": "user-uuid",
+  "foodId": "food-uuid",
+  "symptomId": "symptom-name",
+  "startMs": 1672531200000,
+  "endMs": 1675123200000
+}
+```
 
-Processes recent food-symptom pairs and cleans up expired cache entries.
+**Response (200 OK):**
 
-**Authentication**:
-- Requires `Authorization: Bearer ${CRON_SECRET}` header
-- Vercel adds this automatically for scheduled cron jobs
+```json
+{
+  "score": 0.85,
+  "confidence": "high",
+  "sampleSize": 12,
+  "computedAt": 1675123200000,
+  "fromCache": false
+}
+```
 
-**Configuration**:
-- `RECOMPUTE_WINDOW_DAYS`: 30 (only recompute last 30 days)
-- `MAX_PAIRS_PER_RUN`: 50 (limit pairs per run to avoid timeouts)
+**GET** `/api/correlation/compute`
 
-**Response** (200 OK):
+Retrieves cached correlation results. Read-only.
+
+**Query Parameters:**
+- `userId`: User UUID
+- `foodId`: Food UUID
+- `symptomId`: Symptom Name
+
+**Response (200 OK):** Returns cached correlation object.
+**Response (404 Not Found):** If no cache exists.
+
+---
+
+### Correlation Cron Job
+
+**GET/POST** `/api/correlation/cron`
+
+Triggered by Vercel Cron to incrementally recompute correlations for recent data.
+
+**Headers:**
+- `Authorization`: `Bearer ${CRON_SECRET}`
+
+**Response (200 OK):**
+
 ```json
 {
   "success": true,
   "results": {
-    "usersProcessed": "number",
-    "pairsComputed": "number",
-    "cacheEntriesCreated": "number",
-    "expiredEntriesCleaned": "number",
-    "errors": ["string"],
-    "duration": "number (ms)"
+    "usersProcessed": 10,
+    "pairsComputed": 50,
+    "cacheEntriesCreated": 50,
+    "expiredEntriesCleaned": 5,
+    "errors": [],
+    "duration": 1234
   }
 }
 ```
 
-**Response** (401 Unauthorized):
-```json
-{
-  "error": "Unauthorized"
-}
-```
-
-**Response** (500 Internal Server Error):
-```json
-{
-  "success": false,
-  "error": "string"
-}
-```
-
-**Processing Logic**:
-1. Clean up expired cache entries
-2. Get recent food events and symptom instances (last 30 days)
-3. Extract unique food IDs and symptom names
-4. Generate food-symptom pairs (up to 50 per run)
-5. Compute correlations using orchestration service
-6. Cache all results
-
 ---
 
-### 3. Enhanced Correlation API
+### Sync & Backup
 
-**Endpoint**: `/api/correlation/enhanced`
+**POST** `/api/sync/upload`
 
-**Purpose**: Computes both individual correlations AND combination effects for synergistic food combinations
+Uploads an encrypted backup blob to cloud storage.
 
-**Methods**:
-
-#### POST - Compute Enhanced Correlation
-
-Computes correlations including food combination effects.
-
-**Request Body**:
-```json
-{
-  "userId": "string (required)",
-  "symptomId": "string (required)",
-  "startMs": "number (optional, default: 30 days ago)",
-  "endMs": "number (optional, default: now)",
-  "minSampleSize": "number (optional)"
-}
-```
-
-**Response** (200 OK):
-```json
-{
-  "individualCorrelations": [
-    {
-      "foodId": "string",
-      "correlation": "number",
-      "confidence": "string"
-    }
-  ],
-  "combinations": [
-    {
-      "foodIds": ["string"],
-      "correlation": "number",
-      "confidence": "string",
-      "synergyScore": "number"
-    }
-  ],
-  "computedAt": "number (timestamp)"
-}
-```
-
-**Response** (400 Bad Request):
-```json
-{
-  "error": "Missing required fields: userId, symptomId"
-}
-```
-
-**Response** (500 Internal Server Error):
-```json
-{
-  "error": "Failed to compute enhanced correlation"
-}
-```
-
-#### GET - Retrieve Enhanced Correlation
-
-Retrieves enhanced correlations via query parameters.
-
-**Query Parameters**:
-- `userId` (required): User identifier
-- `symptomId` (required): Symptom identifier
-- `startMs` (optional): Start timestamp in milliseconds
-- `endMs` (optional): End timestamp in milliseconds
-- `minSampleSize` (optional): Minimum sample size for correlation
-
-**Response**: Same as POST method
-
----
-
-## Authentication & Security
-
-**Current Implementation**:
-- **Cron API**: Bearer token authentication via `CRON_SECRET` environment variable
-- **Other APIs**: No authentication (client-side only, local-first architecture)
-
-**Security Considerations**:
-- All data operations are client-side using IndexedDB
-- API routes only perform computational tasks
-- No user authentication required (single-user PWA)
-- Cron endpoint protected for production deployments
-
----
-
-## Error Handling
-
-All endpoints follow consistent error response format:
+**Request Body:**
 
 ```json
 {
-  "error": "Human-readable error message"
+  "blob": "base64-encoded-encrypted-data",
+  "storageKey": "sha256-hash-of-passphrase",
+  "metadata": {
+    "timestamp": 1675123200000,
+    "originalSize": 1024
+  }
 }
 ```
 
-**Standard HTTP Status Codes**:
-- `200 OK`: Success
-- `400 Bad Request`: Missing or invalid parameters
-- `401 Unauthorized`: Authentication failure (cron only)
-- `404 Not Found`: Resource not found (cached data)
-- `500 Internal Server Error`: Server-side processing error
+**Response (200 OK):**
 
----
+```json
+{
+  "success": true,
+  "uploadedAt": "2023-01-31T00:00:00.000Z",
+  "blobSize": 1024,
+  "storageKeyHash": "first-8-chars",
+  "versionId": "blob-id"
+}
+```
 
-## Dependencies
+**GET** `/api/sync/download`
 
-**Internal Services**:
-- `correlationOrchestrationService` - Orchestrates correlation computation
-- `correlationCacheService` - Manages correlation caching
-- `foodEventRepository` - Food event data access
-- `symptomInstanceRepository` - Symptom data access
+Downloads the most recent encrypted backup.
 
-**External**:
-- Vercel Cron (scheduled jobs)
-- IndexedDB via Dexie v4 (client-side storage)
+**Query Parameters:**
+- `storageKey`: SHA-256 hash of passphrase
 
----
+**Response (200 OK):** Binary stream of encrypted blob.
 
-## Performance Considerations
+**GET** `/api/sync/cleanup`
 
-**Caching Strategy**:
-- Cache hit returns results immediately
-- Cache miss triggers synchronous computation on first request
-- Scheduled cron job pre-computes common correlations
-- Expired entries cleaned up automatically
+Cron job to delete backups older than 90 days (preserves most recent).
 
-**Rate Limiting**:
-- Cron job processes max 50 food-symptom pairs per run
-- 30-day rolling window for recent data analysis
-
-**Response Times**:
-- Cached results: <50ms
-- Synchronous computation: Variable (depends on data volume)
-- Cron job: <10s (with 50 pair limit)
-
----
-
-## Future Enhancements
-
-**Planned Improvements**:
-- Webhook-based async computation for large datasets
-- Real-time correlation updates via WebSockets
-- GraphQL endpoint for flexible querying
-- Batch correlation computation API
-
-**Under Consideration**:
-- Authentication layer for multi-user support
-- API rate limiting for production
-- OpenAPI/Swagger documentation generation
+**Headers:**
+- `Authorization`: `Bearer ${CRON_SECRET}`
