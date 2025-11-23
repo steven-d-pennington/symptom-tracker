@@ -92,8 +92,31 @@ export function PhotoLinker({ photo, onSave, onCancel }: PhotoLinkerProps) {
     try {
       // Load recent daily entries (last 30 days)
       const entries = await dailyEntryRepository.getRecent(photo.userId, 30);
-      setRecentEntries(entries);
-      
+      const normalizedEntries: DailyEntry[] = entries.map((entry) => {
+        const treatments = (entry as { treatments?: DailyEntry["treatments"] }).treatments ?? [];
+
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          date: entry.date,
+          overallHealth: entry.overallHealth,
+          energyLevel: entry.energyLevel,
+          sleepQuality: entry.sleepQuality,
+          stressLevel: entry.stressLevel,
+          symptoms: entry.symptoms,
+          medications: entry.medications,
+          triggers: entry.triggers,
+          treatments,
+          notes: entry.notes,
+          mood: entry.mood,
+          weather: entry.weather,
+          location: entry.location,
+          duration: entry.duration,
+          completedAt: entry.completedAt ?? new Date(entry.createdAt),
+        };
+      });
+      setRecentEntries(normalizedEntries);
+
       // TODO: Load active symptoms and body regions in next tasks
     } catch (error) {
       console.error("Failed to load linkable entities:", error);

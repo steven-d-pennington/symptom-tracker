@@ -24,6 +24,7 @@ const STEP_COMPONENTS: Record<OnboardingStepId, OnboardingStepComponent> = {
   profile: ProfileStep,
   condition: ConditionStep,
   preferences: PreferencesStep,
+  privacy: PrivacyStep,
   symptomSelection: SymptomSelectionStep,
   triggerSelection: TriggerSelectionStep,
   treatmentSelection: TreatmentSelectionStep,
