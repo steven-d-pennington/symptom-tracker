@@ -1,0 +1,205 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/3-7-1" v="1.0">
+  <metadata>
+    <epicId>3.7</epicId>
+    <storyId>1</storyId>
+    <title>Region Detail View Infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-7-1-region-detail-view-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user with a larger body type</asA>
+    <iWant>body regions to fill my screen when placing markers</iWant>
+    <soThat>I have enough surface area for comfortable, precise interaction</soThat>
+    <tasks>
+      - Create RegionDetailView component structure
+      - Implement view mode state management
+      - Extract and render isolated region SVG
+      - Implement region-relative coordinate system
+      - Implement coordinate transformation between views
+      - Add existing marker display with toggle
+      - Support multiple marker placement in session
+      - Add Back to Body Map navigation
+      - Update BodyMapViewer integration
+      - Testing and accessibility
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC3.7.1.1">Clicking any body region switches to isolated region view</criterion>
+    <criterion id="AC3.7.1.2">Region fills viewport with maximum space</criterion>
+    <criterion id="AC3.7.1.3">Cannot navigate to adjacent regions without returning</criterion>
+    <criterion id="AC3.7.1.4">Shows existing markers on region (toggleable)</criterion>
+    <criterion id="AC3.7.1.5">Can place multiple markers before returning</criterion>
+    <criterion id="AC3.7.1.6">Back to Body Map button navigation</criterion>
+    <criterion id="AC3.7.1.7">Region-relative coordinate system</criterion>
+    <criterion id="AC3.7.1.8">Coordinate transformation between views</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <document>
+        <path>docs/epics.md</path>
+        <title>Epic 3.7: Body Map UX Enhancements</title>
+        <section>Story 3.7.1: Region Detail View Infrastructure</section>
+        <snippet>Transform body map with precision-focused features for improved usability, particularly for users with motor control challenges or larger body types</snippet>
+      </document>
+      <document>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Epic 3.7: Body Map UX Enhancements</section>
+        <snippet>Enhance body map with region detail view, marker preview, smart defaults, full-screen mode, and history toggle</snippet>
+      </document>
+      <document>
+        <path>docs/FUTURE/body-map-ux-enhancements.md</path>
+        <title>Body Map UX Enhancements Planning</title>
+        <section>Enhancement 1: Region Focus View</section>
+        <snippet>When user clicks on any body region, interface switches to dedicated region-only view where that specific region fills the viewport</snippet>
+      </document>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>30-43</lines>
+        <reason>Main component to extend with region detail view mode</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyRegionSelector.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyRegionSelector</symbol>
+        <reason>Region click handlers will trigger region detail view</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/CoordinateMarker.tsx</path>
+        <kind>component</kind>
+        <symbol>CoordinateMarker</symbol>
+        <reason>Existing marker component to reuse in region view</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/coordinates.ts</path>
+        <kind>utility</kind>
+        <symbol>normalizeCoordinates, denormalizeCoordinates, getRegionBounds</symbol>
+        <lines>22-84</lines>
+        <reason>Coordinate transformation utilities to extend for region-specific transformations</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/types/body-mapping.ts</path>
+        <kind>types</kind>
+        <symbol>BodyMapLocation, BodyRegion, BodyViewType</symbol>
+        <lines>28-42</lines>
+        <reason>Core types for body mapping functionality</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/BodyMapZoom.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapZoom</symbol>
+        <reason>Existing zoom functionality for reference and compatibility</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>react@19.1.0</package>
+        <package>react-dom@19.1.0</package>
+        <package>next@15.5.4</package>
+        <package>lucide-react@^0.544.0</package>
+        <package>react-zoom-pan-pinch@^3.6.1</package>
+        <package>typescript@^5</package>
+      </node>
+      <dev>
+        <package>@testing-library/react@^16.3.0</package>
+        <package>@testing-library/jest-dom@^6.9.1</package>
+        <package>@testing-library/user-event@^14.6.1</package>
+        <package>jest@^30.2.0</package>
+        <package>jest-environment-jsdom@^30.2.0</package>
+      </dev>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Must maintain backward compatibility with existing BodyMapViewer API</constraint>
+    <constraint>Region coordinates must use 0.0-1.0 normalized system relative to region bounds</constraint>
+    <constraint>Touch targets must meet 44x44px minimum for accessibility</constraint>
+    <constraint>Component must follow established patterns in src/components/body-mapping/ directory</constraint>
+    <constraint>View transitions should be smooth and performant (< 300ms)</constraint>
+    <constraint>Must support keyboard navigation (Tab, Enter, ESC keys)</constraint>
+    <constraint>Historical markers must be visually distinct from new session markers</constraint>
+    <constraint>Region must be isolated from full body context (no adjacent regions visible)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>BodyMapViewerProps</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface BodyMapViewerProps {
+  view: "front" | "back" | "left" | "right";
+  userId: string;
+  symptoms?: BodyMapLocation[];
+  selectedRegion?: string;
+  onRegionSelect: (regionId: string) => void;
+  onCoordinateMark?: (regionId: string, coordinates: NormalizedCoordinates) => void;
+  showFlareMarkers?: boolean;
+}</signature>
+      <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+    </interface>
+    <interface>
+      <name>NormalizedCoordinates</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface NormalizedCoordinates {
+  x: number; // 0.0-1.0
+  y: number; // 0.0-1.0
+}</signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>RegionBounds</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface RegionBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}</signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>BodyMapLocation</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface BodyMapLocation {
+  id: string;
+  userId: string;
+  bodyRegionId: string;
+  coordinates?: { x: number; y: number; };
+  severity: number;
+  notes?: string;
+}</signature>
+      <path>src/lib/types/body-mapping.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use Jest with React Testing Library for component testing. Tests live alongside components in __tests__ directories. Follow existing patterns in BodyMapViewer.test.tsx. Test files use .test.tsx extension. Focus on user interactions, accessibility, and coordinate transformations. Use fake-indexeddb for database mocking.</standards>
+    <locations>
+      <location>src/components/body-mapping/__tests__/</location>
+      <location>src/components/body-mapping/RegionDetailView.test.tsx</location>
+      <location>src/lib/utils/__tests__/coordinates.test.ts</location>
+    </locations>
+    <ideas>
+      <test ac="AC3.7.1.1">Test clicking body region triggers view mode change to region-detail</test>
+      <test ac="AC3.7.1.2">Test region fills entire viewport with proper scaling</test>
+      <test ac="AC3.7.1.3">Test navigation prevention between regions in detail view</test>
+      <test ac="AC3.7.1.4">Test toggle shows/hides historical markers</test>
+      <test ac="AC3.7.1.5">Test placing multiple markers without view transition</test>
+      <test ac="AC3.7.1.6">Test Back to Body Map button returns to full view</test>
+      <test ac="AC3.7.1.6">Test ESC key returns to full body view</test>
+      <test ac="AC3.7.1.7">Test coordinate normalization produces 0-1 values</test>
+      <test ac="AC3.7.1.8">Test marker coordinates transform correctly between views</test>
+      <test ac="All">Test keyboard navigation through all interactive elements</test>
+      <test ac="All">Test touch targets meet 44x44px minimum</test>
+      <test ac="All">Test ARIA labels for screen reader compatibility</test>
+    </ideas>
+  </tests>
+</story-context>

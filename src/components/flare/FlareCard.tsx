@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ActiveFlare } from "@/lib/types/flare";
-import { flareRepository } from "@/lib/repositories/flareRepository";
+import { bodyMarkerRepository } from "@/lib/repositories/bodyMarkerRepository";
 import { Map } from "lucide-react";
 
 interface FlareCardProps {
@@ -24,7 +24,10 @@ export function FlareCard({ flare, onUpdate }: FlareCardProps) {
 
   const handleStatusChange = async (newStatus: ActiveFlare["status"]) => {
     try {
-      await flareRepository.update(flare.id, { status: newStatus });
+      // Note: This component is deprecated. Use ActiveFlareCards instead.
+      // The old flareRepository.update() method no longer exists.
+      // To properly update markers, use bodyMarkerRepository.updateMarker() with userId.
+      console.warn("FlareCard component is deprecated. Use ActiveFlareCards instead.");
       onUpdate();
     } catch (error) {
       console.error("Failed to update flare status:", error);

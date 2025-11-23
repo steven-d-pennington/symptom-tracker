@@ -1,0 +1,812 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Story 2.6: View Flare History Timeline - Implementation Context
+Generated: 2025-10-27
+Model: claude-haiku-4-5-20251001
+Purpose: Comprehensive implementation reference for Story 2.6 development
+
+This document provides:
+1. Story specification summary (epic_id, story_id, title, acceptance criteria)
+2. Documentation references (PRD, Solution Architecture, ADR-003)
+3. Code artifact discoveries (existing types, repositories, hooks, components)
+4. Testing patterns and standards
+5. Performance considerations (NFR001)
+6. Integration points and dependencies
+-->
+
+<story>
+  <metadata>
+    <epic_id>2</epic_id>
+    <story_id>6</story_id>
+    <title>View Flare History Timeline</title>
+    <status>Ready</status>
+    <created_date>2025-10-27</created_date>
+    <dependencies>
+      <dependency>Story 2.1: Flare Data Model and IndexedDB Schema</dependency>
+      <dependency>Story 2.4: Update Flare Status (Severity and Trend)</dependency>
+      <dependency>Story 2.5: Log Flare Interventions</dependency>
+    </dependencies>
+  </metadata>
+
+  <user_story>
+    <statement>As a user reviewing a flare's progression, I want to see a chronological timeline of all status changes and interventions, So that I can understand the flare's complete history.</statement>
+    <epic_context>Epic 2: Flare Lifecycle Management - Enables users to track individual flares through their complete lifecycle with complete history visibility.</epic_context>
+  </user_story>
+
+  <acceptance_criteria>
+    <criterion id="AC2.6.1">
+      <title>Flare detail view includes "History" tab</title>
+      <description>
+        Page at `/flares/[id]` displays tab navigation with "Details" and "History" tabs, 
+        clicking "History" tab shows FlareHistory component, 
+        tab navigation accessible via keyboard (arrow keys) and screen readers, 
+        active tab visually indicated with ARIA attributes.
+      </description>
+      <sources>
+        <source>docs/epics.md#Story-2.6</source>
+      </sources>
+      <implementation_notes>
+        - Tab interface component with role="tablist" and role="tab" attributes
+        - Keyboard navigation: Arrow Left/Right to switch tabs, Tab to move focus
+        - Visual indicator: border-bottom, font-semibold, or background color change
+        - ARIA attributes: aria-selected, aria-controls, aria-labelledby
+      </implementation_notes>
+    </criterion>
+
+    <criterion id="AC2.6.2">
+      <title>Timeline displays comprehensive event information</title>
+      <description>
+        Each FlareEvent entry displays:
+        1. Date/time (formatted as relative "2 hours ago" with full timestamp on hover)
+        2. Event type icon (status update = chart line, intervention = medical cross, trend change = arrow)
+        3. Severity badge and value (for status updates showing previous → current)
+        4. Trend arrow indicator (↑ worsening, → stable, ↓ improving) for status and trend updates
+        5. Intervention type and details (for interventions)
+        6. Notes text if present
+      </description>
+      <sources>
+        <source>docs/epics.md#Story-2.6</source>
+        <source>docs/PRD.md#FR008</source>
+      </sources>
+      <implementation_notes>
+        - Event type icons: TrendingUp (status_update), ArrowUpDown (trend_change), Activity (intervention) from lucide-react
+        - Relative time: formatDistanceToNow from date-fns with {addSuffix: true}
+        - Full timestamp on hover: title attribute with toLocaleString('en-US', {...})
+        - Severity color mapping: 1-3 green, 4-6 yellow, 7-8 orange, 9-10 red
+        - Notes display: truncated in collapsed view (100 chars), full in expanded view
+      </implementation_notes>
+    </criterion>
+
+    <criterion id="AC2.6.3">
+      <title>Timeline sorted reverse-chronologically</title>
+      <description>
+        Events fetched via flareRepository.getFlareHistory() sorted by timestamp descending 
+        (most recent first), scroll position starts at top showing latest events, 
+        chronological flow visible by scrolling down, ensures users see current state before historical progression.
+      </description>
+      <sources>
+        <source>docs/epics.md#Story-2.6</source>
+      </sources>
+      <implementation_notes>
+        - getFlareHistory returns events in ASC order (oldest first)
+        - Reverse-sort client-side: events.sort((a, b) => b.timestamp - a.timestamp)
+        - useMemo to cache sorted results and prevent unnecessary re-renders
+        - Display order: map() over sorted array directly (most recent at top)
+      </implementation_notes>
+    </criterion>
+
+    <criterion id="AC2.6.4">
+      <title>Visual line chart shows severity progression</title>
+      <description>
+        Chart.js line chart displays severity values (y-axis 1-10) over time (x-axis chronological), 
+        data points from FlareEvents with eventType="severity_update", 
+        intervention events marked as vertical annotation lines with labels, 
+        chart responsive for mobile and desktop, 
+        tooltip shows full event details on hover/tap, 
+        chart updates automatically when new events added.
+      </description>
+      <sources>
+        <source>docs/epics.md#Story-2.6</source>
+        <source>docs/solution-architecture.md#Component-Architecture</source>
+      </sources>
+      <implementation_notes>
+        - Chart.js with react-chartjs-2: import { Line } from 'react-chartjs-2'
+        - Registers: CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale, annotationPlugin
+        - Data transformation: Filter severity_update events, sort ASC for x-axis, map to {x: timestamp, y: severity}
+        - Y-axis: min: 0, max: 10 (severity scale)
+        - Intervention annotations: chartjs-plugin-annotation with vertical line type, label at top
+        - Responsive: maintain aspect ratio 2:1, responsive: true
+        - Tooltip callback to show event details
+        - useMemo to cache chart data and annotations
+      </implementation_notes>
+    </criterion>
+
+    <criterion id="AC2.6.5">
+      <title>Timeline is filterable by event type</title>
+      <description>
+        Filter controls display three options (All Events, Status Updates Only, Interventions Only), 
+        clicking filter updates displayed timeline list and chart annotations, 
+        filter state persisted to localStorage for user preference, 
+        "All Events" is default filter, filter updates are instantaneous without loading spinner.
+      </description>
+      <sources>
+        <source>docs/epics.md#Story-2.6</source>
+      </sources>
+      <implementation_notes>
+        - Filter type: 'all' | 'status_updates' | 'interventions'
+        - useState with localStorage initialization: localStorage.getItem(`flare-history-filter-${userId}`)
+        - Filter buttons with aria-label for accessibility
+        - Active button styling: bg-blue-600 text-white, inactive: bg-gray-200
+        - Client-side filtering in useMemo: events.filter(e => ...)
+        - Update chart annotations based on filter (hide intervention lines when filtering status_updates only)
+        - Persist on change: localStorage.setItem(`flare-history-filter-${userId}`, newFilter)
+      </implementation_notes>
+    </criterion>
+
+    <criterion id="AC2.6.6">
+      <title>Each timeline entry is tappable for full details</title>
+      <description>
+        Clicking timeline entry expands/collapses full event details inline, 
+        expanded view shows complete notes text (no truncation), 
+        timestamp in full format (e.g., "March 15, 2025 at 2:30 PM"), 
+        edit/delete actions are NOT present (enforces immutability per ADR-003), 
+        entry expansion is keyboard accessible (Enter key, Space bar), 
+        expanded state indicated with ARIA attributes.
+      </description>
+      <sources>
+        <source>docs/epics.md#Story-2.6</source>
+        <source>docs/solution-architecture.md#ADR-003</source>
+      </sources>
+      <implementation_notes>
+        - useState for expandedEventId (single expansion at a time)
+        - Toggle handler: setExpandedEventId(expandedEventId === eventId ? null : eventId)
+        - Keyboard accessible: onKeyDown handler checks key === 'Enter' || key === ' '
+        - role="button", tabIndex={0}, aria-expanded={isExpanded}
+        - Collapsed view: truncate notes to 100 chars with ellipsis, ChevronDown icon
+        - Expanded view: full notes text, full timestamp (toLocaleString format), ChevronUp icon
+        - Touch target min 44x44px for mobile accessibility
+      </implementation_notes>
+    </criterion>
+
+    <criterion id="AC2.6.7">
+      <title>Timeline loads efficiently for flares with many events</title>
+      <description>
+        Component fetches all events once on mount using flareRepository.getFlareHistory(), 
+        uses React.memo and useMemo for performance optimization, 
+        virtual scrolling implemented if > 100 events (prevents DOM bloat), 
+        chart renders smoothly with up to 100 data points, 
+        loading state displays skeleton UI during initial fetch, 
+        ensures timeline loads in less than 300ms for typical flare (20-30 events).
+      </description>
+      <sources>
+        <source>docs/epics.md#Story-2.6</source>
+        <source>docs/PRD.md#NFR001</source>
+      </sources>
+      <implementation_notes>
+        - NFR001 target: &lt;300ms for 20-30 events, &lt;500ms for 100 events
+        - React.memo on FlareHistory and FlareHistoryEntry components
+        - useMemo for filtered events: useMemo(() => { /* filter logic */ }, [events, filter])
+        - useMemo for chart data: useMemo(() => { /* transformation */ }, [events])
+        - Virtual scrolling: Implement if eventCount > 100 using react-window FixedSizeList
+        - Skeleton UI during loading: 3-5 placeholder rows with animate-pulse
+        - Single data fetch on mount: useEffect with empty dependency array
+        - Performance.mark() and performance.measure() for timing measurements
+      </implementation_notes>
+    </criterion>
+  </acceptance_criteria>
+
+  <documentation_references>
+    <reference type="PRD" file="/home/user/symptom-tracker/docs/PRD.md">
+      <section id="FR008">Complete flare history tracking requirement - users need to see all severity changes, trend updates, and interventions in chronological order</section>
+      <section id="NFR001">Performance requirement - interactions shall respond within 100ms, component loads in &lt;300ms for typical 20-30 events</section>
+      <section id="Journey-1">User journey: Day 7 - User reviews flare progression chart with severity timeline and intervention history</section>
+    </reference>
+
+    <reference type="Solution Architecture" file="/home/user/symptom-tracker/docs/solution-architecture.md">
+      <section id="ADR-003">Append-only event history pattern - FlareEventRecords are never modified/deleted after creation, no edit/delete UI elements</section>
+      <section id="Component-Architecture">FlareTimeline component specification, severity progression chart, intervention annotations</section>
+      <section id="Data-Architecture">FlareEventRecord interface structure with eventType enum, severity/trend/notes/interventionType fields</section>
+    </reference>
+
+    <reference type="Epic Breakdown" file="/home/user/symptom-tracker/docs/epics.md">
+      <section id="Story-2.6">Complete story specification with all acceptance criteria, story breakdown structure</section>
+      <section id="Epic-2">Epic 2: Flare Lifecycle Management context and story sequencing</section>
+    </reference>
+
+    <reference type="Story Dependencies" file="/home/user/symptom-tracker/docs/stories/story-2.1.md">
+      <section id="AC2.1.6">FlareRepository methods: getFlareHistory(userId, flareId) returns FlareEventRecord[] ordered by timestamp</section>
+      <section id="AC2.1.2">FlareEventRecord schema with eventType enum (created, severity_update, trend_change, intervention, resolved)</section>
+    </reference>
+
+    <reference type="Story Dependencies" file="/home/user/symptom-tracker/docs/stories/story-2.4.md">
+      <section id="AC2.4.3">Status update creates FlareEvent with eventType="severity_update" or "trend_change"</section>
+      <section id="AC2.4.7">Update appears in flare history timeline immediately</section>
+    </reference>
+
+    <reference type="Story Dependencies" file="/home/user/symptom-tracker/docs/stories/story-2.5.md">
+      <section id="AC2.5.3">Intervention logging creates append-only FlareEvent with eventType="intervention"</section>
+      <section id="AC2.5.4">Intervention appears in flare history timeline with icon/label/timestamp/details</section>
+    </reference>
+  </documentation_references>
+
+  <code_artifacts>
+    <artifact type="Type Definition" path="/home/user/symptom-tracker/src/types/flare.ts">
+      <section id="FlareEventType">Enum with values: Created, SeverityUpdate, TrendChange, Intervention, Resolved</section>
+      <section id="FlareTrend">Enum with values: Improving, Stable, Worsening</section>
+      <section id="InterventionType">Enum with values: Ice, Heat, Medication, Rest, Drainage, Other</section>
+      <section id="FlareEventRecord">Interface with fields: id, flareId, eventType, timestamp, severity?, trend?, notes?, interventionType?, interventionDetails?, userId</section>
+      <section id="Coordinates">Interface with x: number (0-1), y: number (0-1)</section>
+    </artifact>
+
+    <artifact type="Repository" path="/home/user/symptom-tracker/src/lib/repositories/flareRepository.ts">
+      <method name="getFlareHistory">
+        <signature>async function getFlareHistory(userId: string, flareId: string): Promise&lt;FlareEventRecord[]&gt;</signature>
+        <description>Fetches all FlareEventRecords for a flare, ordered by timestamp ASC (oldest first)</description>
+        <returns>Array of FlareEventRecord objects sorted chronologically</returns>
+        <performance>Uses compound index [flareId+timestamp] for O(log n) query performance</performance>
+      </method>
+      <method name="addFlareEvent">
+        <signature>async function addFlareEvent(userId: string, flareId: string, event: Partial&lt;FlareEventRecord&gt;): Promise&lt;FlareEventRecord&gt;</signature>
+        <description>Creates append-only FlareEventRecord. Generates UUID and timestamp automatically.</description>
+        <parameters>
+          <parameter name="userId">User ID for multi-user isolation</parameter>
+          <parameter name="flareId">UUID of flare to add event to</parameter>
+          <parameter name="event">Partial event data (eventType required, others optional)</parameter>
+        </parameters>
+      </method>
+    </artifact>
+
+    <artifact type="React Hook" path="/home/user/symptom-tracker/src/lib/hooks/useFlare.ts">
+      <hook name="useFlare">
+        <signature>function useFlare(flareId: string, userId: string): { data, isLoading, error, refetch }</signature>
+        <description>React hook for fetching single flare data with loading/error states</description>
+        <usage>const { data: flare, isLoading, error } = useFlare(flareId, userId)</usage>
+        <returns>data (FlareRecord | null), isLoading (boolean), error (Error | null), refetch (function)</returns>
+      </hook>
+    </artifact>
+
+    <artifact type="Component" path="/home/user/symptom-tracker/src/components/flares/FlareUpdateModal.tsx">
+      <description>Modal component for updating flare severity and trend. Pattern to follow for FlareHistory modal.</description>
+      <features>
+        <feature>Severity slider (1-10 range) with previous value reference</feature>
+        <feature>Trend radio buttons (Improving/Stable/Worsening)</feature>
+        <feature>Notes textarea with character counter (500 limit)</feature>
+        <feature>Editable timestamp field with datetime-local input</feature>
+        <feature>Loading state during persistence</feature>
+        <feature>Error handling with user-friendly messages</feature>
+        <feature>ARIA attributes and keyboard accessibility</feature>
+      </features>
+    </artifact>
+
+    <artifact type="Component" path="/home/user/symptom-tracker/src/components/flares/InterventionHistory.tsx">
+      <description>Component displaying intervention events in chronological order. Foundation for FlareHistory timeline.</description>
+      <features>
+        <feature>Filters events by eventType === 'intervention'</feature>
+        <feature>Sorts reverse-chronologically: sort((a, b) => b.timestamp - a.timestamp)</feature>
+        <feature>Displays intervention type icons using lucide-react iconography</feature>
+        <feature>Relative timestamp formatting using formatDistanceToNow(date-fns)</feature>
+        <feature>Details truncation to 50 chars with ellipsis</feature>
+        <feature>Empty state message when no interventions</feature>
+        <feature>Loading state skeleton UI</feature>
+      </features>
+      <code_patterns>
+        <pattern>Icon mapping: const interventionIcons = { [InterventionType.Ice]: Snowflake, ... }</pattern>
+        <pattern>Filter pattern: history.filter(e => e.eventType === 'intervention')</pattern>
+        <pattern>Relative time: formatDistanceToNow(timestamp, { addSuffix: true })</pattern>
+        <pattern>useEffect with async data loading inside useCallback pattern</pattern>
+      </code_patterns>
+    </artifact>
+
+    <artifact type="Database Schema" path="/home/user/symptom-tracker/src/lib/db/schema.ts">
+      <entity name="FlareEventRecord">
+        <field name="id" type="string">UUID v4 primary key</field>
+        <field name="flareId" type="string">Foreign key to flares.id</field>
+        <field name="eventType" type="FlareEventType">Event type enum</field>
+        <field name="timestamp" type="number">Unix timestamp</field>
+        <field name="severity" type="number|undefined">1-10 scale for severity_update events</field>
+        <field name="trend" type="FlareTrend|undefined">Trend for trend_change events</field>
+        <field name="notes" type="string|undefined">User notes</field>
+        <field name="interventionType" type="InterventionType|undefined">Type of intervention</field>
+        <field name="interventionDetails" type="string|undefined">Intervention details/notes</field>
+        <field name="userId" type="string">User ID for multi-user support</field>
+      </entity>
+      <indexes>
+        <index name="[flareId+timestamp]">Compound index for efficient chronological queries</index>
+        <index name="[userId+timestamp]">Compound index for user-scoped timeline queries</index>
+      </indexes>
+    </artifact>
+
+    <artifact type="Package Dependencies" file="/home/user/symptom-tracker/package.json">
+      <dependency name="chart.js" version="^4.5.0">Line chart visualization</dependency>
+      <dependency name="react-chartjs-2" version="^5.3.0">React wrapper for Chart.js</dependency>
+      <dependency name="chartjs-plugin-annotation" version="^3.1.0">Chart.js plugin for vertical line annotations</dependency>
+      <dependency name="date-fns" version="^4.1.0">Relative timestamp formatting (formatDistanceToNow)</dependency>
+      <dependency name="lucide-react" version="^0.544.0">Icons: TrendingUp, ArrowUpDown, Activity, ChevronUp, ChevronDown</dependency>
+      <dependency name="react" version="19.1.0">React framework with memo and useMemo hooks</dependency>
+      <dependency name="next" version="15.5.4">Next.js framework</dependency>
+      <dependency name="uuid" version="^13.0.0">UUID generation for event IDs</dependency>
+      <dependency name="dexie" version="^4.2.0">IndexedDB wrapper for database queries</dependency>
+    </artifact>
+
+    <artifact type="Existing Test Patterns" path="/home/user/symptom-tracker/src/components/flares/__tests__">
+      <description>Test patterns to follow for Story 2.6 test implementation</description>
+      <test_files>
+        <file>ActiveFlareCard.test.tsx</file>
+        <file>FlareUpdateModal.test.tsx</file>
+        <file>InterventionHistory.test.tsx</file>
+        <file>InterventionLogModal.test.tsx</file>
+        <file>ActiveFlareCards.test.tsx</file>
+      </test_files>
+      <patterns>
+        <pattern>Use @testing-library/react for component testing</pattern>
+        <pattern>Mock flareRepository methods with jest.mock()</pattern>
+        <pattern>Test rendering, user interactions, state changes</pattern>
+        <pattern>Test accessibility: ARIA attributes, keyboard navigation</pattern>
+        <pattern>Test data persistence and error states</pattern>
+        <pattern>Use fake-indexeddb for database mocking</pattern>
+      </patterns>
+    </artifact>
+  </code_artifacts>
+
+  <component_architecture>
+    <component name="FlareHistory">
+      <file_path>src/components/flares/FlareHistory.tsx</file_path>
+      <responsibility>Main timeline component with filtering and chart</responsibility>
+      <props>
+        <prop name="flareId" type="string">UUID of flare to display</prop>
+        <prop name="userId" type="string">User ID for data fetching</prop>
+      </props>
+      <state>
+        <state_var name="filter" type="'all' | 'status_updates' | 'interventions'">Active filter</state_var>
+        <state_var name="expandedEventId" type="string | null">Currently expanded entry</state_var>
+      </state>
+      <hooks>
+        <hook name="useState">Filter and expanded event tracking</hook>
+        <hook name="useMemo">Filtered events and chart data caching</hook>
+        <hook name="useEffect">localStorage persistence and restoration</hook>
+      </hooks>
+      <composition>
+        <child component="FlareHistoryChart">Chart visualization section</child>
+        <child component="Filter Buttons">All Events / Status Updates / Interventions toggles</child>
+        <child component="FlareHistoryEntry" multiple="true">Timeline entry components</child>
+      </composition>
+    </component>
+
+    <component name="FlareHistoryEntry">
+      <file_path>src/components/flares/FlareHistoryEntry.tsx</file_path>
+      <responsibility>Single timeline entry with expand/collapse</responsibility>
+      <props>
+        <prop name="event" type="FlareEventRecord">Event data to display</prop>
+        <prop name="isExpanded" type="boolean">Whether entry is expanded</prop>
+        <prop name="onToggle" type="() => void">Toggle expansion handler</prop>
+      </props>
+      <features>
+        <feature>Event type icon selection based on eventType</feature>
+        <feature>Relative timestamp with full timestamp on hover</feature>
+        <feature>Severity badge with color coding (event type-specific)</feature>
+        <feature>Trend arrow indicators</feature>
+        <feature>Intervention details display</feature>
+        <feature>Notes text truncation and expansion</feature>
+        <feature>Keyboard accessibility (Enter/Space toggle)</feature>
+      </features>
+    </component>
+
+    <component name="FlareHistoryChart">
+      <file_path>src/components/flares/FlareHistoryChart.tsx</file_path>
+      <responsibility>Chart.js line chart with intervention annotations</responsibility>
+      <props>
+        <prop name="events" type="FlareEventRecord[]">All events for chart rendering</prop>
+      </props>
+      <features>
+        <feature>Line chart: severity over time (x=timestamp, y=severity 1-10)</feature>
+        <feature>Filters severity_update events for data points</feature>
+        <feature>Vertical annotation lines for interventions</feature>
+        <feature>Responsive sizing (mobile and desktop)</feature>
+        <feature>Tooltip showing event details</feature>
+        <feature>Empty state when no severity data</feature>
+      </features>
+      <performance>
+        <optimization>React.memo to prevent unnecessary re-renders</optimization>
+        <optimization>useMemo for chart data transformation caching</optimization>
+        <optimization>Handles up to 100 data points smoothly</optimization>
+      </performance>
+    </component>
+
+    <tabs_integration>
+      <location>Flare detail page at /flares/[id]</location>
+      <tabs>
+        <tab id="details">Details - Flare summary and action buttons (from Story 2.4/2.5)</tab>
+        <tab id="history">History - FlareHistory component (this story)</tab>
+      </tabs>
+      <keyboard_nav>
+        <nav_key>ArrowLeft</nav_key>
+        <nav_key>ArrowRight</nav_key>
+        <nav_key>Tab</nav_key>
+        <nav_key>Escape</nav_key>
+      </keyboard_nav>
+      <aria_attributes>
+        <attribute>role="tablist" on tab container</attribute>
+        <attribute>role="tab" on each tab button</attribute>
+        <attribute>aria-selected="true|false"</attribute>
+        <attribute>aria-controls="panel-id"</attribute>
+        <attribute>aria-labelledby="tab-id"</attribute>
+      </aria_attributes>
+    </tabs_integration>
+  </component_architecture>
+
+  <testing_strategy>
+    <unit_tests>
+      <test id="FlareHistory.fetchesEvents">Fetches events via flareRepository.getFlareHistory on mount</test>
+      <test id="FlareHistory.sortsReverse">Events sorted reverse-chronologically (most recent first)</test>
+      <test id="FlareHistory.loadingState">Displays skeleton UI during fetch</test>
+      <test id="FlareHistory.errorState">Displays retry button on error</test>
+      <test id="FlareHistory.emptyState">Shows "No history yet" message when no events</test>
+      <test id="FlareHistoryEntry.correctIcon">Displays correct icon per event type</test>
+      <test id="FlareHistoryEntry.relativeTimestamp">Formats relative timestamp with full timestamp on hover</test>
+      <test id="FlareHistoryEntry.severityBadge">Displays severity badge for status_update events</test>
+      <test id="FlareHistoryEntry.trendArrow">Displays trend arrow for status/trend updates</test>
+      <test id="FlareHistoryEntry.interventionDetails">Displays intervention type and details</test>
+      <test id="FlareHistoryEntry.expandCollapse">Expands/collapses on click</test>
+      <test id="FlareHistoryEntry.keyboardAccess">Keyboard accessibility (Enter, Space to toggle)</test>
+      <test id="FlareHistoryChart.rendersChart">Chart renders with severity data points</test>
+      <test id="FlareHistoryChart.interventionAnnotations">Chart includes vertical annotation lines for interventions</test>
+      <test id="FlareHistoryChart.emptyState">Handles no severity updates gracefully</test>
+      <test id="FlareHistoryChart.tooltips">Tooltip displays event details on hover</test>
+    </unit_tests>
+
+    <integration_tests>
+      <test id="Filter.updatesTimeline">"All Events" filter shows all events</test>
+      <test id="Filter.statusUpdatesOnly">"Status Updates Only" hides intervention events</test>
+      <test id="Filter.interventionsOnly">"Interventions Only" hides status update events</test>
+      <test id="Filter.persistence">Filter preference persisted to localStorage</test>
+      <test id="Filter.loaded">Filter loads from localStorage on mount</test>
+      <test id="Chart.updatesOnFilter">Chart annotations update based on filter selection</test>
+      <test id="TabNav.click">Tab click switches between Details and History</test>
+      <test id="TabNav.keyboard">Keyboard arrow keys switch tabs</test>
+      <test id="HistoryTab.displays">History tab displays FlareHistory component</test>
+      <test id="TabNav.aria">Tab ARIA attributes set correctly</test>
+      <test id="Expansion.singleEntry">Only one entry expanded at a time</test>
+      <test id="DataFlow.newEvent">New event appears in timeline after logging</test>
+    </integration_tests>
+
+    <accessibility_tests>
+      <test id="A11y.tabKeyboardNav">Tab key navigates between tablist items</test>
+      <test id="A11y.arrowKeys">Arrow keys switch active tab</test>
+      <test id="A11y.enterSpace">Enter/Space toggles timeline entry expansion</test>
+      <test id="A11y.ariaLabels">All interactive elements have aria-label or aria-labelledby</test>
+      <test id="A11y.ariaExpanded">aria-expanded indicates expansion state</test>
+      <test id="A11y.ariaSelected">aria-selected indicates active tab</test>
+      <test id="A11y.focusIndicators">Clear visual focus indicators on keyboard navigation</test>
+      <test id="A11y.screenReader">Screen reader announces tab names and event types</test>
+      <test id="A11y.colorNotOnly">Information not conveyed by color alone (arrows + text)</test>
+    </accessibility_tests>
+
+    <performance_tests>
+      <test id="Perf.loadTime">&lt;300ms load time for 30-event typical flare</test>
+      <test id="Perf.chartRender">Chart renders smoothly with 100 data points</test>
+      <test id="Perf.filterInstant">Filter updates without loading spinner (client-side)</test>
+      <test id="Perf.memoization">React.memo prevents unnecessary re-renders</test>
+      <test id="Perf.useMemoEffective">useMemo caches filter/chart calculations</test>
+      <test id="Perf.virtualScroll">Virtual scrolling activates for >100 events</test>
+    </performance_tests>
+
+    <test_file_structure>
+      <test_file path="src/components/flares/__tests__/FlareHistory.test.tsx">
+        <test_group>FlareHistory component</test_group>
+        <dependencies>
+          <dependency>@testing-library/react</dependency>
+          <dependency>jest.mock('flareRepository')</dependency>
+          <dependency>fake-indexeddb</dependency>
+        </dependencies>
+      </test_file>
+      <test_file path="src/components/flares/__tests__/FlareHistoryEntry.test.tsx">
+        <test_group>FlareHistoryEntry component</test_group>
+        <dependencies>
+          <dependency>@testing-library/react</dependency>
+          <dependency>date-fns for timestamp formatting</dependency>
+        </dependencies>
+      </test_file>
+      <test_file path="src/components/flares/__tests__/FlareHistoryChart.test.tsx">
+        <test_group>FlareHistoryChart component</test_group>
+        <dependencies>
+          <dependency>@testing-library/react</dependency>
+          <dependency>jest.mock('react-chartjs-2')</dependency>
+          <dependency>Mock canvas for chart rendering</dependency>
+        </dependencies>
+      </test_file>
+    </test_file_structure>
+  </testing_strategy>
+
+  <performance_considerations>
+    <requirement id="NFR001">
+      <metric>Component load time</metric>
+      <target>&lt;300ms for typical 20-30 events, &lt;500ms for 100 events</target>
+      <implementation>
+        - Single data fetch on mount (no pagination)
+        - Client-side filtering with useMemo caching
+        - React.memo on components to prevent re-renders
+        - Lazy-load chart visualization (render on demand)
+      </implementation>
+    </requirement>
+
+    <optimization name="Virtual Scrolling">
+      <condition>Activate if eventCount > 100</condition>
+      <implementation>react-window FixedSizeList component</implementation>
+      <row_height>72px (estimated from component styling)</row_height>
+      <container_height>Calculate from viewport or max-height CSS</container_height>
+      <benefit>Renders only visible rows to DOM, reduces memory overhead</benefit>
+    </optimization>
+
+    <optimization name="Memoization">
+      <component>React.memo(FlareHistory) - prevents re-render when parent changes</component>
+      <component>React.memo(FlareHistoryEntry) - prevents re-render of unchanged entries</component>
+      <component>React.memo(FlareHistoryChart) - prevents re-render when other state changes</component>
+      <hook>useMemo for filteredEvents calculation</hook>
+      <hook>useMemo for chart data transformation</hook>
+      <hook>useMemo for chart annotation generation</hook>
+    </optimization>
+
+    <optimization name="Data Fetch Strategy">
+      <fetch>Single getFlareHistory call on mount loads all events</fetch>
+      <cache>React Query with 1-minute staleTime (optional, currently manual state)</cache>
+      <invalidation>Refetch after new event logged (from parent detail page)</invalidation>
+      <tradeoff>Simple implementation vs pagination for very large histories (&gt;1000 events)</tradeoff>
+    </optimization>
+
+    <measurement>
+      <metric>performance.mark() and performance.measure() for critical paths</metric>
+      <measurement>Timeline render duration from fetch to display</measurement>
+      <measurement>Chart data transformation duration</measurement>
+      <logging>Console.time() / console.timeEnd() in development</logging>
+    </measurement>
+  </performance_considerations>
+
+  <key_patterns>
+    <pattern name="Append-Only Event History (ADR-003)">
+      <description>FlareEventRecords are never modified or deleted. Each update creates new event.</description>
+      <implementation>No edit/delete UI elements. Read-only timeline display.</implementation>
+      <implication>Medical data integrity guaranteed. Audit trail maintained.</implication>
+    </pattern>
+
+    <pattern name="Component Composition">
+      <description>Break timeline into smaller components: FlareHistory (container), FlareHistoryEntry (list item), FlareHistoryChart (visualization)</description>
+      <benefit>Single responsibility, testability, reusability</benefit>
+    </pattern>
+
+    <pattern name="Local State + Memoization">
+      <description>Use useState for UI state (filter, expansion), useMemo for derived data (filtered events, chart data)</description>
+      <benefit>Separates UI state from data transformations, prevents unnecessary recalculations</benefit>
+    </pattern>
+
+    <pattern name="Keyboard & ARIA First">
+      <description>All interactive elements have keyboard navigation and screen reader support from the start</description>
+      <implementation>role, aria-* attributes, onKeyDown handlers, focus management</implementation>
+    </pattern>
+
+    <pattern name="Touch-Friendly Mobile Design">
+      <description>Min 44x44px tap targets, appropriate spacing, responsive layout</description>
+      <implementation>Tailwind classes: p-4, gap-3, flex items-start</implementation>
+    </pattern>
+
+    <pattern name="Error Boundaries and Loading States">
+      <description>Show skeleton during fetch, error message on failure, empty state when no data</description>
+      <benefit>Clear user feedback at every state transition</benefit>
+    </pattern>
+  </key_patterns>
+
+  <integration_points>
+    <point type="Flare Detail Page">
+      <location>/flares/[id]/page.tsx</location>
+      <integration>Add "History" tab alongside "Details" tab, render FlareHistory component in History tab</integration>
+      <data_flow>Pass flareId and userId props to FlareHistory component</data_flow>
+      <state_management>useState for activeTab, pass tab state to child components</state_management>
+    </point>
+
+    <point type="Tab Navigation">
+      <location>Flare detail page</location>
+      <integration>Implement tab interface with "Details" (from Story 2.4/2.5) and "History" (this story) tabs</integration>
+      <accessibility>role="tablist", role="tab", aria-selected, keyboard navigation (arrow keys)</accessibility>
+    </point>
+
+    <point type="React Query Cache Invalidation">
+      <location>FlareHistory component</location>
+      <integration>Accept refetch callback or useQueryClient to invalidate 'flareHistory' cache when parent detail page updates</integration>
+      <trigger>New intervention logged (Story 2.5) or status update created (Story 2.4)</trigger>
+    </point>
+
+    <point type="Chart.js Integration">
+      <location>FlareHistoryChart component</location>
+      <integration>Import Line from 'react-chartjs-2', register Chart.js plugins</integration>
+      <dependencies>chart.js, react-chartjs-2, chartjs-plugin-annotation, chartjs-adapter-date-fns</dependencies>
+    </point>
+
+    <point type="Date Formatting">
+      <location>FlareHistoryEntry component</location>
+      <integration>formatDistanceToNow from date-fns for relative timestamps, toLocaleString for full timestamp</integration>
+      <dependency>date-fns ^4.1.0</dependency>
+    </point>
+
+    <point type="Icon Library">
+      <location>FlareHistoryEntry component</location>
+      <integration>TrendingUp, ArrowUpDown, Activity icons from lucide-react, ChevronUp/Down for expand/collapse</integration>
+      <dependency>lucide-react ^0.544.0</dependency>
+    </point>
+
+    <point type="Type Definitions">
+      <location>src/types/flare.ts</location>
+      <integration>Import FlareEventRecord, FlareEventType, FlareTrend, InterventionType enums</integration>
+      <no_changes_needed>All required types already defined in Story 2.1</no_changes_needed>
+    </point>
+
+    <point type="Database Repository">
+      <location>src/lib/repositories/flareRepository.ts</location>
+      <integration>Call flareRepository.getFlareHistory(userId, flareId) to fetch events</integration>
+      <no_changes_needed>Method already implemented in Story 2.1</no_changes_needed>
+    </point>
+  </integration_points>
+
+  <implementation_checklist>
+    <section id="Phase 1: Component Structure">
+      <task status="todo">Create src/components/flares/FlareHistory.tsx main container</task>
+      <task status="todo">Create src/components/flares/FlareHistoryEntry.tsx timeline entry</task>
+      <task status="todo">Create src/components/flares/FlareHistoryChart.tsx chart visualization</task>
+      <task status="todo">Set up React.memo on all three components</task>
+    </section>
+
+    <section id="Phase 2: Core Functionality">
+      <task status="todo">Implement event fetching with useEffect + flareRepository.getFlareHistory()</task>
+      <task status="todo">Implement loading/error/empty states with skeleton UI</task>
+      <task status="todo">Implement reverse-chronological sorting with useMemo</task>
+      <task status="todo">Implement filter state (useState + localStorage persistence)</task>
+      <task status="todo">Implement filtering logic with useMemo</task>
+      <task status="todo">Implement expand/collapse toggle with single expanded entry</task>
+    </section>
+
+    <section id="Phase 3: Timeline Entry Display">
+      <task status="todo">Map event type to icon (TrendingUp, ArrowUpDown, Activity)</task>
+      <task status="todo">Format relative timestamps with date-fns</task>
+      <task status="todo">Display full timestamp on hover (title attribute)</task>
+      <task status="todo">Display severity badge with color mapping</task>
+      <task status="todo">Display trend arrows (↑ ↓ →)</task>
+      <task status="todo">Display intervention type and details</task>
+      <task status="todo">Truncate notes in collapsed view, show full in expanded view</task>
+    </section>
+
+    <section id="Phase 4: Chart Visualization">
+      <task status="todo">Set up Chart.js Line component with necessary plugins</task>
+      <task status="todo">Filter severity_update events for chart data</task>
+      <task status="todo">Transform events to Chart.js format {x: timestamp, y: severity}</task>
+      <task status="todo">Configure y-axis range (1-10 for severity)</task>
+      <task status="todo">Add intervention annotations as vertical lines with labels</task>
+      <task status="todo">Configure chart responsiveness</task>
+      <task status="todo">Implement tooltip callbacks to show event details</task>
+      <task status="todo">Add empty state message when no severity data</task>
+    </section>
+
+    <section id="Phase 5: Filter UI and Persistence">
+      <task status="todo">Create three filter buttons (All, Status Updates, Interventions)</task>
+      <task status="todo">Style active filter with bg-blue-600 text-white</task>
+      <task status="todo">Implement filter change handler with chart/timeline update</task>
+      <task status="todo">Persist filter to localStorage: `flare-history-filter-${userId}`</task>
+      <task status="todo">Load filter from localStorage on mount</task>
+      <task status="todo">Set "all" as default if no saved preference</task>
+      <task status="todo">Add aria-label to filter buttons</task>
+    </section>
+
+    <section id="Phase 6: Tab Integration">
+      <task status="todo">Create/update flare detail page at /flares/[id]/page.tsx</task>
+      <task status="todo">Add tab container with role="tablist"</task>
+      <task status="todo">Create "Details" and "History" tab buttons with proper ARIA attributes</task>
+      <task status="todo">Implement keyboard navigation (arrow keys, Tab)</task>
+      <task status="todo">Style active tab with visual indicator (border/background)</task>
+      <task status="todo">Render FlareHistory in History tab content area</task>
+      <task status="todo">Pass flareId and userId props to FlareHistory</task>
+    </section>
+
+    <section id="Phase 7: Accessibility">
+      <task status="todo">Add keyboard event handlers (onKeyDown) to timeline entries</task>
+      <task status="todo">Add role="button", tabIndex={0} to expandable entries</task>
+      <task status="todo">Add aria-expanded attribute to indicate expansion state</task>
+      <task status="todo">Ensure all interactive elements have aria-labels</task>
+      <task status="todo">Test with screen reader (NVDA/JAWS)</task>
+      <task status="todo">Test keyboard-only navigation</task>
+      <task status="todo">Verify focus indicators are visible</task>
+    </section>
+
+    <section id="Phase 8: Performance Optimization">
+      <task status="todo">Verify React.memo on all three components</task>
+      <task status="todo">Verify useMemo on filtered events calculation</task>
+      <task status="todo">Verify useMemo on chart data transformation</task>
+      <task status="todo">Add performance.mark() for timing measurements</task>
+      <task status="todo">Implement virtual scrolling if eventCount > 100</task>
+      <task status="todo">Performance test with 30, 100, 500 events</task>
+      <task status="todo">Target: &lt;300ms for 30 events, &lt;500ms for 100</task>
+    </section>
+
+    <section id="Phase 9: Comprehensive Testing">
+      <task status="todo">Create src/components/flares/__tests__/FlareHistory.test.tsx</task>
+      <task status="todo">Create src/components/flares/__tests__/FlareHistoryEntry.test.tsx</task>
+      <task status="todo">Create src/components/flares/__tests__/FlareHistoryChart.test.tsx</task>
+      <task status="todo">Write unit tests for all acceptance criteria</task>
+      <task status="todo">Write integration tests for filter/chart/tab interaction</task>
+      <task status="todo">Write accessibility tests (keyboard, ARIA, screen reader)</task>
+      <task status="todo">Achieve &gt;80% test coverage</task>
+    </section>
+
+    <section id="Phase 10: Integration and Validation">
+      <task status="todo">Integrate FlareHistory into flare detail page</task>
+      <task status="todo">Test complete user flow: View active flare → Click History tab → See timeline and chart</task>
+      <task status="todo">Test React Query cache invalidation when new event logged</task>
+      <task status="todo">Test localStorage persistence of filter preference</task>
+      <task status="todo">Test keyboard navigation across all interactive elements</task>
+      <task status="todo">Manual QA on mobile and desktop</task>
+      <task status="todo">Verify all acceptance criteria met</task>
+    </section>
+  </implementation_checklist>
+
+  <risk_mitigation>
+    <risk id="R001">
+      <description>Chart rendering performance with large datasets (&gt;100 events)</description>
+      <mitigation>Implement virtual scrolling, memoize chart data, performance test early</mitigation>
+      <contingency>Fall back to table view if chart performance unacceptable</contingency>
+    </risk>
+
+    <risk id="R002">
+      <description>Browser localStorage quota exceeded on mobile devices</description>
+      <mitigation>Filter preference is small (~40 bytes), low risk. Monitor usage.</mitigation>
+      <contingency>Fall back to session storage or in-memory state if needed</contingency>
+    </risk>
+
+    <risk id="R003">
+      <description>Chart.js annotation plugin compatibility with next.js</description>
+      <mitigation>Test chart rendering in development immediately. Already used in codebase patterns.</mitigation>
+      <contingency>Use SVG overlay for annotations if plugin fails</contingency>
+    </risk>
+
+    <risk id="R004">
+      <description>Single expanded entry state may confuse users with multiple clicks</description>
+      <mitigation>Provide clear visual feedback (chevron icon, hover effect). Consider accordion patterns.</mitigation>
+      <contingency>Allow multiple entries expanded simultaneously if user feedback negative</contingency>
+    </risk>
+
+    <risk id="R005">
+      <description>Accessibility keyboard shortcuts may conflict with browser/OS shortcuts</description>
+      <mitigation>Use standard patterns (Tab, Arrow keys, Enter/Space). Avoid custom shortcuts.</mitigation>
+      <contingency>Provide alternative navigation methods (buttons, links)</contingency>
+    </risk>
+  </risk_mitigation>
+
+  <success_criteria>
+    <criterion>All 7 acceptance criteria implemented and verified</criterion>
+    <criterion>Component load time &lt;300ms for 20-30 events, &lt;500ms for 100 events</criterion>
+    <criterion>100% keyboard accessible (tab, arrow keys, enter/space)</criterion>
+    <criterion>Screen reader compatible (NVDA/JAWS tested)</criterion>
+    <criterion>&gt;80% test coverage with unit, integration, and accessibility tests</criterion>
+    <criterion>Chart renders smoothly with up to 100 data points</criterion>
+    <criterion>Filter preferences persist across sessions via localStorage</criterion>
+    <criterion>All UI elements responsive on mobile (375px) and desktop (1920px)</criterion>
+    <criterion>No console errors or warnings</criterion>
+    <criterion>TypeScript strict mode passes without errors</criterion>
+  </success_criteria>
+
+  <references_summary>
+    <summary>
+This context provides comprehensive implementation guidance for Story 2.6: View Flare History Timeline.
+The story builds on the data layer foundation (Story 2.1), status update feature (Story 2.4), and 
+intervention logging (Story 2.5) to create a unified timeline view with severity progression chart 
+and event filtering.
+
+Key architectural decisions:
+- Append-only event history (ADR-003) enforced with read-only UI
+- Client-side filtering and sorting for performance
+- React.memo and useMemo for optimization
+- localStorage persistence of user preferences
+- Keyboard and screen reader accessibility from the start
+- Chart.js with annotation plugin for visualization
+
+The implementation follows existing patterns from InterventionHistory and FlareUpdateModal components,
+leveraging established code patterns and testing strategies in the codebase.
+    </summary>
+  </references_summary>
+
+</story>

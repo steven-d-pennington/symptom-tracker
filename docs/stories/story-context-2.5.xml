@@ -1,0 +1,262 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.5</storyId>
+    <title>Log Flare Interventions</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user managing an active flare</asA>
+    <iWant>to record treatment interventions (medications, ice, rest, etc.)</iWant>
+    <soThat>I can track what I've tried and evaluate effectiveness</soThat>
+    <tasks>
+- [ ] Task 1: Create InterventionType enum and extend types (AC: #2.5.2, #2.5.3)
+- [ ] Task 2: Create InterventionLogModal component (AC: #2.5.2)
+- [ ] Task 3: Implement intervention persistence logic (AC: #2.5.3, #2.5.7)
+- [ ] Task 4: Add "Log Intervention" button to flare detail view (AC: #2.5.1)
+- [ ] Task 5: Create intervention history display section (AC: #2.5.4, #2.5.6)
+- [ ] Task 6: Integrate intervention history into flare detail page (AC: #2.5.4, #2.5.6)
+- [ ] Task 7: Add comprehensive tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC2.5.1">Flare detail view shows "Log Intervention" button - Page at /flares/[id] route displays prominent "Log Intervention" action button next to "Update Status" button, accessible to keyboard and screen readers, positioned below flare summary information, uses existing button styling patterns from Story 2.4.</criterion>
+    <criterion id="AC2.5.2">Intervention modal captures complete intervention details - Modal form displays (1) intervention type dropdown with options (Ice, Heat, Medication, Rest, Drainage, Other) mapped to InterventionType enum, (2) specific details text field (multi-line textarea, 500 character limit) for medication name/dosage or intervention notes, (3) timestamp field auto-populated to current date/time (editable via date-time picker), (4) "Save" and "Cancel" buttons.</criterion>
+    <criterion id="AC2.5.3">System creates append-only FlareEvent record - On save, system calls flareRepository.addFlareEvent() with eventType="intervention", event includes timestamp, interventionType value, details string, and userId, event persists to IndexedDB flareEvents table following append-only pattern from ADR-003.</criterion>
+    <criterion id="AC2.5.4">Intervention appears in flare history timeline - After successful save, intervention event displays in flare history timeline (foundation for Story 2.6) with intervention type icon/label, timestamp, and details, multiple interventions for same flare display in chronological order (most recent first), each intervention entry is tappable for full details view.</criterion>
+    <criterion id="AC2.5.5">Multiple interventions can be logged - User can log multiple interventions for the same flare (e.g., ice pack at 2pm, medication at 4pm, heat at 8pm), each intervention creates separate FlareEventRecord, no limit on number of interventions per flare, interventions stored with unique event IDs (UUID v4).</criterion>
+    <criterion id="AC2.5.6">Intervention history visible in chronological order - Flare detail page displays all intervention events from flareRepository.getFlareHistory() filtered by eventType="intervention", interventions sorted reverse-chronologically (most recent first), each entry shows intervention type icon, timestamp (relative format "2 hours ago"), and summary of details (first 50 chars with ellipsis).</criterion>
+    <criterion id="AC2.5.7">Data persists offline-first - All database writes (addFlareEvent) persist to IndexedDB immediately using Dexie atomic transactions, no network dependency required, follows existing offline-first architecture from Story 2.1, success confirmation displayed only after IndexedDB write completes, React Query cache invalidation triggers UI update.</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" title="Product Requirements Document">
+        <section name="FR007">System shall allow users to update an existing active flare with: new severity rating, trend status (improving/worsening/stable), treatment interventions, and timestamp</section>
+        <section name="FR008">System shall track complete flare history including all severity changes, trend updates, and interventions in chronological order</section>
+        <section name="NFR002">All flare data (creation, updates, resolution) shall persist to local IndexedDB immediately with offline-first architecture</section>
+        <section name="Journey 1 - Day 3">User adds intervention note: "Applied ice pack, took ibuprofen" to active flare</section>
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture">
+        <section name="ADR-003">Append-Only Flare History - FlareRecord.severityHistory is append-only array. Never mutate existing array. Medical data integrity requirement.</section>
+        <section name="Component Architecture">InterventionLog component - Log ice/meds/rest interventions with timestamps</section>
+      </doc>
+      <doc path="docs/epics.md" title="Epic 2: Flare Lifecycle Management">
+        <section name="Story 2.5">Log Flare Interventions - Enable users to record treatment interventions (medications, ice, rest, etc.) for each flare to track what was tried and evaluate effectiveness over time</section>
+      </doc>
+      <doc path="docs/stories/story-2.1.md" title="Story 2.1: Flare Data Model">
+        <section name="Foundation">Established FlareRecord, FlareEventRecord schema with append-only pattern, flareRepository with addFlareEvent/getFlareHistory methods</section>
+      </doc>
+      <doc path="docs/stories/story-2.4.md" title="Story 2.4: Update Flare Status">
+        <section name="Modal Patterns">FlareUpdateModal component with severity slider, trend radio buttons, notes textarea, timestamp field, Save/Cancel buttons - established UI patterns to follow</section>
+        <section name="Flare Detail Page">Page at /flares/[id] with "Update Status" button - InterventionLogModal should be added alongside this</section>
+      </doc>
+    </docs>
+    
+    <code>
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareEventType enum">
+        <lines>14-24</lines>
+        <reason>FlareEventType.Intervention already exists in enum - Story 2.5 will use this event type for logging interventions</reason>
+      </artifact>
+      
+      <artifact path="src/types/flare.ts" kind="types" symbol="FlareEventRecord interface">
+        <lines>70-90</lines>
+        <reason>FlareEventRecord already has 'interventions?: string' field (JSON-stringified array). Story 2.5 needs to extend this with interventionType and interventionDetails fields for structured data</reason>
+      </artifact>
+      
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="addFlareEvent">
+        <lines>145-180</lines>
+        <reason>Core method for creating intervention events. Story 2.5 will call this with eventType='intervention', interventionType, interventionDetails</reason>
+      </artifact>
+      
+      <artifact path="src/lib/repositories/flareRepository.ts" kind="repository" symbol="getFlareHistory">
+        <lines>182-202</lines>
+        <reason>Retrieves all events for a flare in chronological order. Story 2.5 InterventionHistory component will filter by eventType='intervention'</reason>
+      </artifact>
+      
+      <artifact path="src/components/flares/FlareUpdateModal.tsx" kind="component" symbol="FlareUpdateModal">
+        <lines>1-186</lines>
+        <reason>Established modal pattern to follow for InterventionLogModal: props structure (isOpen, onClose, flare, userId, onUpdate), form state management, error handling, 500 char limit with counter, datetime-local timestamp editing, Save/Cancel buttons, loading states</reason>
+      </artifact>
+      
+      <artifact path="src/app/(protected)/flares/[id]/page.tsx" kind="page" symbol="Flare detail page">
+        <reason>Story 2.4 added "Update Status" button to this page. Story 2.5 will add "Log Intervention" button alongside it and InterventionHistory section below</reason>
+      </artifact>
+      
+      <artifact path="src/lib/hooks/useFlare.ts" kind="hook" symbol="useFlare">
+        <reason>Hook for fetching single flare with React Query. InterventionHistory component should use similar pattern or extend this hook</reason>
+      </artifact>
+    </code>
+    
+    <dependencies>
+      <runtime>
+        <package name="react" version="19.1.0">Client-side UI framework</package>
+        <package name="next" version="15.5.4">App Router framework for pages and routing</package>
+        <package name="dexie" version="4.2.0">IndexedDB wrapper for offline-first persistence</package>
+        <package name="uuid" version="13.0.0">UUID v4 generation for event IDs</package>
+        <package name="zod" version="4.1.12">Schema validation for intervention event data</package>
+        <package name="lucide-react" version="0.544.0">Icon library for intervention type icons (Snowflake, Flame, Pill, BedDouble, Droplet, MoreHorizontal)</package>
+        <package name="date-fns" version="4.1.0">Date utilities for relative time formatting (formatDistanceToNow)</package>
+      </runtime>
+      <testing>
+        <package name="jest" version="30.2.0">Test runner</package>
+        <package name="@testing-library/react" version="16.3.0">React component testing</package>
+        <package name="@testing-library/jest-dom" version="6.9.1">DOM matchers</package>
+        <package name="@testing-library/user-event" version="14.6.1">User interaction simulation</package>
+        <package name="fake-indexeddb" version="6.2.4">IndexedDB mock for testing</package>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="C1">MUST extend FlareEventRecord interface to add interventionType and interventionDetails fields (currently only has 'interventions' JSON string field)</constraint>
+    <constraint id="C2">MUST create InterventionType enum with values: Ice, Heat, Medication, Rest, Drainage, Other</constraint>
+    <constraint id="C3">MUST use flareRepository.addFlareEvent() method with eventType='intervention' - DO NOT create events directly via Dexie</constraint>
+    <constraint id="C4">MUST follow FlareUpdateModal patterns: isOpen/onClose props, userId parameter, onUpdate callback, form state with useEffect reset, 500 char limit with counter, datetime-local timestamp, error handling with user-friendly messages, loading state with spinner, Save/Cancel buttons</constraint>
+    <constraint id="C5">MUST follow ADR-003 append-only pattern - intervention events are never modified or deleted after creation</constraint>
+    <constraint id="C6">MUST use offline-first IndexedDB persistence per NFR002 - no network dependency</constraint>
+    <constraint id="C7">MUST invalidate React Query cache after logging intervention to refresh InterventionHistory display</constraint>
+    <constraint id="C8">InterventionType dropdown MUST map to enum values, not free-text input</constraint>
+    <constraint id="C9">Intervention details textarea is OPTIONAL (user may just log "ice" without specifics)</constraint>
+    <constraint id="C10">Timestamp MUST auto-populate to Date.now() but allow editing for retroactive logging</constraint>
+    <constraint id="C11">Character limit for details MUST be 500 characters with visible counter</constraint>
+    <constraint id="C12">InterventionHistory MUST fetch events using getFlareHistory() and filter by eventType='intervention'</constraint>
+    <constraint id="C13">InterventionHistory MUST sort reverse-chronologically (most recent first)</constraint>
+    <constraint id="C14">InterventionHistory MUST truncate details to 50 characters with ellipsis in list view</constraint>
+    <constraint id="C15">InterventionHistory MUST use date-fns formatDistanceToNow() for relative timestamps ("2 hours ago")</constraint>
+    <constraint id="C16">Intervention type icons MUST map: Ice→Snowflake, Heat→Flame, Medication→Pill, Rest→BedDouble, Drainage→Droplet, Other→MoreHorizontal from lucide-react</constraint>
+    <constraint id="C17">"Log Intervention" button MUST be positioned next to "Update Status" button on flare detail page</constraint>
+    <constraint id="C18">Empty state MUST show "No interventions logged yet" message with guidance</constraint>
+  </constraints>
+  
+  <interfaces>
+    <interface name="flareRepository.addFlareEvent" kind="method">
+      <signature>async function addFlareEvent(userId: string, flareId: string, event: Partial&lt;FlareEventRecord&gt;): Promise&lt;FlareEventRecord&gt;</signature>
+      <description>Creates append-only intervention event. Pass eventType='intervention', interventionType, interventionDetails in event parameter</description>
+    </interface>
+    
+    <interface name="flareRepository.getFlareHistory" kind="method">
+      <signature>async function getFlareHistory(userId: string, flareId: string): Promise&lt;FlareEventRecord[]&gt;</signature>
+      <description>Returns all events for a flare ordered by timestamp ASC. Filter result by eventType='intervention' for intervention history</description>
+    </interface>
+    
+    <interface name="InterventionType" kind="enum">
+      <signature>enum InterventionType { Ice = 'ice', Heat = 'heat', Medication = 'medication', Rest = 'rest', Drainage = 'drainage', Other = 'other' }</signature>
+      <description>NEW enum to create in src/types/flare.ts. Six predefined intervention types covering common HS treatments</description>
+    </interface>
+    
+    <interface name="FlareEventRecord (extended)" kind="interface">
+      <signature>interface FlareEventRecord { ..., interventionType?: InterventionType, interventionDetails?: string }</signature>
+      <description>Extend existing interface in src/types/flare.ts to add structured intervention fields (replace generic 'interventions' JSON string)</description>
+    </interface>
+    
+    <interface name="InterventionLogModalProps" kind="interface">
+      <signature>interface InterventionLogModalProps { isOpen: boolean; onClose: () =&gt; void; flare: FlareRecord; userId: string; onLog?: () =&gt; void; }</signature>
+      <description>Props for InterventionLogModal component. Follow FlareUpdateModal pattern with onLog callback for React Query invalidation</description>
+    </interface>
+    
+    <interface name="InterventionHistoryProps" kind="interface">
+      <signature>interface InterventionHistoryProps { flareId: string; userId: string; }</signature>
+      <description>Props for InterventionHistory component. Fetches and displays intervention events for specified flare</description>
+    </interface>
+    
+    <interface name="formatDistanceToNow" kind="function">
+      <signature>function formatDistanceToNow(date: Date | number, options?: { addSuffix?: boolean }): string</signature>
+      <description>date-fns function for relative time formatting. Use with addSuffix: true to get "2 hours ago" format</description>
+    </interface>
+  </interfaces>
+  
+  <tests>
+    <standards>
+      <framework>Jest 30.2.0 with React Testing Library 16.3.0</framework>
+      <pattern>Colocated __tests__ directories (e.g., src/components/flares/__tests__/)</pattern>
+      <database>fake-indexeddb 6.2.4 for mocking Dexie operations</database>
+      <setup>jest.setup.js includes structuredClone polyfill for fake-indexeddb</setup>
+      <conventions>Test file naming: ComponentName.test.tsx, describe blocks for component/feature, it/test for individual cases</conventions>
+      <patterns>Follow FlareUpdateModal.test.tsx and FlareCreationModal.test.tsx testing patterns for modal components</patterns>
+    </standards>
+    
+    <locations>
+      <location>src/components/flares/__tests__/InterventionLogModal.test.tsx</location>
+      <location>src/components/flares/__tests__/InterventionHistory.test.tsx</location>
+      <location>src/types/__tests__/flare.test.ts (if adding enum validation tests)</location>
+    </locations>
+    
+    <ideas>
+      <!-- AC2.5.1: Log Intervention button in flare detail view -->
+      <test ac="AC2.5.1" priority="high">Test "Log Intervention" button renders on flare detail page</test>
+      <test ac="AC2.5.1" priority="high">Test button positioned next to "Update Status" button</test>
+      <test ac="AC2.5.1" priority="high">Test button click opens InterventionLogModal</test>
+      <test ac="AC2.5.1" priority="medium">Test button has aria-label for accessibility</test>
+      <test ac="AC2.5.1" priority="medium">Test button is keyboard accessible (Tab + Enter)</test>
+      
+      <!-- AC2.5.2: Modal captures intervention details -->
+      <test ac="AC2.5.2" priority="high">Test modal renders with intervention type dropdown</test>
+      <test ac="AC2.5.2" priority="high">Test all intervention types selectable (Ice, Heat, Medication, Rest, Drainage, Other)</test>
+      <test ac="AC2.5.2" priority="high">Test details textarea accepts input with 500 char limit</test>
+      <test ac="AC2.5.2" priority="high">Test character counter displays correctly (e.g., "250/500 characters")</test>
+      <test ac="AC2.5.2" priority="high">Test details textarea truncates at 500 chars</test>
+      <test ac="AC2.5.2" priority="high">Test timestamp field auto-populates to current time</test>
+      <test ac="AC2.5.2" priority="high">Test timestamp is editable via datetime-local input</test>
+      <test ac="AC2.5.2" priority="medium">Test "Save" and "Cancel" buttons render</test>
+      <test ac="AC2.5.2" priority="medium">Test dropdown defaults to first option (Ice)</test>
+      
+      <!-- AC2.5.3: Creates append-only FlareEvent -->
+      <test ac="AC2.5.3" priority="critical">Test "Save" button calls flareRepository.addFlareEvent with eventType='intervention'</test>
+      <test ac="AC2.5.3" priority="critical">Test event includes interventionType from dropdown</test>
+      <test ac="AC2.5.3" priority="critical">Test event includes interventionDetails from textarea</test>
+      <test ac="AC2.5.3" priority="critical">Test event includes timestamp from field</test>
+      <test ac="AC2.5.3" priority="critical">Test event includes userId parameter</test>
+      <test ac="AC2.5.3" priority="high">Test event persists to IndexedDB flareEvents table</test>
+      <test ac="AC2.5.3" priority="medium">Test empty details field allowed (optional)</test>
+      
+      <!-- AC2.5.4: Intervention appears in timeline -->
+      <test ac="AC2.5.4" priority="high">Test intervention displays in InterventionHistory after save</test>
+      <test ac="AC2.5.4" priority="high">Test intervention shows type icon/label</test>
+      <test ac="AC2.5.4" priority="high">Test intervention shows timestamp</test>
+      <test ac="AC2.5.4" priority="high">Test intervention shows details</test>
+      <test ac="AC2.5.4" priority="medium">Test multiple interventions display in chronological order</test>
+      <test ac="AC2.5.4" priority="medium">Test intervention entry is clickable/tappable</test>
+      
+      <!-- AC2.5.5: Multiple interventions can be logged -->
+      <test ac="AC2.5.5" priority="high">Test multiple interventions create separate FlareEventRecords</test>
+      <test ac="AC2.5.5" priority="high">Test each intervention has unique event ID (UUID v4)</test>
+      <test ac="AC2.5.5" priority="medium">Test no limit on number of interventions per flare</test>
+      <test ac="AC2.5.5" priority="medium">Test logging ice at 2pm, medication at 4pm creates 2 distinct events</test>
+      
+      <!-- AC2.5.6: History visible in chronological order -->
+      <test ac="AC2.5.6" priority="high">Test InterventionHistory fetches events from getFlareHistory()</test>
+      <test ac="AC2.5.6" priority="high">Test events filtered by eventType='intervention'</test>
+      <test ac="AC2.5.6" priority="high">Test interventions sorted reverse-chronologically (most recent first)</test>
+      <test ac="AC2.5.6" priority="high">Test intervention type icon displays correctly for each type</test>
+      <test ac="AC2.5.6" priority="high">Test relative timestamp formatting ("2 hours ago" using formatDistanceToNow)</test>
+      <test ac="AC2.5.6" priority="high">Test details truncation (first 50 chars with ellipsis)</test>
+      <test ac="AC2.5.6" priority="medium">Test empty state displays when no interventions exist</test>
+      <test ac="AC2.5.6" priority="medium">Test empty state message: "No interventions logged yet"</test>
+      
+      <!-- AC2.5.7: Offline-first persistence -->
+      <test ac="AC2.5.7" priority="critical">Test addFlareEvent writes to IndexedDB immediately</test>
+      <test ac="AC2.5.7" priority="critical">Test success confirmation only after IndexedDB write completes</test>
+      <test ac="AC2.5.7" priority="high">Test React Query cache invalidation triggers after save</test>
+      <test ac="AC2.5.7" priority="high">Test error handling displays user-friendly message on failure</test>
+      <test ac="AC2.5.7" priority="medium">Test no network dependency required</test>
+      
+      <!-- Additional integration tests -->
+      <test ac="All" priority="high">Integration: Complete intervention logging flow (open modal → select type → add details → save → verify persistence)</test>
+      <test ac="All" priority="medium">Integration: Intervention history updates after new intervention logged</test>
+      <test ac="All" priority="medium">Integration: Multiple interventions for same flare display correctly</test>
+      
+      <!-- Accessibility tests -->
+      <test ac="All" priority="medium">Test keyboard navigation in modal (Tab through fields, Escape to close)</test>
+      <test ac="All" priority="medium">Test ARIA labels on dropdown, textarea, buttons</test>
+      <test ac="All" priority="medium">Test screen reader announces intervention type options</test>
+      <test ac="All" priority="medium">Test focus management (modal traps focus when open)</test>
+      <test ac="All" priority="low">Test intervention history is keyboard navigable</test>
+    </ideas>
+  </tests>
+</story-context>

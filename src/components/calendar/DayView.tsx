@@ -32,9 +32,20 @@ export const DayView = ({ entry, events = [], onEdit }: DayViewProps) => {
         <div>
           <h3 className="text-lg font-semibold text-foreground">{entry.date}</h3>
           <p className="text-sm text-muted-foreground">
-            {entry.hasEntry
-              ? `${entry.symptomCount} symptoms · ${entry.medicationCount} medications · ${entry.triggerCount} triggers`
-              : "No entry recorded"}
+            {entry.hasEntry ? (
+              <>
+                {entry.symptomsDetails.length} symptoms · {entry.medicationDetails.length} medications · {entry.triggerDetails.length} triggers
+                {/* Story 3.5.7: Display counts for new data types */}
+                {entry.foodDetails?.length > 0 && ` · ${entry.foodDetails.filter((f) => f.mealType !== "snack").length} meals`}
+                {entry.foodDetails?.filter((f) => f.mealType === "snack").length > 0 &&
+                  ` · ${entry.foodDetails.filter((f) => f.mealType === "snack").length} snacks`}
+                {entry.moodDetails?.length > 0 && ` · ${entry.moodDetails.length} mood`}
+                {entry.sleepDetails?.length > 0 && ` · ${entry.sleepDetails.length} sleep`}
+                {entry.flareDetails?.length > 0 && ` · ${entry.flareDetails.length} flares`}
+              </>
+            ) : (
+              "No entry recorded"
+            )}
           </p>
         </div>
         <button
@@ -48,9 +59,15 @@ export const DayView = ({ entry, events = [], onEdit }: DayViewProps) => {
 
       <section className="grid gap-3 text-sm text-muted-foreground">
         <div className="rounded-xl border border-border bg-muted/20 p-3">
-          <p>Mood: {entry.mood ?? "Not recorded"}</p>
           <p>
-            Energy: {typeof entry.energyLevel === "number" ? `${entry.energyLevel}/10` : "n/a"}
+            Mood: {entry.moodDetails?.[0]?.moodType ?? entry.mood ?? "Not recorded"}
+            {entry.moodDetails?.[0]?.mood && ` (${entry.moodDetails[0].mood}/10)`}
+          </p>
+          <p>
+            Sleep: {entry.sleepDetails?.[0]?.hours !== undefined
+              ? `${entry.sleepDetails[0].hours}h`
+              : "Not recorded"}
+            {entry.sleepDetails?.[0]?.quality && ` (quality: ${entry.sleepDetails[0].quality}/10)`}
           </p>
           <p>Notes: {entry.notesSummary ?? "Add notes from the daily log."}</p>
         </div>
@@ -105,6 +122,84 @@ export const DayView = ({ entry, events = [], onEdit }: DayViewProps) => {
                     <span className="text-xs text-muted-foreground">{formatImpact(trigger.impact)}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">Category: {trigger.category}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {/* Story 3.5.7: Food entries section */}
+        {entry.foodDetails && entry.foodDetails.length > 0 ? (
+          <div className="space-y-2">
+            <h4 className="font-medium text-foreground">Food</h4>
+            <ul className="space-y-2">
+              {entry.foodDetails.map((food) => (
+                <li key={food.id} className="rounded-xl border border-border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-foreground">{food.mealType}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(food.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{food.foodIds.length} food items</p>
+                  {food.notes ? <p className="mt-1 text-xs text-muted-foreground">{food.notes}</p> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {/* Story 3.5.7: Mood entries section */}
+        {entry.moodDetails && entry.moodDetails.length > 0 ? (
+          <div className="space-y-2">
+            <h4 className="font-medium text-foreground">Mood</h4>
+            <ul className="space-y-2">
+              {entry.moodDetails.map((mood) => (
+                <li key={mood.id} className="rounded-xl border border-border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-foreground">Mood: {mood.mood}/10</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(mood.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                  {mood.moodType ? <p className="text-xs text-muted-foreground">Type: {mood.moodType}</p> : null}
+                  {mood.notes ? <p className="mt-1 text-xs text-muted-foreground">{mood.notes}</p> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {/* Story 3.5.7: Sleep entries section */}
+        {entry.sleepDetails && entry.sleepDetails.length > 0 ? (
+          <div className="space-y-2">
+            <h4 className="font-medium text-foreground">Sleep</h4>
+            <ul className="space-y-2">
+              {entry.sleepDetails.map((sleep) => (
+                <li key={sleep.id} className="rounded-xl border border-border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-foreground">{sleep.hours} hours</span>
+                    <span className="text-xs text-muted-foreground">Quality: {sleep.quality}/10</span>
+                  </div>
+                  {sleep.notes ? <p className="mt-1 text-xs text-muted-foreground">{sleep.notes}</p> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {/* Story 3.5.7: Flare entries section */}
+        {entry.flareDetails && entry.flareDetails.length > 0 ? (
+          <div className="space-y-2">
+            <h4 className="font-medium text-foreground">Flares</h4>
+            <ul className="space-y-2">
+              {entry.flareDetails.map((flare) => (
+                <li key={flare.id} className="rounded-xl border border-border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-foreground">{flare.bodyRegionId}</span>
+                    <span className="text-xs text-muted-foreground">Severity: {flare.currentSeverity}/10</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Status: {flare.status}</p>
                 </li>
               ))}
             </ul>

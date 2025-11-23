@@ -44,6 +44,7 @@ export function usePhotoUpload() {
 
         // Step 4: Generate encryption key (60%)
         const encryptionKey = await PhotoEncryption.generateKey();
+        const exportedKey = await PhotoEncryption.exportKey(encryptionKey);
         setProgress(60);
 
         // Step 5: Encrypt photo (75%)
@@ -52,10 +53,8 @@ export function usePhotoUpload() {
         setProgress(75);
 
         // Step 6: Encrypt thumbnail (85%)
-        const { data: encryptedThumbnail } = await PhotoEncryption.encryptPhoto(
-          thumbnail,
-          encryptionKey
-        );
+        const { data: encryptedThumbnail, iv: thumbnailIV } =
+          await PhotoEncryption.encryptPhoto(thumbnail, encryptionKey);
         setProgress(85);
 
         // Step 7: Get image dimensions
@@ -77,6 +76,8 @@ export function usePhotoUpload() {
           encryptedData,
           thumbnailData: encryptedThumbnail,
           encryptionIV,
+          thumbnailIV,
+          encryptionKey: exportedKey,
           capturedAt: new Date(),
           tags: options.tags || [],
           notes: options.notes,

@@ -3,6 +3,7 @@
 import React from "react";
 import { FRONT_BODY_REGIONS } from "@/lib/data/bodyRegions";
 import { BodyRegion } from "@/lib/types/body-mapping";
+import { useBodyMapAccessibility } from "@/lib/hooks/useBodyMapAccessibility";
 
 interface FrontBodyProps {
   selectedRegions?: string[];
@@ -11,6 +12,16 @@ interface FrontBodyProps {
   onRegionHover?: (regionId: string | null) => void;
   severityByRegion?: Record<string, number>;
   flareRegions?: string[];
+  onCoordinateCapture?: (event: React.MouseEvent<SVGSVGElement>) => void;
+  onTouchCoordinateCapture?: (event: React.TouchEvent<SVGSVGElement>) => void;
+  coordinateCursorActive?: boolean;
+  coordinateMarker?: React.ReactNode;
+  flareOverlay?: React.ReactNode;
+  // Accessibility props
+  userId: string;
+  zoomLevel?: number;
+  isZoomed?: boolean;
+  onCoordinateMark?: (regionId: string, coordinates: { x: number; y: number }) => void;
 }
 
 export function FrontBody({
@@ -20,41 +31,67 @@ export function FrontBody({
   onRegionHover,
   severityByRegion = {},
   flareRegions = [],
+  onCoordinateCapture,
+  onTouchCoordinateCapture,
+  coordinateCursorActive = false,
+  coordinateMarker,
+  flareOverlay,
+  userId,
+  zoomLevel = 1,
+  isZoomed = false,
+  onCoordinateMark,
 }: FrontBodyProps) {
+  // Accessibility hook
+  const {
+    getTabIndex,
+    handleRegionKeyDown,
+    getAriaLabel,
+    setFocusedRegionId,
+  } = useBodyMapAccessibility({
+    regions: FRONT_BODY_REGIONS,
+    selectedRegion: selectedRegions[0],
+    onRegionSelect: onRegionClick,
+    onCoordinateMark,
+    zoomLevel,
+    isZoomed,
+    userId,
+  });
+
   const getSeverityColor = (severity: number): string => {
-    if (severity <= 2) return "#10b981"; // green
-    if (severity <= 4) return "#fbbf24"; // yellow
-    if (severity <= 6) return "#f59e0b"; // orange
-    if (severity <= 8) return "#ef4444"; // red
-    return "#991b1b"; // dark red
+    // Updated softer severity colors aligned with new design system
+    if (severity >= 9) return "#FCA5A5"; // Soft red (from CSS var --severity-high)
+    if (severity >= 7) return "#FBBF24"; // Soft amber (from CSS var --warning)
+    if (severity >= 4) return "#FDE047"; // Soft yellow (from CSS var --severity-mid)
+    return "#86EFAC"; // Soft green (from CSS var --severity-low)
   };
 
   const getRegionFill = (region: BodyRegion): string => {
     const isFlare = flareRegions.includes(region.id);
     const severity = severityByRegion[region.id];
 
-    // Flares get special red coloring regardless of severity
-    if (isFlare) {
-      if (severity <= 4) return "#fca5a5"; // light red
-      if (severity <= 7) return "#ef4444"; // red
-      return "#991b1b"; // dark red
-    }
-
+    // Use severity-based coloring for both flares and symptoms
     if (severity) return getSeverityColor(severity);
-    if (selectedRegions.includes(region.id)) return "#3b82f6";
-    if (highlightedRegion === region.id) return "#60a5fa";
-    return "#e5e7eb";
+    if (selectedRegions.includes(region.id)) return "#0F9D91"; // Calm teal primary
+    if (highlightedRegion === region.id) return "#E0F5F3"; // Primary-light
+    return "#F5F5F4"; // Muted background
   };
 
   const getRegionOpacity = (region: BodyRegion): number => {
     const isFlare = flareRegions.includes(region.id);
     const severity = severityByRegion[region.id];
+    const isSelected = selectedRegions.includes(region.id);
+    const hasSelection = selectedRegions.length > 0;
 
     // Flares are more opaque and prominent
     if (isFlare) return 0.9;
 
+    // If something is selected, dim non-selected regions
+    if (hasSelection && !isSelected) {
+      return 0.15; // Significantly dimmed
+    }
+
     if (severity) return 0.8;
-    if (selectedRegions.includes(region.id)) return 0.6;
+    if (isSelected) return 0.6;
     if (highlightedRegion === region.id) return 0.5;
     return 0.3;
   };
@@ -64,38 +101,74 @@ export function FrontBody({
     return isFlare ? "flare-pulse" : "";
   };
 
+  // Helper function for accessibility props
+  const getAccessibilityProps = (regionId: string) => ({
+    tabIndex: getTabIndex(regionId),
+    "aria-label": getAriaLabel(regionId),
+    onKeyDown: (e: React.KeyboardEvent) => handleRegionKeyDown(e, regionId),
+    onFocus: () => setFocusedRegionId(regionId),
+    onBlur: () => setFocusedRegionId(null),
+  });
+
   return (
     <svg
-      viewBox="0 0 400 800"
-      className="w-full h-full"
+      viewBox="0 -20 400 820"
+      className={coordinateCursorActive ? "coordinate-mode" : ""}
       xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid meet"
+      width="400"
+      height="800"
+      onClickCapture={onCoordinateCapture}
+      onTouchStart={onTouchCoordinateCapture}
+      role="application"
+      aria-label="Interactive body map for flare tracking"
     >
       <defs>
         <style>{`
           .body-region {
-            stroke: #374151;
+            stroke: #78716C;
             stroke-width: 2;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          }
+          .coordinate-mode .body-region {
+            cursor: crosshair !important;
           }
           .body-region:hover {
             opacity: 0.8 !important;
-            stroke-width: 3;
+            stroke: #0F9D91;
+            stroke-width: 2;
           }
           @keyframes flare-pulse {
             0%, 100% {
               opacity: 0.9;
-              filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.8));
+              filter: drop-shadow(0 0 3px rgba(252, 165, 165, 0.6));
             }
             50% {
               opacity: 1;
-              filter: drop-shadow(0 0 8px rgba(239, 68, 68, 1));
+              filter: drop-shadow(0 0 6px rgba(252, 165, 165, 0.8));
             }
           }
           .flare-pulse {
             animation: flare-pulse 2s ease-in-out infinite;
-            stroke: #dc2626;
-            stroke-width: 3;
+            stroke: #F87171;
+            stroke-width: 2;
+          }
+
+          /* Accessibility focus styles using new primary color */
+          .body-region:focus-visible {
+            outline: 2px solid #0F9D91;
+            outline-offset: 2px;
+            stroke-width: 2.5;
+            box-shadow: 0 0 0 4px rgba(15, 157, 145, 0.2);
+          }
+
+          /* High contrast focus for better visibility */
+          @media (prefers-contrast: high) {
+            .body-region:focus-visible {
+              outline: 3px solid #0A7A70;
+              outline-offset: 1px;
+            }
           }
         `}</style>
       </defs>
@@ -104,42 +177,53 @@ export function FrontBody({
       <ellipse
         id="head-front"
         cx="200"
-        cy="60"
+        cy="40"
         rx="50"
         ry="60"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS[0])}`}
         fill={getRegionFill(FRONT_BODY_REGIONS[0])}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS[0])}
+        tabIndex={getTabIndex("head-front")}
+        aria-label={getAriaLabel("head-front")}
         onClick={() => onRegionClick?.("head-front")}
         onMouseEnter={() => onRegionHover?.("head-front")}
         onMouseLeave={() => onRegionHover?.(null)}
+        onKeyDown={(e) => handleRegionKeyDown(e, "head-front")}
+        onFocus={() => setFocusedRegionId("head-front")}
+        onBlur={() => setFocusedRegionId(null)}
       />
 
       {/* Neck */}
       <rect
         id="neck-front"
         x="175"
-        y="110"
+        y="90"
         width="50"
         height="40"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS[1])}`}
         fill={getRegionFill(FRONT_BODY_REGIONS[1])}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS[1])}
+        tabIndex={getTabIndex("neck-front")}
+        aria-label={getAriaLabel("neck-front")}
         onClick={() => onRegionClick?.("neck-front")}
         onMouseEnter={() => onRegionHover?.("neck-front")}
         onMouseLeave={() => onRegionHover?.(null)}
+        onKeyDown={(e) => handleRegionKeyDown(e, "neck-front")}
+        onFocus={() => setFocusedRegionId("neck-front")}
+        onBlur={() => setFocusedRegionId(null)}
       />
 
       {/* Left Shoulder */}
       <ellipse
         id="shoulder-left"
         cx="120"
-        cy="170"
+        cy="150"
         rx="45"
         ry="35"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-left")!)}
+        {...getAccessibilityProps("shoulder-left")}
         onClick={() => onRegionClick?.("shoulder-left")}
         onMouseEnter={() => onRegionHover?.("shoulder-left")}
         onMouseLeave={() => onRegionHover?.(null)}
@@ -149,7 +233,7 @@ export function FrontBody({
       <ellipse
         id="shoulder-right"
         cx="280"
-        cy="170"
+        cy="150"
         rx="45"
         ry="35"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "shoulder-right")!)}`}
@@ -160,11 +244,41 @@ export function FrontBody({
         onMouseLeave={() => onRegionHover?.(null)}
       />
 
+      {/* Left Chest */}
+      <ellipse
+        id="chest-left"
+        cx="165"
+        cy="205"
+        rx="35"
+        ry="45"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
+        onClick={() => onRegionClick?.("chest-left")}
+        onMouseEnter={() => onRegionHover?.("chest-left")}
+        onMouseLeave={() => onRegionHover?.(null)}
+      />
+
+      {/* Right Chest */}
+      <ellipse
+        id="chest-right"
+        cx="235"
+        cy="205"
+        rx="35"
+        ry="45"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
+        onClick={() => onRegionClick?.("chest-right")}
+        onMouseEnter={() => onRegionHover?.("chest-right")}
+        onMouseLeave={() => onRegionHover?.(null)}
+      />
+
       {/* Left Armpit */}
       <ellipse
         id="armpit-left"
         cx="145"
-        cy="195"
+        cy="175"
         rx="20"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-left")!)}`}
@@ -179,7 +293,7 @@ export function FrontBody({
       <ellipse
         id="armpit-right"
         cx="255"
-        cy="195"
+        cy="175"
         rx="20"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-right")!)}`}
@@ -187,34 +301,6 @@ export function FrontBody({
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "armpit-right")!)}
         onClick={() => onRegionClick?.("armpit-right")}
         onMouseEnter={() => onRegionHover?.("armpit-right")}
-        onMouseLeave={() => onRegionHover?.(null)}
-      />
-
-      {/* Left Chest */}
-      <path
-        id="chest-left"
-        d="M 145 160 Q 145 220 165 250"
-        fill="none"
-        stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
-        strokeWidth="60"
-        strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}
-        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-left")!)}`}
-        onClick={() => onRegionClick?.("chest-left")}
-        onMouseEnter={() => onRegionHover?.("chest-left")}
-        onMouseLeave={() => onRegionHover?.(null)}
-      />
-
-      {/* Right Chest */}
-      <path
-        id="chest-right"
-        d="M 255 160 Q 255 220 235 250"
-        fill="none"
-        stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
-        strokeWidth="60"
-        strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}
-        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "chest-right")!)}`}
-        onClick={() => onRegionClick?.("chest-right")}
-        onMouseEnter={() => onRegionHover?.("chest-right")}
         onMouseLeave={() => onRegionHover?.(null)}
       />
 
@@ -251,9 +337,9 @@ export function FrontBody({
       {/* Upper Abdomen */}
       <rect
         id="abdomen-upper"
-        x="165"
+        x="155"
         y="265"
-        width="70"
+        width="90"
         height="60"
         rx="10"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-upper")!)}`}
@@ -267,9 +353,9 @@ export function FrontBody({
       {/* Lower Abdomen */}
       <rect
         id="abdomen-lower"
-        x="165"
+        x="155"
         y="325"
-        width="70"
+        width="90"
         height="60"
         rx="10"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "abdomen-lower")!)}`}
@@ -280,31 +366,66 @@ export function FrontBody({
         onMouseLeave={() => onRegionHover?.(null)}
       />
 
-      {/* Groin */}
-      <path
-        id="groin"
-        d="M 175 385 Q 200 395 225 385"
-        fill="none"
-        stroke={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}
-        strokeWidth="30"
-        strokeOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}
-        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "groin")!)}`}
-        onClick={() => onRegionClick?.("groin")}
-        onMouseEnter={() => onRegionHover?.("groin")}
+      {/* Left Groin */}
+      <ellipse
+        id="left-groin"
+        cx="175"
+        cy="410"
+        rx="22"
+        ry="18"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "left-groin")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "left-groin")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "left-groin")!)}
+        onClick={() => onRegionClick?.("left-groin")}
+        onMouseEnter={() => onRegionHover?.("left-groin")}
         onMouseLeave={() => onRegionHover?.(null)}
+        aria-label="Left Groin"
+      />
+
+      {/* Center Groin */}
+      <ellipse
+        id="center-groin"
+        cx="200"
+        cy="415"
+        rx="18"
+        ry="15"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "center-groin")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "center-groin")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "center-groin")!)}
+        onClick={() => onRegionClick?.("center-groin")}
+        onMouseEnter={() => onRegionHover?.("center-groin")}
+        onMouseLeave={() => onRegionHover?.(null)}
+        aria-label="Center Groin"
+      />
+
+      {/* Right Groin */}
+      <ellipse
+        id="right-groin"
+        cx="225"
+        cy="410"
+        rx="22"
+        ry="18"
+        className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "right-groin")!)}`}
+        fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "right-groin")!)}
+        fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "right-groin")!)}
+        onClick={() => onRegionClick?.("right-groin")}
+        onMouseEnter={() => onRegionHover?.("right-groin")}
+        onMouseLeave={() => onRegionHover?.(null)}
+        aria-label="Right Groin"
       />
 
       {/* Left Upper Arm */}
       <rect
         id="upper-arm-left"
         x="75"
-        y="195"
+        y="175"
         width="40"
         height="120"
         rx="20"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-left")!)}
+        {...getAccessibilityProps("upper-arm-left")}
         onClick={() => onRegionClick?.("upper-arm-left")}
         onMouseEnter={() => onRegionHover?.("upper-arm-left")}
         onMouseLeave={() => onRegionHover?.(null)}
@@ -314,13 +435,14 @@ export function FrontBody({
       <rect
         id="upper-arm-right"
         x="285"
-        y="195"
+        y="175"
         width="40"
         height="120"
         rx="20"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}`}
         fill={getRegionFill(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}
         fillOpacity={getRegionOpacity(FRONT_BODY_REGIONS.find((r) => r.id === "upper-arm-right")!)}
+        {...getAccessibilityProps("upper-arm-right")}
         onClick={() => onRegionClick?.("upper-arm-right")}
         onMouseEnter={() => onRegionHover?.("upper-arm-right")}
         onMouseLeave={() => onRegionHover?.(null)}
@@ -330,7 +452,7 @@ export function FrontBody({
       <ellipse
         id="elbow-left"
         cx="95"
-        cy="325"
+        cy="305"
         rx="25"
         ry="20"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-left")!)}`}
@@ -345,7 +467,7 @@ export function FrontBody({
       <ellipse
         id="elbow-right"
         cx="305"
-        cy="325"
+        cy="305"
         rx="25"
         ry="20"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "elbow-right")!)}`}
@@ -360,7 +482,7 @@ export function FrontBody({
       <rect
         id="forearm-left"
         x="75"
-        y="345"
+        y="325"
         width="35"
         height="110"
         rx="17"
@@ -376,7 +498,7 @@ export function FrontBody({
       <rect
         id="forearm-right"
         x="290"
-        y="345"
+        y="325"
         width="35"
         height="110"
         rx="17"
@@ -392,7 +514,7 @@ export function FrontBody({
       <ellipse
         id="wrist-left"
         cx="92"
-        cy="465"
+        cy="445"
         rx="18"
         ry="15"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-left")!)}`}
@@ -407,7 +529,7 @@ export function FrontBody({
       <ellipse
         id="wrist-right"
         cx="308"
-        cy="465"
+        cy="445"
         rx="18"
         ry="15"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "wrist-right")!)}`}
@@ -422,7 +544,7 @@ export function FrontBody({
       <ellipse
         id="hand-left"
         cx="92"
-        cy="495"
+        cy="470"
         rx="20"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hand-left")!)}`}
@@ -437,7 +559,7 @@ export function FrontBody({
       <ellipse
         id="hand-right"
         cx="308"
-        cy="495"
+        cy="470"
         rx="20"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hand-right")!)}`}
@@ -451,8 +573,8 @@ export function FrontBody({
       {/* Left Hip */}
       <ellipse
         id="hip-left"
-        cx="175"
-        cy="400"
+        cx="145"
+        cy="385"
         rx="30"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hip-left")!)}`}
@@ -466,8 +588,8 @@ export function FrontBody({
       {/* Right Hip */}
       <ellipse
         id="hip-right"
-        cx="225"
-        cy="400"
+        cx="255"
+        cy="385"
         rx="30"
         ry="25"
         className={`body-region ${getRegionClassName(FRONT_BODY_REGIONS.find((r) => r.id === "hip-right")!)}`}
@@ -661,6 +783,56 @@ export function FrontBody({
         onMouseEnter={() => onRegionHover?.("foot-right")}
         onMouseLeave={() => onRegionHover?.(null)}
       />
+
+      {/* Re-render selected regions on top for better visibility when overlapping */}
+      {selectedRegions.map((regionId) => {
+        const region = FRONT_BODY_REGIONS.find((r) => r.id === regionId);
+        if (!region) return null;
+
+        // Re-render specific regions that need to be brought to front
+        if (regionId === "chest-left") {
+          return (
+            <ellipse
+              key={`${regionId}-top`}
+              id={`${regionId}-overlay`}
+              cx="165"
+              cy="205"
+              rx="35"
+              ry="45"
+              className={`body-region ${getRegionClassName(region)}`}
+              fill={getRegionFill(region)}
+              fillOpacity={getRegionOpacity(region)}
+              onClick={() => onRegionClick?.(regionId)}
+              onMouseEnter={() => onRegionHover?.(regionId)}
+              onMouseLeave={() => onRegionHover?.(null)}
+              style={{ pointerEvents: 'all' }}
+            />
+          );
+        }
+        if (regionId === "chest-right") {
+          return (
+            <ellipse
+              key={`${regionId}-top`}
+              id={`${regionId}-overlay`}
+              cx="235"
+              cy="205"
+              rx="35"
+              ry="45"
+              className={`body-region ${getRegionClassName(region)}`}
+              fill={getRegionFill(region)}
+              fillOpacity={getRegionOpacity(region)}
+              onClick={() => onRegionClick?.(regionId)}
+              onMouseEnter={() => onRegionHover?.(regionId)}
+              onMouseLeave={() => onRegionHover?.(null)}
+              style={{ pointerEvents: 'all' }}
+            />
+          );
+        }
+        return null;
+      })}
+
+      {flareOverlay}
+      {coordinateMarker}
     </svg>
   );
 }

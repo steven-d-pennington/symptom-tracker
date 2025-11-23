@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { PhotoAttachment } from "@/lib/types/photo";
 import { PhotoEncryption } from "@/lib/utils/photoEncryption";
+import { Pencil, Link as LinkIcon, CalendarDays } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface PhotoThumbnailProps {
   photo: PhotoAttachment;
   onClick?: () => void;
   selected?: boolean;
   className?: string;
+  showEntryLink?: boolean; // Show entry link metadata and View Entry button
 }
 
 export function PhotoThumbnail({
@@ -16,10 +19,12 @@ export function PhotoThumbnail({
   onClick,
   selected = false,
   className = "",
+  showEntryLink = true, // Default to showing entry links
 }: PhotoThumbnailProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     let objectUrl: string | null = null;
@@ -29,9 +34,17 @@ export function PhotoThumbnail({
         setIsLoading(true);
         setError(null);
 
-        // TODO: Implement photo decryption once encryption key storage is finalized
-        // For now, create object URL directly from thumbnail data
-        objectUrl = URL.createObjectURL(photo.thumbnailData);
+        if (photo.encryptionKey && photo.thumbnailIV) {
+          const key = await PhotoEncryption.importKey(photo.encryptionKey);
+          const decrypted = await PhotoEncryption.decryptPhoto(
+            photo.thumbnailData,
+            key,
+            photo.thumbnailIV
+          );
+          objectUrl = URL.createObjectURL(decrypted);
+        } else {
+          objectUrl = URL.createObjectURL(photo.thumbnailData);
+        }
         setThumbnailUrl(objectUrl);
       } catch (err) {
         console.error("Failed to load thumbnail:", err);
@@ -50,6 +63,13 @@ export function PhotoThumbnail({
       }
     };
   }, [photo]);
+
+  const handleViewEntry = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering photo onClick
+    if (photo.dailyEntryId) {
+      router.push(`/log?id=${photo.dailyEntryId}`);
+    }
+  };
 
   return (
     <div
@@ -83,6 +103,20 @@ export function PhotoThumbnail({
         <p className="text-xs text-white">
           {new Date(photo.capturedAt).toLocaleDateString()}
         </p>
+        
+        {/* Daily Entry Link */}
+        {showEntryLink && photo.dailyEntryId && (
+          <div className="mt-1 flex items-center gap-1">
+            <LinkIcon className="h-3 w-3 text-blue-300" />
+            <button
+              onClick={handleViewEntry}
+              className="text-xs text-blue-300 hover:text-blue-100 hover:underline"
+            >
+              View Entry
+            </button>
+          </div>
+        )}
+        
         {photo.tags.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1">
             {photo.tags.slice(0, 2).map((tag) => (
@@ -118,6 +152,26 @@ export function PhotoThumbnail({
               d="M5 13l4 4L19 7"
             />
           </svg>
+        </div>
+      )}
+
+      {/* Auto-Linked Badge */}
+      {showEntryLink && photo.dailyEntryId && !selected && (
+        <div className="absolute left-2 top-2 rounded-md bg-blue-500 px-2 py-1 shadow-md flex items-center gap-1">
+          <CalendarDays className="h-3 w-3 text-white" />
+          <span className="text-xs font-semibold text-white">
+            Linked
+          </span>
+        </div>
+      )}
+
+      {/* Annotation indicator */}
+      {photo.annotations && photo.annotations.length > 0 && (
+        <div className="absolute right-2 top-2 rounded-md bg-blue-500 px-2 py-1 shadow-md flex items-center gap-1">
+          <Pencil className="h-3 w-3 text-white" />
+          <span className="text-xs font-semibold text-white">
+            {photo.annotations.length}
+          </span>
         </div>
       )}
     </div>

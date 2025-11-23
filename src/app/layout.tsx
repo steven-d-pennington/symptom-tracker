@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "@/styles/accessibility.css"; // Story 3.7.6: Accessibility styles
 import { OnboardingRedirectGate } from "./onboarding/components/OnboardingRedirectGate";
 import { OfflineIndicator, InstallPrompt, UpdateNotification } from "@/components/pwa";
 import { NavLayout } from "@/components/navigation/NavLayout";
 import { MigrationProvider } from "@/components/providers/MigrationProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { CorrelationAutoCalculationProvider } from "@/components/providers/CorrelationAutoCalculationProvider";
+import { ToastContainer } from "@/components/common/ToastContainer";
 
 export const metadata: Metadata = {
   title: "Pocket Symptom Tracker",
@@ -35,7 +39,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#3b82f6",
+  themeColor: "#0F9D91",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -48,16 +52,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased font-sans">
-        <MigrationProvider>
-          <OnboardingRedirectGate />
-          <NavLayout>{children}</NavLayout>
-          {/* PWA Components */}
-          <OfflineIndicator />
-          <InstallPrompt />
-          <UpdateNotification />
-        </MigrationProvider>
+        <ThemeProvider>
+          <MigrationProvider>
+            <CorrelationAutoCalculationProvider>
+              <OnboardingRedirectGate />
+              <NavLayout>{children}</NavLayout>
+              {/* PWA Components */}
+              <OfflineIndicator />
+              <InstallPrompt />
+              <UpdateNotification />
+              {/* Toast Notifications */}
+              <ToastContainer />
+            </CorrelationAutoCalculationProvider>
+          </MigrationProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

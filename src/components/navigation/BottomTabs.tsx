@@ -1,52 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, LayoutDashboard, TrendingUp, Camera, Menu } from "lucide-react";
+import { useCallback } from "react";
 import { useActiveRoute } from "./hooks/useActiveRoute";
-import { LucideIcon } from "lucide-react";
+import { getNavDestinations } from "@/config/navigation";
+import { useUxInstrumentation } from "@/lib/hooks/useUxInstrumentation";
 
-interface TabItem {
-  icon: LucideIcon;
-  label: string;
-  href: string;
-  ariaLabel?: string;
-}
-
-const tabs: TabItem[] = [
-  {
-    icon: FileText,
-    label: "Log",
-    href: "/log",
-    ariaLabel: "Daily log",
-  },
-  {
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    href: "/dashboard",
-    ariaLabel: "Dashboard",
-  },
-  {
-    icon: TrendingUp,
-    label: "Analytics",
-    href: "/analytics",
-    ariaLabel: "Analytics and trends",
-  },
-  {
-    icon: Camera,
-    label: "Gallery",
-    href: "/photos",
-    ariaLabel: "Photo gallery",
-  },
-  {
-    icon: Menu,
-    label: "More",
-    href: "/more",
-    ariaLabel: "More options",
-  },
-];
-
+/**
+ * BottomTabs component - Mobile navigation tabs
+ *
+ * Consumes shared navigation configuration via getNavDestinations("mobile") to display
+ * navigation tabs filtered for mobile surface.
+ *
+ * @see src/config/navigation.ts - Single source of truth for navigation destinations
+ */
 export function BottomTabs() {
   const { isActive } = useActiveRoute();
+  // Consume shared navigation config - automatically filtered for mobile surface
+  const tabs = getNavDestinations("mobile");
+  const { recordUxEvent } = useUxInstrumentation();
+
+  const createClickHandler = useCallback(
+    (href: string, label: string) => () => {
+      void recordUxEvent("navigation.destination.select", {
+        metadata: {
+          surface: "bottomTabs",
+          href,
+          label,
+        },
+      });
+    },
+    [recordUxEvent],
+  );
 
   return (
     <nav
@@ -65,6 +50,7 @@ export function BottomTabs() {
             <Link
               key={tab.href}
               href={tab.href}
+              onClick={createClickHandler(tab.href, tab.label)}
               className={`
                 flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-lg
                 min-w-[64px] transition-all duration-150
@@ -77,11 +63,13 @@ export function BottomTabs() {
               aria-label={tab.ariaLabel || tab.label}
               aria-current={active ? "page" : undefined}
             >
-              <Icon
-                className={`w-5 h-5 transition-transform ${
-                  active ? "scale-110" : ""
-                }`}
-              />
+              {Icon && (
+                <Icon
+                  className={`w-5 h-5 transition-transform ${
+                    active ? "scale-110" : ""
+                  }`}
+                />
+              )}
               <span
                 className={`text-xs ${
                   active ? "font-semibold" : "font-medium"

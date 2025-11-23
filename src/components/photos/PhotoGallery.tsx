@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { PhotoAttachment } from "@/lib/types/photo";
+import { PhotoAttachment, PhotoFilter } from "@/lib/types/photo";
+import { PhotoAnnotation } from "@/lib/types/annotation";
 import { photoRepository } from "@/lib/repositories/photoRepository";
 import { PhotoThumbnail } from "./PhotoThumbnail";
 import { PhotoViewer } from "./PhotoViewer";
@@ -12,7 +13,10 @@ interface PhotoGalleryProps {
   symptomId?: string;
   bodyRegionId?: string;
   onPhotoSelect?: (photo: PhotoAttachment) => void;
+  onPhotoDeleted?: (photoId: string) => void;
   selectable?: boolean;
+  filter?: PhotoFilter;
+  refreshKey?: number;
   className?: string;
 }
 
@@ -22,7 +26,10 @@ export function PhotoGallery({
   symptomId,
   bodyRegionId,
   onPhotoSelect,
+  onPhotoDeleted,
   selectable = false,
+  filter,
+  refreshKey = 0,
   className = "",
 }: PhotoGalleryProps) {
   const [photos, setPhotos] = useState<PhotoAttachment[]>([]);
@@ -56,6 +63,51 @@ export function PhotoGallery({
           newPhotos = await photoRepository.getAll(userId);
         }
 
+        if (filter) {
+          const { dateRange, tags, bodyRegions, symptoms, searchQuery } = filter;
+
+          if (dateRange?.start || dateRange?.end) {
+            newPhotos = newPhotos.filter((photo) => {
+              const capturedAt = photo.capturedAt.getTime();
+              if (dateRange.start && capturedAt < dateRange.start.getTime()) {
+                return false;
+              }
+              if (dateRange.end && capturedAt > dateRange.end.getTime()) {
+                return false;
+              }
+              return true;
+            });
+          }
+
+          if (tags && tags.length > 0) {
+            newPhotos = newPhotos.filter((photo) =>
+              tags.some((tag) => photo.tags.includes(tag))
+            );
+          }
+
+          if (bodyRegions && bodyRegions.length > 0) {
+            newPhotos = newPhotos.filter(
+              (photo) => photo.bodyRegionId && bodyRegions.includes(photo.bodyRegionId)
+            );
+          }
+
+          if (symptoms && symptoms.length > 0) {
+            newPhotos = newPhotos.filter(
+              (photo) => photo.symptomId && symptoms.includes(photo.symptomId)
+            );
+          }
+
+          if (searchQuery && searchQuery.trim().length > 0) {
+            const query = searchQuery.trim().toLowerCase();
+            newPhotos = newPhotos.filter(
+              (photo) =>
+                photo.originalFileName.toLowerCase().includes(query) ||
+                (photo.notes && photo.notes.toLowerCase().includes(query)) ||
+                photo.tags.some((tag) => tag.toLowerCase().includes(query))
+            );
+          }
+        }
+
         // Sort by capture date (newest first)
         newPhotos.sort(
           (a, b) =>
@@ -80,13 +132,13 @@ export function PhotoGallery({
         setIsLoading(false);
       }
     },
-    [userId, dailyEntryId, symptomId, bodyRegionId]
+    [userId, dailyEntryId, symptomId, bodyRegionId, filter]
   );
 
   useEffect(() => {
     loadPhotos(0);
     setPage(0);
-  }, [loadPhotos]);
+  }, [loadPhotos, refreshKey]);
 
   // Infinite scroll setup
   useEffect(() => {
@@ -141,9 +193,43 @@ export function PhotoGallery({
     try {
       await photoRepository.delete(photoId);
       setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+      setSelectedPhotos((prev) => {
+        const next = new Set(prev);
+        next.delete(photoId);
+        return next;
+      });
       setViewerOpen(false);
+      if (onPhotoDeleted) {
+        onPhotoDeleted(photoId);
+      }
     } catch (error) {
       console.error("Failed to delete photo:", error);
+    }
+  };
+
+  const handleAnnotationsSave = async (photoId: string, annotations: PhotoAnnotation[]) => {
+    try {
+      await photoRepository.updateAnnotations(photoId, annotations);
+      
+      // Reload the photo from database to get any changes (e.g., blur applied)
+      const updatedPhoto = await photoRepository.getById(photoId);
+      
+      if (updatedPhoto) {
+        // Update local state with fresh photo data
+        setPhotos((prev) => 
+          prev.map((p) => 
+            p.id === photoId ? updatedPhoto : p
+          )
+        );
+        
+        // Update selected photo if it's the current one
+        if (selectedPhoto?.id === photoId) {
+          setSelectedPhoto(updatedPhoto);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to save annotations:", error);
+      throw error; // Re-throw to show error in PhotoAnnotation component
     }
   };
 
@@ -216,6 +302,7 @@ export function PhotoGallery({
           photos={photos}
           onClose={() => setViewerOpen(false)}
           onDelete={handleDeletePhoto}
+          onAnnotationsSave={handleAnnotationsSave}
           onNext={() => {
             const currentIndex = photos.findIndex((p) => p.id === selectedPhoto.id);
             if (currentIndex < photos.length - 1) {

@@ -3,6 +3,8 @@
  * For secure, encrypted medical photo storage
  */
 
+import { PhotoAnnotation } from './annotation';
+
 export interface PhotoAttachment {
   id: string;
   userId: string;
@@ -18,10 +20,14 @@ export interface PhotoAttachment {
   encryptedData: Blob; // Encrypted photo data
   thumbnailData: Blob; // Encrypted thumbnail (150x150)
   encryptionIV: string; // Initialization vector (base64)
+  thumbnailIV?: string; // Thumbnail IV (base64)
+  encryptionKey?: string; // Base64-encoded key (encrypted at rest in future)
   capturedAt: Date;
   tags: string[];
   notes?: string;
   metadata?: PhotoMetadata;
+  annotations?: PhotoAnnotation[]; // Photo annotations (arrows, circles, etc.)
+  hasBlur?: boolean; // Flag indicating permanent blur has been applied
   createdAt: Date;
   updatedAt: Date;
 }

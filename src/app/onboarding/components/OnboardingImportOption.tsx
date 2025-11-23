@@ -112,9 +112,26 @@ export function OnboardingImportOption() {
           medications: 0,
           triggers: 0,
           dailyEntries: 0,
+          photos: 0,
+          medicationEvents: 0,
+          triggerEvents: 0,
+          symptomInstances: 0,
+          flares: 0,
+          flareEvents: 0,
+          foods: 0,
+          foodEvents: 0,
+          foodCombinations: 0,
+          uxEvents: 0,
+          bodyMapLocations: 0,
+          bodyMapPreferences: 0,
+          photoComparisons: 0,
+          analysisResults: 0,
         },
         errors: [error instanceof Error ? error.message : "Unknown error"],
-        skipped: 0,
+        skipped: {
+          items: 0,
+          photos: 0,
+        },
       });
     } finally {
       setIsImporting(false);

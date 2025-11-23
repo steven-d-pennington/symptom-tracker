@@ -1,0 +1,304 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>5</storyId>
+    <title>Timeline Pattern Detection</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-5-timeline-pattern-detection.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user reviewing my health history</asA>
+    <iWant>the timeline to visually highlight recurring patterns and symptom-trigger windows</iWant>
+    <soThat>I can see at a glance when patterns occur and what precedes my symptoms</soThat>
+    <tasks>
+      <task id="1" title="Extend TimelineView to query correlation data" ac="6.5.1">
+        <subtasks>
+          <subtask>Import correlationRepository from Story 6.3</subtask>
+          <subtask>Add correlation state: const [correlations, setCorrelations] = useState&lt;CorrelationResult[]&gt;([])</subtask>
+          <subtask>Create loadCorrelations() function that queries correlationRepository.findAll(userId)</subtask>
+          <subtask>Filter correlations by timeRange matching timeline date range</subtask>
+          <subtask>Call loadCorrelations() in useEffect when timeline events load</subtask>
+          <subtask>Store correlations in component state for pattern highlighting</subtask>
+          <subtask>Add loading state for correlations (separate from events loading)</subtask>
+          <subtask>Handle errors if correlation query fails</subtask>
+        </subtasks>
+      </task>
+      <task id="2" title="Create pattern highlighting visualization system" ac="6.5.2">
+        <subtasks>
+          <subtask>Create src/components/timeline/PatternHighlight.tsx component</subtask>
+          <subtask>Define PatternHighlightProps: event1, event2, correlationType, lagHours</subtask>
+          <subtask>Calculate band position: connect event1 timestamp to event2 timestamp accounting for lagHours</subtask>
+          <subtask>Implement color mapping: food-symptom (orange), trigger-symptom (red), medication-improvement (green)</subtask>
+          <subtask>Render semi-transparent colored band/connector using SVG or CSS</subtask>
+          <subtask>Only render highlight if both events visible in viewport</subtask>
+          <subtask>Add hover effect: highlight band becomes more opaque on hover</subtask>
+          <subtask>Integrate PatternHighlight into TimelineView rendering loop</subtask>
+        </subtasks>
+      </task>
+      <task id="3" title="Build pattern legend component" ac="6.5.3">
+        <subtasks>
+          <subtask>Create src/components/timeline/PatternLegend.tsx component</subtask>
+          <subtask>Define legend items: food-symptom (orange), trigger-symptom (red), medication-improvement (green), custom (purple)</subtask>
+          <subtask>Display icon, color swatch, label, description for each type</subtask>
+          <subtask>Implement toggle functionality: clicking item shows/hides that pattern type</subtask>
+          <subtask>Store toggle state in component state (will persist in Task 6)</subtask>
+          <subtask>Make legend collapsible on mobile (accordion or drawer)</subtask>
+          <subtask>Position legend above timeline or in sidebar</subtask>
+          <subtask>Update legend dynamically based on available correlations</subtask>
+        </subtasks>
+      </task>
+      <task id="4" title="Implement pattern detection algorithm" ac="6.5.4">
+        <subtasks>
+          <subtask>Create src/lib/services/patternDetectionService.ts module</subtask>
+          <subtask>Implement detectRecurringSequences(events: TimelineEvent[], correlations: CorrelationResult[]): Pattern[]</subtask>
+          <subtask>Sliding window analysis: iterate 24-hour windows across timeline</subtask>
+          <subtask>Detect sequences: food → symptom after N hours (use lagHours from correlation)</subtask>
+          <subtask>Detect day-of-week patterns: group events by day of week, identify recurring spikes</subtask>
+          <subtask>Validate patterns using correlation data: only mark as pattern if correlation exists in correlationRepository</subtask>
+          <subtask>Create Pattern interface: { id, type, description, frequency, confidence, occurrences: Event[] }</subtask>
+          <subtask>Add patternDetections table to IndexedDB schema (version 26)</subtask>
+          <subtask>Implement debouncing: wait 500ms after data load before running detection</subtask>
+          <subtask>Run detection in background (non-blocking UI)</subtask>
+        </subtasks>
+      </task>
+      <task id="5" title="Build pattern badge/icon system" ac="6.5.5">
+        <subtasks>
+          <subtask>Create src/components/timeline/PatternBadge.tsx component</subtask>
+          <subtask>Define PatternBadgeProps: pattern, correlationStrength, eventId</subtask>
+          <subtask>Render badge icon based on pattern type (food, trigger, medication icons from Lucide)</subtask>
+          <subtask>Style badge: strong correlation = filled icon, moderate = outlined icon</subtask>
+          <subtask>Position badge in top-right corner of event card</subtask>
+          <subtask>Add tooltip: "This food preceded symptoms in 7 of 10 instances" with correlation details</subtask>
+          <subtask>Make badge clickable: onClick opens PatternDetailPanel</subtask>
+          <subtask>Integrate PatternBadge into TimelineView event rendering</subtask>
+        </subtasks>
+      </task>
+      <task id="6" title="Implement timeline layer toggle" ac="6.5.6">
+        <subtasks>
+          <subtask>Create src/components/timeline/TimelineLayerToggle.tsx component</subtask>
+          <subtask>Define toggle options: Symptoms, Foods, Triggers, Medications, Flares, Pattern Highlights, Pattern Strength Filter</subtask>
+          <subtask>Implement checkbox/toggle UI for each option</subtask>
+          <subtask>Store toggle state in localStorage: key "timeline-layer-preferences"</subtask>
+          <subtask>Load preferences on component mount</subtask>
+          <subtask>Filter timeline events based on toggle state</subtask>
+          <subtask>Hide pattern highlights when "Pattern Highlights" toggle off</subtask>
+          <subtask>Filter patterns by strength when "Pattern Strength Filter" set</subtask>
+          <subtask>Add keyboard navigation: Tab to focus, Enter to toggle</subtask>
+          <subtask>Integrate TimelineLayerToggle into TimelineView</subtask>
+        </subtasks>
+      </task>
+      <task id="7" title="Create pattern detail panel" ac="6.5.7">
+        <subtasks>
+          <subtask>Create src/components/timeline/PatternDetailPanel.tsx component</subtask>
+          <subtask>Define PatternDetailPanelProps: pattern, isOpen, onClose</subtask>
+          <subtask>Display pattern description: "Dairy consumption correlates with Headache 12 hours later"</subtask>
+          <subtask>Show occurrence frequency: "Occurred in 7 of 10 instances"</subtask>
+          <subtask>Display statistical confidence: coefficient, p-value, sample size</subtask>
+          <subtask>Add "View Related Insights" link → navigates to /insights with correlation pre-selected</subtask>
+          <subtask>Show timeline view of all pattern occurrences (mini timeline)</subtask>
+          <subtask>Add "Export Pattern Data" button (defer PDF to Task 8, show placeholder)</subtask>
+          <subtask>Implement close functionality: X button, Escape key, click outside</subtask>
+          <subtask>Use existing modal/drawer patterns from project (check ui/ components)</subtask>
+        </subtasks>
+      </task>
+      <task id="8" title="Add export functionality" ac="6.5.8">
+        <subtasks>
+          <subtask>Install/verify html2canvas library for image export</subtask>
+          <subtask>Install/verify jsPDF library for PDF export</subtask>
+          <subtask>Create src/lib/services/timelineExportService.ts module</subtask>
+          <subtask>Implement exportTimelineAsImage(): capture timeline DOM with html2canvas, include pattern legend, save as PNG</subtask>
+          <subtask>Implement exportPatternSummaryPDF(): create PDF with jsPDF, list all patterns with statistics, include timeline occurrences</subtask>
+          <subtask>Add export button to timeline header</subtask>
+          <subtask>Export respects layer toggle settings (only visible patterns)</subtask>
+          <subtask>Include medical disclaimer in PDF: "Patterns show correlations, not causation."</subtask>
+          <subtask>Handle export errors gracefully</subtask>
+        </subtasks>
+      </task>
+      <task id="9" title="Optimize timeline rendering performance" ac="6.5.9">
+        <subtasks>
+          <subtask>Install/verify react-window or react-virtualized library</subtask>
+          <subtask>Implement virtualization: render only visible timeline events</subtask>
+          <subtask>Calculate viewport bounds based on scroll position</subtask>
+          <subtask>Lazy load events as user scrolls (load next batch when near bottom)</subtask>
+          <subtask>Lazy load pattern highlights: calculate only for visible date range</subtask>
+          <subtask>Extend pattern highlights as user scrolls (preload next range)</subtask>
+          <subtask>Debounce pattern detection: wait 500ms after scroll stops</subtask>
+          <subtask>Add CSS scroll-behavior: smooth for smooth scrolling</subtask>
+          <subtask>Test performance: verify 60fps with 1000+ events</subtask>
+          <subtask>Test pattern highlight rendering: &lt;100ms after scroll</subtask>
+        </subtasks>
+      </task>
+      <task id="10" title="Write comprehensive tests" ac="6.5.10">
+        <subtasks>
+          <subtask>Create src/lib/services/__tests__/patternDetectionService.test.ts</subtask>
+          <subtask>Test sliding window analysis: detect food → symptom sequences</subtask>
+          <subtask>Test day-of-week pattern detection: identify recurring Monday spikes</subtask>
+          <subtask>Test pattern validation: only mark patterns if correlation exists</subtask>
+          <subtask>Create src/components/timeline/__tests__/PatternBadge.test.tsx</subtask>
+          <subtask>Test badge rendering with different pattern types</subtask>
+          <subtask>Test tooltip display on hover</subtask>
+          <subtask>Create src/components/timeline/__tests__/PatternLegend.test.tsx</subtask>
+          <subtask>Test legend toggle functionality</subtask>
+          <subtask>Create src/components/timeline/__tests__/TimelineView.patterns.test.tsx integration test</subtask>
+          <subtask>Test timeline loads with correlation data</subtask>
+          <subtask>Test pattern highlights render correctly</subtask>
+          <subtask>Test clicking pattern opens detail panel</subtask>
+          <subtask>Test layer toggle filters events/patterns</subtask>
+          <subtask>Test export generates image/PDF</subtask>
+          <subtask>Mock correlationRepository and patternDetectionService for tests</subtask>
+          <subtask>Verify all tests pass with npm test</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="6.5.1" title="Extend timeline component to query correlation data">
+      Extend existing TimelineView component (src/components/timeline/TimelineView.tsx) to query correlationRepository for correlation data matching timeline events. Query correlations by userId and filter by timeRange matching timeline date range. Load correlation data alongside timeline events (symptoms, foods, triggers, medications, flares). Store correlation data in component state for pattern highlighting. Use existing correlationRepository methods: findAll(userId), findByType(userId, type).
+    </ac>
+    <ac id="6.5.2" title="Implement visual pattern highlighting">
+      Create visual highlighting system that displays colored bands/connectors around correlated events on timeline. For food-symptom correlations: draw orange band connecting food event to symptom event occurring 6-12 hours later (based on lagHours from correlation). For trigger-symptom correlations: draw red band. For medication-improvement correlations: draw green band connecting medication event to symptom improvement. Bands use semi-transparent colors with distinct styling per correlation type. Bands only visible when both events are in viewport.
+    </ac>
+    <ac id="6.5.3" title="Create pattern legend">
+      Build PatternLegend component displaying all correlation types with color coding: food-symptom correlations (orange), trigger-symptom correlations (red), medication-improvement correlations (green), custom user patterns (purple). Legend shows icon, color swatch, label, and brief description for each pattern type. Legend positioned above or beside timeline, collapsible on mobile. Clicking legend item toggles visibility of that pattern type on timeline. Legend updates dynamically based on available correlations in current time range.
+    </ac>
+    <ac id="6.5.4" title="Add pattern detection algorithm">
+      Implement pattern detection service (src/lib/services/patternDetectionService.ts) with sliding window analysis. Algorithm analyzes 24-hour windows to detect recurring sequences: food → symptom after N hours, trigger → symptom after N hours, medication → symptom improvement. Identify day-of-week patterns (e.g., "symptoms spike on Mondays"). Pattern detection runs client-side on timeline events, uses correlation data from correlationRepository to validate patterns. Store detected patterns in IndexedDB patternDetections table (schema version 26). Pattern detection runs in background when timeline loads, debounced to avoid blocking UI.
+    </ac>
+    <ac id="6.5.5" title="Build pattern badge/icon system">
+      Add visual badges/icons to timeline events that are part of detected patterns. Badge appears on event card/row indicating pattern membership. Badge shows pattern type icon (food, trigger, medication) with correlation strength indicator (strong = filled icon, moderate = outlined icon). Tooltip on hover explains pattern: "This food preceded symptoms in 7 of 10 instances" with correlation coefficient and confidence level. Badge clickable to open pattern detail panel. Badges use distinct colors matching pattern legend. Badges positioned non-intrusively (top-right corner of event card).
+    </ac>
+    <ac id="6.5.6" title="Implement timeline layer toggle">
+      Create TimelineLayerToggle component allowing users to show/hide different event types and pattern highlights. Toggle options: Show/Hide Symptoms, Show/Hide Foods, Show/Hide Triggers, Show/Hide Medications, Show/Hide Flares, Show/Hide Pattern Highlights, Filter by Pattern Strength (All/Strong Only/Moderate+Strong). Toggle state persists in localStorage (key: "timeline-layer-preferences"). When pattern highlights hidden, colored bands disappear but badges remain visible. Layer toggle positioned above timeline, accessible via keyboard (Tab navigation, Enter to toggle).
+    </ac>
+    <ac id="6.5.7" title="Create pattern detail panel">
+      Build PatternDetailPanel component (side panel or modal) opened when user clicks highlighted pattern or pattern badge. Panel displays: pattern description ("Dairy consumption correlates with Headache 12 hours later"), occurrence frequency ("Occurred in 7 of 10 instances"), statistical confidence ("Strong correlation, ρ = 0.72, p &lt; 0.05"), related insights link (navigates to /insights page with correlation pre-selected), timeline view showing all occurrences of this pattern, export pattern data button. Panel closes via X button, Escape key, or click outside. Panel uses existing modal/drawer patterns from project.
+    </ac>
+    <ac id="6.5.8" title="Add export functionality">
+      Implement export features for timeline with pattern annotations. Export timeline view as image: capture timeline visualization including pattern highlights and badges, use html2canvas or similar library, include pattern legend in exported image. Generate pattern summary report (PDF): create PDF document listing all detected patterns with statistics, occurrence timeline, correlation data, use jsPDF or similar library. Export button positioned in timeline header. Export respects current layer toggle settings (only exports visible patterns). Export includes medical disclaimer: "Patterns show correlations, not causation."
+    </ac>
+    <ac id="6.5.9" title="Optimize timeline rendering">
+      Implement performance optimizations for large datasets (&gt;1000 events). Use virtualization: render only visible timeline events using react-window or react-virtualized, lazy load events as user scrolls. Lazy load pattern highlights: calculate pattern highlights only for visible date range, extend highlights as user scrolls. Smooth scrolling: use CSS scroll-behavior: smooth, implement scroll restoration on navigation. Debounce pattern detection: wait 500ms after scroll stops before recalculating visible patterns. Target: maintain 60fps scrolling with 1000+ events, pattern highlights render within 100ms of scroll.
+    </ac>
+    <ac id="6.5.10" title="Create timeline tests">
+      Write comprehensive test suite for timeline pattern detection features. Unit tests: pattern detection algorithm accuracy (sliding window, day-of-week detection), pattern badge rendering with correct icons/colors, pattern legend toggle functionality, pattern detail panel data display. Integration tests: timeline loads with correlation data, pattern highlights render correctly, clicking pattern opens detail panel, layer toggle filters events/patterns, export generates image/PDF. Performance tests: timeline renders 1000+ events smoothly, pattern highlights lazy load correctly, scroll performance meets 60fps target. Use Jest + React Testing Library, mock correlationRepository and pattern detection service.
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 6.5: Timeline Pattern Detection">
+        Story acceptance criteria and requirements for timeline pattern detection. Includes visual pattern highlighting, pattern detection algorithm, pattern badges, layer toggle, pattern detail panel, export functionality, and performance optimization requirements.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="Technology Stack">
+        Technology stack includes Chart.js 4.5.0, react-zoom-pan-pinch 3.6.1, Next.js 15.5.4, React 19.1.0, TypeScript 5.x, Tailwind CSS 4.x, Dexie 4.2.0. Notes react-window or react-virtualized for virtualization, html2canvas for image export, jsPDF for PDF export.
+      </doc>
+      <doc path="docs/stories/6-3-correlation-engine-and-spearman-algorithm.md" title="Story 6.3" section="Dev Agent Record">
+        Correlation engine implementation details. Created correlationRepository with methods findAll, findByType, findByItem, findSignificant. Created CorrelationResult interface in src/types/correlation.ts. IndexedDB schema version 25 includes correlations table with compound indexes.
+      </doc>
+      <doc path="docs/stories/6-4-health-insights-hub-ui.md" title="Story 6.4" section="Dev Agent Record">
+        UI component patterns for insights dashboard. Created InsightDetailModal component following modal patterns. Uses correlationRepository.findAll(userId) for querying correlations. Time range filtering implementation (7d/30d/90d/all). Component architecture patterns for cards, modals, visualizations.
+      </doc>
+    </docs>
+    <code>
+      <file path="src/components/timeline/TimelineView.tsx" kind="component" symbol="TimelineView" lines="1-707" reason="Existing timeline component to extend. Queries medicationEventRepository, triggerEventRepository, flareRepository, foodEventRepository, symptomInstanceRepository. Groups events by day (DayGroup interface). Event types: 'medication' | 'symptom' | 'trigger' | 'flare-created' | 'flare-updated' | 'flare-resolved' | 'food'. Extension points: add correlation query in useEffect, render PatternHighlight components, add PatternBadge to event cards, integrate TimelineLayerToggle." />
+      <file path="src/lib/repositories/correlationRepository.ts" kind="repository" symbol="CorrelationRepository" lines="1-305" reason="Repository for querying correlation data. Methods: findAll(userId), findByType(userId, type), findByItem(userId, item), findSignificant(userId, threshold). Uses IndexedDB correlations table with compound indexes [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt]." />
+      <file path="src/types/correlation.ts" kind="types" symbol="CorrelationResult, CorrelationType, CorrelationStrength" lines="1-262" reason="TypeScript interfaces for correlation data. CorrelationResult interface with fields: type, item1, item2, coefficient, strength, lagHours, confidence, timeRange. CorrelationType: 'food-symptom' | 'trigger-symptom' | 'medication-symptom' | 'food-flare' | 'trigger-flare'. Helper functions: determineConfidence, meetsSignificanceCriteria, timeRangeToMs." />
+      <file path="src/components/insights/InsightDetailModal.tsx" kind="component" symbol="InsightDetailModal" lines="40-211" reason="Modal component pattern to follow for PatternDetailPanel. Uses backdrop with onClick close, role='dialog', aria-modal, fixed positioning, max-width, overflow-y-auto. Header with title and close button (X icon). Body with space-y-6 layout." />
+      <file path="src/components/timeline/EventDetailModal.tsx" kind="component" symbol="EventDetailModal" lines="25-688" reason="Existing modal pattern in timeline directory. Uses backdrop with bg-black/50 backdrop-blur-sm, fixed inset-0 z-50, role='dialog', aria-modal='true', sticky header, close button with X icon. Handles Escape key, click outside, focus trap." />
+      <file path="src/lib/db/schema.ts" kind="schema" symbol="CorrelationRecord" lines="614-640" reason="IndexedDB schema for correlations table. CorrelationRecord interface matches CorrelationResult. Fields include: id, userId, type, item1, item2, coefficient, strength, significance, sampleSize, lagHours, confidence, timeRange, calculatedAt, createdAt, updatedAt. Schema version 25." />
+      <file path="src/lib/db/client.ts" kind="database" symbol="db" reason="Dexie database client. Schema version 25 includes correlations table. Need to increment to version 26 for patternDetections table. Migration pattern: version(26).stores() with new table definition." />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="next" version="15.5.4" />
+        <package name="react" version="19.1.0" />
+        <package name="react-dom" version="19.1.0" />
+        <package name="typescript" version="^5" />
+        <package name="tailwindcss" version="^4" />
+        <package name="dexie" version="^4.2.0" />
+        <package name="chart.js" version="^4.5.0" />
+        <package name="react-chartjs-2" version="^5.3.0" />
+        <package name="lucide-react" version="^0.544.0" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="zod" version="^4.1.12" />
+        <package name="date-fns" version="^4.1.0" />
+        <package name="react-zoom-pan-pinch" version="^3.6.1" />
+        <package name="@radix-ui/react-tooltip" version="^1.2.8" />
+        <package name="html2canvas" reason="Required for image export (AC 6.5.8). Not currently in package.json - needs installation." />
+        <package name="jsPDF" reason="Required for PDF export (AC 6.5.8). Not currently in package.json - needs installation." />
+        <package name="react-window" reason="Required for virtualization (AC 6.5.9). Alternative: react-virtualized. Not currently in package.json - needs installation." />
+      </ecosystem>
+      <ecosystem name="dev">
+        <package name="jest" version="^30.2.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+        <package name="@testing-library/user-event" version="^14.6.1" />
+        <package name="ts-jest" version="^29.4.4" />
+        <package name="fake-indexeddb" version="^6.2.4" />
+        <package name="jest-environment-jsdom" version="^30.2.0" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      <description>Repository Pattern: Follow existing repository pattern from correlationRepository, flareRepository, dailyLogsRepository. All data access goes through repositories with CRUD operations and business logic.</description>
+    </constraint>
+    <constraint type="architecture">
+      <description>Component Architecture: Functional components only (use function syntax, not arrow functions). Stateful logic extracted to hooks in src/lib/hooks/. Components grouped by feature in src/components/&lt;feature&gt;/.</description>
+    </constraint>
+    <constraint type="architecture">
+      <description>TypeScript Strict Mode: Enabled, no 'any' types except specific edge cases. Import order: React hooks first, then local imports, then external libraries.</description>
+    </constraint>
+    <constraint type="performance">
+      <description>Performance Target: Maintain 60fps scrolling with 1000+ events. Pattern highlights render within 100ms of scroll. Use virtualization (react-window) and lazy loading for large datasets.</description>
+    </constraint>
+    <constraint type="data">
+      <description>IndexedDB Schema: Increment schema version to 26 for patternDetections table. Use compound indexes for efficient queries. Follow offline-first pattern with immediate IndexedDB persistence.</description>
+    </constraint>
+    <constraint type="ui">
+      <description>Accessibility: Keyboard navigation (Tab, Enter, Escape), screen reader support (ARIA labels), touch targets minimum 44x44px, WCAG AA contrast ratios.</description>
+    </constraint>
+    <constraint type="ui">
+      <description>Modal Patterns: Use existing modal patterns from InsightDetailModal, EventDetailModal. Include backdrop, role='dialog', aria-modal, close button, Escape key handling, click outside to close.</description>
+    </constraint>
+    <constraint type="testing">
+      <description>Testing Standards: Jest + React Testing Library. Tests in __tests__ subdirectories alongside source files. Mock repositories and services. 80% coverage threshold enforced.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CorrelationRepository" kind="class" signature="class CorrelationRepository { findAll(userId: string): Promise&lt;CorrelationRecord[]&gt;; findByType(userId: string, type: CorrelationType): Promise&lt;CorrelationRecord[]&gt;; findByItem(userId: string, item: string): Promise&lt;CorrelationRecord[]&gt;; findSignificant(userId: string, threshold: number): Promise&lt;CorrelationRecord[]&gt;; }" path="src/lib/repositories/correlationRepository.ts" />
+    <interface name="CorrelationResult" kind="TypeScript interface" signature="interface CorrelationResult { id: string; userId: string; type: CorrelationType; item1: string; item2: string; coefficient: number; strength: CorrelationStrength; significance: number; sampleSize: number; lagHours: number; confidence: CorrelationConfidence; timeRange: TimeRange; calculatedAt: number; createdAt: number; updatedAt: number; }" path="src/types/correlation.ts" />
+    <interface name="TimelineEvent" kind="TypeScript interface" signature="interface TimelineEvent { id: string; type: TimelineEventType; timestamp: number; summary: string; details?: any; eventRef: any; hasDetails?: boolean; allergens?: string[]; }" path="src/components/timeline/TimelineView.tsx" />
+    <interface name="TimelineViewProps" kind="TypeScript interface" signature="interface TimelineViewProps { onEventTap?: (event: TimelineEvent) =&gt; void; onAddDetails?: (event: TimelineEvent) =&gt; void; }" path="src/components/timeline/TimelineView.tsx" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing uses Jest with experimental VM modules (ESM support) and React Testing Library. Tests are located in __tests__ subdirectories alongside source files. Mock IndexedDB using fake-indexeddb. Mock repositories and services for unit tests. Integration tests verify component interactions and data flow. Performance tests verify 60fps rendering and &lt;100ms highlight rendering. Coverage threshold: 80% minimum across branches, functions, lines, statements.
+    </standards>
+    <locations>
+      <location>src/components/timeline/__tests__/</location>
+      <location>src/lib/services/__tests__/</location>
+      <location>src/lib/hooks/__tests__/</location>
+    </locations>
+    <ideas>
+      <test ac="6.5.1" description="Test TimelineView queries correlationRepository.findAll(userId) when component mounts. Verify correlations stored in component state. Test filtering by timeRange matching timeline date range." />
+      <test ac="6.5.2" description="Test PatternHighlight renders colored bands connecting correlated events. Verify orange for food-symptom, red for trigger-symptom, green for medication-improvement. Test bands only render when both events visible in viewport." />
+      <test ac="6.5.3" description="Test PatternLegend displays all correlation types with correct colors. Test toggle functionality shows/hides pattern types. Test legend updates dynamically based on available correlations." />
+      <test ac="6.5.4" description="Test patternDetectionService.detectRecurringSequences() identifies food → symptom sequences with correct lagHours. Test day-of-week pattern detection identifies recurring spikes. Test patterns only marked if correlation exists in correlationRepository." />
+      <test ac="6.5.5" description="Test PatternBadge renders with correct icon based on pattern type. Test badge shows filled icon for strong correlation, outlined for moderate. Test tooltip displays pattern explanation on hover." />
+      <test ac="6.5.6" description="Test TimelineLayerToggle filters events based on toggle state. Test pattern highlights hidden when toggle off. Test preferences persist in localStorage." />
+      <test ac="6.5.7" description="Test PatternDetailPanel displays pattern description, frequency, confidence. Test 'View Related Insights' link navigates to /insights. Test panel closes via X button, Escape key, click outside." />
+      <test ac="6.5.8" description="Test exportTimelineAsImage() captures timeline DOM with html2canvas. Test exportPatternSummaryPDF() creates PDF with jsPDF. Test export includes medical disclaimer." />
+      <test ac="6.5.9" description="Test virtualization renders only visible events. Test lazy loading loads events as user scrolls. Test 60fps performance with 1000+ events. Test pattern highlights render &lt;100ms after scroll." />
+      <test ac="6.5.10" description="Integration test: Timeline loads with correlation data, pattern highlights render, clicking pattern opens detail panel, layer toggle filters events, export generates image/PDF." />
+    </ideas>
+  </tests>
+</story-context>
+

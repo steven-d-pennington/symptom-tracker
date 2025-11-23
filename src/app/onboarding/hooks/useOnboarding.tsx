@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { ONBOARDING_STEPS } from "../utils/onboardingConfig";
@@ -56,22 +57,33 @@ export const OnboardingProvider = ({
   children: React.ReactNode;
 }) => {
   const [state, setState] = useState<OnboardingState>(getInitialState);
+  // Track if we've already called persistUserSettings to prevent multiple calls
+  const hasPersistedSettings = useRef(false);
 
   useEffect(() => {
     setState((prev) => (prev.hydrated ? prev : { ...prev, hydrated: true }));
   }, []);
 
+  // Persist onboarding state whenever it changes (but NOT the entire state object)
   useEffect(() => {
     if (!state.hydrated) {
       return;
     }
-
     persistOnboardingState(state);
+  }, [state.hydrated, state.currentStep, state.completedSteps, state.isComplete, state.data]);
 
-    if (state.isComplete) {
+  // Only persist user settings when onboarding completes (separate effect!)
+  useEffect(() => {
+    if (!state.hydrated || !state.isComplete) {
+      return;
+    }
+
+    // Only call persistUserSettings ONCE when onboarding completes
+    if (!hasPersistedSettings.current) {
+      hasPersistedSettings.current = true;
       persistUserSettings(state.data);
     }
-  }, [state]);
+  }, [state.hydrated, state.isComplete]); // Only watch isComplete, not entire state!
 
   const goToStep = useCallback((stepId: OnboardingStepId) => {
     setState((prev) => {
@@ -146,6 +158,7 @@ export const OnboardingProvider = ({
   const reset = useCallback(() => {
     clearOnboardingStorage();
     resetUserSettings();
+    hasPersistedSettings.current = false; // Reset the flag
     setState({ ...createInitialState(), hydrated: true });
   }, []);
 

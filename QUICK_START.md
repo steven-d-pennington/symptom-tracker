@@ -196,4 +196,4 @@ From any page:
 
 ---
 
-**Need Help?** Check the [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for detailed implementation info.
+**Need Help?** Check the [Current Implementation Status](../docs/IMPLEMENTATION/current-status.md) for detailed implementation info.

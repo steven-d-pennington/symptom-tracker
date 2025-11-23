@@ -72,7 +72,7 @@ export class PhotoEncryption {
 
     return {
       data: new Blob([encrypted], { type: "application/octet-stream" }),
-      iv: this.arrayBufferToBase64(iv),
+      iv: this.arrayBufferToBase64(iv.buffer),
     };
   }
 

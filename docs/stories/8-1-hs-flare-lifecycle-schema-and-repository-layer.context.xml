@@ -1,0 +1,234 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>8.1</storyId>
+    <title>HS Flare Lifecycle Schema &amp; Repository Layer</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/8-1-hs-flare-lifecycle-schema-and-repository-layer.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer building the lifecycle tracking system</asA>
+    <iWant>to implement the database schema and repository methods for lifecycle stages</iWant>
+    <soThat>flare lifecycle progression can be tracked and queried efficiently</soThat>
+    <tasks>
+### Task 1: Update database schema to v30 with lifecycle fields
+- Open `src/lib/db/schema.ts` and locate BodyMarkerRecord interface
+- Create FlareLifecycleStage type: `type FlareLifecycleStage = 'onset' | 'growth' | 'rupture' | 'draining' | 'healing' | 'resolved';`
+- Export FlareLifecycleStage type from schema.ts
+- Add optional field `currentLifecycleStage?: FlareLifecycleStage` to BodyMarkerRecord interface
+- Add optional field `lifecycleStage?: FlareLifecycleStage` to BodyMarkerEventRecord interface
+- Add 'lifecycle_stage_change' to BodyMarkerEventType union
+
+### Task 2: Implement database migration for v29 → v30
+- Increment database version from 29 to 30 in `src/lib/db/client.ts`
+- Add migration function in `.version(30).upgrade(async (tx) => { ... })`
+- For each marker where layer === 'flares' and status === 'resolved', set currentLifecycleStage = 'resolved'
+- For each marker where layer === 'flares' and status === 'active', set currentLifecycleStage = 'onset'
+- Leave currentLifecycleStage undefined for markers with other layers (pain, mobility, inflammation)
+
+### Task 3: Create lifecycle utility functions
+- Create new file `src/lib/utils/lifecycleUtils.ts`
+- Implement `getNextLifecycleStage(currentStage: FlareLifecycleStage): FlareLifecycleStage | null`
+- Implement `isValidStageTransition(from: FlareLifecycleStage, to: FlareLifecycleStage): boolean`
+- Add helper functions: `formatLifecycleStage()`, `getLifecycleStageDescription()`, `getLifecycleStageIcon()`, `getDaysInStage()`
+
+### Task 4: Implement repository method: updateLifecycleStage()
+- Add method to `bodyMarkerRepository.ts`
+- Validate stage transition using `isValidStageTransition()`
+- Update marker.currentLifecycleStage within Dexie transaction
+- If newStage === 'resolved', also update marker.status and endDate
+- Create BodyMarkerEventRecord with type='lifecycle_stage_change'
+
+### Task 5: Implement repository method: getLifecycleStageHistory()
+- Query bodyMarkerEvents where eventType === 'lifecycle_stage_change'
+- Sort results chronologically (oldest first)
+- Return array of BodyMarkerEventRecord objects
+
+### Task 6: Implement helper utility functions
+- formatLifecycleStage(): 'onset' → 'Onset'
+- getLifecycleStageDescription(): medical descriptions
+- getLifecycleStageIcon(): emoji icons
+- getDaysInStage(): calculate days in current stage
+
+### Task 7: Write comprehensive unit tests
+- Create `src/lib/repositories/__tests__/bodyMarkerRepository.lifecycleStages.test.ts`
+- Test valid forward transitions (5 tests)
+- Test invalid backward transitions (2 tests)
+- Test early resolution (2 tests)
+- Test getLifecycleStageHistory() ordering
+- Test updateLifecycleStage() event creation
+- Test setting 'resolved' updates status and endDate
+- Test migration logic for active/resolved flares
+- Test transaction atomicity
+- Create `src/lib/utils/__tests__/lifecycleUtils.test.ts`
+- Test all getNextLifecycleStage() cases
+- Test all isValidStageTransition() cases
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC8.1.1 — Database schema updated to v30 with lifecycle stage fields
+AC8.1.2 — FlareLifecycleStage type added: 'onset' | 'growth' | 'rupture' | 'draining' | 'healing' | 'resolved'
+AC8.1.3 — BodyMarkerRecord.currentLifecycleStage field added (optional, flare-specific)
+AC8.1.4 — BodyMarkerEventRecord.lifecycleStage field added (optional)
+AC8.1.5 — New event type 'lifecycle_stage_change' added to BodyMarkerEventType union
+AC8.1.6 — Migration handles existing flares (active→onset, resolved→resolved, zero data loss)
+AC8.1.7 — Repository method updateLifecycleStage() with atomic transaction, validation, event creation
+AC8.1.8 — Repository method getLifecycleStageHistory() returns chronological events
+AC8.1.9 — Utility function getNextLifecycleStage() returns next stage in sequence
+AC8.1.10 — Utility function isValidStageTransition() validates forward progression, allows resolved from any, prevents backward
+AC8.1.11 — Stage transitions are atomic (transaction-based, rollback on failure)
+AC8.1.12 — Comprehensive unit tests (35+ test cases) covering all functions and edge cases
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 8 - HS Flare Lifecycle Tracking</title>
+        <section>Epic 8 Overview &amp; Story 8.1</section>
+        <snippet>Epic 8 implements medical stage progression tracking for HS flares through six lifecycle stages: onset → growth → rupture → draining → healing → resolved. Story 8.1 establishes the foundational data layer with database schema v30, FlareLifecycleStage type, migration logic, repository methods (updateLifecycleStage, getLifecycleStageHistory), and utility functions (getNextLifecycleStage, isValidStageTransition).</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Flare Lifecycle Tracking (FR005-FR009)</section>
+        <snippet>FR005: System shall enable users to create flare entities with body location, initial severity, and timestamp. FR006: Each flare assigned unique persistent ID. FR007: Users can update active flares with new severity, trend status (improving/worsening/stable), interventions, and timestamp. FR008: Complete flare history tracked chronologically. FR009: Users can mark flares as resolved.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Repository Pattern &amp; ADR-003 Append-only Event History</section>
+        <snippet>Repository pattern provides data access layer for unified markers (flares, pain, inflammation). All methods include userId for multi-user support. ADR-003 mandates append-only event history - events never modified or deleted after creation. All updates create new event records rather than modifying existing data.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>BodyMarkerRecord</symbol>
+        <lines>424-463</lines>
+        <reason>Current schema definition for unified body markers. Story 8.1 adds currentLifecycleStage field to this interface.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>BodyMarkerEventRecord</symbol>
+        <lines>470-506</lines>
+        <reason>Event record schema for append-only history. Story 8.1 adds lifecycleStage field and 'lifecycle_stage_change' event type.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>type</kind>
+        <symbol>MarkerType</symbol>
+        <lines>408</lines>
+        <reason>Marker type union ('flare' | 'pain' | 'inflammation'). Lifecycle stages only apply to 'flare' type markers.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>type</kind>
+        <symbol>LayerType</symbol>
+        <lines>198</lines>
+        <reason>Layer categorization ('flares' | 'pain' | 'inflammation'). Lifecycle stages only for layer:'flares' markers.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase</symbol>
+        <lines>1-150</lines>
+        <reason>Dexie database class with version history. Story 8.1 increments to v30 with migration logic for existing flares.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMarkerRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>createMarker</symbol>
+        <lines>66-99</lines>
+        <reason>Existing marker creation logic following repository pattern. Story 8.1 adds updateLifecycleStage() and getLifecycleStageHistory() methods following same patterns.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="dexie" version="4.2.0">IndexedDB wrapper for transactions and schema migrations</package>
+        <package name="uuid" version="13.0.0">UUID v4 generation for marker and event IDs</package>
+        <package name="typescript" version="5.x">Type safety for FlareLifecycleStage type and interfaces</package>
+      </node>
+      <testing>
+        <package name="jest" version="30.x">Unit testing framework for repository and utility tests</package>
+        <package name="@testing-library/react" version="16.x">React component testing (for future UI integration)</package>
+        <package name="fake-indexeddb" version="6.2.4">IndexedDB mock for testing database operations</package>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Non-Breaking Schema Changes: New optional fields (currentLifecycleStage, lifecycleStage) ensure backward compatibility with existing markers</constraint>
+    <constraint>Migration Strategy: Existing flares intelligently migrated based on current status (active→onset, resolved→resolved)</constraint>
+    <constraint>Validation-First Design: All stage transitions validated before database updates to prevent invalid states</constraint>
+    <constraint>Transaction Safety: Atomic transactions ensure consistency - no partial updates (all-or-nothing)</constraint>
+    <constraint>Flare-Specific: Lifecycle stages only apply to layer:'flares' markers, not pain/mobility/inflammation</constraint>
+    <constraint>Medical Progression Rules: Forward-only transitions (onset→growth→rupture→draining→healing→resolved), exception: 'resolved' can be set from any stage, resolved is terminal (cannot transition out)</constraint>
+    <constraint>Append-Only Events: Per ADR-003, lifecycle_stage_change events are never modified or deleted after creation</constraint>
+    <constraint>Offline-First: Per NFR002, all lifecycle updates must persist immediately to IndexedDB with proper transactions</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FlareLifecycleStage</name>
+      <kind>type</kind>
+      <signature>type FlareLifecycleStage = 'onset' | 'growth' | 'rupture' | 'draining' | 'healing' | 'resolved';</signature>
+      <path>src/lib/db/schema.ts</path>
+    </interface>
+    <interface>
+      <name>updateLifecycleStage</name>
+      <kind>repository method</kind>
+      <signature>async updateLifecycleStage(userId: string, markerId: string, newStage: FlareLifecycleStage, notes?: string): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/bodyMarkerRepository.ts</path>
+    </interface>
+    <interface>
+      <name>getLifecycleStageHistory</name>
+      <kind>repository method</kind>
+      <signature>async getLifecycleStageHistory(userId: string, markerId: string): Promise&lt;BodyMarkerEventRecord[]&gt;</signature>
+      <path>src/lib/repositories/bodyMarkerRepository.ts</path>
+    </interface>
+    <interface>
+      <name>getNextLifecycleStage</name>
+      <kind>utility function</kind>
+      <signature>function getNextLifecycleStage(currentStage: FlareLifecycleStage): FlareLifecycleStage | null</signature>
+      <path>src/lib/utils/lifecycleUtils.ts</path>
+    </interface>
+    <interface>
+      <name>isValidStageTransition</name>
+      <kind>utility function</kind>
+      <signature>function isValidStageTransition(from: FlareLifecycleStage, to: FlareLifecycleStage): boolean</signature>
+      <path>src/lib/utils/lifecycleUtils.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Testing follows existing project patterns using Jest 30.x and fake-indexeddb 6.2.4 for IndexedDB mocking. All repository tests use async/await patterns with proper setup/teardown. Tests must cover: happy paths (valid transitions), error cases (invalid transitions, validation failures), edge cases (resolved from any stage, terminal state), and transaction atomicity (rollback on failure). Tests use descriptive names and arrange-act-assert pattern. Minimum 80% code coverage required.
+    </standards>
+    <locations>
+src/lib/repositories/__tests__/bodyMarkerRepository.lifecycleStages.test.ts (NEW - repository method tests)
+src/lib/utils/__tests__/lifecycleUtils.test.ts (NEW - utility function tests)
+    </locations>
+    <ideas>
+AC8.1.1-8.1.6 (Schema &amp; Migration): Test migration logic sets 'onset' for active flares, 'resolved' for resolved flares, leaves undefined for non-flare markers. Test schema version increments correctly. Test zero data loss during migration.
+
+AC8.1.7 (updateLifecycleStage): Test valid forward transitions (onset→growth→rupture→draining→healing→resolved). Test invalid backward transitions throw errors. Test resolved from any stage succeeds. Test setting resolved updates marker.status and endDate. Test transaction rollback on validation failure. Test event record creation with correct lifecycleStage field.
+
+AC8.1.8 (getLifecycleStageHistory): Test returns events in chronological order (oldest first). Test filters only lifecycle_stage_change events. Test returns empty array for markers with no history.
+
+AC8.1.9 (getNextLifecycleStage): Test all stage progressions (onset→growth, growth→rupture, rupture→draining, draining→healing, healing→resolved, resolved→null).
+
+AC8.1.10 (isValidStageTransition): Test valid forward transitions return true. Test backward transitions return false. Test resolved from any stage returns true. Test from resolved returns false (terminal). Test invalid transitions return false.
+
+AC8.1.11 (Transaction Atomicity): Test validation failure prevents database changes. Test partial update rollback on error.
+
+AC8.1.12 (Coverage): Minimum 35 test cases across both test files ensuring 100% function coverage and all edge cases.
+    </ideas>
+  </tests>
+</story-context>

@@ -12,6 +12,16 @@ interface BodyRegionSelectorProps {
   multiSelect?: boolean;
   severityByRegion?: Record<string, number>;
   flareRegions?: string[];
+  onCoordinateCapture?: (event: React.MouseEvent<SVGSVGElement>) => void;
+  onTouchCoordinateCapture?: (event: React.TouchEvent<SVGSVGElement>) => void;
+  coordinateCursorActive?: boolean;
+  coordinateMarker?: React.ReactNode;
+  flareOverlay?: React.ReactNode;
+  // Accessibility props
+  userId: string;
+  zoomLevel?: number;
+  isZoomed?: boolean;
+  onCoordinateMark?: (regionId: string, coordinates: { x: number; y: number }) => void;
 }
 
 export function BodyRegionSelector({
@@ -21,6 +31,15 @@ export function BodyRegionSelector({
   multiSelect = false,
   severityByRegion = {},
   flareRegions = [],
+  onCoordinateCapture,
+  onTouchCoordinateCapture,
+  coordinateCursorActive = false,
+  coordinateMarker,
+  flareOverlay,
+  userId,
+  zoomLevel = 1,
+  isZoomed = false,
+  onCoordinateMark,
 }: BodyRegionSelectorProps) {
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -47,7 +66,10 @@ export function BodyRegionSelector({
   };
 
   return (
-    <div className="relative w-full h-full" onMouseMove={handleMouseMove}>
+    <div
+      className={`relative w-full h-full ${coordinateCursorActive ? "cursor-crosshair" : ""}`}
+      onMouseMove={handleMouseMove}
+    >
       {/* Body SVG */}
       <div className="w-full h-full flex items-center justify-center">
         {view === "front" && (
@@ -58,6 +80,15 @@ export function BodyRegionSelector({
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
+            onCoordinateCapture={onCoordinateCapture}
+            onTouchCoordinateCapture={onTouchCoordinateCapture}
+            coordinateCursorActive={coordinateCursorActive}
+            coordinateMarker={coordinateMarker}
+            flareOverlay={flareOverlay}
+            userId={userId}
+            zoomLevel={zoomLevel}
+            isZoomed={isZoomed}
+            onCoordinateMark={onCoordinateMark}
           />
         )}
         {view === "back" && (
@@ -68,6 +99,15 @@ export function BodyRegionSelector({
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
+            onCoordinateCapture={onCoordinateCapture}
+            onTouchCoordinateCapture={onTouchCoordinateCapture}
+            coordinateCursorActive={coordinateCursorActive}
+            coordinateMarker={coordinateMarker}
+            flareOverlay={flareOverlay}
+            userId={userId}
+            zoomLevel={zoomLevel}
+            isZoomed={isZoomed}
+            onCoordinateMark={onCoordinateMark}
           />
         )}
         {(view === "left" || view === "right") && (
@@ -78,6 +118,15 @@ export function BodyRegionSelector({
             onRegionHover={handleRegionHover}
             severityByRegion={severityByRegion}
             flareRegions={flareRegions}
+            onCoordinateCapture={onCoordinateCapture}
+            onTouchCoordinateCapture={onTouchCoordinateCapture}
+            coordinateCursorActive={coordinateCursorActive}
+            coordinateMarker={coordinateMarker}
+            flareOverlay={flareOverlay}
+            userId={userId}
+            zoomLevel={zoomLevel}
+            isZoomed={isZoomed}
+            onCoordinateMark={onCoordinateMark}
           />
         )}
       </div>
@@ -91,16 +140,16 @@ export function BodyRegionSelector({
             top: `${tooltipPosition.y + 10}px`,
           }}
         >
-          <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg">
-            <div className="font-semibold">{hoveredRegionData.name}</div>
+          <div className="card px-3 py-2">
+            <div className="font-semibold text-h4">{hoveredRegionData.name}</div>
             {severityByRegion[hoveredRegionData.id] && (
-              <div className="text-sm text-gray-300">
+              <div className="text-small mt-1">
                 Severity: {severityByRegion[hoveredRegionData.id]}/10
               </div>
             )}
             {hoveredRegionData.commonSymptoms &&
               hoveredRegionData.commonSymptoms.length > 0 && (
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>
                   Common: {hoveredRegionData.commonSymptoms.join(", ")}
                 </div>
               )}

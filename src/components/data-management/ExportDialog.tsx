@@ -1,28 +1,62 @@
 "use client";
 
-import { useState } from "react";
-import { exportService, ExportOptions } from "@/lib/services";
+import { useState, useEffect } from "react";
+import { exportService, ExportOptions, ExportProgress } from "@/lib/services";
 import { userRepository } from "@/lib/repositories";
+import { photoRepository } from "@/lib/repositories/photoRepository";
+
+/**
+ * Format bytes to human-readable size
+ */
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 10) / 10 + " " + sizes[i];
+}
 
 export function ExportDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<"json" | "csv">("json");
-  const [includeOptions, setIncludeOptions] = useState({
-    symptoms: true,
-    medications: true,
-    triggers: true,
-    dailyEntries: true,
-    userData: true,
-  });
+  const [includePhotos, setIncludePhotos] = useState(false); // Photos opt-in
+  const [decryptPhotos, setDecryptPhotos] = useState(false);
+  const [photoStats, setPhotoStats] = useState<{
+    count: number;
+    totalSize: number;
+  } | null>(null);
+  const [exportProgress, setExportProgress] = useState<ExportProgress | null>(
+    null
+  );
   const [dateRange, setDateRange] = useState({
     enabled: false,
     start: "",
     end: "",
   });
 
+  // Load photo stats when dialog opens
+  useEffect(() => {
+    const loadPhotoStats = async () => {
+      try {
+        const user = await userRepository.getCurrentUser();
+        if (user) {
+          const stats = await photoRepository.getStorageStats(user.id);
+          setPhotoStats(stats);
+        }
+      } catch (error) {
+        console.error("Failed to load photo stats:", error);
+      }
+    };
+
+    if (isOpen) {
+      loadPhotoStats();
+    }
+  }, [isOpen]);
+
   const handleExport = async () => {
     setIsExporting(true);
+    setExportProgress(null);
 
     try {
       const user = await userRepository.getCurrentUser();
@@ -31,13 +65,45 @@ export function ExportDialog() {
         return;
       }
 
+      // Export ENTIRE database - all tables by default
       const options: ExportOptions = {
         format: exportFormat,
-        includeSymptoms: includeOptions.symptoms,
-        includeMedications: includeOptions.medications,
-        includeTriggers: includeOptions.triggers,
-        includeDailyEntries: includeOptions.dailyEntries,
-        includeUserData: includeOptions.userData,
+        // User and core data
+        includeUserData: true,
+        // Symptom tracking
+        includeSymptoms: true,
+        includeSymptomInstances: true,
+        // Medication tracking
+        includeMedications: true,
+        includeMedicationEvents: true,
+        // Trigger tracking
+        includeTriggers: true,
+        includeTriggerEvents: true,
+        // Daily tracking
+        includeDailyEntries: true,
+        // Flare tracking
+        includeFlares: true,
+        includeFlareEvents: true,
+        // Food tracking
+        includeFoods: true,
+        includeFoodEvents: true,
+        includeFoodCombinations: true,
+        includeFoodJournal: true,
+        // Analytics and insights
+        includeCorrelations: true,
+        onlySignificant: false, // Include all correlations
+        includeAnalysisResults: true,
+        // Body map data
+        includeBodyMapLocations: true,
+        includePhotoComparisons: true,
+        // UX events
+        includeUxEvents: true,
+        // Photos (opt-in)
+        includePhotos: includePhotos,
+        decryptPhotos: decryptPhotos,
+        onProgress: (progress: ExportProgress) => {
+          setExportProgress(progress);
+        },
       };
 
       if (dateRange.enabled && dateRange.start && dateRange.end) {
@@ -48,12 +114,14 @@ export function ExportDialog() {
       }
 
       await exportService.downloadExport(user.id, options);
+      setExportProgress(null);
       setIsOpen(false);
     } catch (error) {
       console.error("Export failed:", error);
       alert("Export failed. Please try again.");
     } finally {
       setIsExporting(false);
+      setExportProgress(null);
     }
   };
 
@@ -119,33 +187,69 @@ export function ExportDialog() {
           </div>
         </div>
 
-        {/* Include Options */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-foreground">
-            Include in Export
-          </label>
-          <div className="space-y-2">
-            {Object.entries(includeOptions).map(([key, value]) => (
-              <label key={key} className="flex items-center text-foreground">
-                <input
-                  type="checkbox"
-                  checked={value}
-                  onChange={(e) =>
-                    setIncludeOptions({
-                      ...includeOptions,
-                      [key]: e.target.checked,
-                    })
-                  }
-                  className="mr-2"
-                />
-                {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1")}
-              </label>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            ✓ For complete profile transfer, keep all options checked
+        {/* Export Info */}
+        <div className="mb-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
+          <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
+            📦 Complete Database Export
+          </h3>
+          <p className="text-xs text-blue-700 dark:text-blue-300">
+            This will export your ENTIRE IndexedDB database including all:
+            <br/>• Health events (symptoms, medications, triggers, flares)
+            <br/>• Food tracking (meals, foods, combinations)
+            <br/>• Daily logs (mood, sleep, reflections)
+            <br/>• Analytics (correlations, patterns, insights)
+            <br/>• Body map data and preferences
+            <br/>• All timestamps and metadata
           </p>
         </div>
+
+        {/* Photos Option */}
+        <div className="mb-4">
+          <label className="flex items-center text-foreground">
+            <input
+              type="checkbox"
+              checked={includePhotos}
+              onChange={(e) => setIncludePhotos(e.target.checked)}
+              className="mr-2"
+            />
+            <span className="text-sm font-medium">
+              Include Photos{photoStats ? ` (${photoStats.count} photos, ${formatBytes(photoStats.totalSize)})` : ""}
+            </span>
+          </label>
+          <p className="mt-1 ml-6 text-xs text-muted-foreground">
+            Photos can significantly increase export file size
+          </p>
+        </div>
+
+        {/* Decrypt Photos Option */}
+        {includePhotos && (
+          <div className="mb-4 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 p-3">
+            <label className="flex items-start text-foreground">
+              <input
+                type="checkbox"
+                checked={decryptPhotos}
+                onChange={(e) => setDecryptPhotos(e.target.checked)}
+                className="mr-2 mt-1"
+              />
+              <div className="flex-1">
+                <span className="text-sm font-medium">Decrypt photos for portability</span>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Only enable this if you need to view photos outside this app.
+                </p>
+              </div>
+            </label>
+            {decryptPhotos && (
+              <div className="mt-2 rounded bg-orange-100 dark:bg-orange-900/30 p-2">
+                <p className="text-xs font-semibold text-orange-900 dark:text-orange-100">
+                  ⚠️ Warning: Decrypted photos will not be encrypted in the export file.
+                </p>
+                <p className="text-xs text-orange-800 dark:text-orange-200 mt-1">
+                  This reduces privacy during file transfer. Only use if viewing photos in other apps.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Date Range */}
         <div className="mb-4">
@@ -184,6 +288,28 @@ export function ExportDialog() {
           )}
         </div>
 
+        {/* Export Progress */}
+        {exportProgress && (
+          <div className="mb-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4">
+            <p className="mb-2 text-sm font-medium text-blue-900 dark:text-blue-100">
+              {exportProgress.message}
+            </p>
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-blue-200 dark:bg-blue-900">
+              <div
+                className="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
+                style={{
+                  width: `${(exportProgress.current / exportProgress.total) * 100}%`,
+                }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-blue-700 dark:text-blue-300">
+              {exportProgress.current} / {exportProgress.total} (
+              {Math.round((exportProgress.current / exportProgress.total) * 100)}
+              %)
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2">
           <button
@@ -191,7 +317,7 @@ export function ExportDialog() {
             disabled={isExporting}
             className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 font-medium"
           >
-            {isExporting ? "Exporting..." : "Export"}
+            {isExporting ? "Exporting Complete Database..." : "Export Complete Database"}
           </button>
           <button
             onClick={() => setIsOpen(false)}

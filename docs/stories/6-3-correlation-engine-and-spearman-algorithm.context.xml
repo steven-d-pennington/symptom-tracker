@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Story Context: 6-3-correlation-engine-and-spearman-algorithm
+  Generated: 2025-11-08
+  Epic: 6 (Health Insights & Correlation Analytics)
+  Story: 6.3 - Correlation Engine and Spearman Algorithm
+
+  This file provides technical context for implementing the correlation engine
+  with Spearman rank correlation algorithm to detect statistical relationships
+  in health tracking data.
+-->
+
+<story-context id="6-3-correlation-engine-and-spearman-algorithm" epic="6" version="1.0">
+
+  <!-- STORY METADATA -->
+  <story>
+    <id>6.3</id>
+    <title>Correlation Engine and Spearman Algorithm</title>
+    <status>drafted</status>
+    <story-points>21</story-points>
+    <priority>CRITICAL</priority>
+
+    <user-story>
+      <as-a>user seeking to understand what triggers my symptoms</as-a>
+      <i-want>an automated correlation analysis system that finds statistical relationships in my data</i-want>
+      <so-that>I can discover which foods, medications, or triggers correlate with symptom changes without manually analyzing months of logs</so-that>
+    </user-story>
+  </story>
+
+  <!-- ACCEPTANCE CRITERIA -->
+  <acceptance-criteria>
+    <criterion id="AC6.3.1">
+      <summary>Implement Spearman rank correlation coefficient algorithm</summary>
+      <details>Implement Spearman's rank correlation coefficient algorithm in TypeScript with formula: ρ = 1 - (6Σd²)/(n(n²-1)). Handle edge cases: ties (average ranking), perfect correlation (ρ = ±1), zero correlation (ρ = 0), insufficient data (n &lt; 3). Return CorrelationCoefficient object with ρ value (-1 to +1), strength classification (strong/moderate/weak), sample size n. Create unit tests covering all edge cases and mathematical accuracy validation.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+        <source>Statistical Methods textbooks</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.2">
+      <summary>Create CorrelationEngine service class</summary>
+      <details>Create src/lib/services/correlationEngine.ts service class with methods: calculateCorrelation(series1, series2), findSignificantCorrelations(threshold = 0.3), rankByStrength(). Service orchestrates data extraction, Spearman algorithm calls, filtering by significance, and ranking. Follows existing service pattern from analyticsRepository and flareRepository. Export all public methods with TypeScript interfaces and JSDoc comments.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.3">
+      <summary>Implement data windowing logic</summary>
+      <details>Create time-series data extraction functions that pull foods, symptoms, medications, triggers over configurable time ranges (7, 30, 90 days). Extract parallel time series: food consumption frequency per day, symptom severity per day (average if multiple), medication adherence per day, trigger exposure per day. Align data points by date (handle missing data with null or interpolation). Use existing repositories with efficient compound index queries.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+        <source>docs/data-models.md</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.4">
+      <summary>Create correlation pairs with lag windows</summary>
+      <details>Generate all meaningful correlation pairs: food-symptom (each food × each symptom), trigger-symptom, medication-symptom, food-flare severity, trigger-flare severity. Implement lag windows: test correlations at 0, 6, 12, 24, 48 hour lags to detect delayed effects. Use sliding window approach to align lagged time series. Store lag offset with each correlation result for interpretation.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.5">
+      <summary>Filter correlations by statistical significance</summary>
+      <details>Filter correlation results using triple criteria: |ρ| &gt;= 0.3 (moderate or stronger correlation), sample size n &gt;= 10 (minimum data points for validity), p-value &lt; 0.05 (statistical significance test). Implement p-value calculation for Spearman correlation using t-distribution approximation for n &gt;= 10. Store significance flags: isSignificant (boolean), significanceLevel (p-value), confidenceInterval (optional). Return only significant correlations to avoid false positives.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+        <source>Statistical significance standards</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.6">
+      <summary>Create CorrelationResult data model</summary>
+      <details>Define CorrelationResult TypeScript interface in src/types/correlation.ts: { id, type (food-symptom|trigger-symptom|medication-symptom|food-flare|trigger-flare), item1 (name/ID), item2 (name/ID), coefficient (ρ value -1 to +1), strength (strong|moderate|weak), significance (p-value), sampleSize (n), lagHours (0-48), confidence (high|medium|low), calculatedAt (timestamp), userId }. Create Zod schema for validation. Export interface for use across correlation engine, repository, and UI components.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.7">
+      <summary>Implement correlation repository with IndexedDB persistence</summary>
+      <details>Create src/lib/repositories/correlationRepository.ts following existing repository pattern. Add correlations table to Dexie schema (schema version 25) with compound indexes: [userId+type], [userId+item1], [userId+item2], [userId+calculatedAt]. Implement CRUD operations: create(), findAll(userId), findByType(type), findByItem(item), findSignificant(threshold), deleteOlderThan(date). Use efficient queries leveraging compound indexes for fast lookups.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+        <source>docs/data-models.md</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.8">
+      <summary>Add background calculation service</summary>
+      <details>Create src/lib/services/correlationCalculationService.ts that recalculates correlations when new data is logged. Use debouncing (wait 5 minutes after last data entry before recalculating) to avoid excessive computation. Trigger calculation on: new foodEvent, symptomInstance, medicationEvent, triggerEvent, or daily log entry. Run calculation in background (non-blocking UI). Cache results for 1 hour to reduce redundant calculations. Store calculation status in localStorage: lastCalculated timestamp, isCalculating boolean.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.9">
+      <summary>Create comprehensive unit tests for Spearman algorithm</summary>
+      <details>Write test suite src/lib/services/__tests__/spearmanCorrelation.test.ts covering: perfect positive correlation ([1,2,3] vs [2,4,6] → ρ = 1), perfect negative correlation ([1,2,3] vs [6,4,2] → ρ = -1), zero correlation (random series → ρ ≈ 0), tied ranks (handle average ranking correctly), single data point (n=1 → undefined), two data points (n=2 → ρ = ±1), edge case with all identical values ([5,5,5] vs [3,3,3] → undefined). Verify mathematical accuracy against known results from statistical software. Test p-value calculation accuracy.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+      </sources>
+    </criterion>
+
+    <criterion id="AC6.3.10">
+      <summary>Add performance optimization with caching and optional Web Worker</summary>
+      <details>Implement calculation batching: process up to 100 correlation pairs per batch, yield between batches to keep UI responsive. Cache correlation results in memory for 1 hour (Map&lt;cacheKey, CorrelationResult&gt;). Add optional Web Worker for heavy computation: offload Spearman calculations to worker thread when calculating &gt;500 pairs, fallback to main thread if Web Workers unavailable. Measure and log performance: track calculation duration, emit performance metrics. Target: calculate 1000 correlation pairs in &lt;5 seconds.</details>
+      <sources>
+        <source>docs/epics.md#Story-6.3</source>
+      </sources>
+    </criterion>
+  </acceptance-criteria>
+
+  <!-- PREREQUISITES -->
+  <prerequisites>
+    <prerequisite>
+      <story-id>6.2</story-id>
+      <title>Daily Log Page</title>
+      <status>review</status>
+      <reason>Provides mood and sleep data for correlation analysis with symptom patterns</reason>
+    </prerequisite>
+    <prerequisite>
+      <epic-id>3.5</epic-id>
+      <title>Intervention Effectiveness Analysis</title>
+      <status>done</status>
+      <reason>Established intervention effectiveness patterns that inform correlation engine design</reason>
+    </prerequisite>
+    <prerequisite>
+      <repository>foodEventRepository</repository>
+      <reason>Required for extracting food consumption time-series data</reason>
+    </prerequisite>
+    <prerequisite>
+      <repository>symptomInstanceRepository</repository>
+      <reason>Required for extracting symptom severity time-series data</reason>
+    </prerequisite>
+    <prerequisite>
+      <repository>medicationEventRepository</repository>
+      <reason>Required for extracting medication adherence time-series data</reason>
+    </prerequisite>
+    <prerequisite>
+      <repository>triggerEventRepository</repository>
+      <reason>Required for extracting trigger exposure time-series data</reason>
+    </prerequisite>
+  </prerequisites>
+
+  <!-- TECHNICAL CONTEXT -->
+  <technical-context>
+
+    <!-- DATA MODEL -->
+    <data-model>
+      <entity name="CorrelationRecord">
+        <description>Stores calculated correlation results with statistical metadata</description>
+        <schema>
+          <field name="id" type="string" required="true" description="UUID v4 identifier"/>
+          <field name="userId" type="string" required="true" description="User who owns this correlation"/>
+          <field name="type" type="CorrelationType" required="true" description="Type of correlation pair"/>
+          <field name="item1" type="string" required="true" description="First item in correlation (food/trigger/medication ID)"/>
+          <field name="item2" type="string" required="true" description="Second item in correlation (symptom/flare ID)"/>
+          <field name="coefficient" type="number" required="true" description="Spearman's rho (-1 to +1)"/>
+          <field name="strength" type="CorrelationStrength" required="true" description="strong|moderate|weak"/>
+          <field name="significance" type="number" required="true" description="P-value (0-1)"/>
+          <field name="sampleSize" type="number" required="true" description="Number of data points (n)"/>
+          <field name="lagHours" type="number" required="true" description="Time lag in hours (0, 6, 12, 24, 48)"/>
+          <field name="confidence" type="string" required="true" description="high|medium|low"/>
+          <field name="timeRange" type="string" required="true" description="7d|30d|90d"/>
+          <field name="calculatedAt" type="number" required="true" description="Unix timestamp"/>
+          <field name="createdAt" type="number" required="true" description="Unix timestamp"/>
+          <field name="updatedAt" type="number" required="true" description="Unix timestamp"/>
+        </schema>
+        <indexes>
+          <index name="primary" field="id"/>
+          <index name="user-type" fields="[userId+type]" compound="true"/>
+          <index name="user-item1" fields="[userId+item1]" compound="true"/>
+          <index name="user-item2" fields="[userId+item2]" compound="true"/>
+          <index name="user-calculatedAt" fields="[userId+calculatedAt]" compound="true"/>
+          <index name="userId" field="userId"/>
+          <index name="type" field="type"/>
+          <index name="calculatedAt" field="calculatedAt"/>
+        </indexes>
+      </entity>
+
+      <enum name="CorrelationType">
+        <values>
+          <value>food-symptom</value>
+          <value>trigger-symptom</value>
+          <value>medication-symptom</value>
+          <value>food-flare</value>
+          <value>trigger-flare</value>
+        </values>
+      </enum>
+
+      <enum name="CorrelationStrength">
+        <values>
+          <value>strong</value>
+          <value>moderate</value>
+          <value>weak</value>
+        </values>
+      </enum>
+    </data-model>
+
+    <!-- ALGORITHM SPECIFICATION -->
+    <algorithm name="Spearman Rank Correlation">
+      <description>Non-parametric measure of rank correlation that assesses monotonic relationships</description>
+      <formula>ρ = 1 - (6 * Σd²) / (n * (n² - 1))</formula>
+      <variables>
+        <variable name="ρ (rho)" description="Spearman's rank correlation coefficient (-1 to +1)"/>
+        <variable name="d" description="Difference between paired ranks"/>
+        <variable name="n" description="Number of observations (sample size)"/>
+      </variables>
+      <steps>
+        <step order="1">Rank both data series independently (1 = smallest, n = largest)</step>
+        <step order="2">Handle tied ranks by assigning average rank to tied values</step>
+        <step order="3">Calculate rank differences: d[i] = rank(x[i]) - rank(y[i])</step>
+        <step order="4">Sum squared differences: Σd² = sum of all d[i]²</step>
+        <step order="5">Apply formula: ρ = 1 - (6 * Σd²) / (n * (n² - 1))</step>
+        <step order="6">Classify strength: |ρ| &gt;= 0.7 strong, 0.3-0.7 moderate, &lt; 0.3 weak</step>
+      </steps>
+      <edge-cases>
+        <case condition="n &lt; 3" result="return null (insufficient data)"/>
+        <case condition="n = 2" result="return ρ = ±1 (trivial correlation)"/>
+        <case condition="all values identical" result="return undefined (no variance)"/>
+        <case condition="tied ranks" result="assign average rank to tied values"/>
+      </edge-cases>
+      <interpretation>
+        <range min="-1.0" max="-0.7" description="Strong negative correlation"/>
+        <range min="-0.7" max="-0.3" description="Moderate negative correlation"/>
+        <range min="-0.3" max="0.3" description="Weak/no correlation (filtered out)"/>
+        <range min="0.3" max="0.7" description="Moderate positive correlation"/>
+        <range min="0.7" max="1.0" description="Strong positive correlation"/>
+      </interpretation>
+    </algorithm>
+
+    <!-- STATISTICAL SIGNIFICANCE -->
+    <statistical-significance>
+      <test name="Spearman p-value">
+        <method>t-distribution approximation</method>
+        <formula>t = ρ * sqrt((n-2) / (1-ρ²))</formula>
+        <degrees-of-freedom>n - 2</degrees-of-freedom>
+        <validity-condition>n &gt;= 10</validity-condition>
+        <alpha-level>0.05 (95% confidence)</alpha-level>
+      </test>
+      <filtering>
+        <criterion name="Effect Size" test="|ρ| &gt;= 0.3" reason="Moderate or stronger correlation per Cohen's guidelines"/>
+        <criterion name="Sample Size" test="n &gt;= 10" reason="Minimum data points for statistical validity"/>
+        <criterion name="P-Value" test="p &lt; 0.05" reason="Statistical significance at 95% confidence level"/>
+      </filtering>
+    </statistical-significance>
+
+    <!-- LAG WINDOW SPECIFICATION -->
+    <lag-windows>
+      <description>Time delays to test for delayed cause-effect relationships</description>
+      <window hours="0" description="Immediate correlation (no lag)"/>
+      <window hours="6" description="Short-term delayed effect (e.g., food → symptom within 6 hours)"/>
+      <window hours="12" description="Half-day lag (e.g., lunch → evening symptom)"/>
+      <window hours="24" description="Next-day effect (e.g., trigger today → symptom tomorrow)"/>
+      <window hours="48" description="Two-day lag (e.g., medication → symptom reduction after 2 days)"/>
+      <implementation>
+        <method>Shift series2 backward by lagHours before alignment</method>
+        <alignment>Match timestamps within ±1 hour tolerance</alignment>
+        <missing-data>Skip date if both series have no data</missing-data>
+      </implementation>
+    </lag-windows>
+
+    <!-- REPOSITORY PATTERN -->
+    <repository-pattern>
+      <repository name="correlationRepository">
+        <location>src/lib/repositories/correlationRepository.ts</location>
+        <follows-pattern>flareRepository, dailyLogsRepository</follows-pattern>
+        <methods>
+          <method name="create" signature="create(correlation: CorrelationRecord): Promise&lt;string&gt;" description="Insert new correlation, return ID"/>
+          <method name="findAll" signature="findAll(userId: string): Promise&lt;CorrelationRecord[]&gt;" description="Get all correlations for user"/>
+          <method name="findByType" signature="findByType(userId: string, type: CorrelationType): Promise&lt;CorrelationRecord[]&gt;" description="Get correlations of specific type"/>
+          <method name="findByItem" signature="findByItem(userId: string, item: string): Promise&lt;CorrelationRecord[]&gt;" description="Get all correlations involving specific food/symptom/etc."/>
+          <method name="findSignificant" signature="findSignificant(userId: string, threshold: number): Promise&lt;CorrelationRecord[]&gt;" description="Filter by |coefficient| &gt;= threshold"/>
+          <method name="deleteOlderThan" signature="deleteOlderThan(userId: string, date: number): Promise&lt;number&gt;" description="Cleanup old correlations"/>
+          <method name="upsert" signature="upsert(correlation: CorrelationRecord): Promise&lt;string&gt;" description="Update if exists, create if new"/>
+        </methods>
+      </repository>
+    </repository-pattern>
+
+    <!-- SERVICE ARCHITECTURE -->
+    <services>
+      <service name="correlationEngine">
+        <location>src/lib/services/correlationEngine.ts</location>
+        <description>Main orchestration service for correlation calculation</description>
+        <methods>
+          <method name="calculateCorrelation" signature="calculateCorrelation(series1: number[], series2: number[]): CorrelationResult"/>
+          <method name="findSignificantCorrelations" signature="findSignificantCorrelations(userId: string, timeRange: string, threshold?: number): Promise&lt;CorrelationResult[]&gt;"/>
+          <method name="rankByStrength" signature="rankByStrength(correlations: CorrelationResult[]): CorrelationResult[]"/>
+        </methods>
+        <dependencies>
+          <dependency>spearmanCorrelation (algorithm module)</dependency>
+          <dependency>correlationDataExtractor (data module)</dependency>
+          <dependency>correlationRepository</dependency>
+        </dependencies>
+      </service>
+
+      <service name="correlationDataExtractor">
+        <location>src/lib/services/correlationDataExtractor.ts</location>
+        <description>Extracts and aligns time-series data from repositories</description>
+        <methods>
+          <method name="extractFoodTimeSeries" description="Get food consumption frequency per day"/>
+          <method name="extractSymptomTimeSeries" description="Get average symptom severity per day"/>
+          <method name="extractMedicationTimeSeries" description="Get medication adherence per day"/>
+          <method name="extractTriggerTimeSeries" description="Get trigger exposure per day"/>
+          <method name="alignTimeSeries" description="Align two time series by date with lag offset"/>
+        </methods>
+      </service>
+
+      <service name="correlationCalculationService">
+        <location>src/lib/services/correlationCalculationService.ts</location>
+        <description>Background calculation with debouncing and caching</description>
+        <features>
+          <feature>5-minute debouncing after last data entry</feature>
+          <feature>Triggered by foodEvent, symptomInstance, medicationEvent, triggerEvent, dailyLog</feature>
+          <feature>1-hour in-memory cache</feature>
+          <feature>localStorage for calculation status (lastCalculated, isCalculating)</feature>
+          <feature>Non-blocking background execution</feature>
+        </features>
+      </service>
+    </services>
+
+    <!-- PERFORMANCE TARGETS -->
+    <performance>
+      <target description="Calculate 1000 correlation pairs in &lt;5 seconds"/>
+      <optimization name="Batching" description="Process 100 pairs per batch, yield between batches"/>
+      <optimization name="Caching" description="In-memory cache with 1-hour TTL"/>
+      <optimization name="Web Worker" description="Optional: offload to worker thread for &gt;500 pairs"/>
+      <optimization name="Compound Indexes" description="Leverage [userId+type], [userId+item1] indexes for fast queries"/>
+    </performance>
+
+  </technical-context>
+
+  <!-- ARCHITECTURE DECISIONS -->
+  <architecture-decisions>
+    <decision id="AD-6.3-1">
+      <title>Use Spearman over Pearson correlation</title>
+      <rationale>Spearman is non-parametric and handles non-linear monotonic relationships better than Pearson, which assumes linearity. Health data often has non-linear relationships and outliers, making Spearman more robust.</rationale>
+    </decision>
+
+    <decision id="AD-6.3-2">
+      <title>Store correlation results in IndexedDB</title>
+      <rationale>Calculations are expensive (1000+ pairs). Storing results enables instant retrieval and reduces recalculation. Offline-first architecture requires local persistence.</rationale>
+    </decision>
+
+    <decision id="AD-6.3-3">
+      <title>Use lag windows up to 48 hours</title>
+      <rationale>Most food-symptom relationships manifest within 48 hours. Longer lags increase computational cost without significant value. 48-hour window balances detection accuracy with performance.</rationale>
+    </decision>
+
+    <decision id="AD-6.3-4">
+      <title>Triple significance filter (effect size + sample size + p-value)</title>
+      <rationale>Single criterion leads to false positives. Cohen's effect size (|ρ| &gt;= 0.3) filters weak correlations. Sample size (n &gt;= 10) ensures statistical validity. P-value (p &lt; 0.05) confirms significance. All three criteria reduce spurious correlations.</rationale>
+    </decision>
+
+    <decision id="AD-6.3-5">
+      <title>5-minute debouncing for background recalculation</title>
+      <rationale>Users often log multiple events in quick succession. Recalculating after each entry wastes CPU. 5-minute debounce batches events while keeping data fresh enough for insights page.</rationale>
+    </decision>
+  </architecture-decisions>
+
+  <!-- FILE STRUCTURE -->
+  <file-structure>
+    <files-to-create>
+      <file path="src/types/correlation.ts" description="CorrelationResult, CorrelationType interfaces and Zod schemas"/>
+      <file path="src/lib/services/statistics/spearmanCorrelation.ts" description="Spearman's ρ algorithm implementation"/>
+      <file path="src/lib/services/correlationEngine.ts" description="Main correlation engine service"/>
+      <file path="src/lib/services/correlationDataExtractor.ts" description="Time-series data extraction"/>
+      <file path="src/lib/services/correlationCalculationService.ts" description="Background calculation with debouncing"/>
+      <file path="src/lib/repositories/correlationRepository.ts" description="Correlation CRUD operations"/>
+      <file path="src/lib/services/__tests__/spearmanCorrelation.test.ts" description="Algorithm unit tests"/>
+      <file path="src/lib/services/__tests__/correlationEngine.test.ts" description="Service integration tests"/>
+      <file path="src/workers/correlationWorker.ts" description="Optional Web Worker for heavy calculations"/>
+    </files-to-create>
+
+    <files-to-modify>
+      <file path="src/lib/db/schema.ts" action="Add CorrelationRecord interface"/>
+      <file path="src/lib/db/client.ts" action="Add correlations table, increment version to 25"/>
+    </files-to-modify>
+  </file-structure>
+
+  <!-- TESTING REQUIREMENTS -->
+  <testing>
+    <unit-tests>
+      <test-suite file="spearmanCorrelation.test.ts">
+        <test case="Perfect positive correlation" input="[1,2,3] vs [2,4,6]" expected="ρ = 1"/>
+        <test case="Perfect negative correlation" input="[1,2,3] vs [6,4,2]" expected="ρ = -1"/>
+        <test case="Zero correlation" input="random series" expected="ρ ≈ 0"/>
+        <test case="Tied ranks" input="[1,2,2,3] vs [4,5,5,6]" expected="Correct averaging"/>
+        <test case="Insufficient data n=1" expected="return null"/>
+        <test case="Trivial n=2" expected="ρ = ±1"/>
+        <test case="All identical values" input="[5,5,5] vs [3,3,3]" expected="return undefined"/>
+        <test case="P-value accuracy" expected="Match statistical tables"/>
+      </test-suite>
+    </unit-tests>
+
+    <integration-tests>
+      <test-suite file="correlationEngine.test.ts">
+        <test case="Find significant correlations with mock data"/>
+        <test case="Data extraction from repositories"/>
+        <test case="Lag window generation (0, 6, 12, 24, 48 hours)"/>
+        <test case="Filtering by significance criteria"/>
+        <test case="Ranking by correlation strength"/>
+        <test case="Repository persistence (save/retrieve correlations)"/>
+        <test case="Background calculation service debouncing"/>
+        <test case="Cache expiration and invalidation"/>
+      </test-suite>
+    </integration-tests>
+
+    <performance-tests>
+      <test description="Calculate 1000 correlation pairs in &lt;5 seconds"/>
+      <test description="Verify batching yields to UI thread"/>
+      <test description="Validate cache hit/miss rates"/>
+    </performance-tests>
+  </testing>
+
+  <!-- INTEGRATION POINTS -->
+  <integration-points>
+    <depends-on>
+      <story id="6.2" title="Daily Log Page" reason="Provides mood/sleep data for correlation"/>
+      <epic id="3.5" title="Intervention Effectiveness" reason="Established effectiveness analysis patterns"/>
+      <repository name="foodEventRepository" reason="Food consumption data"/>
+      <repository name="symptomInstanceRepository" reason="Symptom severity data"/>
+      <repository name="medicationEventRepository" reason="Medication adherence data"/>
+      <repository name="triggerEventRepository" reason="Trigger exposure data"/>
+    </depends-on>
+
+    <enables>
+      <story id="6.4" title="Health Insights Hub UI" reason="Consumes correlation data to display insights"/>
+      <story id="6.5" title="Timeline Pattern Detection" reason="Uses correlation results to highlight patterns"/>
+      <story id="6.7" title="Treatment Effectiveness Tracker" reason="Extends correlation engine for treatment analysis"/>
+    </enables>
+  </integration-points>
+
+  <!-- REFERENCE DOCUMENTATION -->
+  <references>
+    <reference type="epic" path="docs/epics.md#Story-6.3" description="Story acceptance criteria and requirements"/>
+    <reference type="data-model" path="docs/data-models.md#flareEvents" description="Existing data model patterns"/>
+    <reference type="data-model" path="docs/data-models.md#foodEvents" description="Food event structure"/>
+    <reference type="data-model" path="docs/data-models.md#symptomInstances" description="Symptom severity tracking"/>
+    <reference type="story" path="docs/stories/6-2-daily-log-page.md" description="Repository pattern from Story 6.2"/>
+    <reference type="external" source="Statistical Methods" description="Spearman's rank correlation coefficient formula"/>
+    <reference type="external" source="Cohen's Guidelines" description="Correlation strength classification (0.3 moderate, 0.7 strong)"/>
+  </references>
+
+  <!-- RISK MITIGATION -->
+  <risks>
+    <risk id="RISK-6.3-1">
+      <description>Statistical misinterpretation by users (correlation ≠ causation)</description>
+      <impact>HIGH</impact>
+      <mitigation>Medical disclaimer in all UI consuming correlation data. Strict significance filtering prevents false positives. Documentation emphasizes consulting healthcare providers.</mitigation>
+    </risk>
+
+    <risk id="RISK-6.3-2">
+      <description>Performance degradation with large datasets</description>
+      <impact>MEDIUM</impact>
+      <mitigation>Batching ensures UI remains responsive. Caching reduces redundant calculations. Optional Web Worker for heavy computation.</mitigation>
+    </risk>
+
+    <risk id="RISK-6.3-3">
+      <description>Insufficient data leading to spurious correlations</description>
+      <impact>HIGH</impact>
+      <mitigation>Triple filter (|ρ| &gt;= 0.3, n &gt;= 10, p &lt; 0.05). Clear minimum sample size requirements. Confidence levels based on statistical validity.</mitigation>
+    </risk>
+
+    <risk id="RISK-6.3-4">
+      <description>Background calculation consuming excessive resources</description>
+      <impact>LOW</impact>
+      <mitigation>5-minute debouncing prevents constant recalculation. Calculation runs only when needed (new data logged). Cache prevents redundant work within 1-hour window.</mitigation>
+    </risk>
+  </risks>
+
+  <!-- EXAMPLE USE CASES -->
+  <use-cases>
+    <use-case id="UC-6.3-1">
+      <title>Detect food-symptom correlation</title>
+      <scenario>User logs dairy consumption daily and headaches sporadically. Correlation engine detects strong positive correlation (ρ = 0.72, p = 0.003) at 12-hour lag.</scenario>
+      <result>System identifies "Dairy → Headache (12h delay)" as significant finding. Surfaces in Story 6.4 Health Insights UI.</result>
+    </use-case>
+
+    <use-case id="UC-6.3-2">
+      <title>Identify medication effectiveness</title>
+      <scenario>User takes ibuprofen for flare pain. Correlation engine analyzes medication events vs flare severity changes.</scenario>
+      <result>Detects moderate negative correlation (ρ = -0.48, p = 0.021) at 6-hour lag, indicating ibuprofen reduces pain severity within 6 hours.</result>
+    </use-case>
+
+    <use-case id="UC-6.3-3">
+      <title>Filter out spurious correlations</title>
+      <scenario>User ate chocolate twice (n = 2) and had headache once. Naive analysis might show correlation.</scenario>
+      <result>Triple filter rejects: n &lt; 10 (insufficient data). Prevents false positive from reaching user.</result>
+    </use-case>
+  </use-cases>
+
+</story-context>

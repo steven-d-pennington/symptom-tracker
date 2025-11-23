@@ -194,26 +194,64 @@ export const persistUserSettings = async (data: OnboardingData) => {
     return;
   }
 
+  // DEBUG: Check if selections are present
+  console.log("[Onboarding] persistUserSettings called with data:", {
+    hasUserProfile: !!data.userProfile,
+    hasSelections: !!data.selections,
+    selectionCounts: data.selections ? {
+      symptoms: data.selections.symptoms.length,
+      triggers: data.selections.triggers.length,
+      medications: data.selections.medications.length,
+      foods: data.selections.foods.length,
+    } : null
+  });
+
   try {
     const { userRepository } = await import("@/lib/repositories/userRepository");
+    const { initializeUserDefaults } = await import("@/lib/services/userInitialization");
 
-    // Create user record in IndexedDB with all onboarding data
-    const userId = await userRepository.create({
+    // Use getOrCreateCurrentUser() to ensure we use the same lock mechanism as dashboard components
+    // This prevents race conditions where multiple components try to create users simultaneously
+    const user = await userRepository.getOrCreateCurrentUser();
+    console.log("[Onboarding] Got user from getOrCreateCurrentUser():", user.id);
+
+    // Always update the user with onboarding data
+    // (getOrCreateCurrentUser creates a default "User" if none exists, so we need to update it)
+    await userRepository.update(user.id, {
       name: data.userProfile.name,
       email: data.userProfile.email,
       preferences: {
-        theme: "system",
+        ...user.preferences,
         notifications: {
           remindersEnabled: data.trackingPreferences.notificationsEnabled,
           reminderTime: data.trackingPreferences.reminderTime,
         },
         privacy: data.privacySettings,
-        exportFormat: "json",
-        symptomFilterPresets: [],
       },
     });
+    console.log("[Onboarding] Updated user with onboarding data");
 
-    console.log("[Onboarding] User created in IndexedDB:", userId);
+    const userId = user.id;
+
+    // Story 3.6.1 - AC3.6.1.10: Initialize with selections if provided
+    if (data.selections) {
+      console.log("[Onboarding] Initializing user defaults with selections:", data.selections);
+      const initResult = await initializeUserDefaults(userId, data.selections);
+      if (initResult.success) {
+        console.log("[Onboarding] ✅ Defaults initialized successfully:", initResult.details);
+      } else {
+        console.error("[Onboarding] ⚠️ Failed to initialize defaults:", initResult.error);
+      }
+    } else {
+      // Fallback to old behavior - auto-populate all defaults
+      console.log("[Onboarding] No selections provided, initializing with all defaults");
+      const initResult = await initializeUserDefaults(userId);
+      if (initResult.success) {
+        console.log("[Onboarding] ✅ Defaults initialized successfully:", initResult.details);
+      } else {
+        console.error("[Onboarding] ⚠️ Failed to initialize defaults:", initResult.error);
+      }
+    }
 
     // Store userId in localStorage for quick access
     window.localStorage.setItem(CURRENT_USER_ID_KEY, userId);

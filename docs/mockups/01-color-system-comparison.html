@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Symptom Tracker - Color System Redesign</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1C1917;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #78716C;
+            margin-bottom: 48px;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .side {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .side h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .side .label {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .side.current .label {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .side.new .label {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .palette-section {
+            margin-bottom: 32px;
+        }
+
+        .palette-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #78716C;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .color-swatch {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-swatch::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.1) 100%);
+            pointer-events: none;
+        }
+
+        .color-name {
+            font-size: 11px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .color-hex {
+            font-size: 10px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            opacity: 0.8;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Current colors */
+        .current .primary { background: #6366F1; color: white; }
+        .current .success { background: #10B981; color: white; }
+        .current .warning { background: #F59E0B; color: white; }
+        .current .error { background: #EF4444; color: white; }
+        .current .bg { background: #FFFFFF; color: #1F2937; border: 1px solid #E5E7EB; }
+        .current .text { background: #1F2937; color: white; }
+
+        /* New colors */
+        .new .primary { background: #0F9D91; color: white; }
+        .new .primary-light { background: #E0F5F3; color: #0A7A70; }
+        .new .success { background: #10B981; color: white; }
+        .new .warning { background: #F59E0B; color: white; }
+        .new .error { background: #EF4444; color: white; }
+        .new .info { background: #06B6D4; color: white; }
+        .new .bg { background: #FAFAF9; color: #1C1917; border: 1px solid #E7E5E4; }
+        .new .card { background: #FFFFFF; color: #1C1917; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .new .text-primary { background: #1C1917; color: white; }
+        .new .text-secondary { background: #78716C; color: white; }
+        .new .text-muted { background: #A8A29E; color: white; }
+
+        /* Component Examples */
+        .examples {
+            margin-top: 32px;
+        }
+
+        .examples h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1C1917;
+        }
+
+        .example-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .current .btn-primary {
+            background: #6366F1;
+            color: white;
+        }
+
+        .current .btn-primary:hover {
+            background: #4F46E5;
+        }
+
+        .new .btn-primary {
+            background: #0F9D91;
+            color: white;
+            border-radius: 11px;
+        }
+
+        .new .btn-primary:hover {
+            background: #0A7A70;
+            box-shadow: 0 4px 12px rgba(15, 157, 145, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .current .btn-secondary {
+            background: transparent;
+            color: #6366F1;
+            border: 1px solid #6366F1;
+        }
+
+        .new .btn-secondary {
+            background: transparent;
+            color: #0F9D91;
+            border: 1px solid #E7E5E4;
+        }
+
+        .new .btn-secondary:hover {
+            background: #E0F5F3;
+            border-color: #0F9D91;
+        }
+
+        .example-card {
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .current .example-card {
+            background: white;
+            border: 1px solid #E5E7EB;
+        }
+
+        .new .example-card {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .new .example-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+            transition: all 0.2s;
+        }
+
+        .example-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .current .example-card h4 {
+            color: #1F2937;
+        }
+
+        .new .example-card h4 {
+            color: #1C1917;
+        }
+
+        .example-card p {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .current .example-card p {
+            color: #6B7280;
+        }
+
+        .new .example-card p {
+            color: #78716C;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            gap: 6px;
+        }
+
+        .current .badge-severity {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .new .badge-severity {
+            background: #FCA5A5;
+            color: #7F1D1D;
+        }
+
+        .current .badge-improving {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .new .badge-improving {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .toggle-view {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: #1C1917;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+        }
+
+        .toggle-view:hover {
+            background: #292524;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Color System Redesign</h1>
+        <p class="subtitle">Comparing current generic blue theme vs. new calm teal + warm neutrals</p>
+
+        <div class="comparison">
+            <!-- Current Design -->
+            <div class="side current">
+                <h2>Current Design</h2>
+                <span class="label">❌ Generic SaaS</span>
+
+                <div class="palette-section">
+                    <h3>Primary Colors</h3>
+                    <div class="color-grid">
+                        <div class="color-swatch primary">
+                            <div class="color-name">Primary</div>
+                            <div class="color-hex">#6366F1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="palette-section">
+                    <h3>Semantic Colors</h3>
+                    <div class="color-grid">
+                        <div class="color-swatch success">
+                            <div class="color-name">Success</div>
+                            <div class="color-hex">#10B981</div>
+                        </div>
+                        <div class="color-swatch warning">
+                            <div class="color-name">Warning</div>
+                            <div class="color-hex">#F59E0B</div>
+                        </div>
+                        <div class="color-swatch error">
+                            <div class="color-name">Error</div>
+                            <div class="color-hex">#EF4444</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="palette-section">
+                    <h3>Neutrals</h3>
+                    <div class="color-grid">
+                        <div class="color-swatch bg">
+                            <div class="color-name">Background</div>
+                            <div class="color-hex">#FFFFFF</div>
+                        </div>
+                        <div class="color-swatch text">
+                            <div class="color-name">Text</div>
+                            <div class="color-hex">#1F2937</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="examples">
+                    <h3>Components with Current Colors</h3>
+                    <div class="example-buttons">
+                        <button class="btn btn-primary">Primary Button</button>
+                        <button class="btn btn-secondary">Secondary</button>
+                    </div>
+
+                    <div class="example-card">
+                        <h4>Active Flare - Left Groin</h4>
+                        <p>Severity: 7/10 • Started 3 days ago</p>
+                        <div style="margin-top: 12px;">
+                            <span class="badge badge-severity">High Severity</span>
+                            <span class="badge badge-improving">↗ Improving</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Design -->
+            <div class="side new">
+                <h2>New Design</h2>
+                <span class="label">✨ Calm & Empowering</span>
+
+                <div class="palette-section">
+                    <h3>Primary Colors</h3>
+                    <div class="color-grid">
+                        <div class="color-swatch primary">
+                            <div class="color-name">Primary Teal</div>
+                            <div class="color-hex">#0F9D91</div>
+                        </div>
+                        <div class="color-swatch primary-light">
+                            <div class="color-name">Primary Light</div>
+                            <div class="color-hex">#E0F5F3</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="palette-section">
+                    <h3>Semantic Colors</h3>
+                    <div class="color-grid">
+                        <div class="color-swatch success">
+                            <div class="color-name">Success</div>
+                            <div class="color-hex">#10B981</div>
+                        </div>
+                        <div class="color-swatch warning">
+                            <div class="color-name">Warning</div>
+                            <div class="color-hex">#F59E0B</div>
+                        </div>
+                        <div class="color-swatch error">
+                            <div class="color-name">Error</div>
+                            <div class="color-hex">#EF4444</div>
+                        </div>
+                        <div class="color-swatch info">
+                            <div class="color-name">Info (NEW)</div>
+                            <div class="color-hex">#06B6D4</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="palette-section">
+                    <h3>Warm Neutrals</h3>
+                    <div class="color-grid">
+                        <div class="color-swatch bg">
+                            <div class="color-name">Background</div>
+                            <div class="color-hex">#FAFAF9</div>
+                        </div>
+                        <div class="color-swatch card">
+                            <div class="color-name">Card</div>
+                            <div class="color-hex">#FFFFFF</div>
+                        </div>
+                        <div class="color-swatch text-primary">
+                            <div class="color-name">Text Primary</div>
+                            <div class="color-hex">#1C1917</div>
+                        </div>
+                        <div class="color-swatch text-secondary">
+                            <div class="color-name">Text Secondary</div>
+                            <div class="color-hex">#78716C</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="examples">
+                    <h3>Components with New Colors</h3>
+                    <div class="example-buttons">
+                        <button class="btn btn-primary">Primary Button</button>
+                        <button class="btn btn-secondary">Secondary</button>
+                    </div>
+
+                    <div class="example-card">
+                        <h4>Active Flare - Left Groin</h4>
+                        <p>Severity: 7/10 • Started 3 days ago</p>
+                        <div style="margin-top: 12px;">
+                            <span class="badge badge-severity">High Severity</span>
+                            <span class="badge badge-improving">↗ Improving</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px; color: #1C1917;">Key Improvements</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-size: 15px;">
+                    <strong style="color: #0F9D91;">✓ Calm Teal Primary:</strong> Medical-grade feel, less generic than blue
+                </li>
+                <li style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-size: 15px;">
+                    <strong style="color: #0F9D91;">✓ Warm Neutrals:</strong> Softer on eyes than stark white/black (Notion-style)
+                </li>
+                <li style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-size: 15px;">
+                    <strong style="color: #0F9D91;">✓ Better Shadows:</strong> Subtle depth without heaviness
+                </li>
+                <li style="padding: 12px 0; color: #1C1917; font-size: 15px;">
+                    <strong style="color: #0F9D91;">✓ Smooth Interactions:</strong> Hover states feel premium
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="toggle-view" onclick="toggleComparison()">
+        👀 Toggle Side-by-Side
+    </div>
+
+    <script>
+        let isSplit = true;
+        function toggleComparison() {
+            const comparison = document.querySelector('.comparison');
+            isSplit = !isSplit;
+            comparison.style.gridTemplateColumns = isSplit ? '1fr 1fr' : '1fr';
+
+            if (!isSplit) {
+                document.querySelectorAll('.side').forEach((side, i) => {
+                    side.style.display = i === 0 ? 'none' : 'block';
+                });
+            } else {
+                document.querySelectorAll('.side').forEach(side => {
+                    side.style.display = 'block';
+                });
+            }
+        }
+    </script>
+</body>
+</html>

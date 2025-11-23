@@ -1,0 +1,222 @@
+<story-context id="story-1.1-context" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Add Groin Regions to Body Map SVG</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user tracking HS flares</asA>
+    <iWant>groin-specific regions (left groin, right groin, center groin) visible on all body map views</iWant>
+    <soThat>I can accurately log flare locations in these critical areas</soThat>
+    <tasks>
+      - Update BodyRegion enum with groin region constants (AC: 1.1, 1.3)
+      - Design and implement groin SVG path definitions (AC: 1.1, 1.2, 1.4)
+      - Implement interactive SVG behaviors for groin regions (AC: 1.3, 1.5)
+      - Add region labels and ARIA attributes (AC: 1.6)
+      - Testing and validation (All ACs)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1.1">Front body view displays three distinct groin regions: left groin, right groin, center groin</criterion>
+    <criterion id="AC1.2">Groin regions are anatomically accurate and tastefully rendered</criterion>
+    <criterion id="AC1.3">Each groin region is a selectable SVG path element with hover/active states</criterion>
+    <criterion id="AC1.4">Groin regions visible on all body map views (front, back if applicable, side views)</criterion>
+    <criterion id="AC1.5">Groin region selection triggers the same flare-location flow as other body regions</criterion>
+    <criterion id="AC1.6">Region labels display "Left Groin", "Right Groin", "Center Groin" when selected or hovered</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements - FR001</section>
+        <snippet>System shall include groin-specific regions (left groin, right groin, center groin) on all body map views (front, back, side). This addresses the critical gap for HS users who frequently experience flares in the groin area.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>ADR-005: Groin Regions as Separate SVG Paths</section>
+        <snippet>Decision: Define groin as 3 separate clickable SVG paths (left/right/center). Rationale: Matches existing pattern (all regions are separate paths), allows precise click detection, enables future per-region styling.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Epic 1 Component Architecture</section>
+        <snippet>Components: BodyRegions SVG path definitions (add groin). Data: BodyRegion enum extension (groin regions). No schema migration needed (code-only).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 1, Story 1.1</section>
+        <snippet>Foundational story for Epic 1. All subsequent body map precision features (zoom, pan, coordinate capture) build on this groin region enhancement. Prerequisites: None.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/types/body-mapping.ts</path>
+        <kind>types</kind>
+        <symbol>BodyRegion</symbol>
+        <lines>16-27</lines>
+        <reason>Interface definition for body regions. Contains all required fields: id, name, category, side, svgPath, selectable, zIndex. This is the type that groin regions must conform to.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/data/bodyRegions.ts</path>
+        <kind>data</kind>
+        <symbol>FRONT_BODY_REGIONS</symbol>
+        <lines>7-40</lines>
+        <reason>Current implementation has single "groin" region at line 13. This needs to be replaced with 3 separate regions: left-groin, right-groin, center-groin. All other regions follow the same pattern and serve as templates.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/bodies/FrontBody.tsx</path>
+        <kind>component</kind>
+        <symbol>FrontBody</symbol>
+        <lines>245-253</lines>
+        <reason>Current groin SVG path implementation. Single path element with id "groin" and path data "M 175 385 Q 200 395 225 385". This needs to be split into 3 separate path elements with appropriate coordinates.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/bodies/FrontBody.tsx</path>
+        <kind>component</kind>
+        <symbol>FrontBody</symbol>
+        <lines>1-67</lines>
+        <reason>Component structure showing how regions are rendered: each region has onClick, onMouseEnter, onMouseLeave handlers, dynamic fill/opacity based on severity, and CSS classes. Pattern to replicate for groin regions.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/data/bodyRegions.ts</path>
+        <kind>data</kind>
+        <symbol>getRegionsForView</symbol>
+        <lines>73-84</lines>
+        <reason>Function that returns regions for each view (front/back/left/right). Currently returns FRONT_BODY_REGIONS for front view. New groin regions will automatically be included.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <framework name="React" version="19.1.0" ecosystem="node">
+        Core UI library for components
+      </framework>
+      <framework name="Next.js" version="15.5.4" ecosystem="node">
+        App framework with App Router
+      </framework>
+      <framework name="TypeScript" version="5.x" ecosystem="node">
+        Type safety and interfaces
+      </framework>
+      <framework name="Tailwind CSS" version="4.x" ecosystem="node">
+        Styling framework for CSS classes
+      </framework>
+      <package name="lucide-react" version="0.544.0" ecosystem="node">
+        Icon library (may be used for region labels)
+      </package>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architectural">Must maintain existing body map API - no breaking changes to region click handlers (onRegionClick, onRegionHover signatures)</constraint>
+    <constraint type="architectural">Groin regions must integrate seamlessly with existing region selection UI flow</constraint>
+    <constraint type="design">Visual design must be tasteful and appropriate for medical context (AC1.2)</constraint>
+    <constraint type="technical">BodyRegion enum is code-only, no database schema migration required</constraint>
+    <constraint type="technical">SVG viewBox is 0 0 400 800 - all coordinates must be within this range</constraint>
+    <constraint type="performance">All region interactions must respond within 100ms (NFR001)</constraint>
+    <constraint type="accessibility">Touch targets must be minimum 44x44px for mobile accessibility</constraint>
+    <constraint type="pattern">Reuse existing interaction patterns - groin regions use same click handlers and state management as existing regions (neck, shoulder, knee, etc.)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>BodyRegion</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface BodyRegion {
+  id: string;
+  name: string;
+  category: BodyRegionCategory;
+  side?: BodySide;
+  svgPath: string;
+  commonSymptoms?: string[];
+  selectable: boolean;
+  zIndex: number;
+}
+      </signature>
+      <path>src/lib/types/body-mapping.ts</path>
+    </interface>
+    <interface>
+      <name>FrontBody Region Props</name>
+      <kind>React Component Props</kind>
+      <signature>
+interface FrontBodyProps {
+  selectedRegions?: string[];
+  highlightedRegion?: string;
+  onRegionClick?: (regionId: string) => void;
+  onRegionHover?: (regionId: string | null) => void;
+  severityByRegion?: Record&lt;string, number&gt;;
+  flareRegions?: string[];
+}
+      </signature>
+      <path>src/components/body-mapping/bodies/FrontBody.tsx</path>
+    </interface>
+    <interface>
+      <name>Region Click Handler Pattern</name>
+      <kind>SVG Event Handler</kind>
+      <signature>
+onClick={() => onRegionClick?.("region-id")}
+onMouseEnter={() => onRegionHover?.("region-id")}
+onMouseLeave={() => onRegionHover?.(null)}
+      </signature>
+      <path>src/components/body-mapping/bodies/FrontBody.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Testing uses Jest 30.2.0 with React Testing Library 16.3.0. Components are tested in isolation with fake-indexeddb 6.2.4 for database mocking. Tests should verify: (1) Region rendering, (2) Click/hover interactions, (3) Visual states (fill/opacity changes), (4) Accessibility (ARIA labels, keyboard navigation).
+    </standards>
+    <locations>
+- Unit tests: src/__tests__/types/body-map.test.ts
+- Component tests: src/components/body-mapping/bodies/__tests__/FrontBody.test.tsx  
+- Integration tests: src/__tests__/integration/body-map-groin-selection.test.ts
+    </locations>
+    <ideas>
+      <test ac="AC1.1">Unit test: Verify FRONT_BODY_REGIONS array includes exactly 3 groin region objects with ids: left-groin, right-groin, center-groin</test>
+      <test ac="AC1.2">Visual regression: Verify groin SVG paths render anatomically accurate and tastefully (manual review with stakeholder)</test>
+      <test ac="AC1.3">Component test: Render FrontBody and verify 3 groin SVG elements exist with class "body-region", verify hover state changes opacity</test>
+      <test ac="AC1.4">Component test: Verify groin regions render in all body views (front confirmed, back/side if anatomically relevant)</test>
+      <test ac="AC1.5">Integration test: Click left-groin region, verify onRegionClick called with "left-groin" parameter</test>
+      <test ac="AC1.6">Component test: Hover over right-groin, verify onRegionHover called with "right-groin", verify label displays "Right Groin"</test>
+      <test ac="All">Accessibility test: Verify each groin region has aria-label attribute, verify keyboard navigation works</test>
+    </ideas>
+  </tests>
+
+  <implementation-notes>
+    <note priority="critical">
+      **Existing Infrastructure:** The BodyRegion interface, coordinate system, and interaction patterns are already implemented. This story extends the existing system rather than creating new infrastructure.
+    </note>
+    <note priority="high">
+      **Current Groin Region:** Single "groin" region exists at src/lib/data/bodyRegions.ts line 13 and FrontBody.tsx lines 245-253. This needs to be REPLACED (not added to) with 3 new regions.
+    </note>
+    <note priority="high">
+      **SVG Path Coordinates:** Current groin path is "M 175 385 Q 200 395 225 385" (curved line from left to right). Split this into 3 paths: left (M 175 385 Q 187 390 190 385), center (M 190 385 Q 200 395 210 385), right (M 210 385 Q 213 390 225 385). Adjust as needed for visual clarity.
+    </note>
+    <note priority="medium">
+      **Pattern Replication:** Study existing armpit regions (armpit-left, armpit-right at lines 93-111 in FrontBody.tsx) - these are similar HS-specific regions and serve as the best template for groin implementation.
+    </note>
+    <note priority="medium">
+      **Region Names:** Use exact names from AC: "Left Groin", "Right Groin", "Center Groin" for the name field. IDs should be: "left-groin", "right-groin", "center-groin" (kebab-case).
+    </note>
+    <note priority="low">
+      **Back View:** Consider whether groin regions should appear on back view. Anatomically, groin is front-facing, but buttocks (back view) may need connection. Check with stakeholder if unsure.
+    </note>
+  </implementation-notes>
+
+  <knowledge-from-memory>
+    <insight source="Symptom Tracker Architecture Memory">
+      **Brownfield Enhancement Context:** This is a brownfield Next.js/React/Dexie PWA. Key decisions: Minimal schema changes (FlareRecord coordinates link only), no global state management (React Query sufficient), analytics calculated on-demand. Single new dependency for Epic 1: react-zoom-pan-pinch 3.6.1 for zoom/pan in future stories.
+    </insight>
+    <insight source="React Hook Form Memory">
+      When accessing array values from watch() or getValues(), use defensive programming: always check if value exists before calling array methods like .includes(). Pattern: `const regions = watch('bodyRegions') || []` prevents runtime errors.
+    </insight>
+  </knowledge-from-memory>
+</story-context>

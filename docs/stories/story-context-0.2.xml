@@ -1,0 +1,83 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>0</epicId>
+    <storyId>2</storyId>
+    <title>Dashboard "Today" Refresh</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-0.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA><![CDATA[As a user landing on the dashboard]]></asA>
+    <iWant><![CDATA[I want a focused "Today" view with highlights and quick actions]]></iWant>
+    <soThat><![CDATA[so that I can log events or review context without scanning multiple panels]]></soThat>
+    <tasks><![CDATA[
+- Task 1: Restructure dashboard layout into Today modules (TodayHighlightsCard, TodayQuickActionsCard, TodayTimelineCard) and update `dashboard/page.tsx` with semantic regions, spacing, and shared navigation metadata.
+- Task 2: Convert Quick Actions into route-driven sheets by swapping local state toggles for router-aware handlers, refactoring `QuickLogButtons` to emit navigation intents, and updating log modals to respond to query/route state.
+- Task 3: Implement guided empty states across Highlights, Quick Actions, and Timeline with first-run copy, offline/error fallbacks, and tests covering helper messaging.
+- Task 4: Add regression coverage and optional instrumentation verifying module ordering, empty-state accessibility, and quick-action routing across breakpoints.
+    ]]></tasks>
+  </story>
+
+  <acceptanceCriteria><![CDATA[
+1. AC0.2.1 – Three-module layout with Highlights, Quick Actions, and Today’s Timeline stacked consistently across breakpoints and populated from existing data sources.
+2. AC0.2.2 – Quick Actions launch route-based sheets or mobile dialogs (e.g., `/dashboard?quickAction=flare`) with proper focus management and deep-link support.
+3. AC0.2.3 – Guided empty states provide helper copy and CTAs for modules with no data, surfaced in the accessibility tree.
+4. AC0.2.4 – Navigation chrome (title, breadcrumb, pillar highlighting) aligns with shared Track configuration shipped in Story 0.1.
+  ]]></acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/ui/ui-ux-revamp-blueprint.md#Phase-3--Dashboard-Refresh"><![CDATA[Phase 3 roadmap defines the exact Today view modules (Highlights, Quick Actions, Timeline), route-based sheets, and guided empty states expected for the dashboard refresh.]]></doc>
+      <doc path="docs/ui/ui-ux-revamp-blueprint.md#2-Current-Experience-Audit"><![CDATA[Audit notes identify current dashboard overload (multiple modals, conflated panels) and accessibility concerns that this story must resolve.]]></doc>
+      <doc path="docs/epics.md#Story-0.2-Dashboard-Today-Refresh"><![CDATA[Epic breakdown reiterates the user story, acceptance criteria ordering, and dependency on Story 0.1 navigation consolidation.]]></doc>
+      <doc path="docs/PRD.md#User-Interface-Design-Goals"><![CDATA[PRD UI goals call for at-a-glance Active Flares dashboard, quick logging flows, and responsive layouts that inform the refreshed Today modules.]]></doc>
+    </docs>
+    <code>
+      <file path="src/app/(protected)/dashboard/page.tsx"><![CDATA[Current dashboard stacks ActiveFlareCards, QuickLogButtons, TimelineView, and local modal state; refactor targets this file to introduce the Today module structure and router-driven overlays.]]></file>
+      <file path="src/components/flares/ActiveFlareCards.tsx"><![CDATA[Highlights module will wrap this component; note Dexie-backed data loading, sorting controls, and update/resolve actions that need refreshed layout styling and empty-state hooks.]]></file>
+      <file path="src/components/quick-log/QuickLogButtons.tsx"><![CDATA[Quick action button grid currently invokes callbacks; story converts these into navigation intents (e.g., router pushes) while keeping accessibility affordances.]]></file>
+      <file path="src/components/flares/FlareCreationModal.tsx"><![CDATA[Modal opened via local state today; transitioning to route-based sheets must preserve form validation, escape handling, and keyboard traps defined here.]]></file>
+      <file path="src/components/medications/MedicationLogModal.tsx"><![CDATA[Represents another quick action modal requiring route-state orchestration and graceful teardown when navigating back.]]></file>
+      <file path="src/components/symptoms/SymptomLogModal.tsx"><![CDATA[Symptom logging modal; verify it can hydrate from router state and close via navigation updates.]]></file>
+      <file path="src/components/triggers/TriggerLogModal.tsx"><![CDATA[Trigger logging modal; ensure query-driven rendering covers offline fallbacks and focus management.]]></file>
+      <file path="src/components/food/FoodLogModal.tsx"><![CDATA[Food log modal renders continuously once `FoodProvider` mounts; ensure route-based triggers do not collide with provider-managed state.]]></file>
+      <file path="src/components/navigation/NavLayout.tsx"><![CDATA[Shared navigation metadata from Story 0.1; confirm Today view wiring uses `getPageTitle`/pillar helpers for AC0.2.4.]]></file>
+    </code>
+    <dependencies>
+      <dependency><![CDATA[Next.js App Router (src/app/*) and React 19 client components — Today view remains client-rendered but should respect server/client boundaries when introducing route-based overlays.]]></dependency>
+      <dependency><![CDATA[Dexie-backed repositories (`flareRepository`, medication/symptom repositories) — ensure refreshed layout triggers repository refreshes without double-fetching.]]></dependency>
+      <dependency><![CDATA[FoodProvider context (`src/contexts/FoodContext.tsx`) — Quick Actions continue to rely on provider methods; route-driven flow must still access context callbacks.]]></dependency>
+      <dependency><![CDATA[`cn` utility (`src/lib/utils/cn.ts`) and Tailwind design tokens for consistent card styling and responsive stacks.]]></dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints><![CDATA[
+- Maintain offline-first behavior: quick actions and highlights must function without network and continue writing to IndexedDB via repositories.
+- Route-based sheets must preserve accessibility (focus trap, Escape handling) and support deep links/refresh, matching UX blueprint expectations.
+- Align spacing, typography, and headings with Track pillar design choices established in Story 0.1 and blueprint Section 3.3.
+- Avoid regressing pull-to-refresh and refresh button behaviors currently implemented in `dashboard/page.tsx`.
+  ]]></constraints>
+  <interfaces><![CDATA[
+- `QuickLogButtonsProps` (`src/components/quick-log/QuickLogButtons.tsx`): surface for emitting navigation intents and controlling disabled/loading states.
+- `FlareCreationModalProps` (`src/components/flares/FlareCreationModal.tsx`): modal lifecycle, required userId, and async `onSave` contract reused by route-based sheets.
+- `ActiveFlareCards` props (`src/components/flares/ActiveFlareCards.tsx`): expects userId, optional callbacks, and repository override — ensure new layout still provides refresh triggers.
+- `FoodContext` (`src/contexts/FoodContext.tsx`): exposes `openFoodLog` used by Quick Actions; adjust to work with router-based invocation if necessary.
+  ]]></interfaces>
+  <tests>
+    <standards><![CDATA[Jest + React Testing Library (configured via `jest.config.js` with fake-indexeddb) for component/unit coverage, plus Playwright readiness per project tooling for interaction flows. Follow testing strategy in docs/testing-strategy.md if updated by blueprint.]]></standards>
+    <locations><![CDATA[
+- src/components/**/__tests__/
+- src/app/(protected)/dashboard/__tests__/
+- Integration smoke tests under src/__tests__/integration/
+    ]]></locations>
+    <ideas><![CDATA[
+- AC0.2.1: Render dashboard page and assert module ordering, responsive classnames, and Highlights card wrapping ActiveFlareCards output using mock repository data.
+- AC0.2.2: Simulate clicking each Quick Action and verify router query updates, appropriate sheet/dialog renders, and back navigation closes the overlay.
+- AC0.2.3: Provide empty repositories to confirm helper copy appears for Highlights and Timeline and is announced via role/aria attributes.
+- AC0.2.4: Verify navigation helpers set page title, breadcrumbs, and active pillar state when visiting `/dashboard`, using shared navigation config exports.
+    ]]></ideas>
+  </tests>
+</story-context>

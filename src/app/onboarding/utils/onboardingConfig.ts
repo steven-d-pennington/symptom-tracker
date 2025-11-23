@@ -26,17 +26,34 @@ export const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
       "Tell us how often you want reminders and which symptom categories matter most to you.",
   },
   {
-    id: "education",
-    title: "Learn the Basics",
-    description:
-      "Review short lessons on effective symptom tracking, privacy, and staying motivated.",
-    optional: true,
-  },
-  {
     id: "privacy",
     title: "Review Privacy Controls",
     description:
       "Understand exactly how your information stays on your device and under your control.",
+  },
+  {
+    id: "symptomSelection",
+    title: "Select Your Symptoms",
+    description:
+      "Choose which symptoms you want to track. Search and add custom items if needed.",
+  },
+  {
+    id: "triggerSelection",
+    title: "Select Your Triggers",
+    description:
+      "Choose which triggers you want to monitor. Search and add custom items if needed.",
+  },
+  {
+    id: "medicationSelection",
+    title: "Select Your Treatments",
+    description:
+      "Choose which medications and treatments you want to track. Search and add custom items if needed.",
+  },
+  {
+    id: "foodSelection",
+    title: "Select Foods to Track",
+    description:
+      "Choose which foods you want to monitor. Search and add custom items if needed.",
   },
   {
     id: "completion",

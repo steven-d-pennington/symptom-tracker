@@ -1,0 +1,246 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.6</epicId>
+    <storyId>3.6.1</storyId>
+    <title>Interactive Data Selection During Onboarding</title>
+    <status>draft</status>
+    <generatedAt>2025-11-01</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3.6.1-onboarding-data-selection-flow.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a new user going through onboarding</asA>
+    <iWant>to select which symptoms, triggers, medications, and foods are relevant to me</iWant>
+    <soThat>my dashboard only shows items I actually use and I feel in control of my data from day one</soThat>
+    <tasks>
+      <task id="1">Design data structure for onboarding selections (OnboardingSelections type, React context)</task>
+      <task id="2">Create reusable SelectionStep component with search, categories, checkboxes</task>
+      <task id="3">Create symptom selection step using SelectionStep component</task>
+      <task id="4">Create trigger selection step using SelectionStep component</task>
+      <task id="5">Create medication selection step using SelectionStep component</task>
+      <task id="6">Create food selection step using SelectionStep component</task>
+      <task id="7">Update OnboardingFlow to add 4 new steps after ConditionStep, implement batch creation</task>
+      <task id="8">Update ProgressIndicator for new step count</task>
+      <task id="9">Update onboarding utilities for selection persistence and validation</task>
+      <task id="10">Implement responsive layouts (mobile 1-col, tablet 2-col, desktop 3-col)</task>
+      <task id="11">Add analytics tracking using useUxInstrumentation hook</task>
+      <task id="12">Update userInitialization.ts to accept optional selections parameter</task>
+      <task id="13">Update existing tests for new onboarding steps</task>
+      <task id="14">Update documentation and add JSDoc comments</task>
+      <task id="15">Migration and backwards compatibility (feature flag, sessionStorage)</task>
+      <task id="16">Verify and ensure GUID-based user ID generation (crypto.randomUUID)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC3.6.1.1" priority="HIGH">Add symptom selection step to onboarding after step 4, organized by category (collapsible), with Select All/Clear All buttons</criterion>
+    <criterion id="AC3.6.1.2" priority="CRITICAL">Add search functionality to ALL selection steps - real-time filtering, auto-expand matching categories, clear button, case-insensitive</criterion>
+    <criterion id="AC3.6.1.3" priority="CRITICAL">Allow adding custom items during onboarding for ALL types - search prompt, inline form, auto-select/favorite, Custom badge</criterion>
+    <criterion id="AC3.6.1.4" priority="HIGH">Add trigger selection step with EXACT SAME UX pattern as symptoms</criterion>
+    <criterion id="AC3.6.1.5" priority="HIGH">Add medication selection step with EXACT SAME UX pattern</criterion>
+    <criterion id="AC3.6.1.6" priority="HIGH">Add food selection step with EXACT SAME UX pattern</criterion>
+    <criterion id="AC3.6.1.7" priority="MEDIUM">Update progress indicator for new steps, back button preserves selections</criterion>
+    <criterion id="AC3.6.1.8" priority="MEDIUM">Skip functionality for each step - Skip button, empty state allowed, tracked in analytics</criterion>
+    <criterion id="AC3.6.1.9" priority="HIGH">Preserve selections if user goes back - store in context/sessionStorage, validate before Next</criterion>
+    <criterion id="AC3.6.1.10" priority="HIGH">Batch creation on completion - single operation, isDefault+isEnabled for defaults, isFavorite for custom, loading state</criterion>
+    <criterion id="AC3.6.1.11" priority="HIGH">Responsive design - mobile/tablet/desktop layouts, 44x44px touch targets, sticky search</criterion>
+    <criterion id="AC3.6.1.12" priority="LOW">Analytics tracking - selection frequency, categories explored, custom items, skip rates</criterion>
+    <criterion id="AC3.6.1.13" priority="CRITICAL">Use GUID for user ID generation - crypto.randomUUID or uuid library, verify generateId utility</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Core Features - Onboarding</section>
+        <snippet>Onboarding flow should personalize user experience and reduce initial overwhelm. Focus on user agency and control from day one.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Frontend Architecture - React Components</section>
+        <snippet>Reusable component patterns, state management via React Context, sessionStorage for temporary persistence, IndexedDB for permanent data.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-5-1-fix-empty-state-crisis-and-pre-populate-defaults.md</path>
+        <title>Story 3.5.1: Fix Empty State Crisis</title>
+        <section>Default Data Pre-Population</section>
+        <snippet>Story 3.5.1 established default data structure (DEFAULT_SYMPTOMS, DEFAULT_FOODS, DEFAULT_TRIGGERS, DEFAULT_MEDICATIONS) and auto-population. Story 3.6.1 enhances this by letting users choose which defaults to enable.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Product Epics</title>
+        <section>Epic 3: UX Refinement</section>
+        <snippet>Epic 3 focuses on production-ready UX including onboarding improvements, mobile optimization, and user control features.</snippet>
+      </doc>
+      <doc>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>Brainstorming Session 2025-10-29</title>
+        <section>Empty State Crisis</section>
+        <snippet>Identified that auto-populating all defaults can feel overwhelming. Users want control and personalization from first login.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/app/onboarding/components/OnboardingFlow.tsx</path>
+        <kind>component</kind>
+        <symbol>OnboardingFlow</symbol>
+        <lines>1-147</lines>
+        <reason>Main onboarding orchestrator - needs to add 4 new steps after ConditionStep (currently 7 steps total)</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/onboarding/hooks/useOnboarding.tsx</path>
+        <kind>hook</kind>
+        <symbol>useOnboarding</symbol>
+        <lines>all</lines>
+        <reason>Onboarding state management - needs to support new selection steps and preserve state</reason>
+      </artifact>
+      <artifact>
+        <path>src/app/onboarding/components/ProgressIndicator.tsx</path>
+        <kind>component</kind>
+        <symbol>ProgressIndicator</symbol>
+        <lines>all</lines>
+        <reason>Progress UI - needs to update for new step count (from 7 to 11 steps total)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/data/defaultData.ts</path>
+        <kind>data</kind>
+        <symbol>DEFAULT_SYMPTOMS, DEFAULT_FOODS, DEFAULT_TRIGGERS, DEFAULT_MEDICATIONS</symbol>
+        <lines>1-100+</lines>
+        <reason>Source data for selection steps - organized by category, provides structure for checkboxes</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/services/userInitialization.ts</path>
+        <kind>service</kind>
+        <symbol>initializeUserDefaults</symbol>
+        <lines>46-80</lines>
+        <reason>User initialization service - needs to accept optional selections parameter to create only selected items instead of all defaults</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/userRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>getOrCreateCurrentUser</symbol>
+        <lines>97-156</lines>
+        <reason>User creation - calls initializeUserDefaults, needs to pass selections from onboarding context</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/symptomRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>bulkCreate</symbol>
+        <lines>all</lines>
+        <reason>Batch creation API for symptoms - used during onboarding completion</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/hooks/useUxInstrumentation.ts</path>
+        <kind>hook</kind>
+        <symbol>useUxInstrumentation</symbol>
+        <lines>all</lines>
+        <reason>Analytics tracking - use for onboarding selection events (AC3.6.1.12)</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/idGenerator.ts</path>
+        <kind>utility</kind>
+        <symbol>generateId</symbol>
+        <lines>all</lines>
+        <reason>ID generation utility - must verify it uses GUID/UUID format (AC3.6.1.13)</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <framework name="Next.js" version="15.5.4">App router, server/client components, navigation hooks</framework>
+      <framework name="React" version="19.1.0">Hooks, Context API, state management</framework>
+      <library name="dexie" version="4.2.0">IndexedDB wrapper for bulk operations</library>
+      <library name="lucide-react" version="0.544.0">Icons (ChevronDown, ChevronUp, Search, X)</library>
+      <library name="uuid" version="13.0.0">GUID generation for user IDs (crypto.randomUUID alternative)</library>
+      <library name="zod" version="4.1.12">Schema validation for form data</library>
+      <devLibrary name="@testing-library/react" version="16.3.0">Component testing</devLibrary>
+      <devLibrary name="jest" version="30.2.0">Test framework</devLibrary>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Component Reusability: SelectionStep component must be generic and work identically for all 4 data types (symptoms, triggers, medications, foods)</constraint>
+    <constraint>Performance: Batch creation must complete in single transaction - use bulkCreate APIs, not individual creates</constraint>
+    <constraint>State Management: Use React Context for onboarding selections, sessionStorage for persistence across page refreshes</constraint>
+    <constraint>Accessibility: WCAG 2.1 AA compliance - 44x44px touch targets, aria-labels, keyboard navigation, screen reader support</constraint>
+    <constraint>Mobile-First: Responsive layouts (1-col mobile, 2-col tablet, 3-col desktop), sticky search bar, smooth animations</constraint>
+    <constraint>Backwards Compatibility: Feature flag for gradual rollout, fall back to old auto-populate if disabled, no data migration needed</constraint>
+    <constraint>GUID Requirement: User IDs must use GUID/UUID format (xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx) for cloud sync preparation</constraint>
+    <constraint>Testing Standards: Unit tests for components, integration tests for full flow, E2E tests on real devices</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>OnboardingSelections</name>
+      <kind>TypeScript type</kind>
+      <signature>
+type OnboardingSelections = {
+  symptoms: Array&lt;{ id?: string; name: string; category: string; isDefault: boolean; isCustom: boolean }&gt;;
+  triggers: Array&lt;{ id?: string; name: string; category: string; isDefault: boolean; isCustom: boolean }&gt;;
+  medications: Array&lt;{ id?: string; name: string; category: string; isDefault: boolean; isCustom: boolean }&gt;;
+  foods: Array&lt;{ id?: string; name: string; category: string; isDefault: boolean; isCustom: boolean }&gt;;
+}
+      </signature>
+      <path>src/app/onboarding/types/onboarding.ts</path>
+    </interface>
+    <interface>
+      <name>SelectionStepProps</name>
+      <kind>React component props</kind>
+      <signature>
+interface SelectionStepProps {
+  type: 'symptom' | 'trigger' | 'medication' | 'food';
+  title: string;
+  description: string;
+  defaultItems: Array&lt;{ name: string; category: string; [key: string]: any }&gt;;
+  onNext: () => void;
+  onSkip: () => void;
+  onBack: () => void;
+}
+      </signature>
+      <path>src/app/onboarding/components/SelectionStep.tsx</path>
+    </interface>
+    <interface>
+      <name>initializeUserDefaults</name>
+      <kind>Function signature</kind>
+      <signature>
+async function initializeUserDefaults(
+  userId: string,
+  selections?: OnboardingSelections
+): Promise&lt;InitializationResult&gt;
+      </signature>
+      <path>src/lib/services/userInitialization.ts</path>
+    </interface>
+    <interface>
+      <name>bulkCreate APIs</name>
+      <kind>Repository methods</kind>
+      <signature>
+symptomRepository.bulkCreate(items: Omit&lt;SymptomRecord, 'id' | 'createdAt' | 'updatedAt'&gt;[]): Promise&lt;string[]&gt;
+foodRepository.bulkCreate(items: Omit&lt;FoodRecord, 'id' | 'createdAt' | 'updatedAt'&gt;[]): Promise&lt;string[]&gt;
+triggerRepository.bulkCreate(items: Omit&lt;TriggerRecord, 'id' | 'createdAt' | 'updatedAt'&gt;[]): Promise&lt;string[]&gt;
+medicationRepository.bulkCreate(items: Omit&lt;MedicationRecord, 'id' | 'createdAt' | 'updatedAt'&gt;[]): Promise&lt;string[]&gt;
+      </signature>
+      <path>src/lib/repositories/</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Testing follows Jest + React Testing Library patterns. Components tested in isolation with mocked dependencies. Integration tests verify full onboarding flow. E2E tests run on real devices (mobile, tablet, desktop). Accessibility tested with screen readers and keyboard navigation. Performance tested with 1, 10, 50 items per category.
+    </standards>
+    <locations>
+      <location>__tests__/components/onboarding/</location>
+      <location>__tests__/services/userInitialization.test.ts</location>
+      <location>__tests__/integration/onboarding-flow.test.tsx</location>
+    </locations>
+    <ideas>
+      <idea criterion="AC3.6.1.2">Test search filters items correctly, auto-expands matching categories, clears on X click</idea>
+      <idea criterion="AC3.6.1.3">Test custom item creation: form appears, validates, adds to list with Custom badge</idea>
+      <idea criterion="AC3.6.1.8">Test skip functionality: can proceed with no selections, analytics tracks skip event</idea>
+      <idea criterion="AC3.6.1.9">Test back button: selections preserved when going back/forward between steps</idea>
+      <idea criterion="AC3.6.1.10">Test batch creation: all selected items created with correct isDefault/isFavorite flags</idea>
+      <idea criterion="AC3.6.1.11">Test responsive: mobile 1-col, tablet 2-col, desktop 3-col layouts render correctly</idea>
+      <idea criterion="AC3.6.1.13">Test GUID generation: verify generateId() returns valid UUID v4 format</idea>
+    </ideas>
+  </tests>
+</story-context>

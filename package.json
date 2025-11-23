@@ -1,27 +1,47 @@
 {
   "name": "symptom-tracker",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 3001",
+    "dev:clean": "rm -Recurse -Force .next; npm run dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "ux:validate": "node scripts/ux-validate.js"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@upstash/ratelimit": "^2.0.7",
+    "@upstash/redis": "^1.35.6",
+    "@vercel/blob": "^2.0.0",
     "chart.js": "^4.5.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-annotation": "^3.1.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "dexie": "^4.2.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-chartjs-2": "^5.3.0",
+    "react-day-picker": "^9.11.1",
     "react-dom": "19.1.0",
-    "uuid": "^13.0.0"
+    "react-zoom-pan-pinch": "^3.6.1",
+    "resend": "^6.4.2",
+    "tailwind-merge": "^3.4.0",
+    "uuid": "^13.0.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -36,9 +56,11 @@
     "@types/uuid": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
+    "fake-indexeddb": "^6.2.4",
     "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.4",
-    "typescript": "^5"
+    "typescript": "5.9.3"
   }
 }

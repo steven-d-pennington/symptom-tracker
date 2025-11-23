@@ -1,0 +1,347 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3.5</epicId>
+    <storyId>7</storyId>
+    <title>Fix Calendar Data Wiring</title>
+    <status>drafted</status>
+    <generatedAt>2025-10-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-5-7-fix-calendar-data-wiring.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user reviewing my health history</asA>
+    <iWant>the calendar to display my logged data</iWant>
+    <soThat>I can see my activity patterns over time</soThat>
+    <tasks>
+      - Task 1: Implement calendar data fetching (AC: #3.5.7.1, #3.5.7.7)
+        - 1.1: Locate calendar component (src/components/calendar/ or src/app/(protected)/calendar/page.tsx)
+        - 1.2: Create calendar data hook: useCalendarData(userId, startDate, endDate)
+        - 1.3: Hook fetches from all repositories: symptoms, foods, triggers, medications, mood, sleep, flares
+        - 1.4: Use Promise.all() to fetch in parallel for performance
+        - 1.5: Query only displayed month range: startOfMonth to endOfMonth
+        - 1.6: Group fetched data by date for calendar rendering
+        - 1.7: Return data structure: Map&lt;dateString, EntryData[]&gt; keyed by "YYYY-MM-DD"
+        - 1.8: Add loading and error states
+
+      - Task 2: Display count badges on calendar dates (AC: #3.5.7.2, #3.5.7.3)
+        - 2.1: Update calendar date cell component to display badges
+        - 2.2: Count entries per data type for each date
+        - 2.3: Render badges with data type colors: symptoms (red), foods (green), triggers (orange), medications (blue), mood (purple), sleep (indigo)
+        - 2.4: Use small circular badges with count numbers
+        - 2.5: Stack or arrange badges to avoid overlap
+        - 2.6: Responsive sizing: smaller badges on mobile (avoid clutter)
+        - 2.7: Add icons or abbreviations if space allows (e.g., "S" for symptoms)
+
+      - Task 3: Implement day summary modal (AC: #3.5.7.4)
+        - 3.1: Create DaySummaryModal component
+        - 3.2: Modal triggered by clicking calendar date
+        - 3.3: Fetch all entries for selected date
+        - 3.4: Display grouped by type: Symptoms, Foods, Triggers, Medications, Mood, Sleep, Flares
+        - 3.5: Each entry shows: time, primary details (severity, hours, etc.), notes if present
+        - 3.6: Entries are tappable to view full details or edit
+        - 3.7: Add close button to return to calendar
+        - 3.8: Style with scrollable content if many entries
+
+      - Task 4: Implement reactive calendar updates (AC: #3.5.7.5)
+        - 4.1: Use React Query or polling pattern to fetch calendar data
+        - 4.2: Invalidate calendar query after logging new data
+        - 4.3: Calendar re-fetches data and updates automatically
+        - 4.4: Show brief loading indicator during refetch
+        - 4.5: Test: log symptom → calendar updates immediately
+
+      - Task 5: Handle empty dates gracefully (AC: #3.5.7.6)
+        - 5.1: Calendar dates with no data render cleanly (no badges)
+        - 5.2: Clicking empty date shows: "No entries for this date"
+        - 5.3: Add link/button: "Log something now" navigates to logging pages
+        - 5.4: Empty state styling distinct from dates with data
+        - 5.5: Test light and dark mode appearance
+
+      - Task 6: Optimize calendar performance (AC: #3.5.7.7)
+        - 6.1: Profile calendar data fetching: measure query times
+        - 6.2: Ensure queries use indexed fields for efficiency
+        - 6.3: Limit queries to displayed month only (not all data)
+        - 6.4: Implement pagination for month navigation
+        - 6.5: Add loading skeleton for calendar while fetching
+        - 6.6: Test with large dataset (100+ entries) - verify performance acceptable
+        - 6.7: Test on mobile devices - interactions respond within 100ms
+
+      - Task 7: Add comprehensive tests (AC: All)
+        - 7.1: Test useCalendarData hook: fetches all data types correctly
+        - 7.2: Test date grouping: entries grouped by date string
+        - 7.3: Test badge rendering: correct counts and colors
+        - 7.4: Test day summary modal: displays all entries for date
+        - 7.5: Test empty dates: render cleanly, show appropriate message
+        - 7.6: Test calendar updates: new data appears immediately
+        - 7.7: Test performance: month view loads quickly (&lt;500ms)
+        - 7.8: Integration test: full calendar flow end-to-end
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC3.5.7.1: Calendar wired to IndexedDB data sources - Calendar component queries IndexedDB for logged data: symptoms, foods, triggers, medications, mood entries, sleep entries, flare events, queries use repository methods: getByDateRange(userId, startDate, endDate), data fetched for currently displayed month, efficient queries with date range filters (not loading all data).
+
+    AC3.5.7.2: Historical mode displays all logged data types - Calendar shows data in historical view mode (first mode per brainstorming decision), each calendar date displays: symptom entries (count or icons), food entries (count or icons), trigger entries (count or icons), medication entries (count or icons), mood entries (mood indicator), sleep entries (hours or quality indicator), active flares (flare markers), visual indicators differentiate data types (colors, icons, badges).
+
+    AC3.5.7.3: Calendar day view shows count badges - Each date cell shows count badges for multiple entries, badge format: small circular badge with number (e.g., "3" for 3 symptoms), different badge colors per data type: symptoms (red), foods (green), triggers (orange), medications (blue), mood (purple), sleep (indigo), stacked or arranged to avoid overlap, mobile-friendly sizing (not too cluttered on small screens).
+
+    AC3.5.7.4: Clicking date shows day summary - Clicking/tapping a calendar date opens modal or panel showing summary of logged data for that day, summary lists all entries: symptoms with severity, foods with meal type, triggers, medications with dosage, mood value and notes, sleep hours and quality, flare events, each entry is tappable to view full details, summary can be closed to return to calendar view.
+
+    AC3.5.7.5: Calendar updates when new data logged - Calendar view updates immediately when user logs new data (symptoms, food, etc.), uses React state or query invalidation to refresh calendar data, no manual page refresh required to see new entries, loading state shown briefly during data refetch, follows reactive data patterns from existing app.
+
+    AC3.5.7.6: Empty dates display appropriately - Calendar dates with no logged data appear empty (no badges, no errors), empty state doesn't break layout or cause rendering issues, clicking empty date shows: "No entries for this date. Log something to track patterns.", empty dates are visually distinct from dates with data, consistent styling across light and dark mode.
+
+    AC3.5.7.7: Calendar performance optimized - Loading month view efficient: queries only date range for displayed month, pagination or lazy loading if user navigates to different months, data fetching happens in background (doesn't block UI), handles large datasets gracefully (100+ entries per month), no performance degradation on mobile devices, interactions respond within 100ms per NFR001.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Non-Functional Requirements</section>
+        <snippet>NFR001: Body map zoom and pan interactions shall respond within 100ms to maintain smooth user experience on mobile and desktop devices. NFR002: All flare data (creation, updates, resolution) shall persist to local IndexedDB immediately with offline-first architecture, ensuring zero data loss even without network connectivity.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Repository and Service Architecture</section>
+        <snippet>Repository Strategy: Monorepo (existing). Project Structure: Next.js App Router. Uses IndexedDB via Dexie for offline-first data persistence. Repository pattern for data access with hooks layer for React components.</snippet>
+      </doc>
+      <doc>
+        <path>docs/brainstorming-session-results-2025-10-29.md</path>
+        <title>Brainstorming Session Results</title>
+        <section>Daily Active User Perspective - Calendar Issues</section>
+        <snippet>Calendar: Completely out of sync, nothing displaying - needs complete rewiring. Historical Mode First: Brainstorming decision: launch with historical mode (display logged entries). Predictive and planning modes are future enhancements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epic-3.5-production-ux.md</path>
+        <title>Epic 3.5: Production UX Polish</title>
+        <section>Story 3.5.7: Fix Calendar Data Wiring</section>
+        <snippet>Epic 3.5 addresses critical UI/UX issues blocking production deployment. Story 3.5.7 focuses on wiring calendar to IndexedDB data sources to display logged data in historical mode. Requires integration with mood/sleep data from Story 3.5.2.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 3.5.7</section>
+        <snippet>Complete story specification with 7 acceptance criteria covering data wiring, visual display, performance optimization, and reactive updates.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/calendar/hooks/useCalendarData.ts</path>
+        <kind>hook</kind>
+        <symbol>useCalendarData</symbol>
+        <lines>1-743</lines>
+        <reason>Existing calendar data hook that fetches from dailyEntryRepository. Currently only fetches daily entries, needs extension to fetch from symptom, food, trigger, medication, mood, sleep, and flare repositories. Contains data grouping logic by date that can be reused.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/calendar/CalendarView.tsx</path>
+        <kind>component</kind>
+        <symbol>CalendarView</symbol>
+        <lines>1-148</lines>
+        <reason>Main calendar view component. Consumes useCalendarData hook and renders CalendarGrid, TimelineView, ChartView, and DayView. Integration point for wiring new data sources.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/calendar/CalendarGrid.tsx</path>
+        <kind>component</kind>
+        <symbol>CalendarGrid</symbol>
+        <lines>unknown</lines>
+        <reason>Renders calendar date cells. Needs modification to display count badges for different data types with color coding.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/symptomRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>SymptomRepository</symbol>
+        <lines>1-147</lines>
+        <reason>Repository for symptom data access. Provides getAll(userId) method. Needs getByDateRange method for calendar integration.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>flareRepository</symbol>
+        <lines>1-384</lines>
+        <reason>Repository for flare data with getActiveFlares(userId) method. Provides pattern for date range queries. Currently does not have getByDateRange but can be extended.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/index.ts</path>
+        <kind>file</kind>
+        <symbol>repository exports</symbol>
+        <lines>1-8</lines>
+        <reason>Central export for all repositories. Lists available repositories: symptomRepository, medicationRepository, triggerRepository, dailyEntryRepository, flareRepository. Need to check for mood/sleep repositories.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/types/calendar.ts</path>
+        <kind>types</kind>
+        <symbol>CalendarEntry, CalendarDayDetail, TimelineEvent</symbol>
+        <lines>unknown</lines>
+        <reason>Type definitions for calendar data structures. Defines CalendarEntry, CalendarDayDetail, TimelineEvent interfaces used throughout calendar components.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/calendar/DayView.tsx</path>
+        <kind>component</kind>
+        <symbol>DayView</symbol>
+        <lines>unknown</lines>
+        <reason>Displays selected day summary. May serve as day summary modal or need replacement with new DaySummaryModal component per Task 3.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <react>19.1.0</react>
+        <next>15.5.4</next>
+        <dexie>4.2.0</dexie>
+        <date-fns>4.1.0</date-fns>
+        <lucide-react>0.544.0</lucide-react>
+        <uuid>13.0.0</uuid>
+        <zod>4.1.12</zod>
+        <chart-js>4.5.0</chart-js>
+        <react-chartjs-2>5.3.0</react-chartjs-2>
+        <chartjs-adapter-date-fns>3.0.0</chartjs-adapter-date-fns>
+        <chartjs-plugin-annotation>3.1.0</chartjs-plugin-annotation>
+        <typescript>5</typescript>
+        <tailwindcss>4</tailwindcss>
+      </node>
+      <devDependencies>
+        <jest>30.2.0</jest>
+        <testing-library-react>16.3.0</testing-library-react>
+        <testing-library-jest-dom>6.9.1</testing-library-jest-dom>
+        <fake-indexeddb>6.2.4</fake-indexeddb>
+        <ts-jest>29.4.4</ts-jest>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - CRITICAL: Calendar currently broken per brainstorming session - "completely out of sync, nothing displaying"
+    - MUST fetch from all data sources: symptoms, foods, triggers, medications, mood, sleep, flares
+    - MUST use repository getByDateRange(userId, startDate, endDate) pattern for efficient queries
+    - MUST implement historical mode first (predictive/planning modes are future enhancements)
+    - MUST handle mood and sleep data from Story 3.5.2 (prerequisite dependency)
+    - MUST maintain offline-first architecture - all data from IndexedDB, no network dependency
+    - MUST optimize for performance: query only displayed month, no full dataset loads
+    - MUST respond within 100ms per NFR001 (performance requirement)
+    - MUST support both light and dark mode styling
+    - MUST use existing calendar components where possible (CalendarView, CalendarGrid, DayView)
+    - MUST follow existing patterns: useCalendarData hook for data fetching, repository pattern for data access
+    - MUST group data by ISO date string "YYYY-MM-DD" for consistent keying
+    - MUST use Promise.all() for parallel repository queries to maximize performance
+    - SHOULD reuse existing badge color scheme: symptoms (red), foods (green), triggers (orange), medications (blue), mood (purple), sleep (indigo)
+    - SHOULD stack badges to avoid overlap on mobile devices
+    - SHOULD show loading skeleton during data fetching
+    - SHOULD invalidate React Query cache after logging new data for reactive updates
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Repository.getByDateRange</name>
+      <kind>function signature</kind>
+      <signature>getByDateRange(userId: string, startDate: number, endDate: number): Promise&lt;Record[]&gt;</signature>
+      <path>src/lib/repositories/[repository].ts</path>
+      <note>Pattern to be implemented across symptom, food, trigger, medication, mood, sleep, and flare repositories for calendar date range queries</note>
+    </interface>
+    <interface>
+      <name>useCalendarData</name>
+      <kind>hook</kind>
+      <signature>useCalendarData(options: CalendarDataHookOptions): CalendarDataResult</signature>
+      <path>src/components/calendar/hooks/useCalendarData.ts</path>
+      <note>Existing hook that needs extension to fetch from all repositories and group by date</note>
+    </interface>
+    <interface>
+      <name>CalendarEntry</name>
+      <kind>interface</kind>
+      <signature>
+        interface CalendarEntry {
+          date: string; // ISO date "YYYY-MM-DD"
+          hasEntry: boolean;
+          symptomCount: number;
+          medicationCount: number;
+          triggerCount: number;
+          mood?: string;
+          notes: boolean;
+          symptomCategories: string[];
+          triggerCategories: string[];
+          medicationCategories: string[];
+          symptomTags: string[];
+          triggerTags: string[];
+          medicationTags: string[];
+        }
+      </signature>
+      <path>src/lib/types/calendar.ts</path>
+      <note>May need extension for food, sleep, flare data types</note>
+    </interface>
+    <interface>
+      <name>CalendarDayDetail</name>
+      <kind>interface</kind>
+      <signature>
+        interface CalendarDayDetail extends CalendarEntry {
+          energyLevel?: number;
+          notesSummary?: string;
+          symptomsDetails: SymptomDetail[];
+          medicationDetails: MedicationDetail[];
+          triggerDetails: TriggerDetail[];
+        }
+      </signature>
+      <path>src/lib/types/calendar.ts</path>
+      <note>Used for day summary modal. May need extension for food, mood, sleep, flare details</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses Jest 30.2.0 with React Testing Library 16.3.0 for unit and integration tests. Tests use fake-indexeddb 6.2.4 to mock IndexedDB. Test files located in __tests__ directories adjacent to source files or in component/lib directories. Testing pattern: unit tests for hooks and services, integration tests for component flows, repository tests mock Dexie database. Coverage target: 80% for service/repository layers per architecture doc.
+    </standards>
+    <locations>
+      src/components/calendar/__tests__/
+      src/lib/hooks/__tests__/
+      src/lib/repositories/__tests__/
+      src/__tests__/integration/
+    </locations>
+    <ideas>
+      <test ac="AC3.5.7.1">
+        - Test useCalendarData hook fetches from all repositories (symptom, food, trigger, medication, mood, sleep, flare)
+        - Test repository calls use correct date range (start/end of displayed month)
+        - Test Promise.all parallel fetching executes correctly
+        - Test data grouping by ISO date string "YYYY-MM-DD"
+        - Mock fake-indexeddb with sample data across all repositories
+      </test>
+      <test ac="AC3.5.7.2">
+        - Test CalendarGrid renders entries for each data type
+        - Test historical mode displays all data types (not predictive/planning modes)
+        - Test visual indicators present for symptoms, foods, triggers, medications, mood, sleep, flares
+      </test>
+      <test ac="AC3.5.7.3">
+        - Test CalendarDateCell renders correct badge counts per data type
+        - Test badge colors: symptoms (red), foods (green), triggers (orange), medications (blue), mood (purple), sleep (indigo)
+        - Test badges stack without overlap
+        - Test mobile responsive sizing
+      </test>
+      <test ac="AC3.5.7.4">
+        - Test clicking date opens DaySummaryModal
+        - Test modal displays all entry types grouped correctly
+        - Test modal shows time, details, notes for each entry
+        - Test modal entries are tappable/clickable
+        - Test close button returns to calendar view
+      </test>
+      <test ac="AC3.5.7.5">
+        - Test calendar updates after logging new symptom (React Query invalidation)
+        - Test loading state shown during refetch
+        - Test no manual refresh required
+        - Integration test: log symptom → verify calendar displays new entry
+      </test>
+      <test ac="AC3.5.7.6">
+        - Test empty date renders cleanly (no badges, no errors)
+        - Test clicking empty date shows empty state message
+        - Test empty state includes "Log something" link
+        - Test empty dates visually distinct from dates with data
+        - Test light and dark mode styling
+      </test>
+      <test ac="AC3.5.7.7">
+        - Performance test: measure query times for month view load
+        - Test queries limited to displayed month only (not all historical data)
+        - Test with large dataset (100+ entries per month)
+        - Test mobile device performance (interactions &lt; 100ms)
+        - Test loading skeleton displays during fetch
+      </test>
+    </ideas>
+  </tests>
+</story-context>

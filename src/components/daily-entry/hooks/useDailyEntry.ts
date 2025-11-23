@@ -14,6 +14,9 @@ import { dailyEntryRepository } from "@/lib/repositories/dailyEntryRepository";
 import { medicationRepository } from "@/lib/repositories/medicationRepository";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { MedicationRecord } from "@/lib/db/schema";
+import { symptomInstanceRepository } from "@/lib/repositories/symptomInstanceRepository";
+import { medicationEventRepository } from "@/lib/repositories/medicationEventRepository";
+import { triggerEventRepository } from "@/lib/repositories/triggerEventRepository";
 
 const createInitialEntry = (userId: string, medications: MedicationRecord[] = []): DailyEntry => ({
   id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
@@ -176,26 +179,26 @@ export const useDailyEntry = () => {
 
         const updatedSymptoms: DailySymptom[] = existing
           ? prev.symptoms.map((symptom) =>
-              symptom.symptomId === symptomId
-                ? {
-                    ...symptom,
-                    ...changes,
-                    symptomId,
-                    severity:
-                      "severity" in changes
-                        ? Math.min(10, Math.max(0, changes.severity ?? symptom.severity))
-                        : symptom.severity,
-                  }
-                : symptom,
-            )
-          : [
-              ...prev.symptoms,
-              {
+            symptom.symptomId === symptomId
+              ? {
+                ...symptom,
+                ...changes,
                 symptomId,
-                severity: changes.severity ?? 5,
-                notes: changes.notes,
-              },
-            ];
+                severity:
+                  "severity" in changes
+                    ? Math.min(10, Math.max(0, changes.severity ?? symptom.severity))
+                    : symptom.severity,
+              }
+              : symptom,
+          )
+          : [
+            ...prev.symptoms,
+            {
+              symptomId,
+              severity: changes.severity ?? 5,
+              notes: changes.notes,
+            },
+          ];
 
         return {
           ...prev,
@@ -224,9 +227,9 @@ export const useDailyEntry = () => {
         medications: prev.medications.map((medication) =>
           medication.medicationId === medicationId
             ? {
-                ...medication,
-                ...changes,
-              }
+              ...medication,
+              ...changes,
+            }
             : medication,
         ),
       }));
@@ -259,26 +262,26 @@ export const useDailyEntry = () => {
 
         const updatedTriggers: DailyTrigger[] = existing
           ? prev.triggers.map((trigger) =>
-              trigger.triggerId === triggerId
-                ? {
-                    ...trigger,
-                    ...changes,
-                    triggerId,
-                    intensity:
-                      "intensity" in changes
-                        ? Math.min(10, Math.max(0, changes.intensity ?? trigger.intensity))
-                        : trigger.intensity,
-                  }
-                : trigger,
-            )
-          : [
-              ...prev.triggers,
-              {
+            trigger.triggerId === triggerId
+              ? {
+                ...trigger,
+                ...changes,
                 triggerId,
-                intensity: changes.intensity ?? 5,
-                notes: changes.notes,
-              },
-            ];
+                intensity:
+                  "intensity" in changes
+                    ? Math.min(10, Math.max(0, changes.intensity ?? trigger.intensity))
+                    : trigger.intensity,
+              }
+              : trigger,
+          )
+          : [
+            ...prev.triggers,
+            {
+              triggerId,
+              intensity: changes.intensity ?? 5,
+              notes: changes.notes,
+            },
+          ];
 
         return {
           ...prev,
@@ -328,12 +331,86 @@ export const useDailyEntry = () => {
       setQueue((prev) => [finalizedEntry, ...prev]);
     } else {
       try {
-        // Save to IndexedDB
+        // Save to IndexedDB (Daily Entry Journal)
         await dailyEntryRepository.create({
           ...finalizedEntry,
           createdAt: completedAt,
           updatedAt: completedAt,
         });
+
+        // Save individual events for Timeline visibility
+        // 1. Symptoms
+        for (const symptom of finalizedEntry.symptoms) {
+          // Fetch symptom definition to get name, category, etc.
+          // We need to import symptomRepository for this, but it's not imported yet.
+          // Wait, it IS imported in line 15 of the original file? No, line 15 is useCurrentUser.
+          // I need to add symptomRepository import.
+          // Actually, I can't import it inside the function.
+          // I will assume it's imported or I will add the import in a separate chunk if needed.
+          // Checking imports... symptomRepository IS imported in the file (line 15 in my previous view, but I might have missed it).
+          // Let's check the file content again. Line 13: dailyEntryRepository. Line 14: medicationRepository.
+          // I need to add symptomRepository import.
+
+          // Wait, I can't see the imports here. I'll assume I need to add it.
+          // But I'm in a replacement chunk.
+
+          // Let's use the existing imports if possible.
+          // I'll use a dynamic import or assume it's there.
+          // Actually, I'll add the import in a separate chunk.
+
+          // For now, let's write the logic assuming symptomRepository is available.
+          // But wait, I can't compile if it's not there.
+          // I'll add the import in the top chunk.
+
+          const symptomDef = await import("@/lib/repositories/symptomRepository").then(m => m.symptomRepository.getById(symptom.symptomId));
+
+          if (symptomDef) {
+            await symptomInstanceRepository.create({
+              userId: finalizedEntry.userId,
+              name: symptomDef.name,
+              category: symptomDef.category,
+              severity: symptom.severity,
+              severityScale: {
+                type: "numeric",
+                min: symptomDef.severityScale.min,
+                max: symptomDef.severityScale.max,
+                labels: symptomDef.severityScale.labels,
+              },
+              notes: symptom.notes,
+              timestamp: completedAt,
+              // Optional fields
+              location: undefined,
+              duration: undefined,
+              triggers: undefined,
+              photos: undefined,
+            });
+          }
+        }
+
+        // 2. Medications (only taken ones)
+        for (const med of finalizedEntry.medications) {
+          if (med.taken) {
+            await medicationEventRepository.create({
+              userId: finalizedEntry.userId,
+              medicationId: med.medicationId,
+              taken: true,
+              dosage: med.dosage,
+              timestamp: completedAt.getTime(),
+              notes: "Logged via Daily Entry",
+            });
+          }
+        }
+
+        // 3. Triggers
+        for (const trigger of finalizedEntry.triggers) {
+          await triggerEventRepository.create({
+            userId: finalizedEntry.userId,
+            triggerId: trigger.triggerId,
+            intensity: trigger.intensity >= 7 ? 'high' : trigger.intensity >= 4 ? 'medium' : 'low',
+            notes: trigger.notes,
+            timestamp: completedAt.getTime(),
+          });
+        }
 
         // Reload history
         const entries = await dailyEntryRepository.getAll("demo");
@@ -346,6 +423,8 @@ export const useDailyEntry = () => {
         // Dispatch event for other components
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("daily-entry-updated"));
+          // Also trigger timeline refresh
+          window.dispatchEvent(new CustomEvent("timeline-refresh-needed"));
         }
       } catch (error) {
         console.error("Failed to save entry", error);

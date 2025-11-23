@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Log - symptom-tracker UX Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #FAFAFA;
+            color: #292524;
+            line-height: 1.6;
+            padding-bottom: 4rem;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, #0F9D91 0%, #0A7A70 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .demo-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .date-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #F5F5F4;
+        }
+
+        .current-date {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1C1917;
+            margin-bottom: 0.25rem;
+        }
+
+        .date-nav {
+            color: #78716C;
+            font-size: 0.9375rem;
+            margin-top: 0.5rem;
+        }
+
+        .date-nav button {
+            background: none;
+            border: none;
+            color: #0F9D91;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            font-weight: 500;
+        }
+
+        .date-nav button:hover {
+            text-decoration: underline;
+        }
+
+        .log-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #F5F5F4;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1C1917;
+        }
+
+        .mood-selector {
+            display: flex;
+            justify-content: space-around;
+            gap: 0.75rem;
+        }
+
+        .mood-option {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 0.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #F5F5F4;
+            border: 2px solid transparent;
+        }
+
+        .mood-option:hover {
+            background: #E7E5E4;
+            transform: scale(1.05);
+        }
+
+        .mood-option.selected {
+            background: #E0F5F3;
+            border-color: #0F9D91;
+        }
+
+        .mood-emoji {
+            font-size: 2.5rem;
+        }
+
+        .mood-label {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: #57534E;
+        }
+
+        .mood-option.selected .mood-label {
+            color: #0A7A70;
+        }
+
+        .input-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #44403C;
+            font-size: 0.9375rem;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #E7E5E4;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #0F9D91;
+            box-shadow: 0 0 0 3px rgba(15, 157, 145, 0.1);
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .star {
+            font-size: 1.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #D6D3D1;
+        }
+
+        .star.filled {
+            color: #FBBF24;
+        }
+
+        .star:hover {
+            transform: scale(1.1);
+        }
+
+        .flare-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .flare-item {
+            padding: 1rem;
+            background: #FAFAFA;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .flare-item.worsening {
+            border-color: #FCA5A5;
+        }
+
+        .flare-item.stable {
+            border-color: #FBBF24;
+        }
+
+        .flare-item.improving {
+            border-color: #86EFAC;
+        }
+
+        .flare-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .flare-location {
+            font-weight: 600;
+            color: #1C1917;
+        }
+
+        .flare-severity {
+            font-weight: 600;
+            color: #57534E;
+        }
+
+        .flare-trend {
+            font-size: 0.8125rem;
+            color: #78716C;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .flare-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-small {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #E7E5E4;
+            background: white;
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-small:hover {
+            border-color: #0F9D91;
+            color: #0F9D91;
+        }
+
+        .add-flare-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem;
+            border: 2px dashed #D6D3D1;
+            background: transparent;
+            border-radius: 8px;
+            color: #0F9D91;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9375rem;
+        }
+
+        .add-flare-btn:hover {
+            border-color: #0F9D91;
+            background: #E0F5F3;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid #E7E5E4;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            transition: all 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #0F9D91;
+            box-shadow: 0 0 0 3px rgba(15, 157, 145, 0.1);
+        }
+
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 1rem;
+            background: #F5F5F4;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .collapsible-header:hover {
+            background: #E7E5E4;
+        }
+
+        .collapsible-title {
+            font-weight: 600;
+            color: #44403C;
+        }
+
+        .collapsible-icon {
+            font-size: 1.25rem;
+            color: #78716C;
+            transition: transform 0.2s;
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.expanded {
+            max-height: 500px;
+        }
+
+        .save-button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #0F9D91 0%, #0A7A70 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1.5rem;
+        }
+
+        .save-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 157, 145, 0.3);
+        }
+
+        .save-button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 640px) {
+            .mood-selector {
+                flex-wrap: wrap;
+            }
+
+            .mood-option {
+                flex: 0 0 calc(50% - 0.375rem);
+            }
+
+            .input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1>📝 Daily Log</h1>
+        <p>Interactive UX Mockup - Unified Tracking Interface</p>
+    </div>
+
+    <div class="container">
+        <div class="date-header">
+            <div class="current-date">Thursday, November 7 2025</div>
+            <div class="date-nav">
+                <button onclick="alert('Navigate to previous day')">← Yesterday</button>
+                <span style="color: #D6D3D1;">|</span>
+                <button onclick="alert('Navigate to today')">Today</button>
+                <span style="color: #D6D3D1;">|</span>
+                <button onclick="alert('Navigate to next day')">Tomorrow →</button>
+            </div>
+        </div>
+
+        <!-- Mood Section -->
+        <div class="log-section">
+            <div class="section-header">
+                <span class="section-icon">💭</span>
+                <h2 class="section-title">How are you feeling today?</h2>
+            </div>
+            <div class="mood-selector">
+                <div class="mood-option" onclick="selectMood(this, 5)">
+                    <span class="mood-emoji">😊</span>
+                    <span class="mood-label">Great</span>
+                </div>
+                <div class="mood-option selected" onclick="selectMood(this, 4)">
+                    <span class="mood-emoji">🙂</span>
+                    <span class="mood-label">Good</span>
+                </div>
+                <div class="mood-option" onclick="selectMood(this, 3)">
+                    <span class="mood-emoji">😐</span>
+                    <span class="mood-label">Okay</span>
+                </div>
+                <div class="mood-option" onclick="selectMood(this, 2)">
+                    <span class="mood-emoji">😟</span>
+                    <span class="mood-label">Poor</span>
+                </div>
+                <div class="mood-option" onclick="selectMood(this, 1)">
+                    <span class="mood-emoji">😢</span>
+                    <span class="mood-label">Bad</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sleep Section -->
+        <div class="log-section">
+            <div class="section-header">
+                <span class="section-icon">😴</span>
+                <h2 class="section-title">Sleep last night?</h2>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Hours of Sleep</label>
+                <input type="number" value="7.5" step="0.5" min="0" max="24" placeholder="Hours">
+            </div>
+            <div class="input-group">
+                <label class="input-label">Sleep Quality</label>
+                <div class="star-rating" id="sleepQuality">
+                    <span class="star filled" onclick="setSleepQuality(1)">★</span>
+                    <span class="star filled" onclick="setSleepQuality(2)">★</span>
+                    <span class="star filled" onclick="setSleepQuality(3)">★</span>
+                    <span class="star" onclick="setSleepQuality(4)">★</span>
+                    <span class="star" onclick="setSleepQuality(5)">★</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Flares Section -->
+        <div class="log-section">
+            <div class="section-header">
+                <span class="section-icon">🔥</span>
+                <h2 class="section-title">Active Flares (3)</h2>
+            </div>
+            <div class="flare-list">
+                <div class="flare-item worsening">
+                    <div class="flare-header">
+                        <span class="flare-location">Left groin</span>
+                        <span class="flare-severity">Severity: 7</span>
+                    </div>
+                    <div class="flare-trend">
+                        <span>↗️</span>
+                        <span>Worsening</span>
+                    </div>
+                    <div class="flare-actions">
+                        <button class="btn-small" onclick="alert('Update flare severity')">Update</button>
+                        <button class="btn-small" onclick="alert('Add treatment note')">Add Note</button>
+                    </div>
+                </div>
+
+                <div class="flare-item stable">
+                    <div class="flare-header">
+                        <span class="flare-location">Right armpit</span>
+                        <span class="flare-severity">Severity: 4</span>
+                    </div>
+                    <div class="flare-trend">
+                        <span>→</span>
+                        <span>Stable</span>
+                    </div>
+                    <div class="flare-actions">
+                        <button class="btn-small" onclick="alert('Update flare severity')">Update</button>
+                        <button class="btn-small" onclick="alert('Add treatment note')">Add Note</button>
+                    </div>
+                </div>
+
+                <div class="flare-item improving">
+                    <div class="flare-header">
+                        <span class="flare-location">Inner thigh (left)</span>
+                        <span class="flare-severity">Severity: 3</span>
+                    </div>
+                    <div class="flare-trend">
+                        <span>✅</span>
+                        <span>Improving</span>
+                    </div>
+                    <div class="flare-actions">
+                        <button class="btn-small" onclick="alert('Update flare severity')">Update</button>
+                        <button class="btn-small" onclick="alert('Mark as resolved')">Resolve</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="add-flare-btn" onclick="alert('Navigate to body map to mark new flare')">
+                <span>+</span>
+                <span>Mark new flare on body map</span>
+            </button>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="log-section">
+            <div class="section-header">
+                <span class="section-icon">📝</span>
+                <h2 class="section-title">Today's Notes</h2>
+            </div>
+            <textarea placeholder="How are you feeling? Any observations about your health today?">Felt tired all day, think poor sleep affected my mood...</textarea>
+        </div>
+
+        <!-- Detailed Tracking (Collapsible) -->
+        <div class="collapsible-header" onclick="toggleCollapsible()">
+            <span class="collapsible-title">▼ Detailed Tracking (Optional)</span>
+            <span class="collapsible-icon" id="collapseIcon">▼</span>
+        </div>
+
+        <div class="collapsible-content" id="detailedTracking">
+            <div class="log-section" style="margin-top: 0.75rem;">
+                <div class="section-header">
+                    <span class="section-icon">💊</span>
+                    <h3 class="section-title">Medications taken today</h3>
+                </div>
+                <p style="color: #78716C; font-size: 0.9375rem;">No medications logged yet. <a href="#" style="color: #0F9D91;">Add medication</a></p>
+            </div>
+
+            <div class="log-section">
+                <div class="section-header">
+                    <span class="section-icon">🍽️</span>
+                    <h3 class="section-title">Foods logged</h3>
+                </div>
+                <p style="color: #78716C; font-size: 0.9375rem;">No foods logged yet. <a href="#" style="color: #0F9D91;">Log food</a></p>
+            </div>
+
+            <div class="log-section">
+                <div class="section-header">
+                    <span class="section-icon">⚠️</span>
+                    <h3 class="section-title">Triggers noticed</h3>
+                </div>
+                <p style="color: #78716C; font-size: 0.9375rem;">No triggers logged yet. <a href="#" style="color: #0F9D91;">Add trigger</a></p>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <button class="save-button" onclick="saveDailyLog()">Save Daily Log</button>
+    </div>
+
+    <script>
+        function selectMood(element, value) {
+            document.querySelectorAll('.mood-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            console.log('Mood selected:', value);
+        }
+
+        function setSleepQuality(rating) {
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('filled');
+                } else {
+                    star.classList.remove('filled');
+                }
+            });
+            console.log('Sleep quality:', rating);
+        }
+
+        function toggleCollapsible() {
+            const content = document.getElementById('detailedTracking');
+            const icon = document.getElementById('collapseIcon');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                icon.textContent = '▼';
+            } else {
+                content.classList.add('expanded');
+                icon.textContent = '▲';
+            }
+        }
+
+        function saveDailyLog() {
+            alert('✅ Daily Log saved!\n\nIn the real app, this would:\n1. Save all data to IndexedDB\n2. Show a success message\n3. Optionally navigate back to dashboard\n\nData includes: mood, sleep hours & quality, flare updates, and notes.');
+        }
+
+        // Auto-focus on notes textarea for demo
+        setTimeout(() => {
+            const textarea = document.querySelector('textarea');
+            // Just highlight it visually, don't actually focus (annoying on mobile)
+            textarea.style.border = '2px solid #0F9D91';
+            setTimeout(() => {
+                textarea.style.border = '1px solid #E7E5E4';
+            }, 2000);
+        }, 1000);
+    </script>
+</body>
+</html>

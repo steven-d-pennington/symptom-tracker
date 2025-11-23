@@ -63,6 +63,7 @@ export const SeverityScale = ({ value, onChange, scale, ariaLabel }: SeveritySca
           onChange={(event) => onChange(Number(event.target.value))}
           className="h-2 w-full cursor-pointer rounded-full bg-muted"
           aria-label={ariaLabel}
+          data-testid="severity-slider"
         />
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-foreground">
           {value}

@@ -40,10 +40,26 @@ export const OnboardingRedirectGate = () => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname?.startsWith("/onboarding")) {
+    // Allow access to public pages without redirect
+    const publicPaths = [
+      "/",
+      "/onboarding",
+      "/thank-you",
+      "/about",
+      "/privacy",
+      "/help",
+    ];
+
+    // Check if current path is a public path or starts with a public path
+    const isPublicPath = publicPaths.some(
+      (publicPath) => pathname === publicPath || pathname?.startsWith(`${publicPath}/`)
+    );
+
+    if (isPublicPath) {
       return;
     }
 
+    // Only redirect to onboarding if trying to access protected routes
     if (!hasCompletedOnboarding()) {
       router.replace("/onboarding");
     }

@@ -3,6 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { PhotoAttachment } from "@/lib/types/photo";
 import { PhotoEncryption } from "@/lib/utils/photoEncryption";
+import { PhotoAnnotation } from "./PhotoAnnotation";
+import { PhotoLinker } from "./PhotoLinker";
+import { photoRepository } from "@/lib/repositories/photoRepository";
+import { PhotoAnnotation as PhotoAnnotationType } from "@/lib/types/annotation";
+import { renderAnnotations } from "@/lib/utils/annotationRendering";
+import { Pencil, Eye, EyeOff, Link } from "lucide-react";
 
 interface PhotoViewerProps {
   photo: PhotoAttachment;
@@ -11,6 +17,7 @@ interface PhotoViewerProps {
   onDelete: (photoId: string) => void;
   onNext?: () => void;
   onPrevious?: () => void;
+  onAnnotationsSave?: (photoId: string, annotations: PhotoAnnotationType[]) => Promise<void>;
 }
 
 export function PhotoViewer({
@@ -20,15 +27,24 @@ export function PhotoViewer({
   onDelete,
   onNext,
   onPrevious,
+  onAnnotationsSave,
 }: PhotoViewerProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPhotoLinker, setShowPhotoLinker] = useState(false);
+  const [currentPhoto, setCurrentPhoto] = useState<PhotoAttachment>(photo);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [showAnnotation, setShowAnnotation] = useState(false);
+  const [showAnnotations, setShowAnnotations] = useState(true);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const dragStart = useRef({ x: 0, y: 0 });
+  const imageRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const currentIndex = photos.findIndex((p) => p.id === photo.id);
   const hasPrevious = currentIndex > 0;
@@ -44,9 +60,17 @@ export function PhotoViewer({
         setScale(1);
         setPosition({ x: 0, y: 0 });
 
-        // TODO: Implement photo decryption once encryption key storage is finalized
-        // For now, create object URL directly from encrypted data
-        objectUrl = URL.createObjectURL(photo.encryptedData);
+        if (photo.encryptionKey) {
+          const key = await PhotoEncryption.importKey(photo.encryptionKey);
+          const decrypted = await PhotoEncryption.decryptPhoto(
+            photo.encryptedData,
+            key,
+            photo.encryptionIV
+          );
+          objectUrl = URL.createObjectURL(decrypted);
+        } else {
+          objectUrl = URL.createObjectURL(photo.encryptedData);
+        }
         setImageUrl(objectUrl);
       } catch (err) {
         console.error("Failed to load photo:", err);
@@ -88,6 +112,51 @@ export function PhotoViewer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, hasNext, hasPrevious, onNext, onPrevious]);
 
+  // Render annotations on canvas when photo or annotations change
+  useEffect(() => {
+    if (!imageUrl || !canvasRef.current || !imageRef.current) return;
+    if (!photo.annotations || photo.annotations.length === 0) return;
+
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear canvas if annotations are hidden
+    if (!showAnnotations) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
+    // Filter out blur annotations if photo has permanent blur applied
+    const annotationsToRender = photo.hasBlur 
+      ? photo.annotations.filter(a => a.type !== 'blur')
+      : photo.annotations;
+
+    if (annotationsToRender.length === 0) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
+    // Wait for image to load
+    if (!img.complete) {
+      const handleLoad = () => {
+        const rect = img.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        renderAnnotations(ctx, annotationsToRender, rect.width, rect.height);
+      };
+      img.addEventListener('load', handleLoad);
+      return () => img.removeEventListener('load', handleLoad);
+    }
+
+    // Image already loaded
+    const rect = img.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    renderAnnotations(ctx, annotationsToRender, rect.width, rect.height);
+  }, [imageUrl, photo.annotations, scale, position, showAnnotations, photo.hasBlur]);
+
   const handleZoomIn = () => setScale((s) => Math.min(s + 0.25, 4));
   const handleZoomOut = () => setScale((s) => Math.max(s - 0.25, 0.5));
   const handleResetZoom = () => {
@@ -124,11 +193,46 @@ export function PhotoViewer({
     setShowDeleteConfirm(false);
   };
 
+  const handleManageLinks = () => {
+    setShowPhotoLinker(true);
+  };
+
+  const handleLinksSave = async (updatedPhoto: PhotoAttachment) => {
+    try {
+      await photoRepository.update(updatedPhoto.id, updatedPhoto);
+      setCurrentPhoto(updatedPhoto);
+      setShowPhotoLinker(false);
+    } catch (error) {
+      console.error("Failed to update photo links:", error);
+      throw error;
+    }
+  };
+
+  const getLinkCount = () => {
+    let count = 0;
+    if (currentPhoto.dailyEntryId) count++;
+    if (currentPhoto.symptomId) count++;
+    if (currentPhoto.bodyRegionId) count++;
+    return count;
+  };
+
+  const handleAnnotate = () => {
+    setShowAnnotation(true);
+  };
+
+  const handleAnnotationsSave = async (annotations: PhotoAnnotationType[]) => {
+    if (onAnnotationsSave) {
+      await onAnnotationsSave(photo.id, annotations);
+    }
+    setShowAnnotation(false);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
-      {/* Header */}
-      <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent p-4">
-        <div className="text-white">
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+        {/* Header */}
+        <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent p-4">
+          <div className="text-white">
           <h3 className="text-lg font-semibold">
             {new Date(photo.capturedAt).toLocaleDateString("en-US", {
               year: "numeric",
@@ -174,16 +278,30 @@ export function PhotoViewer({
         )}
 
         {imageUrl && !isLoading && (
-          <img
-            src={imageUrl}
-            alt={photo.notes || "Medical photo"}
-            className="max-h-[90vh] max-w-[90vw] select-none object-contain"
-            style={{
-              transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
-              transition: isDragging ? "none" : "transform 0.2s",
-            }}
-            draggable={false}
-          />
+          <>
+            <img
+              ref={imageRef}
+              src={imageUrl}
+              alt={photo.notes || "Medical photo"}
+              className="max-h-[90vh] max-w-[90vw] select-none object-contain"
+              style={{
+                transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                transition: isDragging ? "none" : "transform 0.2s",
+              }}
+              draggable={false}
+            />
+            {/* Annotation overlay canvas */}
+            {photo.annotations && photo.annotations.length > 0 && (
+              <canvas
+                ref={canvasRef}
+                className="absolute pointer-events-none max-h-[90vh] max-w-[90vw]"
+                style={{
+                  transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                  transition: isDragging ? "none" : "transform 0.2s",
+                }}
+              />
+            )}
+          </>
         )}
 
         {/* Navigation arrows */}
@@ -255,10 +373,47 @@ export function PhotoViewer({
             />
           </svg>
         </button>
+        
+        {/* Toggle Annotations */}
+        {photo.annotations && photo.annotations.length > 0 && (
+          <>
+            <div className="h-8 w-px bg-white/30" />
+            <button
+              onClick={() => setShowAnnotations(!showAnnotations)}
+              className="rounded p-2 text-white transition-colors hover:bg-white/20"
+              aria-label={showAnnotations ? "Hide annotations" : "Show annotations"}
+              title={showAnnotations ? "Hide annotations" : "Show annotations"}
+            >
+              {showAnnotations ? (
+                <Eye className="h-5 w-5" />
+              ) : (
+                <EyeOff className="h-5 w-5" />
+              )}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Action buttons */}
       <div className="absolute bottom-4 right-4 z-10 flex gap-2">
+        <button
+          onClick={handleManageLinks}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
+          aria-label="Manage photo links"
+        >
+          <Link className="h-4 w-4" />
+          Manage Links {getLinkCount() > 0 && `(${getLinkCount()})`}
+        </button>
+        <button
+          onClick={handleAnnotate}
+          disabled={photo.hasBlur}
+          className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed"
+          aria-label={photo.hasBlur ? "Annotations locked (blur applied)" : "Annotate photo"}
+          title={photo.hasBlur ? "Annotations locked (blur applied)" : "Annotate photo"}
+        >
+          <Pencil className="h-4 w-4" />
+          Annotate
+        </button>
         <button
           onClick={handleDelete}
           className="rounded-lg bg-destructive px-4 py-2 text-destructive-foreground transition-colors hover:bg-destructive/90"
@@ -293,10 +448,50 @@ export function PhotoViewer({
         </div>
       )}
 
-      {/* Photo counter */}
-      <div className="absolute right-4 top-4 z-10 rounded-lg bg-black/70 px-3 py-1 text-sm text-white">
-        {currentIndex + 1} / {photos.length}
+      {/* Photo counter and annotation badge */}
+      <div className="absolute right-4 top-4 z-10 flex flex-col gap-2 items-end">
+        <div className="rounded-lg bg-black/70 backdrop-blur-sm px-3 py-1.5 text-sm text-white shadow-lg">
+          {currentIndex + 1} / {photos.length}
+        </div>
+        {photo.annotations && photo.annotations.length > 0 && (() => {
+          // Filter out blur annotations if photo has permanent blur applied
+          const visibleAnnotations = photo.hasBlur 
+            ? photo.annotations.filter(a => a.type !== 'blur')
+            : photo.annotations;
+          
+          if (visibleAnnotations.length === 0) return null;
+          
+          return (
+            <div className="rounded-lg bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 text-sm text-white flex items-center gap-1.5 shadow-lg">
+              <Pencil className="h-3.5 w-3.5" />
+              <span className="font-medium">
+                {visibleAnnotations.length} annotation{visibleAnnotations.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+          );
+        })()}
       </div>
     </div>
+
+    {/* Annotation modal */}
+    {showAnnotation && (
+      <PhotoAnnotation
+        photo={photo}
+        existingAnnotations={photo.annotations || []}
+        isOpen={showAnnotation}
+        onClose={() => setShowAnnotation(false)}
+        onSave={handleAnnotationsSave}
+      />
+    )}
+
+    {/* Photo Linker modal */}
+    {showPhotoLinker && (
+      <PhotoLinker
+        photo={currentPhoto}
+        onSave={handleLinksSave}
+        onCancel={() => setShowPhotoLinker(false)}
+      />
+    )}
+  </>
   );
 }

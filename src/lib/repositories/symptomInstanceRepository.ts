@@ -10,7 +10,7 @@ export class SymptomInstanceRepository {
   private recordToSymptom(record: SymptomInstanceRecord): Symptom {
     return {
       ...record,
-      severityScale: JSON.parse(record.severityScale),
+      severityScale: record.severityScale ? JSON.parse(record.severityScale) : undefined,
       triggers: record.triggers ? JSON.parse(record.triggers) : undefined,
       photos: record.photos ? JSON.parse(record.photos) : undefined,
     };
@@ -62,18 +62,55 @@ export class SymptomInstanceRepository {
 
   /**
    * Get symptom instances in date range
+   * CRITICAL: Compound indexes with Date fields require Date objects for comparison
+   * Dexie compares Date objects properly when stored as Date type
    */
   async getByDateRange(
     userId: string,
     startDate: Date,
     endDate: Date
   ): Promise<Symptom[]> {
+    // Use all records and filter manually since compound index comparison is unreliable
+    const allRecords = await db.symptomInstances
+      .where("userId")
+      .equals(userId)
+      .toArray();
+
+    // Filter by date range manually
+    const filteredRecords = allRecords.filter(record => {
+      const recordTime = record.timestamp instanceof Date
+        ? record.timestamp.getTime()
+        : new Date(record.timestamp).getTime();
+      const startTime = startDate.getTime();
+      const endTime = endDate.getTime();
+      return recordTime >= startTime && recordTime <= endTime;
+    });
+
+    // Sort descending (most recent first)
+    const sorted = filteredRecords.sort((a, b) => {
+      const aTime = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+      const bTime = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+      return bTime - aTime;
+    });
+
+    return sorted.map(r => this.recordToSymptom(r));
+  }
+
+  /**
+   * Find symptom instances by date range (epoch milliseconds)
+   * Used for correlation analysis
+   */
+  async findByDateRange(
+    userId: string,
+    startMs: number,
+    endMs: number
+  ): Promise<SymptomInstanceRecord[]> {
     const records = await db.symptomInstances
       .where("[userId+timestamp]")
-      .between([userId, startDate], [userId, endDate], true, true)
-      .reverse()
-      .sortBy("timestamp");
-    return records.map(r => this.recordToSymptom(r));
+      .between([userId, new Date(startMs)], [userId, new Date(endMs)], true, true)
+      .toArray();
+
+    return records.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }
 
   /**
@@ -100,6 +137,12 @@ export class SymptomInstanceRepository {
     };
 
     await db.symptomInstances.add(record);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("symptom-instance-updated"));
+    }
+
     return id;
   }
 
@@ -122,6 +165,11 @@ export class SymptomInstanceRepository {
     };
 
     await db.symptomInstances.update(id, updateRecord);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("symptom-instance-updated"));
+    }
   }
 
   /**
@@ -129,6 +177,11 @@ export class SymptomInstanceRepository {
    */
   async delete(id: string): Promise<void> {
     await db.symptomInstances.delete(id);
+
+    // Dispatch event to update calendar and other views
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("symptom-instance-updated"));
+    }
   }
 
   /**
@@ -227,6 +280,31 @@ export class SymptomInstanceRepository {
     const names = new Set<string>();
     symptoms.forEach(s => names.add(s.name));
     return Array.from(names).sort();
+  }
+
+  /**
+   * Get recent notes for a symptom (for smart suggestions)
+   */
+  async getRecentNotes(
+    userId: string,
+    symptomName: string,
+    limit: number = 10
+  ): Promise<string[]> {
+    const records = await db.symptomInstances
+      .where("userId")
+      .equals(userId)
+      .reverse()
+      .limit(limit * 3) // Get more to filter by name
+      .toArray();
+
+    // Filter by symptom name and extract notes
+    const notes = records
+      .filter(r => r.name === symptomName && r.notes && r.notes.trim().length > 0)
+      .map(r => r.notes!)
+      .slice(0, limit);
+
+    // Return unique notes
+    return Array.from(new Set(notes));
   }
 }
 

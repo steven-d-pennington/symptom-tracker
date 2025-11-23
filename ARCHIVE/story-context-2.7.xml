@@ -1,0 +1,96 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>7</storyId>
+    <title>Food-Specific Correlation Reports</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>view detailed correlation reports for specific foods</iWant>
+    <soThat>I can understand the time delay patterns and symptom relationships</soThat>
+    <tasks>
+      Task 1: Build FoodCorrelationDetailView (correlation %, confidence badge, typical delay window, and summary stats).&#10;
+      Task 2: Assemble detail data from Dexie analysisResults cache; hydrate with food/symptom labels via repositories; include instance list (food event → subsequent symptoms).&#10;
+      Task 3: Implement FoodCorrelationDelayChart to visualize frequency by delay buckets with accessible data table fallback.&#10;
+      Task 4: Wire navigation from FoodCorrelationWidget (list) to detail view and back, preserving filters/sorting.&#10;
+      Task 5: Testing: component rendering/accessibility, data assembly (gating by significance), delay buckets, navigation.
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1) Clicking a food correlation shows a detailed report.&#10;
+    2) Report displays correlation percentage, confidence level, and time delay pattern.&#10;
+    3) Report shows symptom frequency after this food (e.g., “migraines occur 78% of the time, 2–4 hours after dairy”).&#10;
+    4) Report lists all instances (food log + resulting symptoms).&#10;
+    5) Visual timeline shows the typical delay pattern.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epic-stories.md" reason="Epic 2, Story 2.7 authoritative ACs and technical notes" />
+      <doc path="docs/tech-spec-epic-E2.md" reason="Detail view expectations, significance gating, dashboard integration" />
+      <doc path="docs/solution-architecture.md" reason="Hybrid/local-first flow, Dexie cache, UI composition patterns" />
+      <doc path="docs/PRD.md" reason="Correlation insights (FR007/FR019), reporting expectations" />
+      <doc path="docs/architecture-decisions.md" reason="ADR-001 Hybrid Architecture, NFR alignment and caching" />
+      <doc path="AGENTS.md" reason="Dexie JSON arrays, compound indexes, testing requirements, code style" />
+      <doc path="TESTING_GUIDE.md" reason="jsdom, IndexedDB and Canvas mocks, RTL usage and patterns" />
+    </docs>
+    <code>
+      <file path="src/components/food/FoodCorrelationWidget.tsx" kind="component" symbol="FoodCorrelationWidget" reason="Entry point list → detail navigation (passes selected food correlation)" />
+      <file path="src/components/food/FoodCorrelationDetailView.tsx" kind="component" symbol="FoodCorrelationDetailView" reason="Renders correlation %, confidence badge, delay window, instance list" />
+      <file path="src/components/charts/FoodCorrelationDelayChart.tsx" kind="component" symbol="FoodCorrelationDelayChart" reason="Delay histogram/line visualization with accessible table fallback" />
+      <file path="src/lib/services/food/CorrelationCacheService.ts" kind="service" symbol="CorrelationCacheService" reason="TTL rules and cache hydration for analysisResults" />
+      <file path="src/lib/repositories/analysisResultsRepository.ts" kind="repository" symbol="analysisResultsRepository" reason="Access cached correlation summaries (user-scoped)" />
+      <file path="src/lib/repositories/foodRepository.ts" kind="repository" symbol="foodRepository" reason="Hydrate food labels and allergen tags; JSON array parsing conventions" />
+      <file path="src/lib/repositories/symptomRepository.ts" kind="repository" symbol="symptomRepository" reason="Hydrate symptom names/severity for instance list" />
+    </code>
+    <dependencies>
+      <pkg name="next" version="15.5.4" />
+      <pkg name="react" version="19.1.0" />
+      <pkg name="react-dom" version="19.1.0" />
+      <pkg name="dexie" version="^4.2.0" />
+      <pkg name="chart.js" version="^4.5.0" />
+      <pkg name="react-chartjs-2" version="^5.3.0" />
+      <pkg name="@radix-ui/react-tooltip" version="^1.2.8" />
+      <pkg name="jest" version="^30.2.0" />
+      <pkg name="@testing-library/react" version="^16.3.0" />
+      <pkg name="@testing-library/jest-dom" version="^6.9.1" />
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Local-first: Read correlation summaries from Dexie analysisResults with 24h TTL; refresh when stale.&#10;
+    - JSON stringification: Arrays stored as JSON strings (e.g., foodIds, delay buckets); parse on read.&#10;
+    - Indexed queries first: Use compound indexes (e.g., [userId+timestamp], [userId+foodId]) then filter in memory.&#10;
+    - Component architecture: Functional components only; custom hooks in src/lib/hooks; group by feature (components/food, components/charts).&#10;
+    - Accessibility: WCAG 2.1 AA; keyboard navigation, labeled controls, aria semantics; charts provide data-table fallback.&#10;
+    - Testing: 80% coverage minimum; jsdom with IndexedDB and Canvas mocks; RTL with accessible queries.&#10;
+    - Performance: Avoid N+1 Dexie calls; batch hydration and memoize derivations.
+  </constraints>
+
+  <interfaces>
+    <ui name="FoodCorrelationDetailView" kind="component" path="src/components/food/FoodCorrelationDetailView.tsx">
+      <signature>function FoodCorrelationDetailView(props: { foodId: string; symptomId?: string; onBack: () =&gt; void }): JSX.Element</signature>
+    </ui>
+    <ui name="FoodCorrelationDelayChart" kind="component" path="src/components/charts/FoodCorrelationDelayChart.tsx">
+      <signature>function FoodCorrelationDelayChart(props: { buckets: Array&lt;{ startMs: number; endMs: number; count: number }&gt;; total: number }): JSX.Element</signature>
+    </ui>
+  </interfaces>
+
+  <tests>
+    <standards>Use Jest + RTL with jsdom; mock IndexedDB (via jest.setup.js) and Canvas for Chart.js; prefer accessible queries (getByRole/getByLabelText) and verify ARIA semantics.</standards>
+    <locations>src/components/food/__tests__&#10;src/components/charts/__tests__&#10;src/lib/services/**/__tests__</locations>
+    <ideas>
+      AC1: Clicking list item navigates to detail view; title and summary metrics render.&#10;
+      AC2: Confidence badge and typical delay window shown; significance gating respected (p ≥ 0.05 → “Insufficient data”).&#10;
+      AC3: Instance list includes event timestamps, meal context, portion/notes, and subsequent symptoms.&#10;
+      AC4: Delay chart renders with correct bucket counts; accessible table fallback verified.&#10;
+      AC5: Back navigation preserves previous filters and sort state.
+    </ideas>
+  </tests>
+</story-context>

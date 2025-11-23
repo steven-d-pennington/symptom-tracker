@@ -1,0 +1,365 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.4</storyId>
+    <title>Coordinate-based Location Marking in Zoomed View</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user marking a precise flare location</asA>
+    <iWant>to tap/click an exact spot within a zoomed body region</iWant>
+    <soThat>the system captures precise X/Y coordinates for the flare</soThat>
+    <tasks>
+      - Create coordinate capture component (AC: 1.1, 1.3, 1.5, 1.6)
+      - Implement coordinate normalization (AC: 1.2, 1.4)
+      - Enhance FlareMarkers to use coordinates when available (AC: 1.7)
+      - Integrate with flare creation flow (AC: 1.4)
+      - Visual feedback and UX polish (AC: 1.3, 1.5)
+      - Testing and integration (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1.1">When zoomed and region is selected, tap/click captures precise X/Y coordinates</criterion>
+    <criterion id="AC1.2">Coordinates are normalized relative to the selected body region (0-1 scale)</criterion>
+    <criterion id="AC1.3">Visual crosshair or pin appears at the marked location</criterion>
+    <criterion id="AC1.4">Coordinate data is stored with the body region ID (e.g., "left-groin", x: 0.42, y: 0.67)</criterion>
+    <criterion id="AC1.5">Users can adjust marked location by tapping a different spot (before saving)</criterion>
+    <criterion id="AC1.6">Marked location persists when zooming out and back in</criterion>
+    <criterion id="AC1.7">Coordinate precision enables distinguishing multiple flares in the same region</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR003: Coordinate-based Location Marking</section>
+        <snippet>System shall support coordinate-based or grid-based location marking within zoomed regions, capturing precise X/Y coordinates relative to the body region</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR001: Performance Requirement</section>
+        <snippet>Body map zoom and pan interactions shall respond within 100ms to maintain smooth user experience on mobile and desktop devices</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>ADR-001: Use react-zoom-pan-pinch for Body Map</section>
+        <snippet>Decision to use react-zoom-pan-pinch library for declarative React API with built-in mobile gesture support. Must normalize coordinates relative to transform scale.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Data Architecture - FlareRecord Schema Extension</section>
+        <snippet>FlareRecord extends with optional coordinates field: coordinates?: { x: number; y: number; } // Normalized 0-1 scale relative to body region</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Component Architecture - CoordinateCapture</section>
+        <snippet>CoordinateCapture component handles click/tap coordinate extraction within TransformComponent. Must denormalize coordinates for rendering at different zoom levels.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 1, Story 1.4</section>
+        <snippet>Prerequisites: Story 1.1 (Groin Regions), Story 1.2 (Zoom), Story 1.3 (Pan). Enables medical-grade coordinate precision for Epic 1.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Story 1.1: Add Groin Regions to Body Map SVG</title>
+        <section>Status: Complete</section>
+        <snippet>Three groin regions (left-groin, center-groin, right-groin) added to FrontBody component with center coordinates. Coordinates can be marked in groin regions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.2.md</path>
+        <title>Story 1.2: Implement Zoom Controls for Body Map</title>
+        <section>Status: Complete</section>
+        <snippet>BodyMapZoom component created using react-zoom-pan-pinch. Zoom range 1x-3x, pinch-to-zoom, scroll-wheel zoom. Zooming enables precise coordinate capture.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.3.md</path>
+        <title>Story 1.3: Implement Pan Controls for Zoomed Body Map</title>
+        <section>Status: Complete</section>
+        <snippet>Pan controls added to BodyMapZoom (click-drag desktop, touch-drag mobile). limitToBounds=true, velocityAnimation enabled. Panning allows navigation to mark different spots.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.5.md</path>
+        <title>Story 1.5: Display Flare Markers on Body Map</title>
+        <section>Status: Complete</section>
+        <snippet>FlareMarkers component displays at region centers with radial offsets for multiple flares. Will be enhanced to use coordinates when available (backward compatible fallback).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/body-map/BodyMapZoom.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapZoom</symbol>
+        <lines>1-147</lines>
+        <reason>Main zoom/pan wrapper using react-zoom-pan-pinch. Houses TransformComponent where coordinate capture will occur. Passes zoomLevel to FlareMarkers (will be needed for coordinate denormalization).</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-map/FlareMarkers.tsx</path>
+        <kind>component</kind>
+        <symbol>FlareMarkers</symbol>
+        <lines>1-119</lines>
+        <reason>Current implementation uses region center coordinates with radial offsets. Must be enhanced to check for flare.coordinates field and use denormalized coordinates when available (AC1.7).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/types/flare.ts</path>
+        <kind>type</kind>
+        <symbol>ActiveFlare</symbol>
+        <lines>1-40</lines>
+        <reason>FlareRecord interface needs optional coordinates field extension: coordinates?: Array&lt;{regionId: string; x: number; y: number}&gt;</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/data/bodyRegions.ts</path>
+        <kind>data</kind>
+        <symbol>FRONT_BODY_REGIONS, BACK_BODY_REGIONS</symbol>
+        <lines>1-113</lines>
+        <reason>Body region definitions with center coordinates for all 93 regions. Each region has center: {x, y} which will be used for denormalization bounds calculation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/utils/flareMarkers.ts</path>
+        <kind>utility</kind>
+        <symbol>calculateRadialOffsets, getFlareMarkerColor</symbol>
+        <lines>unknown</lines>
+        <reason>Existing flare marker utilities. calculateRadialOffsets used for multiple flares in same region (will still be needed if coordinates not provided).</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/hooks/useFlares.ts</path>
+        <kind>hook</kind>
+        <symbol>useFlares</symbol>
+        <lines>unknown</lines>
+        <reason>React hook for fetching flare data. Already used by FlareMarkers. Flares returned will include coordinates field after schema extension.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/body-mapping/BodyMapViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>BodyMapViewer</symbol>
+        <lines>unknown</lines>
+        <reason>Integration point where BodyMapZoom is used. Will need to add click handler for coordinate capture and pass callback for marked coordinates.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/flare/NewFlareDialog.tsx</path>
+        <kind>component</kind>
+        <symbol>NewFlareDialog</symbol>
+        <lines>unknown</lines>
+        <reason>Flare creation dialog. Must accept optional initialCoordinates prop and include coordinates in saved flare data.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <runtime>
+        <package name="react" version="19.1.0"/>
+        <package name="react-dom" version="19.1.0"/>
+        <package name="next" version="15.5.4"/>
+        <package name="react-zoom-pan-pinch" version="3.6.1"/>
+        <package name="dexie" version="4.2.0"/>
+        <package name="uuid" version="13.0.0"/>
+        <package name="lucide-react" version="0.544.0"/>
+      </runtime>
+      <development>
+        <package name="typescript" version="5.x"/>
+        <package name="@types/node" version="^20"/>
+        <package name="@types/react" version="^19"/>
+        <package name="@types/react-dom" version="^19"/>
+        <package name="@types/uuid" version="^11.0.0"/>
+        <package name="jest" version="30.2.0"/>
+        <package name="@testing-library/react" version="16.3.0"/>
+        <package name="@testing-library/jest-dom" version="6.9.1"/>
+        <package name="@testing-library/user-event" version="14.6.1"/>
+        <package name="fake-indexeddb" version="6.2.4"/>
+        <package name="ts-jest" version="29.4.4"/>
+      </development>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="C1">Coordinates must be normalized to 0-1 scale relative to body region SVG bounds to remain valid across different screen sizes and zoom levels</constraint>
+    <constraint id="C2">Coordinates are optional in FlareRecord schema - existing flares without coordinates must remain valid (backward compatible)</constraint>
+    <constraint id="C3">Story 1.5 (FlareMarkers) already exists and uses region centers - this story enhances it to use coordinates when available (additive change)</constraint>
+    <constraint id="C4">Must work seamlessly with react-zoom-pan-pinch library from Stories 1.2/1.3 within TransformComponent</constraint>
+    <constraint id="C5">Coordinate capture must respond within 100ms (NFR001) - use React.memo and avoid expensive calculations in render path</constraint>
+    <constraint id="C6">SVG coordinate system must respect existing body map viewBox and coordinate space from Stories 1.1-1.3</constraint>
+    <constraint id="C7">Touch targets must account for finger size on mobile devices (minimum 44x44px per NFR001)</constraint>
+    <constraint id="C8">getBoundingClientRect() depends on DOM, may fail in SSR or testing - only call in client components with proper null checks</constraint>
+    <constraint id="C9">FlareMarkers must gracefully fall back to region center if coordinates missing (backward compatibility)</constraint>
+    <constraint id="C10">Coordinate calculations on every render could impact performance - use React.memo, useMemo for expensive calculations</constraint>
+    <constraint id="C11">All coordinate values must be clamped to 0-1 range to ensure bounds checking</constraint>
+    <constraint id="C12">Visual crosshair must be clearly visible against all body region backgrounds with sufficient contrast</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Coordinates</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface Coordinates {
+  x: number; // Normalized 0-1
+  y: number; // Normalized 0-1
+}
+      </signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>SVGCoordinates</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface SVGCoordinates {
+  x: number; // SVG units
+  y: number; // SVG units
+}
+      </signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>normalizeCoordinates</name>
+      <kind>Function Signature</kind>
+      <signature>
+function normalizeCoordinates(
+  svgCoords: SVGCoordinates,
+  regionId: string
+): Coordinates | null
+      </signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>denormalizeCoordinates</name>
+      <kind>Function Signature</kind>
+      <signature>
+function denormalizeCoordinates(
+  normalized: Coordinates,
+  regionId: string
+): SVGCoordinates | null
+      </signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>getRegionBounds</name>
+      <kind>Function Signature</kind>
+      <signature>
+function getRegionBounds(regionId: string): DOMRect | null
+      </signature>
+      <path>src/lib/utils/coordinates.ts</path>
+    </interface>
+    <interface>
+      <name>CoordinateMarkerProps</name>
+      <kind>Component Props Interface</kind>
+      <signature>
+interface CoordinateMarkerProps {
+  x: number; // SVG coordinates (not normalized)
+  y: number;
+  visible: boolean;
+  zoomLevel: number;
+}
+      </signature>
+      <path>src/components/body-map/CoordinateMarker.tsx</path>
+    </interface>
+    <interface>
+      <name>ActiveFlare (Extended)</name>
+      <kind>TypeScript Interface Extension</kind>
+      <signature>
+export interface ActiveFlare {
+  // ... existing fields ...
+  bodyRegions: string[]; // Existing
+  coordinates?: Array&lt;{
+    regionId: string;
+    x: number; // Normalized 0-1
+    y: number; // Normalized 0-1
+  }&gt;; // NEW: Optional coordinates
+}
+      </signature>
+      <path>src/lib/types/flare.ts</path>
+    </interface>
+    <interface>
+      <name>ReactZoomPanPinchRef</name>
+      <kind>Library Interface</kind>
+      <signature>
+interface ReactZoomPanPinchRef {
+  state: { scale: number; positionX: number; positionY: number };
+  centerView: (scale: number, duration: number, easing: string) => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetTransform: () => void;
+}
+      </signature>
+      <path>node_modules/react-zoom-pan-pinch (library)</path>
+    </interface>
+    <interface>
+      <name>TransformComponent</name>
+      <kind>React Component (Library)</kind>
+      <signature>
+&lt;TransformComponent
+  wrapperClass="!w-full !h-full !flex !items-center !justify-center"
+  contentClass="cursor-grab active:cursor-grabbing select-none"
+  wrapperStyle={{ width: '100%', height: '100%' }}
+&gt;
+  {children}
+&lt;/TransformComponent&gt;
+      </signature>
+      <path>node_modules/react-zoom-pan-pinch (library)</path>
+    </interface>
+    <interface>
+      <name>BodyRegion</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface BodyRegion {
+  id: string;
+  name: string;
+  center?: { x: number; y: number };
+  // ... other fields
+}
+      </signature>
+      <path>src/lib/types/body-mapping.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing Framework: Jest 30.2.0 with React Testing Library 16.3.0
+
+      Test Organization:
+      - Unit tests: src/lib/utils/__tests__/
+      - Component tests: src/components/body-map/__tests__/
+      - Integration tests: src/__tests__/integration/
+
+      Standards:
+      - All coordinate transformation functions must have unit tests
+      - Component tests must use @testing-library/react patterns
+      - Use fake-indexeddb@6.2.4 for Dexie mocking
+      - Integration tests should test complete user workflows
+      - Performance tests must validate <100ms latency target (NFR001)
+      - Accessibility tests must validate keyboard navigation and ARIA labels
+    </standards>
+    <locations>
+      - src/lib/utils/__tests__/coordinates.test.ts (new unit tests)
+      - src/components/body-map/__tests__/CoordinateMarker.test.tsx (new component tests)
+      - src/__tests__/integration/coordinate-marking.test.tsx (new integration tests)
+    </locations>
+    <ideas>
+      <idea ac="AC1.1">Test: Click on zoomed region captures precise X/Y coordinates</idea>
+      <idea ac="AC1.2">Test: normalizeCoordinates() returns values in 0-1 range for all 93 body regions</idea>
+      <idea ac="AC1.2">Test: denormalizeCoordinates() correctly converts 0-1 values back to SVG coordinates</idea>
+      <idea ac="AC1.2">Test: Coordinate transformations are accurate at zoom levels 1x, 2x, 3x</idea>
+      <idea ac="AC1.3">Test: Crosshair renders at correct SVG position matching click coordinates</idea>
+      <idea ac="AC1.3">Test: Crosshair size scales inversely with zoom level (stays same screen size)</idea>
+      <idea ac="AC1.4">Test: Marked coordinates are stored with correct regionId in FlareRecord</idea>
+      <idea ac="AC1.5">Test: Clicking different spot updates marker position and coordinates</idea>
+      <idea ac="AC1.6">Test: Marked location persists when zooming out from 2x to 1x and back to 2x</idea>
+      <idea ac="AC1.6">Test: Marked location persists when panning away and panning back</idea>
+      <idea ac="AC1.7">Test: FlareMarkers displays multiple flares in same region at distinct coordinate positions (not radial offset)</idea>
+      <idea ac="AC1.7">Test: FlareMarkers falls back to region center for flares without coordinates (backward compatibility)</idea>
+      <idea ac="AC1.7">Test: Mixed scenario - some flares with coordinates, some without, all render correctly</idea>
+      <idea ac="NFR001">Test: Coordinate capture responds within 100ms from click to visual feedback</idea>
+      <idea ac="All">Test: Complete workflow - zoom to region → click to mark → create flare → verify coordinates saved → verify marker displays at coordinates</idea>
+      <idea ac="All">Test: Touch target size for coordinate marker meets 44x44px minimum on mobile</idea>
+      <idea ac="All">Test: getBoundingClientRect() null checks handle missing DOM elements gracefully</idea>
+    </ideas>
+  </tests>
+</story-context>

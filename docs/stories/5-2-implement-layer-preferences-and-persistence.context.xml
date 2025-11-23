@@ -1,0 +1,203 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>2</storyId>
+    <title>Implement Layer Preferences and Persistence</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-2-implement-layer-preferences-and-persistence.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user who primarily tracks one condition type</asA>
+    <iWant>my last-used layer to persist between sessions</iWant>
+    <soThat>I don't have to re-select my preferred layer every time I log data</soThat>
+    <tasks>
+      - Task 1: Create BodyMapPreferences interface and defaults (AC: #5.2.1, #5.2.3)
+      - Task 2: Add bodyMapPreferences table to Dexie schema (AC: #5.2.1)
+      - Task 3: Implement BodyMapPreferencesRepository (AC: #5.2.2, #5.2.4, #5.2.7)
+      - Task 4: Create repository unit tests (AC: #5.2.2, #5.2.3, #5.2.6)
+      - Task 5: Integration testing with body map (AC: #5.2.5)
+      - Task 6: Import/export support (AC: #5.2.8) (Optional)
+      - Task 7: DevDataControls integration (AC: #5.2.9) (Optional)
+      - Task 8: Documentation and validation (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC5.2.1 — bodyMapPreferences table created with fields: userId (primary key), lastUsedLayer (LayerType), visibleLayers (LayerType[]), defaultViewMode ('single'|'all'), updatedAt (timestamp). Table created in database schema version 22.
+    2. AC5.2.2 — BodyMapPreferencesRepository implemented with methods: get(userId) returns preferences or creates defaults, setLastUsedLayer(userId, layer), setVisibleLayers(userId, layers), setViewMode(userId, mode). All methods use async/await pattern.
+    3. AC5.2.3 — Default preferences for new users: lastUsedLayer='flares', visibleLayers=['flares'], defaultViewMode='single'.
+    4. AC5.2.4 — Immediate persistence on layer switch with optimistic UI updates and fire-and-forget async persistence (NFR002).
+    5. AC5.2.5 — Preferences load on session start with loading state to prevent flickering.
+    6. AC5.2.6 — User isolation: all preference operations scoped by userId as primary key.
+    7. AC5.2.7 — Repository error handling with try-catch blocks and fallback to defaults. Failed writes logged but don't crash UI.
+    8. AC5.2.8 — Import/export support: bodyMapPreferences included in data export if import/export functionality exists.
+    9. AC5.2.9 — DevDataControls integration: development controls support testing layer preferences if DevDataControls exists.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>Story 5.2: Preferences Table</section>
+        <snippet>Defines BodyMapPreferences interface with userId, lastUsedLayer, visibleLayers, defaultViewMode, and updatedAt fields. Includes repository pattern with get/set operations and default preferences for backward compatibility.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epic-5-tech-spec.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement - Technical Specification</title>
+        <section>Repository Pattern</section>
+        <snippet>Repository methods include async get(userId) with default creation, setLastUsedLayer(), setVisibleLayers(), and setViewMode(). All methods use optimistic UI with fire-and-forget persistence.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/5-1-add-layer-field-to-data-model-and-indexeddb-schema.md</path>
+        <title>Story 5.1: Add Layer Field to Data Model and IndexedDB Schema</title>
+        <section>Dev Notes - Technical Architecture</section>
+        <snippet>Establishes LayerType definition ('flares' | 'pain' | 'mobility' | 'inflammation') and Dexie schema migration pattern. Current schema at version 21. Story 5.1 is ready-for-dev and provides foundation for preferences table.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 5: Body Map Multi-Layer Enhancement</title>
+        <section>Story 5.2: Implement Layer Preferences and Persistence</section>
+        <snippet>New bodyMapPreferences IndexedDB table with userId-scoped preferences. Last-used layer persists immediately (NFR002), defaults to 'flares' for backward compatibility, preference updates non-blocking.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>interface</kind>
+        <symbol>UserPreferences, BodyMapLocationRecord</symbol>
+        <lines>1-489</lines>
+        <reason>Contains existing schema interfaces showing pattern for defining new BodyMapPreferences interface. UserPreferences shows preference structure pattern.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/client.ts</path>
+        <kind>database</kind>
+        <symbol>SymptomTrackerDatabase</symbol>
+        <lines>1-496</lines>
+        <reason>Dexie database class with migration pattern. Current schema is version 21. Shows how to add new table in version 22 with proper indexes and upgrade() callbacks.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/bodyMapLocationRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>BodyMapLocationRepository</symbol>
+        <lines>1-224</lines>
+        <reason>Example repository implementation showing async/await pattern, error handling, and CRUD operations. Pattern to follow for BodyMapPreferencesRepository.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/__tests__/flareRepository.test.ts</path>
+        <kind>test</kind>
+        <symbol>flareRepository tests</symbol>
+        <lines>1-100</lines>
+        <reason>Test pattern for repository: db.clear() in beforeEach, db.delete() in afterAll, fake-indexeddb usage. Shows how to test IndexedDB operations with Jest.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="dexie" version="^4.2.0" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="next" version="15.5.4" />
+        <package name="react" version="19.1.0" />
+        <package name="typescript" version="^5" />
+      </node>
+      <devDependencies>
+        <package name="fake-indexeddb" version="^6.2.4" />
+        <package name="jest" version="^30.2.0" />
+        <package name="jest-environment-jsdom" version="^30.2.0" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+        <package name="ts-jest" version="^29.4.4" />
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Current Dexie schema version is 21. New bodyMapPreferences table must be added in version 22.
+    - Must follow existing Dexie migration pattern: .version(22).stores({...}).upgrade(async (trans) => {...})
+    - All repository methods must use async/await pattern (no callbacks or promises without await)
+    - Repository must be exported as singleton instance: export const bodyMapPreferencesRepository = new BodyMapPreferencesRepository()
+    - userId must be used as primary key for user isolation (Dexie index: "userId")
+    - No compound indexes needed for preferences table (simple userId lookup sufficient)
+    - Error handling: try-catch with console.error logging, fallback to defaults on failures
+    - Offline-first persistence (NFR002): all changes persist immediately to IndexedDB, no server roundtrip
+    - Optimistic UI: setters update state immediately, persistence fires asynchronously (fire-and-forget)
+    - Backward compatibility: default to 'flares' layer for new users to maintain existing behavior
+    - LayerType must be imported from schema (defined in Story 5.1): 'flares' | 'pain' | 'mobility' | 'inflammation'
+    - Timestamps use epoch milliseconds (Date.now()), not Date objects
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>BodyMapPreferences</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        export interface BodyMapPreferences {
+          userId: string;
+          lastUsedLayer: LayerType;
+          visibleLayers: LayerType[];
+          defaultViewMode: 'single' | 'all';
+          updatedAt: number;
+        }
+      </signature>
+      <path>src/lib/db/schema.ts</path>
+    </interface>
+    <interface>
+      <name>DEFAULT_BODY_MAP_PREFERENCES</name>
+      <kind>Constant</kind>
+      <signature>
+        export const DEFAULT_BODY_MAP_PREFERENCES: Omit&lt;BodyMapPreferences, 'userId'&gt; = {
+          lastUsedLayer: 'flares',
+          visibleLayers: ['flares'],
+          defaultViewMode: 'single',
+          updatedAt: Date.now()
+        }
+      </signature>
+      <path>src/lib/db/schema.ts</path>
+    </interface>
+    <interface>
+      <name>BodyMapPreferencesRepository</name>
+      <kind>Class with methods</kind>
+      <signature>
+        class BodyMapPreferencesRepository {
+          async get(userId: string): Promise&lt;BodyMapPreferences&gt;
+          async setLastUsedLayer(userId: string, layer: LayerType): Promise&lt;void&gt;
+          async setVisibleLayers(userId: string, layers: LayerType[]): Promise&lt;void&gt;
+          async setViewMode(userId: string, mode: 'single' | 'all'): Promise&lt;void&gt;
+        }
+      </signature>
+      <path>src/lib/repositories/bodyMapPreferencesRepository.ts</path>
+    </interface>
+    <interface>
+      <name>Dexie Table Declaration</name>
+      <kind>Dexie table</kind>
+      <signature>
+        bodyMapPreferences!: Table&lt;BodyMapPreferences, string&gt;
+      </signature>
+      <path>src/lib/db/client.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing uses Jest with fake-indexeddb for IndexedDB operations. Repository tests follow pattern: db.clear() in beforeEach to reset state, db.delete() in afterAll for cleanup. Test coverage threshold is 80% (branches, functions, lines, statements). Use descriptive test names following pattern "should [expected behavior]". Test files located in __tests__ directories adjacent to source files.
+    </standards>
+    <locations>
+      - src/lib/repositories/__tests__/bodyMapPreferencesRepository.test.ts (new file)
+      - src/lib/db/__tests__/migration-v22.test.ts (optional migration test)
+    </locations>
+    <ideas>
+      - Test AC5.2.3: "should create default preferences for new users" - verify lastUsedLayer='flares', visibleLayers=['flares'], defaultViewMode='single'
+      - Test AC5.2.2: "should persist lastUsedLayer changes" - call setLastUsedLayer, verify get() returns updated value
+      - Test AC5.2.2: "should persist visibleLayers changes" - call setVisibleLayers, verify array persistence
+      - Test AC5.2.2: "should persist viewMode changes" - call setViewMode, verify mode persistence
+      - Test AC5.2.6: "should isolate preferences by userId" - create prefs for user1 and user2, verify no cross-contamination
+      - Test AC5.2.7: "should handle IndexedDB errors gracefully" - mock db.bodyMapPreferences.get to throw error, verify returns defaults
+      - Test AC5.2.7: "should log errors without crashing" - mock console.error, verify error logged on db failure
+      - Test AC5.2.4: "should update updatedAt timestamp on modifications" - verify timestamp changes after setLastUsedLayer
+      - Integration test: "should create preferences on first get() call" - verify auto-initialization for new user
+      - Integration test: "should handle missing table gracefully" - test backward compatibility if table doesn't exist
+    </ideas>
+  </tests>
+</story-context>

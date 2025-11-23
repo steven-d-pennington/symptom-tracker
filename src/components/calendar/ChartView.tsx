@@ -11,8 +11,9 @@ import {
   LineElement,
   PointElement,
   Tooltip,
+  Filler,
 } from "chart.js";
-import { Bar, Doughnut, Line, Scatter } from "react-chartjs-2";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { CalendarMetrics } from "@/lib/types/calendar";
 
 ChartJS.register(
@@ -24,6 +25,7 @@ ChartJS.register(
   ArcElement,
   Tooltip,
   ChartLegend,
+  Filler,
 );
 
 interface ChartViewProps {
@@ -36,24 +38,20 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
   const healthChartRef = useRef<ChartJS | null>(null);
   const symptomChartRef = useRef<ChartJS | null>(null);
   const medicationChartRef = useRef<ChartJS | null>(null);
-  const correlationChartRef = useRef<ChartJS | null>(null);
 
   useEffect(() => {
     onRegisterChart("health-trend", healthChartRef.current);
     if (variant === "health-only") {
       onRegisterChart("symptom-frequency", null);
       onRegisterChart("medication-adherence", null);
-      onRegisterChart("correlation", null);
     } else {
       onRegisterChart("symptom-frequency", symptomChartRef.current);
       onRegisterChart("medication-adherence", medicationChartRef.current);
-      onRegisterChart("correlation", correlationChartRef.current);
     }
     return () => {
       onRegisterChart("health-trend", null);
       onRegisterChart("symptom-frequency", null);
       onRegisterChart("medication-adherence", null);
-      onRegisterChart("correlation", null);
     };
   }, [metrics, onRegisterChart, variant]);
 
@@ -62,7 +60,7 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
       labels: metrics.healthTrend.map((point) => point.date.slice(5)),
       datasets: [
         {
-          label: "Health score",
+          label: "Avg severity",
           data: metrics.healthTrend.map((point) => point.score),
           borderColor: "#0ea5e9",
           backgroundColor: "rgba(14,165,233,0.25)",
@@ -113,28 +111,11 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
     [metrics.medicationAdherence],
   );
 
-  const correlationData = useMemo(
-    () => ({
-      datasets: metrics.correlationInsights.map((item) => ({
-        label: `${item.symptom} vs ${item.trigger}`,
-        data: [
-          {
-            x: item.occurrences,
-            y: item.correlation * 100,
-          },
-        ],
-        backgroundColor: "rgba(99,102,241,0.6)",
-      })),
-    }),
-    [metrics.correlationInsights],
-  );
-
   const emptyState = variant === "health-only"
     ? metrics.healthTrend.length === 0
     : metrics.healthTrend.length === 0 &&
-      metrics.symptomFrequency.length === 0 &&
-      metrics.medicationAdherence.length === 0 &&
-      metrics.correlationInsights.length === 0;
+    metrics.symptomFrequency.length === 0 &&
+    metrics.medicationAdherence.length === 0;
 
   if (emptyState) {
     return (
@@ -171,7 +152,7 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
   return (
     <section className="space-y-6">
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <h3 className="text-base font-semibold text-foreground">Health trend</h3>
+        <h3 className="text-base font-semibold text-foreground">Symptom severity trend</h3>
         <Line
           ref={(instance) => {
             healthChartRef.current = instance ?? null;
@@ -229,40 +210,6 @@ export const ChartView = ({ metrics, onRegisterChart, variant = "full" }: ChartV
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h3 className="text-base font-semibold text-foreground">Correlation insights</h3>
-          <Scatter
-            ref={(instance) => {
-              correlationChartRef.current = instance ?? null;
-            }}
-            data={correlationData}
-            options={{
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: ({ raw }) => {
-                      if (!raw || typeof raw !== "object") {
-                        return "";
-                      }
-                      const point = raw as { x: number; y: number };
-                      return `Occurrences: ${point.x}, correlation: ${(point.y / 100).toFixed(2)}`;
-                    },
-                  },
-                },
-              },
-              scales: {
-                x: { title: { display: true, text: "Occurrences" } },
-                y: {
-                  title: { display: true, text: "Correlation %" },
-                  suggestedMin: 0,
-                  suggestedMax: 100,
-                },
-              },
-            }}
-          />
-        </div>
-
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h3 className="text-base font-semibold text-foreground">Symptom distribution</h3>
           <Doughnut

@@ -1,13 +1,14 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { TrendAnalysisService } from '../../lib/services/TrendAnalysisService';
+import { TrendAnalysisService, MetricSeries } from '../../lib/services/TrendAnalysisService';
 import { RegressionResult } from '../../lib/utils/statistics/linearRegression';
 import { useCurrentUser } from '../../lib/hooks/useCurrentUser';
 
 interface AnalysisResult {
     result: RegressionResult | null;
-    data: unknown[];
+    series: MetricSeries;
+    interpretation?: { direction: string; confidence: string };
 }
 
 interface DashboardState {
@@ -24,7 +25,7 @@ interface DashboardState {
 
 const DashboardContext = createContext<DashboardState | undefined>(undefined);
 
-const DEFAULT_METRIC = 'overallHealth';
+const DEFAULT_METRIC = 'symptom-frequency:all:daily';
 const DEFAULT_TIME_RANGE = '90d';
 
 export const DashboardProvider = ({ children, service }: { children: ReactNode, service: TrendAnalysisService }) => {
@@ -49,21 +50,19 @@ export const DashboardProvider = ({ children, service }: { children: ReactNode, 
         setError(null);
 
         try {
-            const result = await service.analyzeTrend(userId, metric, timeRange);
-
-            // Fetch the actual data points for charting
-            const data = await service.fetchMetricData(userId, metric, timeRange);
-            const points = service.extractTimeSeriesPoints(data, metric);
+            const series = await service.fetchMetricSeries(userId, metric, timeRange);
+            const result = await service.computeTrend(userId, metric, timeRange, series);
+            const interpretation = result ? service.generateInterpretation(result, series.points.length) : undefined;
 
             console.log('[Analytics] Data fetched:', {
                 metric,
                 timeRange,
-                dataCount: data.length,
-                pointsCount: points.length,
-                result
+                pointsCount: series.points.length,
+                metadata: series.metadata,
+                result,
             });
 
-            setAnalysis({ result, data: points });
+            setAnalysis({ result, series, interpretation });
             setRetryCount(0); // Reset retry count on success
             setLoading(false);
         } catch (e) {
@@ -97,7 +96,7 @@ export const DashboardProvider = ({ children, service }: { children: ReactNode, 
     const value = {
         selectedMetric,
         selectedTimeRange,
-        analysis,
+    analysis,
         loading,
         error,
         retryCount,

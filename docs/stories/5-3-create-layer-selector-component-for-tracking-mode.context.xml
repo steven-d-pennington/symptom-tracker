@@ -1,0 +1,280 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>3</storyId>
+    <title>Create Layer Selector Component for Tracking Mode</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-3-create-layer-selector-component-for-tracking-mode.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user tracking different condition types</asA>
+    <iWant>to select which layer I'm logging to before marking body regions</iWant>
+    <soThat>my data is categorized correctly without extra steps</soThat>
+    <tasks>
+      - Task 1: Create LayerSelector component structure (AC: #5.3.1, #5.3.2)
+      - Task 2: Implement layer selection logic (AC: #5.3.3, #5.3.8)
+      - Task 3: Add last-used layer badge (AC: #5.3.4)
+      - Task 4: Mobile optimization (AC: #5.3.6)
+      - Task 5: Keyboard navigation (AC: #5.3.7)
+      - Task 6: Accessibility (AC: #5.3.9)
+      - Task 7: Integration with body map (AC: #5.3.5, #5.3.8)
+      - Task 8: Component unit tests (AC: All)
+      - Task 9: Visual testing and polish (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC5.3.1: LayerSelector component with dropdown/tab interface
+    AC5.3.2: Layer options with icons and labels (3 options: Flares, Pain, Inflammation)
+    AC5.3.3: Immediate optimistic UI update on selection
+    AC5.3.4: Last-used layer badge display
+    AC5.3.5: Prominent positioning above body map diagram
+    AC5.3.6: Mobile-optimized 44x44px touch targets
+    AC5.3.7: Keyboard navigation support (Tab, Arrow keys, Enter/Space)
+    AC5.3.8: Integration with bodyMapPreferencesRepository.setLastUsedLayer()
+    AC5.3.9: Screen reader announcements with ARIA attributes
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Epic 5 Technical Specification -->
+      <doc path="docs/epic-5-tech-spec.md" title="Epic 5: Body Map Multi-Layer Enhancement - Technical Specification" section="Story 5.3: LayerSelector Component">
+        Component architecture for LayerSelector: Props interface (currentLayer, onLayerChange, disabled, lastUsedLayer), UI design with dropdown/tab showing all 4 layers with icon+label, mobile-optimized 44x44px touch targets, keyboard navigation (Tab/Arrow/Enter), accessibility requirements with ARIA labels and screen reader announcements.
+      </doc>
+
+      <!-- Architecture Documentation -->
+      <doc path="docs/solution-architecture.md" title="Solution Architecture - Flare Tracking & Body Map Enhancements" section="Technology Stack">
+        Next.js 15.5.4 with App Router, React 19.1.0, TypeScript 5.x, Tailwind CSS 4.x, Dexie 4.2.0 for IndexedDB. Body map components use react-zoom-pan-pinch 3.6.1 for SVG pan/zoom. Testing with Jest 30.x + React Testing Library 16.x.
+      </doc>
+
+      <doc path="docs/solution-architecture.md" title="Solution Architecture - Flare Tracking & Body Map Enhancements" section="Repository Architecture">
+        Project structure: src/components/body-map/ for body map components, src/lib/repositories/ for data layer, src/lib/hooks/ for state management hooks, src/components/ui/ for shared UI primitives. Repository pattern with Dexie for offline-first IndexedDB access.
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Schema and Type Definitions -->
+      <code-artifact path="src/lib/db/schema.ts" kind="schema" symbol="LayerType" lines="196">
+        LayerType definition: 'flares' | 'pain' | 'inflammation' (3 layers, mobility removed from original spec)
+      </code-artifact>
+
+      <code-artifact path="src/lib/db/schema.ts" kind="schema" symbol="LAYER_CONFIG" lines="214-236">
+        LAYER_CONFIG constant with metadata for each layer: id, label, icon (emoji), color (Tailwind class), description. Used for consistent layer representation across UI.
+      </code-artifact>
+
+      <code-artifact path="src/lib/db/schema.ts" kind="schema" symbol="BodyMapLocationRecord" lines="238-257">
+        BodyMapLocationRecord interface with layer field (optional LayerType, defaults to 'flares' for backward compatibility). Includes coordinates, severity, userId, bodyRegionId.
+      </code-artifact>
+
+      <!-- Existing Body Map Components -->
+      <code-artifact path="src/components/body-map/BodyMapZoom.tsx" kind="component" symbol="BodyMapZoom" lines="1-100">
+        Existing body map zoom wrapper using react-zoom-pan-pinch. Shows pattern for body map interactive components with zoom controls, accessibility features, and state management.
+      </code-artifact>
+
+      <code-artifact path="src/components/body-map/FlareMarkers.tsx" kind="component" symbol="FlareMarkers">
+        Existing marker rendering component. Shows pattern for displaying markers on body map with severity-based styling, click handlers, and integration with body map state.
+      </code-artifact>
+
+      <!-- Repository Layer -->
+      <code-artifact path="src/lib/repositories/bodyMapLocationRepository.ts" kind="repository" symbol="BodyMapLocationRepository" lines="1-313">
+        Repository with layer-aware methods: getMarkersByLayer() using compound index [userId+layer+createdAt], getMarkersByLayers() for multi-layer queries, getMarkerCountsByLayer() for counts. Pattern for IndexedDB queries with Dexie.
+      </code-artifact>
+
+      <!-- Utility Functions -->
+      <code-artifact path="src/lib/utils/cn.ts" kind="utility" symbol="cn">
+        Tailwind class name utility for conditional styling (assumed to exist based on project patterns)
+      </code-artifact>
+    </code>
+
+    <dependencies>
+      <framework name="next" version="15.5.4">Next.js framework with App Router</framework>
+      <runtime name="react" version="19.1.0">React library</runtime>
+      <language name="typescript" version="5.x">TypeScript for type safety</language>
+      <styling name="tailwindcss" version="4.x">Utility-first CSS framework</styling>
+      <database name="dexie" version="4.2.0">IndexedDB wrapper for offline storage</database>
+      <icons name="lucide-react" version="0.544.0">Icon library</icons>
+      <zoom name="react-zoom-pan-pinch" version="3.6.1">SVG zoom/pan for body map</zoom>
+      <testing name="jest" version="30.2.0">Test framework</testing>
+      <testing name="@testing-library/react" version="16.3.0">React testing utilities</testing>
+      <testing name="@testing-library/user-event" version="14.6.1">User interaction simulation</testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Development Patterns and Standards -->
+    <constraint id="C1" type="architecture">
+      Controlled Component Pattern: Parent manages currentLayer state, LayerSelector is presentational component that calls onLayerChange callback. Separation of concerns: selection logic in parent, display logic in component.
+    </constraint>
+
+    <constraint id="C2" type="architecture">
+      Optimistic UI Pattern: UI updates immediately on layer selection, preference persistence happens asynchronously (fire-and-forget). No loading spinners or delays for layer switching.
+    </constraint>
+
+    <constraint id="C3" type="accessibility">
+      Accessibility-First: ARIA attributes baked in from start. Component must implement role="radiogroup", aria-label, aria-checked, and ARIA live region for screen reader announcements. Meets WCAG 2.1 Level AA standards.
+    </constraint>
+
+    <constraint id="C4" type="mobile">
+      Mobile-Optimized: All layer option buttons must meet minimum 44x44px touch target size. Spacing between options prevents accidental taps. Thumb-friendly positioning for one-handed mobile use.
+    </constraint>
+
+    <constraint id="C5" type="testing">
+      Component Testing Required: Full unit test suite using Jest + React Testing Library. Tests must cover: rendering all options, highlighting current layer, click callbacks, last-used badge, disabled state, keyboard navigation, screen reader attributes, touch target sizes.
+    </constraint>
+
+    <constraint id="C6" type="repository">
+      Repository Pattern: Use bodyMapPreferencesRepository.setLastUsedLayer(userId, layer) from Story 5.2 for persistence. Parent component provides userId from app auth context. Repository logs errors but doesn't throw (no try-catch needed).
+    </constraint>
+
+    <constraint id="C7" type="styling">
+      Tailwind-First Styling: Use Tailwind CSS utility classes for styling. Use cn() utility for conditional class names. Support light/dark theme with Tailwind's dark: prefix. Visual consistency with existing body map components.
+    </constraint>
+
+    <constraint id="C8" type="backward-compatibility">
+      Default Layer: New users start with layer='flares' (from DEFAULT_BODY_MAP_PREFERENCES). LayerSelector should handle this gracefully on first load. All existing markers default to 'flares' layer.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Component Props Interface -->
+    <interface name="LayerSelectorProps" path="src/components/body-map/LayerSelector.tsx">
+      interface LayerSelectorProps {
+        currentLayer: LayerType;           // Active layer from parent state
+        onLayerChange: (layer: LayerType) => void; // Callback when user selects layer
+        disabled?: boolean;                // Disable selection during loading
+        lastUsedLayer?: LayerType;         // Show "Last used" badge on this layer
+      }
+    </interface>
+
+    <!-- Layer Metadata Interface (from Story 5.1) -->
+    <interface name="LayerMetadata" path="src/lib/db/schema.ts">
+      interface LayerMetadata {
+        id: LayerType;
+        label: string;      // Display name
+        icon: string;       // Emoji icon
+        color: string;      // Tailwind color class
+        description: string;
+      }
+    </interface>
+
+    <!-- Repository Method (from Story 5.2) -->
+    <interface name="BodyMapPreferencesRepository.setLastUsedLayer" path="src/lib/repositories/bodyMapPreferencesRepository.ts">
+      async setLastUsedLayer(userId: string, layer: LayerType): Promise<void>
+
+      Persists user's layer selection to IndexedDB preferences table. Fire-and-forget async call.
+    </interface>
+
+    <!-- Custom Hook Pattern (Recommended) -->
+    <interface name="useBodyMapLayers" path="src/lib/hooks/useBodyMapLayers.ts">
+      function useBodyMapLayers(userId: string) {
+        return {
+          currentLayer: LayerType;
+          changeLayer: (layer: LayerType) => Promise<void>; // Handles persistence
+          isLoading: boolean;
+        }
+      }
+
+      Hook manages layer state and preference persistence. Parent component uses this hook and passes state to LayerSelector.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses Jest 30.x with React Testing Library 16.x for component testing. Test files located in __tests__/ subdirectories next to components. Naming convention: ComponentName.test.tsx. Mock external dependencies (next/navigation, hooks, repositories). Use describe() blocks to group tests by acceptance criteria. Test user interactions with fireEvent and user-event library. Verify accessibility with screen reader queries (getByRole, getByLabelText). Use fake-indexeddb for mocking IndexedDB in tests.
+    </standards>
+
+    <locations>
+      Component tests: src/components/body-map/__tests__/LayerSelector.test.tsx
+      Integration tests: src/__tests__/integration/ (if multi-component testing needed)
+      Test patterns: See src/components/body-map/__tests__/FlareMarkers.test.tsx for existing body map component test examples
+    </locations>
+
+    <ideas>
+      <!-- Test Ideas Mapped to Acceptance Criteria -->
+      <test-idea ac="AC5.3.1, AC5.3.2" priority="high">
+        Test: "renders all layer options with icons and labels"
+        - Render LayerSelector with currentLayer="flares"
+        - Query for all 3 layer buttons (Flares, Pain, Inflammation)
+        - Verify each button displays correct icon emoji and label text
+        - Verify LAYER_CONFIG is used for rendering
+      </test-idea>
+
+      <test-idea ac="AC5.3.1" priority="high">
+        Test: "highlights current layer with visual indicator"
+        - Render with currentLayer="pain"
+        - Verify Pain button has aria-checked="true"
+        - Verify visual styling (ring-2, bg-primary, etc.)
+        - Verify other layers have aria-checked="false"
+      </test-idea>
+
+      <test-idea ac="AC5.3.3, AC5.3.8" priority="high">
+        Test: "calls onLayerChange when option clicked"
+        - Mock onLayerChange callback
+        - Render with currentLayer="flares"
+        - Click "Pain" button
+        - Verify onLayerChange called with 'pain'
+        - Verify no loading delay or spinner
+      </test-idea>
+
+      <test-idea ac="AC5.3.4" priority="medium">
+        Test: "displays last-used badge correctly"
+        - Render with currentLayer="flares", lastUsedLayer="pain"
+        - Verify "Last used" badge appears on Pain option
+        - Verify badge does NOT appear on current layer (Flares)
+        - Verify badge does NOT appear when lastUsedLayer === currentLayer
+      </test-idea>
+
+      <test-idea ac="AC5.3.3" priority="medium">
+        Test: "prevents selection when disabled=true"
+        - Mock onLayerChange callback
+        - Render with disabled={true}
+        - Click layer button
+        - Verify onLayerChange NOT called
+        - Verify buttons have disabled attribute
+        - Verify opacity-50 and cursor-not-allowed styles applied
+      </test-idea>
+
+      <test-idea ac="AC5.3.7" priority="high">
+        Test: "keyboard navigation with Arrow keys and Enter"
+        - Render LayerSelector
+        - Focus on component (Tab key)
+        - Press ArrowRight to navigate between options
+        - Press Enter to select focused option
+        - Verify onLayerChange called with correct layer
+        - Verify focus indicator visible
+      </test-idea>
+
+      <test-idea ac="AC5.3.9" priority="high">
+        Test: "screen reader attributes and announcements"
+        - Render LayerSelector
+        - Verify role="radiogroup" on wrapper
+        - Verify aria-label="Layer selector"
+        - Verify role="radio" on each option
+        - Verify aria-checked attributes
+        - Verify ARIA live region exists
+        - Change layer and verify live region updates
+      </test-idea>
+
+      <test-idea ac="AC5.3.6" priority="high">
+        Test: "touch targets meet 44x44px minimum"
+        - Render LayerSelector
+        - Query all layer buttons
+        - For each button, check computed styles
+        - Verify minHeight >= 44px and minWidth >= 44px
+        - Verify spacing (gap) between buttons
+      </test-idea>
+
+      <test-idea ac="All" priority="medium">
+        Test: "supports light and dark themes"
+        - Render in light mode
+        - Verify color classes render correctly
+        - Switch to dark mode (add dark class to parent)
+        - Verify Tailwind dark: classes apply
+        - Verify contrast meets accessibility standards
+      </test-idea>
+    </ideas>
+  </tests>
+</story-context>

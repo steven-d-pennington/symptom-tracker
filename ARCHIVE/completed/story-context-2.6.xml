@@ -1,0 +1,279 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.6</storyId>
+    <title>Event Detail Modal for Progressive Disclosure</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs\stories\story-2.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user who quick-logged an event</asA>
+    <iWant>to add additional context later when I have time</iWant>
+    <soThat>I can capture comprehensive data without slowing down initial logging</soThat>
+    <tasks>
+      <task id="1">Create EventDetailModal component (AC: 1,2)</task>
+      <task id="2">Implement dynamic form based on event type (AC: 3)</task>
+      <task id="3">Add photo attachment (AC: 4)</task>
+      <task id="4">Implement event linking (AC: 5)</task>
+      <task id="5">Add rich text notes (AC: 6)</task>
+      <task id="6">Implement save and delete (AC: 7,8)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Opens when user taps timeline event or taps [Add Details] in quick-log modals</criterion>
+    <criterion id="2">Shows event summary at top: type icon, time, name (e.g., "💊 Humira at 8:05am")</criterion>
+    <criterion id="3">Form fields for additional details based on event type:
+      - Medications: Dosage override, detailed notes
+      - Symptoms: Severity (1-10), body location, triggers, notes
+      - Triggers: Intensity, suspected cause, notes
+      - Flares: Already detailed, but can add photos, additional notes</criterion>
+    <criterion id="4">Photo attachment: "Add photo" button opens camera/gallery</criterion>
+    <criterion id="5">Links to related events: "Link to trigger" suggests recent trigger events</criterion>
+    <criterion id="6">Notes field with rich text (bold, lists) via simple markdown</criterion>
+    <criterion id="7">[Save] button updates event record with new details</criterion>
+    <criterion id="8">[Delete Event] button with confirmation (destructive action)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/event-stream-redesign-spec.md</path>
+        <title>Event Stream Redesign - Technical Specification</title>
+        <section>Component Architecture - EventDetailModal (#9)</section>
+        <snippet>EventDetailModal shows event summary, dynamic form for additional details based on event type (medications: dosage override, notes; symptoms: severity, body location, triggers, notes; triggers: intensity, cause, notes; flares: photos, notes), photo attachment via camera/gallery, event linking, markdown notes, Save/Delete buttons</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRODUCT/event-stream-redesign-epics.md</path>
+        <title>Event Stream Redesign Epics</title>
+        <section>Story 2.6: Event Detail Modal for Progressive Disclosure</section>
+        <snippet>Opens from timeline tap or [Add Details] in quick-log modals. Shows event summary with type icon, time, name. Form fields vary by event type. Photo attachment button opens camera/gallery. Links to related events with suggestions. Markdown notes support (bold, lists). Save updates event, Delete with confirmation is destructive.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRODUCT/ux-specification.md</path>
+        <title>UX Specification</title>
+        <section>Component Library - Report Builder Components</section>
+        <snippet>Modal patterns: full-screen on mobile, centered dialog on desktop. Progressive disclosure principle. WCAG 2.1 AA compliance with ARIA labels, keyboard navigation, focus management. Form validation patterns with aria-describedby.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ARCHITECTURE/general-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Component Structure - Organisms</section>
+        <snippet>Complex modal components pattern. Client-side rendering with React hooks for state management. TypeScript strict mode for type safety. Tailwind CSS for styling.</snippet>
+      </doc>
+      <doc>
+        <path>src/components/photos/PhotoLinker.tsx</path>
+        <title>PhotoLinker Component (reference pattern)</title>
+        <section>Modal implementation pattern</section>
+        <snippet>Modal with backdrop, sticky header with close button, scrollable content, sticky footer with action buttons. Uses fixed positioning with z-50, backdrop blur, click-to-close on backdrop.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/lib/repositories/medicationEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>MedicationEventRepository</symbol>
+        <lines>1-318</lines>
+        <reason>Shows CRUD pattern for event repositories with update() method (AC #7). Demonstrates type validation and error handling patterns for event updates.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/triggerEventRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>TriggerEventRepository</symbol>
+        <lines>1-150</lines>
+        <reason>Pattern for updating trigger events with intensity field (AC #3). Shows validation for 'low' | 'medium' | 'high' intensity values.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/flareRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>FlareRepository</symbol>
+        <lines>1-200</lines>
+        <reason>Pattern for flare updates including photo attachments and notes (AC #3). Shows update methods for severity tracking and adding details.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/repositories/photoRepository.ts</path>
+        <kind>repository</kind>
+        <symbol>PhotoRepository</symbol>
+        <lines>1-505</lines>
+        <reason>Manages photo attachments with eventId linking (AC #4). create() and update() methods for attaching photos to events. Shows photo metadata handling.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/photos/PhotoLinker.tsx</path>
+        <kind>component</kind>
+        <symbol>PhotoLinker</symbol>
+        <lines>1-320</lines>
+        <reason>Reference implementation for modal with entity linking pattern (AC #5). Shows event suggestions, selection state, save/cancel patterns, and modal structure.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/photos/PhotoCapture.tsx</path>
+        <kind>component</kind>
+        <symbol>PhotoCapture</symbol>
+        <lines>1-200</lines>
+        <reason>Pattern for camera/gallery photo attachment (AC #4). Shows how to handle photo upload and storage integration.</reason>
+      </artifact>
+      <artifact>
+        <path>src/lib/db/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>MedicationEventRecord, TriggerEventRecord, FlareRecord</symbol>
+        <lines>1-100</lines>
+        <reason>Defines event record types with fields that can be updated via detail modal (dosage, notes, intensity, severity). Shows which fields are optional for progressive disclosure.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/daily-entry/EntrySections/PhotoSection.tsx</path>
+        <kind>component</kind>
+        <symbol>PhotoSection</symbol>
+        <lines>1-250</lines>
+        <reason>Pattern for "Add photo" button and photo gallery display (AC #4). Shows integration between photo capture and event attachment.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="19.1.0">State management with hooks (useState, useEffect)</package>
+        <package name="react-dom" version="19.1.0">DOM rendering</package>
+        <package name="next" version="15.5.4">App framework, client components</package>
+        <package name="dexie" version="^4.2.0">IndexedDB for data persistence</package>
+        <package name="lucide-react" version="^0.544.0">Icons for modal UI (X, Save, Trash)</package>
+        <package name="uuid" version="^13.0.0">ID generation for new records</package>
+        <package name="@radix-ui/react-tooltip" version="^1.2.8">Accessible tooltips for form hints</package>
+      </node>
+      <markdown>
+        <library name="marked" version="optional">Simple markdown parser for notes (AC #6). Alternative: react-markdown. Both support bold, lists, basic formatting.</library>
+        <library name="react-markdown" version="optional">React-based markdown rendering alternative. Requires remark plugins for full feature set.</library>
+      </markdown>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architecture>
+      <constraint>Client-side rendering only - use 'use client' directive at top of component file</constraint>
+      <constraint>Repository pattern for all database operations - no direct Dexie calls in components</constraint>
+      <constraint>TypeScript strict mode - all props and state must be typed</constraint>
+      <constraint>Component structure: EventDetailModal.tsx in src/components/timeline/ directory</constraint>
+      <constraint>Follow existing modal patterns: fixed positioning, backdrop blur, z-50 for layering</constraint>
+      <constraint>Progressive disclosure: show minimal fields initially, expand based on user interaction</constraint>
+    </architecture>
+    <ui-patterns>
+      <constraint>Modal structure: backdrop → fixed container → sticky header → scrollable content → sticky footer</constraint>
+      <constraint>Responsive: full-screen on mobile (<768px), centered dialog on desktop (≥768px)</constraint>
+      <constraint>Header: event summary with type emoji icon, formatted time, event name</constraint>
+      <constraint>Footer: [Delete Event] (left, destructive), [Cancel]/[Save] (right, primary)</constraint>
+      <constraint>Form validation: show errors inline with aria-describedby for screen readers</constraint>
+      <constraint>Dynamic forms: switch statement on event.type to render appropriate fields</constraint>
+    </ui-patterns>
+    <accessibility>
+      <constraint>WCAG 2.1 AA compliance minimum</constraint>
+      <constraint>Keyboard navigation: Tab, Shift+Tab, Enter (save), Esc (close)</constraint>
+      <constraint>ARIA labels: aria-label on icon buttons, role="dialog", aria-describedby for errors</constraint>
+      <constraint>Focus management: auto-focus first input on modal open, restore focus on close</constraint>
+      <constraint>Screen reader: announce modal open/close, form validation errors</constraint>
+      <constraint>Color contrast: 4.5:1 for text, 3:1 for interactive elements</constraint>
+    </accessibility>
+    <data-handling>
+      <constraint>All updates use repository.update(id, partialData) pattern</constraint>
+      <constraint>Delete requires confirmation dialog with explicit "Are you sure?" message</constraint>
+      <constraint>Photo attachment: create PhotoAttachment with eventId reference, not embedding</constraint>
+      <constraint>Event linking: query events from same day (24h window), show as suggestions</constraint>
+      <constraint>Markdown notes: sanitize input to prevent XSS, use DOMPurify or safe renderer</constraint>
+      <constraint>Timestamp preservation: never modify original event timestamp when updating details</constraint>
+    </data-handling>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>medicationEventRepository.update</name>
+      <kind>method</kind>
+      <signature>async update(id: string, updates: Partial&lt;MedicationEventDraft&gt;): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/medicationEventRepository.ts:179-204</path>
+      <purpose>Update medication event with dosage override and/or notes (AC #3)</purpose>
+    </interface>
+    <interface>
+      <name>triggerEventRepository.update</name>
+      <kind>method</kind>
+      <signature>async update(id: string, updates: Partial&lt;TriggerEventDraft&gt;): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/triggerEventRepository.ts</path>
+      <purpose>Update trigger event with intensity and/or notes (AC #3)</purpose>
+    </interface>
+    <interface>
+      <name>flareRepository.updateSeverity</name>
+      <kind>method</kind>
+      <signature>async updateSeverity(flareId: string, newSeverity: number, status: FlareStatus, notes?: string): Promise&lt;void&gt;</signature>
+      <path>src/lib/repositories/flareRepository.ts</path>
+      <purpose>Update flare severity and add notes (AC #3)</purpose>
+    </interface>
+    <interface>
+      <name>photoRepository.create</name>
+      <kind>method</kind>
+      <signature>async create(data: Omit&lt;PhotoAttachment, "id" | "createdAt" | "updatedAt"&gt;): Promise&lt;PhotoAttachment&gt;</signature>
+      <path>src/lib/repositories/photoRepository.ts:14-30</path>
+      <purpose>Create photo attachment and link to event via eventId (AC #4)</purpose>
+    </interface>
+    <interface>
+      <name>TimelineEvent</name>
+      <kind>type</kind>
+      <signature>{ id: string; type: 'medication' | 'symptom' | 'trigger' | 'flare'; timestamp: number; summary: string; details?: any; }</signature>
+      <path>docs/event-stream-redesign-spec.md:240-248</path>
+      <purpose>Unified event type passed to EventDetailModal from timeline (AC #1)</purpose>
+    </interface>
+    <interface>
+      <name>eventRepository.findByDateRange</name>
+      <kind>method</kind>
+      <signature>async findByDateRange(userId: string, startTimestamp: number, endTimestamp: number): Promise&lt;EventRecord[]&gt;</signature>
+      <path>multiple repositories</path>
+      <purpose>Query events from same day for event linking suggestions (AC #5)</purpose>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest 30.0.0 with React Testing Library for unit/integration tests. Component tests should cover user interactions, accessibility, and error states. Use @testing-library/user-event for realistic user interactions. Mock repositories with jest.mock(). Test keyboard navigation, focus management, and ARIA attributes. Aim for 80%+ coverage on interactive components.</standards>
+    <locations>
+      <location>src/components/timeline/__tests__/EventDetailModal.test.tsx</location>
+      <location>src/lib/repositories/__tests__/ (for repository integration tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test modal opens when timeline event clicked - verify isOpen prop triggers modal render</idea>
+      <idea ac="1">Test modal opens when [Add Details] button clicked from quick-log modal</idea>
+      <idea ac="1">Test Escape key closes modal - verify onClose callback called</idea>
+      <idea ac="1">Test clicking backdrop closes modal</idea>
+      <idea ac="2">Test event summary displays correct icon for each event type (💊 medication, 😣 symptom, ⚠️ trigger, 🔥 flare)</idea>
+      <idea ac="2">Test event summary shows formatted time (e.g., "8:05am")</idea>
+      <idea ac="2">Test event summary shows event name (e.g., "Humira", "Right armpit flare")</idea>
+      <idea ac="3">Test medication event shows dosage override field and notes field</idea>
+      <idea ac="3">Test symptom event shows severity slider (1-10), body location selector, trigger links, and notes</idea>
+      <idea ac="3">Test trigger event shows intensity selector (low/medium/high), suspected cause field, and notes</idea>
+      <idea ac="3">Test flare event shows photo attachment button and additional notes field</idea>
+      <idea ac="3">Test dynamic form switches correctly based on event.type prop</idea>
+      <idea ac="4">Test "Add photo" button renders for all event types</idea>
+      <idea ac="4">Test clicking "Add photo" opens PhotoCapture component</idea>
+      <idea ac="4">Test photo attachment saves with eventId reference</idea>
+      <idea ac="4">Test attached photos display as thumbnails</idea>
+      <idea ac="5">Test "Link to trigger" section queries events from same day (24h window)</idea>
+      <idea ac="5">Test event suggestions filtered by type (triggers for flares, etc.)</idea>
+      <idea ac="5">Test clicking suggestion adds link to event</idea>
+      <idea ac="5">Test linked events saved to event record</idea>
+      <idea ac="6">Test notes field accepts markdown input (bold, lists)</idea>
+      <idea ac="6">Test markdown preview renders correctly (**bold** → <strong>bold</strong>)</idea>
+      <idea ac="6">Test markdown sanitization prevents XSS attacks</idea>
+      <idea ac="7">Test [Save] button calls appropriate repository.update() with form data</idea>
+      <idea ac="7">Test save updates medication event with dosage and notes</idea>
+      <idea ac="7">Test save updates trigger event with intensity and notes</idea>
+      <idea ac="7">Test save updates flare with photos and notes</idea>
+      <idea ac="7">Test save success closes modal and shows confirmation</idea>
+      <idea ac="7">Test save error displays error message to user</idea>
+      <idea ac="8">Test [Delete Event] button renders with destructive styling</idea>
+      <idea ac="8">Test clicking Delete shows confirmation dialog</idea>
+      <idea ac="8">Test confirmation dialog has "Are you sure?" message</idea>
+      <idea ac="8">Test confirming deletion calls repository.delete(eventId)</idea>
+      <idea ac="8">Test canceling deletion closes dialog without deleting</idea>
+      <idea ac="8">Test successful deletion closes modal and removes event from timeline</idea>
+      <idea ac="accessibility">Test keyboard navigation: Tab moves between fields, Enter saves, Esc closes</idea>
+      <idea ac="accessibility">Test focus management: first input focused on modal open, focus restored on close</idea>
+      <idea ac="accessibility">Test ARIA attributes: role="dialog", aria-label on buttons, aria-describedby on errors</idea>
+      <idea ac="accessibility">Test screen reader announcements for save success/error</idea>
+      <idea ac="responsive">Test modal full-screen on mobile viewport (&lt;768px)</idea>
+      <idea ac="responsive">Test modal centered dialog on desktop viewport (≥768px)</idea>
+      <idea ac="integration">Test complete flow: open → fill form → save → verify in database</idea>
+      <idea ac="integration">Test complete flow: open → delete → confirm → verify removed from database</idea>
+    </ideas>
+  </tests>
+</story-context>
