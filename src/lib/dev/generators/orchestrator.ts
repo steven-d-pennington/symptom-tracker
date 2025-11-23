@@ -28,7 +28,6 @@ import { generateBodyMapLocations, generateFlareBodyMapLocations } from "./gener
 import { generateUxEvents } from "./generateUxEvents";
 import { generatePhotoAttachments } from "./generatePhotoAttachments";
 import { generateId } from "@/lib/utils/idGenerator";
-import { seedFoodsService } from "@/lib/services/food/seedFoodsService";
 import { generateDailyLogs } from "./generateDailyLogs";
 import { generateAllIntentionalPatterns } from "./generatePatternData";
 
@@ -55,7 +54,7 @@ export async function generateComprehensiveData(
   const symptoms = await getOrCreateSymptoms(userId);
   const medications = await getOrCreateMedications(userId);
   const triggers = await getOrCreateTriggers(userId);
-  await seedFoodsService.seedDefaultFoods(userId, db);
+  // Foods should already be seeded through onboarding or userInitialization.ts
   const allFoods = await db.foods.where({ userId }).toArray();
   const foods = allFoods.filter((f: FoodRecord) => f.isActive && f.name !== "__SEED_COMPLETE_V1__");
 
