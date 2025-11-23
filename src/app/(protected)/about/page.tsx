@@ -5,7 +5,7 @@ import { Info, Heart, Github, Mail, ExternalLink, Keyboard, ChevronDown, Chevron
 import Link from "next/link";
 
 export default function AboutPage() {
-  const [expandedChangelog, setExpandedChangelog] = useState<string>("epic-3.5");
+  const [expandedChangelog, setExpandedChangelog] = useState<string>("v0.4.0");
 
   const toggleChangelog = (id: string) => {
     setExpandedChangelog(expandedChangelog === id ? "" : id);
@@ -87,10 +87,10 @@ export default function AboutPage() {
           </h2>
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>
-              <strong className="text-foreground">Version:</strong> 0.3.0
+              <strong className="text-foreground">Version:</strong> 0.4.0
             </p>
             <p>
-              <strong className="text-foreground">Status:</strong> Beta - Production Ready ✅
+              <strong className="text-foreground">Status:</strong> Beta - Architecture Hardened 🛡️
             </p>
             <p>
               <strong className="text-foreground">Build:</strong> Development
@@ -134,23 +134,23 @@ export default function AboutPage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-medium text-foreground mb-2">Phase 2</h3>
+              <h3 className="font-medium text-foreground mb-2">Phase 2 (Completed)</h3>
               <ul className="space-y-1.5 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Interactive body mapping</span>
+                  <span>Unified Body Marker System (Pain, Inflammation, Flares)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Flare tracking and management</span>
+                  <span>Interactive Body Mapping with 4 Views</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Active flare dashboard</span>
+                  <span>Event-Sourced History Tracking</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Intervention logging</span>
+                  <span>Zero-Knowledge Cloud Backup</span>
                 </li>
               </ul>
             </div>
@@ -211,6 +211,64 @@ export default function AboutPage() {
             Changelog
           </h2>
           <div className="space-y-3">
+            {/* Version 0.4.0 - November 2025 */}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <button
+                onClick={() => toggleChangelog("v0.4.0")}
+                className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  {expandedChangelog === "v0.4.0" ? (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  )}
+                  <div className="text-left">
+                    <h3 className="font-semibold text-foreground">
+                      Version 0.4.0 - Architecture Hardening
+                    </h3>
+                    <p className="text-sm text-muted-foreground">November 2025</p>
+                  </div>
+                </div>
+              </button>
+
+              {expandedChangelog === "v0.4.0" && (
+                <div className="px-4 pb-4 pt-2 border-t border-border">
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <h4 className="font-medium text-foreground mb-2">🏗️ Core Architecture</h4>
+                      <ul className="space-y-1 text-muted-foreground pl-4">
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span><strong>Unified Body Marker System:</strong> Replaced separate flare/pain tracking with a polymorphic marker system.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span><strong>Event Sourcing:</strong> Implemented append-only event logs for high-fidelity history tracking.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span><strong>Zero-Knowledge Sync:</strong> Added encrypted cloud backup capabilities (server cannot read data).</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-foreground mb-2">📚 Documentation</h4>
+                      <ul className="space-y-1 text-muted-foreground pl-4">
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Comprehensive documentation suite (Architecture, Data Models, API Contracts).</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span>•</span>
+                          <span>Updated Development Guide and Source Tree mapping.</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             {/* Epic 3.5 - October 2025 */}
             <div className="border border-border rounded-lg overflow-hidden">
               <button
